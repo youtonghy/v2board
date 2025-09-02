@@ -25,18 +25,28 @@ class ClientController extends Controller
         if ($userService->isAvailable($user)) {
             $serverService = new ServerService();
             $servers = $serverService->getAvailableServers($user);
+            $hasExplicitFlag = !empty($request->input('flag'));
+            $matched = false;
             if($flag) {
                 if (!strpos($flag, 'sing')) {
                     $this->setSubscribeInfoToServers($servers, $user);
+                    // Treat UA containing 'TJXT' the same as 'meta'
+                    if (strpos($flag, 'tjxt') !== false) {
+                        $matched = true;
+                        $class = new ClashMeta($user, $servers);
+                        return $class->handle();
+                    }
                     foreach (array_reverse(glob(app_path('Protocols') . '/*.php')) as $file) {
                         $file = 'App\\Protocols\\' . basename($file, '.php');
                         $class = new $file($user, $servers);
                         if (strpos($flag, $class->flag) !== false) {
+                            $matched = true;
                             return $class->handle();
                         }
                     }
                 }
                 if (strpos($flag, 'sing') !== false) {
+                    $matched = true;
                     $version = null;
                     if (preg_match('/sing-box\s+([0-9.]+)/i', $flag, $matches)) {
                         $version = $matches[1];
@@ -48,6 +58,9 @@ class ClientController extends Controller
                     }
                     return $class->handle();
                 }
+            }
+            if (!$matched && !$hasExplicitFlag) {
+                abort(400, 'flag or user-agent is invalid');
             }
             $class = new General($user, $servers);
             return $class->handle();
