@@ -8,6 +8,7 @@ use App\Jobs\TrafficFetchJob;
 use App\Models\Order;
 use App\Models\Plan;
 use App\Models\User;
+use App\Services\ServerService;
 
 class UserService
 {
@@ -230,6 +231,10 @@ class UserService
         TrafficFetchJob::dispatch($data, $server, $protocol);
         StatUserJob::dispatch($data, $server, $protocol, 'd');
         StatServerJob::dispatch($data, $server, $protocol, 'd');
+        $serverService = new ServerService();
+        foreach ($data as $userId => $traffic) {
+            $serverService->log($userId, $server['id'], $traffic[0], $traffic[1], $server['rate'], $protocol);
+        }
     }
 
     public static function getMaxId()

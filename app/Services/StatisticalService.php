@@ -7,6 +7,7 @@ use App\Models\Stat;
 use App\Models\StatServer;
 use App\Models\StatUser;
 use App\Models\User;
+use App\Models\ServerLog;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -203,6 +204,26 @@ class StatisticalService {
                     ->get();
             }
         }
+    }
+
+    public function getUserNodeTraffic()
+    {
+        $startAt = $this->startAt ?? strtotime(date('Y-m-d'));
+        $endAt = $this->endAt ?? strtotime('+1 day', $startAt);
+
+        return ServerLog::where('log_at', '>=', $startAt)
+            ->where('log_at', '<', $endAt)
+            ->select([
+                'user_id',
+                'server_id',
+                'method',
+                'log_at',
+                DB::raw('SUM(u) as u'),
+                DB::raw('SUM(d) as d')
+            ])
+            ->groupBy('user_id', 'server_id', 'method', 'log_at')
+            ->orderBy('log_at', 'ASC')
+            ->get();
     }
 
     public function getRanking($type, $limit = 20)

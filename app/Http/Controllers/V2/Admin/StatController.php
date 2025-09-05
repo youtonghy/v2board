@@ -88,5 +88,20 @@ class StatController extends Controller
             'data' => $statisticalService->getRanking($request->input('type'), $request->input('limit') ?? 20)
         ];
     }
+
+    public function userNodeTraffic(Request $request)
+    {
+        $request->validate([
+            'start_at' => '',
+            'end_at' => ''
+        ]);
+
+        $statisticalService = new StatisticalService();
+        $statisticalService->setStartAt($request->input('start_at'));
+        $statisticalService->setEndAt($request->input('end_at'));
+        return [
+            'data' => $statisticalService->getUserNodeTraffic()
+        ];
+    }
 }
 
