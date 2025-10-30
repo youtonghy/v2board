@@ -41,7 +41,8 @@
                 'zh-TW',
                 'fa-IR'
             ],
-            logo: '{{$logo}}'
+            logo: '{{$logo}}',
+            telegram_login_enable: {{$telegram_login_enable}}
         }
     </script>
     <script src="/theme/{{$theme}}/assets/i18n/zh-CN.js?v={{$version}}"></script>

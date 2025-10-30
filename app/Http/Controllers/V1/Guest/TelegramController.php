@@ -4,6 +4,9 @@ namespace App\Http\Controllers\V1\Guest;
 
 use App\Http\Controllers\Controller;
 use App\Services\TelegramService;
+use App\Utils\CacheKey;
+use App\Utils\Helper;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\Request;
 
 class TelegramController extends Controller
@@ -11,6 +14,7 @@ class TelegramController extends Controller
     protected $msg;
     protected $commands = [];
     protected $telegramService;
+    protected $callback;
 
     public function __construct(Request $request)
     {
@@ -25,11 +29,16 @@ class TelegramController extends Controller
     {
         $this->formatMessage($request->input());
         $this->formatChatJoinRequest($request->input());
+        $this->formatCallbackQuery($request->input());
         $this->handle();
     }
 
     public function handle()
     {
+        if ($this->callback) {
+            $this->handleCallback($this->callback);
+            return;
+        }
         if (!$this->msg) return;
         $msg = $this->msg;
         $commandName = explode('@', $msg->command);
@@ -90,6 +99,66 @@ class TelegramController extends Controller
             $obj->reply_text = $data['message']['reply_to_message']['text'];
         }
         $this->msg = $obj;
+    }
+
+    private function formatCallbackQuery(array $data)
+    {
+        if (!isset($data['callback_query'])) return;
+        if (!isset($data['callback_query']['data'])) return;
+        $callback = $data['callback_query'];
+        $obj = new \StdClass();
+        $obj->id = $callback['id'];
+        $obj->data = $callback['data'];
+        $obj->from_id = $callback['from']['id'] ?? null;
+        $obj->chat_id = $callback['message']['chat']['id'] ?? null;
+        $obj->message_id = $callback['message']['message_id'] ?? null;
+        $this->callback = $obj;
+    }
+
+    private function handleCallback($callback)
+    {
+        if (!preg_match('/^LOGIN_(APPROVE|REJECT):([A-Za-z0-9\\-]+)/', $callback->data, $match)) {
+            $this->telegramService->answerCallbackQuery($callback->id);
+            return;
+        }
+        $action = $match[1];
+        $token = $match[2];
+        $cacheKey = CacheKey::get('TELEGRAM_LOGIN_REQUEST', $token);
+        $payload = Cache::get($cacheKey);
+        if (!$payload) {
+            $this->telegramService->answerCallbackQuery($callback->id, '请求已失效', true);
+            return;
+        }
+        if (($payload['telegram_id'] ?? null) !== $callback->from_id) {
+            $this->telegramService->answerCallbackQuery($callback->id, '无权处理该请求', true);
+            return;
+        }
+        if (($payload['status'] ?? 'pending') !== 'pending') {
+            $this->telegramService->answerCallbackQuery($callback->id, '该请求已处理');
+            return;
+        }
+        if ($action === 'APPROVE') {
+            $code = Helper::guid();
+            Cache::put(CacheKey::get('TEMP_TOKEN', $code), $payload['user_id'], 120);
+            $payload['status'] = 'approved';
+            $payload['verify_code'] = $code;
+            $payload['handled_at'] = time();
+            Cache::put($cacheKey, $payload, 120);
+            $redirect = '/#/login?verify=' . $code . '&redirect=' . ($payload['redirect'] ?? 'dashboard');
+            if (config('v2board.app_url')) {
+                $loginUrl = config('v2board.app_url') . $redirect;
+            } else {
+                $loginUrl = url($redirect);
+            }
+            $this->telegramService->answerCallbackQuery($callback->id, '已批准登录请求');
+            $this->telegramService->sendMessage($callback->from_id, "已批准登录请求\n\n登录链接：{$loginUrl}");
+            return;
+        }
+        $payload['status'] = 'rejected';
+        $payload['handled_at'] = time();
+        Cache::put($cacheKey, $payload, 120);
+        $this->telegramService->answerCallbackQuery($callback->id, '已拒绝登录请求');
+        $this->telegramService->sendMessage($callback->from_id, '已拒绝本次登录请求');
     }
 
     private function formatChatJoinRequest(array $data)
