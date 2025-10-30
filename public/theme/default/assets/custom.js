@@ -13,15 +13,50 @@
         pollingRedirect: null,
         hideToastTimer: null,
         attachTimer: null,
-        defaultText: '使用 Telegram 登录'
+        defaultText: '使用 Telegram 登录',
+        overlay: null,
+        overlayEmailInput: null,
+        overlaySubmit: null,
+        overlayClose: null,
+        overlayMessage: null,
+        overlayIsActive: false
     };
+
+    function injectStyles() {
+        if (document.getElementById('telegram-login-style')) {
+            return;
+        }
+        var style = document.createElement('style');
+        style.id = 'telegram-login-style';
+        style.textContent = `
+            body.telegram-login-lock { overflow: hidden; }
+            #telegram-login-overlay { position: fixed; inset: 0; width: 100%; height: 100%; background: rgba(17, 24, 39, 0.72); z-index: 3200; display: none; align-items: center; justify-content: center; padding: 24px; }
+            #telegram-login-overlay.telegram-active { display: flex; }
+            #telegram-login-overlay .telegram-card { position: relative; width: 100%; max-width: 420px; background: #ffffff; border-radius: 18px; box-shadow: 0 24px 55px rgba(15, 23, 42, 0.25); padding: 36px 32px 32px; text-align: center; }
+            #telegram-login-overlay .telegram-title { font-size: 20px; font-weight: 600; color: #1f2937; margin-bottom: 12px; }
+            #telegram-login-overlay .telegram-desc { font-size: 14px; color: #6b7280; margin-bottom: 28px; }
+            #telegram-login-overlay .telegram-input { width: 100%; height: 46px; border-radius: 10px; border: 1px solid #d1d5db; padding: 0 14px; font-size: 15px; outline: none; transition: border-color .15s ease, box-shadow .15s ease; }
+            #telegram-login-overlay .telegram-input:focus { border-color: #0665d0; box-shadow: 0 0 0 3px rgba(6, 101, 208, 0.16); }
+            #telegram-login-overlay .telegram-submit { margin-top: 26px; width: 100%; height: 46px; border-radius: 10px; border: none; background: #0665d0; color: #ffffff; font-size: 15px; font-weight: 600; cursor: pointer; transition: background .2s ease; }
+            #telegram-login-overlay .telegram-submit:hover:not([disabled]) { background: #0559b8; }
+            #telegram-login-overlay .telegram-submit:disabled { background: #93c5fd; cursor: default; }
+            #telegram-login-overlay .telegram-close { position: absolute; top: 16px; right: 16px; width: 36px; height: 36px; border-radius: 18px; border: none; background: rgba(243, 244, 246, 0.9); color: #6b7280; font-size: 20px; cursor: pointer; transition: background .2s ease, color .2s ease; }
+            #telegram-login-overlay .telegram-close:hover:not([disabled]) { background: rgba(209, 213, 219, 0.95); color: #374151; }
+            #telegram-login-overlay .telegram-close:disabled { cursor: default; color: #d1d5db; }
+            #telegram-login-overlay .telegram-message { margin-top: 20px; min-height: 18px; font-size: 13px; color: #6b7280; }
+            #telegram-login-overlay .telegram-message[data-type="error"] { color: #dc2626; }
+            #telegram-login-overlay .telegram-message[data-type="success"] { color: #16a34a; }
+            #telegram-login-overlay .telegram-message[data-type="info"] { color: #2563eb; }
+        `;
+        document.head.appendChild(style);
+    }
 
     function isLoginPage() {
         var hash = window.location.hash || '';
         return hash.indexOf('#/login') === 0;
     }
 
-    function getEmailInput() {
+    function getPrimaryLoginEmailInput() {
         return document.querySelector('.v2board-auth-box input[type="text"]');
     }
 
@@ -99,6 +134,14 @@
         state.button.classList.add('btn-primary');
     }
 
+    function setButtonLoggingIn() {
+        if (!state.button) return;
+        state.button.disabled = true;
+        state.button.textContent = '正在登录...';
+        state.button.classList.remove('btn-outline-primary');
+        state.button.classList.add('btn-primary');
+    }
+
     function setButtonWaiting() {
         if (!state.button) return;
         state.button.disabled = true;
@@ -107,17 +150,11 @@
         state.button.classList.add('btn-primary');
     }
 
-    function removeButton() {
-        if (state.button && state.button.parentNode) {
-            state.button.parentNode.removeChild(state.button);
-        }
-        state.button = null;
-    }
-
     function ensureButton() {
         if (!isLoginPage()) {
             stopPolling();
             removeButton();
+            closeOverlay(true);
             return;
         }
         if (state.button && !document.body.contains(state.button)) {
@@ -134,26 +171,148 @@
         btn.addEventListener('click', onTelegramLoginClick);
         loginButton.parentNode.appendChild(btn);
         state.button = btn;
+        setButtonIdle();
+    }
+
+    function removeButton() {
+        if (state.button && state.button.parentNode) {
+            state.button.parentNode.removeChild(state.button);
+        }
+        state.button = null;
+    }
+
+    function ensureOverlay() {
+        if (state.overlay) return;
+        var overlay = document.createElement('div');
+        overlay.id = 'telegram-login-overlay';
+        overlay.innerHTML = `
+            <div class="telegram-card">
+                <button type="button" class="telegram-close" aria-label="关闭">×</button>
+                <div class="telegram-title">Telegram 登录</div>
+                <div class="telegram-desc">请输入已绑定 Telegram 的账户邮箱</div>
+                <form class="telegram-form">
+                    <input type="email" class="telegram-input" placeholder="邮箱地址" required />
+                    <button type="submit" class="telegram-submit">提交</button>
+                </form>
+                <div class="telegram-message" data-role="message"></div>
+            </div>`;
+        overlay.addEventListener('click', function (event) {
+            if (event.target === overlay) {
+                if (state.overlayClose && state.overlayClose.disabled) return;
+                closeOverlay(true);
+            }
+        });
+        document.body.appendChild(overlay);
+        state.overlay = overlay;
+        state.overlayEmailInput = overlay.querySelector('.telegram-input');
+        state.overlaySubmit = overlay.querySelector('.telegram-submit');
+        state.overlayClose = overlay.querySelector('.telegram-close');
+        state.overlayMessage = overlay.querySelector('[data-role="message"]');
+        var form = overlay.querySelector('.telegram-form');
+        form.addEventListener('submit', function (event) {
+            event.preventDefault();
+            submitTelegramLogin();
+        });
+        state.overlayClose.addEventListener('click', function () {
+            if (state.overlayClose.disabled) return;
+            closeOverlay(true);
+        });
+    }
+
+    function resetOverlay() {
+        if (!state.overlay) return;
+        if (state.overlayEmailInput) {
+            state.overlayEmailInput.value = '';
+        }
+        setOverlayMessage('');
+        setOverlayStateIdle();
+    }
+
+    function openOverlay() {
+        ensureOverlay();
+        resetOverlay();
+        var loginInput = getPrimaryLoginEmailInput();
+        if (loginInput && loginInput.value) {
+            state.overlayEmailInput.value = loginInput.value.trim();
+        }
+        state.overlay.classList.add('telegram-active');
+        document.body.classList.add('telegram-login-lock');
+        state.overlayIsActive = true;
+        setTimeout(function () {
+            state.overlayEmailInput.focus();
+        }, 50);
+    }
+
+    function closeOverlay(forceReset) {
+        if (!state.overlay || !state.overlayIsActive) return;
+        state.overlay.classList.remove('telegram-active');
+        document.body.classList.remove('telegram-login-lock');
+        state.overlayIsActive = false;
+        if (forceReset) {
+            resetOverlay();
+        }
+    }
+
+    function setOverlayStateIdle() {
+        if (state.overlaySubmit) {
+            state.overlaySubmit.disabled = false;
+            state.overlaySubmit.textContent = '提交';
+        }
+        if (state.overlayClose) {
+            state.overlayClose.disabled = false;
+        }
+    }
+
+    function setOverlayStateLoading() {
+        if (state.overlaySubmit) {
+            state.overlaySubmit.disabled = true;
+            state.overlaySubmit.textContent = '发送请求中...';
+        }
+        if (state.overlayClose) {
+            state.overlayClose.disabled = true;
+        }
+    }
+
+    function setOverlayStateWaiting() {
+        if (state.overlaySubmit) {
+            state.overlaySubmit.disabled = true;
+            state.overlaySubmit.textContent = '等待 Telegram 确认...';
+        }
+        if (state.overlayClose) {
+            state.overlayClose.disabled = true;
+        }
+    }
+
+    function setOverlayMessage(message, type) {
+        if (!state.overlayMessage) return;
+        state.overlayMessage.textContent = message || '';
+        if (type) {
+            state.overlayMessage.setAttribute('data-type', type);
+        } else {
+            state.overlayMessage.removeAttribute('data-type');
+        }
     }
 
     function onTelegramLoginClick() {
-        var emailInput = getEmailInput();
-        if (!emailInput) {
-            showToast('无法获取邮箱输入框，请刷新页面后重试。', 'error');
-            return;
-        }
-        var email = emailInput.value.trim();
+        openOverlay();
+    }
+
+    function submitTelegramLogin() {
+        ensureOverlay();
+        var email = state.overlayEmailInput ? state.overlayEmailInput.value.trim() : '';
         if (!email) {
-            showToast('请输入邮箱地址。', 'error');
-            emailInput.focus();
+            setOverlayMessage('请输入邮箱地址。', 'error');
+            if (state.overlayEmailInput) {
+                state.overlayEmailInput.focus();
+            }
             return;
         }
+        setOverlayMessage('');
         stopPolling();
+        setOverlayStateLoading();
         setButtonLoading();
         var redirect = getRedirectParam();
-        var payload = {
-            email: email
-        };
+        var payload = { email: email };
         if (redirect) {
             payload.redirect = redirect;
         }
@@ -166,11 +325,16 @@
                 throw new Error('请求失败，请稍后再试。');
             }
             showToast('请求已发送，请在 Telegram 中确认。', 'info');
+            setOverlayStateWaiting();
+            setOverlayMessage('请求已发送，请在 Telegram 中确认。', 'info');
             setButtonWaiting();
             startPolling(data.token, redirect || null);
         }).catch(function (err) {
+            setOverlayStateIdle();
             setButtonIdle();
-            showToast(err && err.message ? err.message : '请求失败，请稍后再试。', 'error');
+            var message = err && err.message ? err.message : '请求失败，请稍后再试。';
+            setOverlayMessage(message, 'error');
+            showToast(message, 'error');
         });
     }
 
@@ -200,6 +364,8 @@
         if (state.pollingAttempts > state.pollingMaxAttempts) {
             stopPolling();
             setButtonIdle();
+            setOverlayStateIdle();
+            setOverlayMessage('登录请求已超时，请重新尝试。', 'error');
             showToast('登录请求已超时，请重新尝试。', 'error');
             return;
         }
@@ -211,31 +377,57 @@
             if (status === 'pending') {
                 return;
             }
-            stopPolling();
             if (status === 'approved' && data.verify_code) {
-                showToast('已确认，正在登录。', 'success');
-                var redirect = data.redirect || state.pollingRedirect || 'dashboard';
-                var target = '/#/login?verify=' + encodeURIComponent(data.verify_code);
-                if (redirect) {
-                    target += '&redirect=' + encodeURIComponent(redirect);
+                var redirectTarget = data.redirect || state.pollingRedirect || 'dashboard';
+                stopPolling();
+                setOverlayMessage('已确认，正在登录...', 'success');
+                if (state.overlaySubmit) {
+                    state.overlaySubmit.disabled = true;
+                    state.overlaySubmit.textContent = '正在登录...';
                 }
-                window.location.href = target;
+                if (state.overlayClose) {
+                    state.overlayClose.disabled = true;
+                }
+                setButtonLoggingIn();
+                var target = '/#/login?verify=' + encodeURIComponent(data.verify_code);
+                if (redirectTarget) {
+                    target += '&redirect=' + encodeURIComponent(redirectTarget);
+                }
+                setTimeout(function () {
+                    closeOverlay(false);
+                    if (typeof window.location.replace === 'function') {
+                        window.location.replace(target);
+                    } else {
+                        window.location.href = target;
+                    }
+                    setTimeout(function () {
+                        window.location.reload();
+                    }, 400);
+                }, 200);
                 return;
             }
+            stopPolling();
             setButtonIdle();
+            setOverlayStateIdle();
             if (status === 'rejected') {
+                setOverlayMessage('请求已被拒绝。', 'error');
                 showToast('请求已被拒绝。', 'error');
                 return;
             }
             if (status === 'expired') {
+                setOverlayMessage('登录请求已过期，请重新尝试。', 'error');
                 showToast('登录请求已过期，请重新尝试。', 'error');
                 return;
             }
+            setOverlayMessage('请求处理失败，请稍后再试。', 'error');
             showToast('请求处理失败，请稍后再试。', 'error');
         }).catch(function (err) {
             stopPolling();
             setButtonIdle();
-            showToast(err && err.message ? err.message : '请求失败，请稍后再试。', 'error');
+            setOverlayStateIdle();
+            var message = err && err.message ? err.message : '请求失败，请稍后再试。';
+            setOverlayMessage(message, 'error');
+            showToast(message, 'error');
         });
     }
 
@@ -260,7 +452,7 @@
     }
 
     function init() {
-        if (state.attachTimer) return;
+        injectStyles();
         ensureButton();
         state.attachTimer = setInterval(ensureButton, 1000);
         window.addEventListener('hashchange', function () {
@@ -268,6 +460,13 @@
         });
         window.addEventListener('beforeunload', function () {
             stopPolling();
+        });
+        window.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && state.overlayIsActive) {
+                if (state.overlayClose && state.overlayClose.disabled) return;
+                event.preventDefault();
+                closeOverlay(true);
+            }
         });
     }
 
