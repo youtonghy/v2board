@@ -11,6 +11,7 @@ use App\Models\InviteCode;
 use App\Models\Plan;
 use App\Models\User;
 use App\Services\AuthService;
+use App\Services\TelegramService;
 use App\Utils\CacheKey;
 use App\Utils\Dict;
 use App\Utils\Helper;
@@ -71,6 +72,120 @@ class AuthController extends Controller
             'data' => $link
         ]);
 
+    }
+
+    public function loginWithTelegram(Request $request)
+    {
+        if ((int)config('v2board.telegram_login_enable', 0) !== 1) {
+            abort(500, __('暂无法使用'));
+        }
+        if ((int)config('v2board.telegram_bot_enable', 0) !== 1 || !config('v2board.telegram_bot_token')) {
+            abort(500, __('暂无法使用'));
+        }
+        $params = $request->validate([
+            'email' => 'required|email:strict',
+            'redirect' => 'nullable|string'
+        ]);
+        $email = $params['email'];
+        if (Cache::has(CacheKey::get('LAST_SEND_TELEGRAM_LOGIN_REQUEST', $email))) {
+            abort(500, __('发送频繁，请稍后再试'));
+        }
+        $user = User::where('email', $email)->first();
+        if (
+            !$user ||
+            !$user->telegram_id ||
+            $user->banned
+        ) {
+            abort(500, __('暂无法使用'));
+        }
+        $requestToken = Helper::guid();
+        $cacheKey = CacheKey::get('TELEGRAM_LOGIN_REQUEST', $requestToken);
+        Cache::put($cacheKey, [
+            'user_id' => $user->id,
+            'telegram_id' => $user->telegram_id,
+            'email' => $email,
+            'status' => 'pending',
+            'redirect' => $params['redirect'] ?? null,
+            'created_at' => time()
+        ], 120);
+        Cache::put(CacheKey::get('LAST_SEND_TELEGRAM_LOGIN_REQUEST', $email), time(), 60);
+        $telegramService = new TelegramService();
+        $appName = config('v2board.app_name', 'V2Board');
+        $lines = [
+            '[' . $appName . '] ' . __('登录请求'),
+            __('邮箱') . '：' . $email,
+            'IP：' . $request->ip()
+        ];
+        $ua = $request->userAgent();
+        if (!empty($ua)) {
+            $lines[] = __('设备') . '：' . mb_substr($ua, 0, 100);
+        }
+        $lines[] = '';
+        $lines[] = __('是否允许此次登录？');
+        $keyboard = [
+            'inline_keyboard' => [[
+                [
+                    'text' => __('批准登录'),
+                    'callback_data' => 'LOGIN_APPROVE:' . $requestToken
+                ],
+                [
+                    'text' => __('拒绝'),
+                    'callback_data' => 'LOGIN_REJECT:' . $requestToken
+                ]
+            ]]
+        ];
+        $telegramService->sendMessage(
+            $user->telegram_id,
+            implode("\n", $lines),
+            '',
+            [
+                'reply_markup' => json_encode($keyboard),
+            ]
+        );
+        return response([
+            'data' => [
+                'token' => $requestToken
+            ]
+        ]);
+    }
+
+    public function checkTelegramLogin(Request $request)
+    {
+        $params = $request->validate([
+            'token' => 'required|string'
+        ]);
+        $cacheKey = CacheKey::get('TELEGRAM_LOGIN_REQUEST', $params['token']);
+        $cached = Cache::get($cacheKey);
+        if (!$cached) {
+            return response([
+                'data' => [
+                    'status' => 'expired'
+                ]
+            ]);
+        }
+        if (($cached['status'] ?? 'pending') === 'approved' && !empty($cached['verify_code'])) {
+            Cache::forget($cacheKey);
+            return response([
+                'data' => [
+                    'status' => 'approved',
+                    'verify_code' => $cached['verify_code'],
+                    'redirect' => $cached['redirect']
+                ]
+            ]);
+        }
+        if (($cached['status'] ?? 'pending') === 'rejected') {
+            Cache::forget($cacheKey);
+            return response([
+                'data' => [
+                    'status' => 'rejected'
+                ]
+            ]);
+        }
+        return response([
+            'data' => [
+                'status' => 'pending'
+            ]
+        ]);
     }
 
     public function register(AuthRegister $request)

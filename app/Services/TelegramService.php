@@ -14,16 +14,34 @@ class TelegramService {
         $this->api = 'https://api.telegram.org/bot' . config('v2board.telegram_bot_token', $token) . '/';
     }
 
-    public function sendMessage(int $chatId, string $text, string $parseMode = '')
+    public function sendMessage(int $chatId, string $text, string $parseMode = '', array $options = [])
     {
         if ($parseMode === 'markdown') {
             $text = str_replace('_', '\_', $text);
         }
-        $this->request('sendMessage', [
+        $payload = [
             'chat_id' => $chatId,
             'text' => $text,
             'parse_mode' => $parseMode
-        ]);
+        ];
+        if (empty($parseMode)) {
+            unset($payload['parse_mode']);
+        }
+        $this->request('sendMessage', array_merge($payload, $options));
+    }
+
+    public function answerCallbackQuery(string $callbackQueryId, string $text = '', bool $showAlert = false)
+    {
+        $params = [
+            'callback_query_id' => $callbackQueryId,
+        ];
+        if ($text !== '') {
+            $params['text'] = $text;
+        }
+        if ($showAlert) {
+            $params['show_alert'] = true;
+        }
+        $this->request('answerCallbackQuery', $params);
     }
 
     public function approveChatJoinRequest(int $chatId, int $userId)
