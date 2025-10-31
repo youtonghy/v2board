@@ -140,7 +140,14 @@ class ConfigController extends Controller
                 'email_username' => config('v2board.email_username'),
                 'email_password' => config('v2board.email_password'),
                 'email_encryption' => config('v2board.email_encryption'),
-                'email_from_address' => config('v2board.email_from_address')
+                'email_from_address' => config('v2board.email_from_address'),
+                'email_oauth_enable' => (int)config('v2board.email_oauth_enable', 0),
+                'email_oauth_provider' => config('v2board.email_oauth_provider', 'google'),
+                'email_oauth_client_id' => config('v2board.email_oauth_client_id'),
+                'email_oauth_client_secret' => config('v2board.email_oauth_client_secret'),
+                'email_oauth_refresh_token' => config('v2board.email_oauth_refresh_token'),
+                'email_oauth_tenant' => config('v2board.email_oauth_tenant'),
+                'email_oauth_scope' => config('v2board.email_oauth_scope'),
             ],
             'telegram' => [
                 'telegram_bot_enable' => config('v2board.telegram_bot_enable', 0),
