@@ -75,6 +75,13 @@ class ConfigSave extends FormRequest
         'email_password' => '',
         'email_encryption' => '',
         'email_from_address' => '',
+        'email_oauth_enable' => 'in:0,1',
+        'email_oauth_provider' => 'nullable|string',
+        'email_oauth_client_id' => 'nullable|string',
+        'email_oauth_client_secret' => 'nullable|string',
+        'email_oauth_refresh_token' => 'nullable|string',
+        'email_oauth_tenant' => 'nullable|string',
+        'email_oauth_scope' => 'nullable|string',
         // telegram
         'telegram_bot_enable' => 'in:0,1',
         'telegram_bot_token' => '',
@@ -123,6 +130,30 @@ class ConfigSave extends FormRequest
                     }
                     $fail('充值奖励格式不正确，必须为充值金额:奖励金额');
                 }
+            }
+        };
+        $rules['email_oauth_client_id'][] = function ($attribute, $value, $fail) {
+            if ((int)$this->input('email_oauth_enable', config('v2board.email_oauth_enable', 0)) !== 1) {
+                return;
+            }
+            if (empty($value)) {
+                $fail('启用OAuth 2.0时，Client ID不能为空');
+            }
+        };
+        $rules['email_oauth_client_secret'][] = function ($attribute, $value, $fail) {
+            if ((int)$this->input('email_oauth_enable', config('v2board.email_oauth_enable', 0)) !== 1) {
+                return;
+            }
+            if (empty($value)) {
+                $fail('启用OAuth 2.0时，Client Secret不能为空');
+            }
+        };
+        $rules['email_oauth_refresh_token'][] = function ($attribute, $value, $fail) {
+            if ((int)$this->input('email_oauth_enable', config('v2board.email_oauth_enable', 0)) !== 1) {
+                return;
+            }
+            if (empty($value)) {
+                $fail('启用OAuth 2.0时，Refresh Token不能为空');
             }
         };
         return $rules;

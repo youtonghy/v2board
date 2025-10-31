@@ -6360,6 +6360,68 @@
                     defaultValue: v.email_password,
                     onChange: e=>this.set("email", "email_password", e.target.value)
                 })), f.a.createElement(m, {
+                    title: "\u542f\u7528 OAuth 2.0",
+                    description: "\u5f00\u542f\u540e\u5c06\u4f7f\u7528\u5ba2\u6237\u7aef\u51ed\u636e\u5237\u65b0\u4ee4\u724c\u8ba4\u8bc1\uff0c\u9002\u5408 Gmail/Microsoft \u7b49\u670d\u52a1\u3002"
+                }, f.a.createElement(l["a"], {
+                    checked: parseInt(v.email_oauth_enable),
+                    onChange: e=>this.set("email", "email_oauth_enable", e ? 1 : 0)
+                })), parseInt(v.email_oauth_enable) ? f.a.createElement(f.a.Fragment, null, f.a.createElement(m, {
+                    title: "OAuth\u63d0\u4f9b\u5546",
+                    description: "\u5f53\u524d\u652f\u6301 Google \u548c Microsoft\u3002"
+                }, f.a.createElement("select", {
+                    className: "form-control",
+                    value: v.email_oauth_provider || "google",
+                    onChange: e=>this.set("email", "email_oauth_provider", e.target.value)
+                }, f.a.createElement("option", {
+                    value: "google"
+                }, "Google"), f.a.createElement("option", {
+                    value: "microsoft"
+                }, "Microsoft"))), f.a.createElement(m, {
+                    title: "OAuth Client ID",
+                    description: "\u7531\u5e73\u53f0\u63d0\u4f9b\u7684 Client ID\u3002"
+                }, f.a.createElement("input", {
+                    type: "text",
+                    className: "form-control",
+                    placeholder: "xxxxxxxx.apps.googleusercontent.com",
+                    defaultValue: v.email_oauth_client_id,
+                    onChange: e=>this.set("email", "email_oauth_client_id", e.target.value)
+                })), f.a.createElement(m, {
+                    title: "OAuth Client Secret",
+                    description: "\u7531\u5e73\u53f0\u63d0\u4f9b\u7684 Client Secret\u3002"
+                }, f.a.createElement("input", {
+                    type: "text",
+                    className: "form-control",
+                    placeholder: "Client Secret",
+                    defaultValue: v.email_oauth_client_secret,
+                    onChange: e=>this.set("email", "email_oauth_client_secret", e.target.value)
+                })), f.a.createElement(m, {
+                    title: "Refresh Token",
+                    description: "\u901a\u8fc7 OAuth \u6388\u6743\u6d41\u7a0b\u4ea7\u751f\u7684\u5237\u65b0 Token\u3002"
+                }, f.a.createElement("textarea", {
+                    className: "form-control",
+                    rows: "2",
+                    placeholder: "ya29....",
+                    defaultValue: v.email_oauth_refresh_token,
+                    onChange: e=>this.set("email", "email_oauth_refresh_token", e.target.value)
+                })), f.a.createElement(m, {
+                    title: "OAuth Scope",
+                    description: "\u9ed8\u8ba4\u5373\u53ef\uff0cMicrosoft \u901a\u5e38\u4e3a https://outlook.office365.com/.default\u3002"
+                }, f.a.createElement("input", {
+                    type: "text",
+                    className: "form-control",
+                    placeholder: "https://mail.google.com/",
+                    defaultValue: v.email_oauth_scope,
+                    onChange: e=>this.set("email", "email_oauth_scope", e.target.value)
+                })), ["microsoft", "azure", "office365"].includes(((v.email_oauth_provider || "") + "").toLowerCase()) ? f.a.createElement(m, {
+                    title: "Microsoft Tenant",
+                    description: "\u53ef\u586b\u5199\u79df\u6237 ID\uff0c\u4f8b\u5982 common\u3002"
+                }, f.a.createElement("input", {
+                    type: "text",
+                    className: "form-control",
+                    placeholder: "common",
+                    defaultValue: v.email_oauth_tenant,
+                    onChange: e=>this.set("email", "email_oauth_tenant", e.target.value)
+                })) : null) : null, f.a.createElement(m, {
                     title: "\u53d1\u4ef6\u5730\u5740",
                     description: "\u7531\u90ae\u4ef6\u670d\u52a1\u5546\u63d0\u4f9b\u7684\u53d1\u4ef6\u5730\u5740"
                 }, f.a.createElement("input", {
