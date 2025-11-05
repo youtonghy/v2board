@@ -21,7 +21,8 @@
             version: '{{$version}}',
             background_url: '{{$background_url}}',
             logo: '{{$logo}}',
-            secure_path: '{{$secure_path}}'
+            secure_path: '{{$secure_path}}',
+            apiHost: '{{ request()->getSchemeAndHttpHost() }}'
         }
     </script>
 </head>
@@ -31,6 +32,7 @@
 <script src="/assets/admin/vendors.async.js?v={{$version}}"></script>
 <script src="/assets/admin/components.async.js?v={{$version}}"></script>
 <script src="/assets/admin/umi.js?v={{$version}}"></script>
+<script src="/assets/admin/broadcast.js?v={{$version}}"></script>
 </body>
 
 </html>

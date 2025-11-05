@@ -5,11 +5,15 @@ namespace App\Http\Controllers\V1\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ConfigSave;
 use App\Jobs\SendEmailJob;
+use App\Http\Requests\Admin\TelegramBroadcast;
+use App\Models\Plan;
+use App\Models\User;
 use App\Services\TelegramService;
 use App\Utils\Dict;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 
 class ConfigController extends Controller
@@ -62,6 +66,135 @@ class ConfigController extends Controller
         $telegramService->setWebhook($hookUrl);
         return response([
             'data' => true
+        ]);
+    }
+
+    public function telegramBroadcast(TelegramBroadcast $request)
+    {
+        if ((int)config('v2board.telegram_bot_enable', 0) !== 1 || !config('v2board.telegram_bot_token')) {
+            abort(400, '请先启用 Telegram 机器人并配置 Token');
+        }
+
+        $target = $request->input('target');
+        $message = trim((string)$request->input('message', ''));
+        if ($message === '') {
+            abort(422, '群发内容不能为空');
+        }
+
+        @set_time_limit(0);
+
+        $now = time();
+        $query = User::query()
+            ->whereNotNull('telegram_id')
+            ->where('telegram_id', '>', 0)
+            ->where('banned', 0);
+
+        $selectedPlans = collect();
+
+        switch ($target) {
+            case 'active':
+                $query->whereNotNull('plan_id')
+                    ->where(function ($sub) use ($now) {
+                        $sub->whereNull('expired_at')
+                            ->orWhere('expired_at', '>', $now);
+                    });
+                break;
+            case 'history':
+                $query->where(function ($sub) {
+                    $sub->where(function ($inner) {
+                        $inner->whereNotNull('plan_id')
+                            ->where('plan_id', '>', 0);
+                    })->orWhereExists(function ($exists) {
+                        $exists->select(DB::raw(1))
+                            ->from('v2_order')
+                            ->whereColumn('v2_order.user_id', 'v2_user.id')
+                            ->where('status', 3);
+                    });
+                });
+                break;
+            case 'plan':
+                $planIds = collect($request->input('plan_ids', []))
+                    ->map(static function ($id) {
+                        return (int)$id;
+                    })
+                    ->filter()
+                    ->unique()
+                    ->values();
+                if ($planIds->isEmpty()) {
+                    abort(422, '请选择需要群发的订阅套餐');
+                }
+                $selectedPlans = Plan::whereIn('id', $planIds)->get(['id', 'name']);
+                $query->where(function ($sub) use ($planIds, $now) {
+                    $sub->whereIn('plan_id', $planIds)
+                        ->where(function ($inner) use ($now) {
+                            $inner->whereNull('expired_at')
+                                ->orWhere('expired_at', '>', $now);
+                        })
+                        ->orWhereExists(function ($exists) use ($planIds) {
+                            $exists->select(DB::raw(1))
+                                ->from('v2_order')
+                                ->whereColumn('v2_order.user_id', 'v2_user.id')
+                                ->where('status', 3)
+                                ->whereIn('plan_id', $planIds);
+                        });
+                });
+                break;
+            case 'all':
+            default:
+                break;
+        }
+
+        $summary = [
+            'target' => $target,
+            'total' => 0,
+            'success' => 0,
+            'failed' => 0,
+            'plans' => $selectedPlans->map(static function (Plan $plan) {
+                return [
+                    'id' => $plan->id,
+                    'name' => $plan->name,
+                ];
+            })->values()->all(),
+        ];
+
+        $logs = [];
+        $logLimit = 200;
+        $telegramService = new TelegramService();
+
+        $query->select(['id', 'email', 'telegram_id'])
+            ->orderBy('id')
+            ->chunkById(100, function ($users) use (&$summary, &$logs, $logLimit, $telegramService, $message) {
+                foreach ($users as $user) {
+                    $summary['total']++;
+                    try {
+                        $telegramService->sendMessage((int)$user->telegram_id, $message);
+                        $summary['success']++;
+                        if (count($logs) < $logLimit) {
+                            $logs[] = [
+                                'user_id' => $user->id,
+                                'email' => $user->email,
+                                'status' => 'success',
+                            ];
+                        }
+                    } catch (\Throwable $e) {
+                        $summary['failed']++;
+                        if (count($logs) < $logLimit) {
+                            $logs[] = [
+                                'user_id' => $user->id,
+                                'email' => $user->email,
+                                'status' => 'failed',
+                                'error' => mb_substr($e->getMessage(), 0, 200),
+                            ];
+                        }
+                    }
+                }
+            }, 'id');
+
+        return response([
+            'data' => [
+                'summary' => $summary,
+                'logs' => $logs,
+            ]
         ]);
     }
 
