@@ -122,40 +122,55 @@ class ConfigSave extends FormRequest
     {
         $rules = self::RULES;
 
-        $rules['deposit_bounus'][] = function ($attribute, $value, $fail) {
-            foreach ($value as $tier) {
-                if (!preg_match('/^\d+(\.\d+)?:\d+(\.\d+)?$/', $tier)) {
-                    if($tier == '') {
-                        continue;
-                    }
-                    $fail('充值奖励格式不正确，必须为充值金额:奖励金额');
+        $rules['deposit_bounus'] = array_merge(
+            is_array($rules['deposit_bounus']) ? $rules['deposit_bounus'] : (array)$rules['deposit_bounus'],
+            [function ($attribute, $value, $fail) {
+                if (!is_array($value)) {
+                    return;
                 }
-            }
-        };
-        $rules['email_oauth_client_id'][] = function ($attribute, $value, $fail) {
-            if ((int)$this->input('email_oauth_enable', config('v2board.email_oauth_enable', 0)) !== 1) {
-                return;
-            }
-            if (empty($value)) {
-                $fail('启用OAuth 2.0时，Client ID不能为空');
-            }
-        };
-        $rules['email_oauth_client_secret'][] = function ($attribute, $value, $fail) {
-            if ((int)$this->input('email_oauth_enable', config('v2board.email_oauth_enable', 0)) !== 1) {
-                return;
-            }
-            if (empty($value)) {
-                $fail('启用OAuth 2.0时，Client Secret不能为空');
-            }
-        };
-        $rules['email_oauth_refresh_token'][] = function ($attribute, $value, $fail) {
-            if ((int)$this->input('email_oauth_enable', config('v2board.email_oauth_enable', 0)) !== 1) {
-                return;
-            }
-            if (empty($value)) {
-                $fail('启用OAuth 2.0时，Refresh Token不能为空');
-            }
-        };
+                foreach ($value as $tier) {
+                    if (!preg_match('/^\d+(\.\d+)?:\d+(\.\d+)?$/', $tier)) {
+                        if ($tier == '') {
+                            continue;
+                        }
+                        $fail('充值奖励格式不正确，必须为充值金额:奖励金额');
+                    }
+                }
+            }]
+        );
+        $rules['email_oauth_client_id'] = array_merge(
+            is_array($rules['email_oauth_client_id']) ? $rules['email_oauth_client_id'] : [$rules['email_oauth_client_id']],
+            [function ($attribute, $value, $fail) {
+                if ((int)$this->input('email_oauth_enable', config('v2board.email_oauth_enable', 0)) !== 1) {
+                    return;
+                }
+                if (empty($value)) {
+                    $fail('启用OAuth 2.0时，Client ID不能为空');
+                }
+            }]
+        );
+        $rules['email_oauth_client_secret'] = array_merge(
+            is_array($rules['email_oauth_client_secret']) ? $rules['email_oauth_client_secret'] : [$rules['email_oauth_client_secret']],
+            [function ($attribute, $value, $fail) {
+                if ((int)$this->input('email_oauth_enable', config('v2board.email_oauth_enable', 0)) !== 1) {
+                    return;
+                }
+                if (empty($value)) {
+                    $fail('启用OAuth 2.0时，Client Secret不能为空');
+                }
+            }]
+        );
+        $rules['email_oauth_refresh_token'] = array_merge(
+            is_array($rules['email_oauth_refresh_token']) ? $rules['email_oauth_refresh_token'] : [$rules['email_oauth_refresh_token']],
+            [function ($attribute, $value, $fail) {
+                if ((int)$this->input('email_oauth_enable', config('v2board.email_oauth_enable', 0)) !== 1) {
+                    return;
+                }
+                if (empty($value)) {
+                    $fail('启用OAuth 2.0时，Refresh Token不能为空');
+                }
+            }]
+        );
         return $rules;
     }
 
