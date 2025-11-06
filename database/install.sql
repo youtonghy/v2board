@@ -244,7 +244,8 @@ CREATE TABLE `v2_server_tuic` (
                                       `port` varchar(11) NOT NULL,
                                       `server_port` int(11) NOT NULL,
                                       `tags` varchar(255) DEFAULT NULL,
-                                      `rate` varchar(11) NOT NULL,
+                                      `rate` varchar(11) NOT NULL
+                                   `dynamic_rate` text DEFAULT NULL,
                                       `show` tinyint(1) NOT NULL DEFAULT '0',
                                       `sort` int(11) DEFAULT NULL,
                                       `server_name` varchar(64) DEFAULT NULL,
@@ -271,7 +272,8 @@ CREATE TABLE `v2_server_hysteria` (
                                       `port` varchar(11) NOT NULL,
                                       `server_port` int(11) NOT NULL,
                                       `tags` varchar(255) DEFAULT NULL,
-                                      `rate` varchar(11) NOT NULL,
+                                      `rate` varchar(11) NOT NULL
+                                   `dynamic_rate` text DEFAULT NULL,
                                       `show` tinyint(1) NOT NULL DEFAULT '0',
                                       `sort` int(11) DEFAULT NULL,
                                       `up_mbps` int(11) NOT NULL,
@@ -307,7 +309,9 @@ CREATE TABLE `v2_server_shadowsocks` (
                                          `parent_id` int(11) DEFAULT NULL,
                                          `tags` varchar(255) DEFAULT NULL,
                                          `name` varchar(255) NOT NULL,
-                                         `rate` varchar(11) NOT NULL,
+                                         `rate` varchar(11) NOT NULL
+                                   `dynamic_rate` text DEFAULT NULL,
+                                         `dynamic_rate` text DEFAULT NULL,
                                          `host` varchar(255) NOT NULL,
                                          `port` varchar(11) NOT NULL,
                                          `server_port` int(11) NOT NULL,
@@ -330,7 +334,9 @@ CREATE TABLE `v2_server_trojan` (
                                     `parent_id` int(11) DEFAULT NULL COMMENT '父节点',
                                     `tags` varchar(255) DEFAULT NULL COMMENT '节点标签',
                                     `name` varchar(255) NOT NULL COMMENT '节点名称',
-                                    `rate` varchar(11) NOT NULL COMMENT '倍率',
+                                    `rate` varchar(11) NOT NULL
+                                   `dynamic_rate` text DEFAULT NULL COMMENT '倍率',
+                                    `dynamic_rate` text DEFAULT NULL COMMENT '动态倍率',
                                     `host` varchar(255) NOT NULL COMMENT '主机名',
                                     `port` varchar(11) NOT NULL COMMENT '连接端口',
                                     `server_port` int(11) NOT NULL COMMENT '服务端口',
@@ -364,7 +370,9 @@ CREATE TABLE `v2_server_vless` (
                                    `encryption` varchar(64) DEFAULT NULL,
                                    `encryption_settings` text,
                                    `tags` text,
-                                   `rate` varchar(11) NOT NULL,
+                                   `rate` varchar(11) NOT NULL
+                                   `dynamic_rate` text DEFAULT NULL,
+                                   `dynamic_rate` text DEFAULT NULL,
                                    `show` tinyint(1) NOT NULL DEFAULT '0',
                                    `sort` int(11) DEFAULT NULL,
                                    `created_at` int(11) NOT NULL,
@@ -385,7 +393,8 @@ CREATE TABLE `v2_server_vmess` (
                                    `server_port` int(11) NOT NULL,
                                    `tls` tinyint(4) NOT NULL DEFAULT '0',
                                    `tags` varchar(255) DEFAULT NULL,
-                                   `rate` varchar(11) NOT NULL,
+                                   `rate` varchar(11) NOT NULL
+                                   `dynamic_rate` text DEFAULT NULL,
                                    `network` varchar(11) NOT NULL,
                                    `rules` text,
                                    `networkSettings` text,
@@ -410,7 +419,8 @@ CREATE TABLE `v2_server_anytls` (
                                       `port` varchar(11) NOT NULL,
                                       `server_port` int(11) NOT NULL,
                                       `tags` varchar(255) DEFAULT NULL,
-                                      `rate` varchar(11) NOT NULL,
+                                      `rate` varchar(11) NOT NULL
+                                   `dynamic_rate` text DEFAULT NULL,
                                       `show` tinyint(1) NOT NULL DEFAULT '0',
                                       `sort` int(11) DEFAULT NULL,
                                       `server_name` varchar(64) DEFAULT NULL,
@@ -433,7 +443,8 @@ CREATE TABLE `v2_server_v2node` (
                                     `port` varchar(11) NOT NULL,
                                     `server_port` int(11) NOT NULL,
                                     `tags` varchar(255) DEFAULT NULL,
-                                    `rate` varchar(11) NOT NULL,
+                                    `rate` varchar(11) NOT NULL
+                                   `dynamic_rate` text DEFAULT NULL,
                                     `show` tinyint(1) NOT NULL DEFAULT '0',
                                     `sort` int(11) DEFAULT NULL,
                                     `protocol` varchar(24) NOT NULL COMMENT '协议类型',

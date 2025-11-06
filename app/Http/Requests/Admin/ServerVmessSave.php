@@ -3,6 +3,8 @@
 namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\ValidationException;
+use App\Utils\DynamicRate;
 
 class ServerVmessSave extends FormRequest
 {
@@ -30,7 +32,11 @@ class ServerVmessSave extends FormRequest
             'networkSettings.security' => 'nullable|in:auto,aes-128-gcm,chacha20-poly1305,none',
             'ruleSettings' => 'nullable|array',
             'tlsSettings' => 'nullable|array',
-            'dnsSettings' => 'nullable|array'
+            'dnsSettings' => 'nullable|array',
+            'dynamic_rate' => 'nullable|array',
+            'dynamic_rate.*.start' => 'required_with:dynamic_rate|string',
+            'dynamic_rate.*.end' => 'required_with:dynamic_rate|string',
+            'dynamic_rate.*.rate' => 'required_with:dynamic_rate|numeric'
         ];
     }
 
@@ -55,7 +61,31 @@ class ServerVmessSave extends FormRequest
             'networkSettings.security.in' => 'vmess加密类型只能是: auto, aes-128-gcm, chacha20-poly1305, none',
             'ruleSettings.array' => '规则配置有误',
             'tlsSettings.array' => 'tls配置有误',
-            'dnsSettings.array' => 'dns配置有误'
+            'dnsSettings.array' => 'dns配置有误',
+            'dynamic_rate.array' => '动态倍率格式不正确',
+            'dynamic_rate.*.start.required_with' => '动态倍率开始时间不能为空',
+            'dynamic_rate.*.end.required_with' => '动态倍率结束时间不能为空',
+            'dynamic_rate.*.rate.required_with' => '动态倍率数值不能为空',
+            'dynamic_rate.*.rate.numeric' => '动态倍率需为数字'
         ];
+    }
+
+    protected function passedValidation(): void
+    {
+        $dynamicRate = $this->input('dynamic_rate');
+
+        if (!$dynamicRate) {
+            $this->merge(['dynamic_rate' => null]);
+            return;
+        }
+
+        try {
+            $sanitized = DynamicRate::sanitize($dynamicRate);
+            $this->merge(['dynamic_rate' => $sanitized]);
+        } catch (\InvalidArgumentException $exception) {
+            throw ValidationException::withMessages([
+                'dynamic_rate' => $exception->getMessage()
+            ]);
+        }
     }
 }

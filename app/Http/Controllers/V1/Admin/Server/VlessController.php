@@ -7,6 +7,8 @@ use App\Models\ServerVless;
 use Illuminate\Http\Request;
 use ParagonIE_Sodium_Compat as SodiumCompat;
 use App\Utils\Helper;
+use App\Utils\DynamicRate;
+use Illuminate\Validation\ValidationException;
 
 class VlessController extends Controller
 {
@@ -30,8 +32,20 @@ class VlessController extends Controller
             'tags' => 'nullable|array',
             'rate' => 'required',
             'show' => 'nullable|in:0,1',
-            'sort' => 'nullable'
+            'sort' => 'nullable',
+            'dynamic_rate' => 'nullable|array',
+            'dynamic_rate.*.start' => 'required_with:dynamic_rate|string',
+            'dynamic_rate.*.end' => 'required_with:dynamic_rate|string',
+            'dynamic_rate.*.rate' => 'required_with:dynamic_rate|numeric'
         ]);
+
+        try {
+            $params['dynamic_rate'] = DynamicRate::sanitize($params['dynamic_rate'] ?? null);
+        } catch (\InvalidArgumentException $exception) {
+            throw ValidationException::withMessages([
+                'dynamic_rate' => $exception->getMessage()
+            ]);
+        }
 
         if (isset($params['tls']) && (int)$params['tls'] === 2) {
             $keyPair = SodiumCompat::crypto_box_keypair();

@@ -4,7 +4,9 @@ namespace App\Http\Controllers\V1\Admin\Server;
 
 use App\Http\Controllers\Controller;
 use App\Models\ServerAnytls;
+use App\Utils\DynamicRate;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class AnyTLSController extends Controller
 {
@@ -24,7 +26,19 @@ class AnyTLSController extends Controller
             'server_name' => 'nullable',
             'insecure' => 'required|in:0,1',
             'padding_scheme' => 'nullable',
+            'dynamic_rate' => 'nullable|array',
+            'dynamic_rate.*.start' => 'required_with:dynamic_rate|string',
+            'dynamic_rate.*.end' => 'required_with:dynamic_rate|string',
+            'dynamic_rate.*.rate' => 'required_with:dynamic_rate|numeric',
         ]);
+
+        try {
+            $params['dynamic_rate'] = DynamicRate::sanitize($params['dynamic_rate'] ?? null);
+        } catch (\InvalidArgumentException $exception) {
+            throw ValidationException::withMessages([
+                'dynamic_rate' => $exception->getMessage()
+            ]);
+        }
 
         if (isset($params['padding_scheme'])) {
             $params['padding_scheme'] = json_decode($params['padding_scheme']);

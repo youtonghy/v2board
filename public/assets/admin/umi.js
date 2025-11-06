@@ -12401,19 +12401,21 @@
           , _ = (n("VeWa"),
         n("umNf"),
         n("8zNj"));
-        class E extends d.a.Component {
+class E extends d.a.Component {
             constructor(e) {
-                super(e),
+                super(e);
+                var t = this.props.record ? Object.assign({}, this.props.record) : {
+                    tls: 0,
+                    rate: 1
+                };
+                t.dynamic_rate = Array.isArray(t.dynamic_rate) ? t.dynamic_rate.map(e=>Object.assign({}, e)) : [];
                 this.state = {
-                    server: this.props.record || {
-                        tls: 0,
-                        rate: 1
-                    },
+                    server: t,
                     visible: !1,
                     childDrawer: {
                         visible: !1
                     }
-                }
+                };
             }
             onShow() {
                 if (this.setState({
@@ -12432,6 +12434,13 @@
                     var e, t, n = this.state.server;
                     n.networkSettings = n.networkSettings ? "string" === typeof n.networkSettings && JSON.parse(n.networkSettings) : null,
                     (null === (e = n.dnsSettings) || void 0 === e ? void 0 : null === (t = e.servers) || void 0 === t ? void 0 : t.length) || (n.dnsSettings = null),
+                    n.dynamic_rate = Array.isArray(n.dynamic_rate) && n.dynamic_rate.length ? n.dynamic_rate.map(function(e) {
+                        return {
+                            start: (e.start || "").trim(),
+                            end: (e.end || "").trim(),
+                            rate: "" === e.rate || null === e.rate || void 0 === e.rate ? e.rate : parseFloat(e.rate)
+                        };
+                    }) : null,
                     console.log(n),
                     this.props.dispatch({
                         type: "serverVmess/save",
@@ -12560,6 +12569,238 @@
                     server: n
                 })
             }
+            toggleDynamicRate(e) {
+                var t;
+                if (e) {
+                    var n = this.state.server.rate || 1
+                      , r = Array.isArray(this.state.server.dynamic_rate) && this.state.server.dynamic_rate.length ? this.state.server.dynamic_rate.map(e=>I()({}, e)) : [{
+                        start: "00:00",
+                        end: "24:00",
+                        rate: n
+                    }];
+                    t = r;
+                } else
+                    t = [];
+                this.formChange("dynamic_rate", t)
+            }
+            updateDynamicRate(e, t, n) {
+                var r = Array.isArray(this.state.server.dynamic_rate) ? this.state.server.dynamic_rate.map(e=>I()({}, e)) : [];
+                r[e] = I()({
+                    start: "",
+                    end: "",
+                    rate: this.state.server.rate || 1
+                }, r[e], {
+                    [t]: n
+                }),
+                this.formChange("dynamic_rate", r)
+            }
+            addDynamicRateSegment() {
+                var e = Array.isArray(this.state.server.dynamic_rate) ? this.state.server.dynamic_rate.map(e=>I()({}, e)) : []
+                  , t = e[e.length - 1]
+                  , n = this.state.server.rate || 1;
+                e.push({
+                    start: t && t.end ? t.end : "00:00",
+                    end: t && t.end ? t.end : "00:00",
+                    rate: t && void 0 !== t.rate ? t.rate : n
+                }),
+                this.formChange("dynamic_rate", e)
+            }
+            removeDynamicRateSegment(e) {
+                var t = Array.isArray(this.state.server.dynamic_rate) ? this.state.server.dynamic_rate.map(e=>I()({}, e)) : [];
+                t.splice(e, 1),
+                this.formChange("dynamic_rate", t)
+            }
+            renderDynamicRate() {
+                var e = this
+                  , t = this.state.server
+                  , n = Array.isArray(t.dynamic_rate) ? t.dynamic_rate : []
+                  , r = n.length > 0;
+                return y.a.createElement("div", {
+                    className: "form-group"
+                }, y.a.createElement("label", null, "\u52a8\u6001\u500d\u7387"), y.a.createElement("div", {
+                    className: "d-flex align-items-center mb-2"
+                }, y.a.createElement("label", {
+                    className: "mr-2 mb-0"
+                }, "\u542f\u7528"), y.a.createElement("input", {
+                    type: "checkbox",
+                    checked: r,
+                    onChange: function(t) {
+                        return e.toggleDynamicRate(t.target.checked);
+                    }
+                })), r ? y.a.createElement("div", null, n.map(function(t, n) {
+                    return y.a.createElement("div", {
+                        className: "row align-items-center mb-2",
+                        key: "dynamic-rate-".concat(n)
+                    }, y.a.createElement("div", {
+                        className: "col-3"
+                    }, y.a.createElement("input", {
+                        type: "text",
+                        className: "form-control",
+                        placeholder: "00:00",
+                        value: t.start || "",
+                        onChange: function(t) {
+                            return e.updateDynamicRate(n, "start", t.target.value);
+                        },
+                        maxLength: 5
+                    })), y.a.createElement("div", {
+                        className: "col-3"
+                    }, y.a.createElement("input", {
+                        type: "text",
+                        className: "form-control",
+                        placeholder: "00:00",
+                        value: t.end || "",
+                        onChange: function(t) {
+                            return e.updateDynamicRate(n, "end", t.target.value);
+                        },
+                        maxLength: 5
+                    })), y.a.createElement("div", {
+                        className: "col-3"
+                    }, y.a.createElement("input", {
+                        type: "number",
+                        className: "form-control",
+                        min: "0",
+                        step: "0.01",
+                        value: void 0 !== t.rate ? t.rate : "",
+                        onChange: function(t) {
+                            return e.updateDynamicRate(n, "rate", t.target.value);
+                        }
+                    })), y.a.createElement("div", {
+                        className: "col-3 text-right"
+                    }, y.a.createElement("button", {
+                        type: "button",
+                        className: "btn btn-outline-danger btn-sm",
+                        onClick: function() {
+                            return e.removeDynamicRateSegment(n);
+                        }
+                    }, "\u5220\u9664")));
+                }), y.a.createElement("button", {
+                    type: "button",
+                    className: "btn btn-outline-primary btn-sm",
+                    onClick: function() {
+                        return e.addDynamicRateSegment();
+                    }
+                }, "\u6dfb\u52a0\u65f6\u95f4\u6bb5"), y.a.createElement("small", {
+                    className: "form-text text-muted mt-2"
+                }, "\u65f6\u95f4\u6bb5\u9700\u8981\u65e0\u7a7a\u767d\u8fde\u7eed\u8986\u76d6\u6574\u5929\u3002")) : y.a.createElement("small", {
+                    className: "form-text text-muted"
+                }, "\u542f\u7528\u540e\u53ef\u6839\u636e\u65f6\u95f4\u6bb5\u8bbe\u7f6e\u4e0d\u540c\u500d\u7387\u3002"))
+            }
+            toggleDynamicRate(e) {
+                var t;
+                if (e) {
+                    var n = this.state.server.rate || 1
+                      , r = Array.isArray(this.state.server.dynamic_rate) && this.state.server.dynamic_rate.length ? this.state.server.dynamic_rate.map(e=>Object.assign({}, e)) : [{
+                        start: "00:00",
+                        end: "24:00",
+                        rate: n
+                    }];
+                    t = r;
+                } else
+                    t = [];
+                this.formChange("dynamic_rate", t)
+            }
+            updateDynamicRate(e, t, n) {
+                var r = Array.isArray(this.state.server.dynamic_rate) ? this.state.server.dynamic_rate.map(e=>Object.assign({}, e)) : [];
+                r[e] = Object.assign({}, r[e] || {
+                    start: "",
+                    end: "",
+                    rate: this.state.server.rate || 1
+                }, {
+                    [t]: n
+                }),
+                this.formChange("dynamic_rate", r)
+            }
+            addDynamicRateSegment() {
+                var e = Array.isArray(this.state.server.dynamic_rate) ? this.state.server.dynamic_rate.map(e=>Object.assign({}, e)) : []
+                  , t = e[e.length - 1]
+                  , n = this.state.server.rate || 1;
+                e.push({
+                    start: t && t.end ? t.end : "00:00",
+                    end: t && t.end ? t.end : "00:00",
+                    rate: t && void 0 !== t.rate ? t.rate : n
+                }),
+                this.formChange("dynamic_rate", e)
+            }
+            removeDynamicRateSegment(e) {
+                var t = Array.isArray(this.state.server.dynamic_rate) ? this.state.server.dynamic_rate.map(e=>Object.assign({}, e)) : [];
+                t.splice(e, 1),
+                this.formChange("dynamic_rate", t)
+            }
+            renderDynamicRate() {
+                var e = this
+                  , t = this.state.server
+                  , n = Array.isArray(t.dynamic_rate) ? t.dynamic_rate : []
+                  , r = n.length > 0;
+                return d.a.createElement("div", {
+                    className: "form-group"
+                }, d.a.createElement("label", null, "\u52a8\u6001\u500d\u7387"), d.a.createElement("div", {
+                    className: "d-flex align-items-center mb-2"
+                }, d.a.createElement("label", {
+                    className: "mr-2 mb-0"
+                }, "\u542f\u7528"), d.a.createElement("input", {
+                    type: "checkbox",
+                    checked: r,
+                    onChange: function(t) {
+                        return e.toggleDynamicRate(t.target.checked);
+                    }
+                })), r ? d.a.createElement("div", null, n.map(function(t, n) {
+                    return d.a.createElement("div", {
+                        className: "row align-items-center mb-2",
+                        key: "dynamic-rate-".concat(n)
+                    }, d.a.createElement("div", {
+                        className: "col-3"
+                    }, d.a.createElement("input", {
+                        type: "text",
+                        className: "form-control",
+                        placeholder: "00:00",
+                        value: t.start || "",
+                        onChange: function(t) {
+                            return e.updateDynamicRate(n, "start", t.target.value);
+                        },
+                        maxLength: 5
+                    })), d.a.createElement("div", {
+                        className: "col-3"
+                    }, d.a.createElement("input", {
+                        type: "text",
+                        className: "form-control",
+                        placeholder: "00:00",
+                        value: t.end || "",
+                        onChange: function(t) {
+                            return e.updateDynamicRate(n, "end", t.target.value);
+                        },
+                        maxLength: 5
+                    })), d.a.createElement("div", {
+                        className: "col-3"
+                    }, d.a.createElement("input", {
+                        type: "number",
+                        className: "form-control",
+                        min: "0",
+                        step: "0.01",
+                        value: void 0 !== t.rate ? t.rate : "",
+                        onChange: function(t) {
+                            return e.updateDynamicRate(n, "rate", t.target.value);
+                        }
+                    })), d.a.createElement("div", {
+                        className: "col-3 text-right"
+                    }, d.a.createElement("button", {
+                        type: "button",
+                        className: "btn btn-outline-danger btn-sm",
+                        onClick: function() {
+                            return e.removeDynamicRateSegment(n);
+                        }
+                    }, "\u5220\u9664")));
+                }), d.a.createElement("button", {
+                    type: "button",
+                    className: "btn btn-outline-primary btn-sm",
+                    onClick: function() {
+                        return e.addDynamicRateSegment();
+                    }
+                }, "\u6dfb\u52a0\u65f6\u95f4\u6bb5"), d.a.createElement("small", {
+                    className: "form-text text-muted mt-2"
+                }, "\u65f6\u95f4\u6bb5\u9700\u8981\u65e0\u7a7a\u767d\u8fde\u7eed\u8986\u76d6\u6574\u5929\u3002")) : d.a.createElement("small", {
+                    className: "form-text text-muted"
+                }, "\u542f\u7528\u540e\u53ef\u6839\u636e\u65f6\u95f4\u6bb5\u8bbe\u7f6e\u4e0d\u540c\u500d\u7387\u3002"))
+            }
             render() {
                 var e = this.state.server
                   , t = this.props.serverVmess.saveLoading
@@ -12590,7 +12831,7 @@
                     placeholder: "\u8bf7\u8f93\u5165\u8282\u70b9\u500d\u7387",
                     value: e.rate,
                     onChange: e=>this.formChange("rate", e.target.value)
-                }))), d.a.createElement("div", {
+                }))), this.renderDynamicRate(), d.a.createElement("div", {
                     className: "form-group"
                 }, d.a.createElement("label", null, "\u8282\u70b9\u6807\u7b7e"), d.a.createElement(a["a"], {
                     mode: "tags",
@@ -28173,19 +28414,21 @@
         n("VeWa"),
         n("umNf"),
         n("8zNj"));
-        class p extends h.a.Component {
+class p extends h.a.Component {
             constructor(e) {
-                super(e),
+                super(e);
+                var t = this.props.record ? c()({}, this.props.record) : {
+                    cipher: "chacha20-ietf-poly1305",
+                    rate: 1
+                };
+                t.dynamic_rate = Array.isArray(t.dynamic_rate) ? t.dynamic_rate.map(e=>c()({}, e)) : [];
                 this.state = {
-                    server: this.props.record || {
-                        cipher: "chacha20-ietf-poly1305",
-                        rate: 1
-                    },
+                    server: t,
                     visible: !1,
                     childDrawer: {
                         visible: !1
                     }
-                }
+                };
             }
             onShow() {
                 this.setState({
@@ -28193,7 +28436,14 @@
                 })
             }
             save() {
-                var e = this.state.server;
+                var e = c()({}, this.state.server);
+                e.dynamic_rate = Array.isArray(e.dynamic_rate) && e.dynamic_rate.length ? e.dynamic_rate.map(function(e) {
+                    return {
+                        start: (e.start || "").trim(),
+                        end: (e.end || "").trim(),
+                        rate: "" === e.rate || null === e.rate || void 0 === e.rate ? e.rate : parseFloat(e.rate)
+                    };
+                }) : null;
                 this.props.dispatch({
                     type: "serverShadowsocks/save",
                     params: e,
@@ -28224,6 +28474,122 @@
                         [e]: t
                     })
                 })
+            }
+            toggleDynamicRate(e) {
+                var t;
+                if (e) {
+                    var n = this.state.server.rate || 1
+                      , r = Array.isArray(this.state.server.dynamic_rate) && this.state.server.dynamic_rate.length ? this.state.server.dynamic_rate.map(e=>c()({}, e)) : [{
+                        start: "00:00",
+                        end: "24:00",
+                        rate: n
+                    }];
+                    t = r;
+                } else
+                    t = [];
+                this.formChange("dynamic_rate", t)
+            }
+            updateDynamicRate(e, t, n) {
+                var r = Array.isArray(this.state.server.dynamic_rate) ? this.state.server.dynamic_rate.map(e=>c()({}, e)) : [];
+                r[e] = c()({
+                    start: "",
+                    end: "",
+                    rate: this.state.server.rate || 1
+                }, r[e], {
+                    [t]: n
+                }),
+                this.formChange("dynamic_rate", r)
+            }
+            addDynamicRateSegment() {
+                var e = Array.isArray(this.state.server.dynamic_rate) ? this.state.server.dynamic_rate.map(e=>c()({}, e)) : []
+                  , t = e[e.length - 1]
+                  , n = this.state.server.rate || 1;
+                e.push({
+                    start: t && t.end ? t.end : "00:00",
+                    end: t && t.end ? t.end : "00:00",
+                    rate: t && void 0 !== t.rate ? t.rate : n
+                }),
+                this.formChange("dynamic_rate", e)
+            }
+            removeDynamicRateSegment(e) {
+                var t = Array.isArray(this.state.server.dynamic_rate) ? this.state.server.dynamic_rate.map(e=>c()({}, e)) : [];
+                t.splice(e, 1),
+                this.formChange("dynamic_rate", t)
+            }
+            renderDynamicRate() {
+                var e = this
+                  , t = this.state.server
+                  , n = Array.isArray(t.dynamic_rate) ? t.dynamic_rate : []
+                  , r = n.length > 0;
+                return h.a.createElement("div", {
+                    className: "form-group"
+                }, h.a.createElement("label", null, "\u52a8\u6001\u500d\u7387"), h.a.createElement("div", {
+                    className: "d-flex align-items-center mb-2"
+                }, h.a.createElement("label", {
+                    className: "mr-2 mb-0"
+                }, "\u542f\u7528"), h.a.createElement("input", {
+                    type: "checkbox",
+                    checked: r,
+                    onChange: function(t) {
+                        return e.toggleDynamicRate(t.target.checked);
+                    }
+                })), r ? h.a.createElement("div", null, n.map(function(t, n) {
+                    return h.a.createElement("div", {
+                        className: "row align-items-center mb-2",
+                        key: "dynamic-rate-".concat(n)
+                    }, h.a.createElement("div", {
+                        className: "col-3"
+                    }, h.a.createElement("input", {
+                        type: "text",
+                        className: "form-control",
+                        placeholder: "00:00",
+                        value: t.start || "",
+                        onChange: function(t) {
+                            return e.updateDynamicRate(n, "start", t.target.value);
+                        },
+                        maxLength: 5
+                    })), h.a.createElement("div", {
+                        className: "col-3"
+                    }, h.a.createElement("input", {
+                        type: "text",
+                        className: "form-control",
+                        placeholder: "00:00",
+                        value: t.end || "",
+                        onChange: function(t) {
+                            return e.updateDynamicRate(n, "end", t.target.value);
+                        },
+                        maxLength: 5
+                    })), h.a.createElement("div", {
+                        className: "col-3"
+                    }, h.a.createElement("input", {
+                        type: "number",
+                        className: "form-control",
+                        min: "0",
+                        step: "0.01",
+                        value: void 0 !== t.rate ? t.rate : "",
+                        onChange: function(t) {
+                            return e.updateDynamicRate(n, "rate", t.target.value);
+                        }
+                    })), h.a.createElement("div", {
+                        className: "col-3 text-right"
+                    }, h.a.createElement("button", {
+                        type: "button",
+                        className: "btn btn-outline-danger btn-sm",
+                        onClick: function() {
+                            return e.removeDynamicRateSegment(n);
+                        }
+                    }, "\u5220\u9664")));
+                }), h.a.createElement("button", {
+                    type: "button",
+                    className: "btn btn-outline-primary btn-sm",
+                    onClick: function() {
+                        return e.addDynamicRateSegment();
+                    }
+                }, "\u6dfb\u52a0\u65f6\u95f4\u6bb5"), h.a.createElement("small", {
+                    className: "form-text text-muted mt-2"
+                }, "\u65f6\u95f4\u6bb5\u9700\u8981\u65e0\u7a7a\u767d\u8fde\u7eed\u8986\u76d6\u6574\u5929\u3002")) : h.a.createElement("small", {
+                    className: "form-text text-muted"
+                }, "\u542f\u7528\u540e\u53ef\u6839\u636e\u65f6\u95f4\u6bb5\u8bbe\u7f6e\u4e0d\u540c\u500d\u7387\u3002"))
             }
             setObfsSettings(e, t) {
                 var n = this.state.server
@@ -28289,7 +28655,7 @@
                     placeholder: "\u8bf7\u8f93\u5165\u8282\u70b9\u500d\u7387",
                     value: e.rate,
                     onChange: e=>this.formChange("rate", e.target.value)
-                }))), h.a.createElement("div", {
+                }))), this.renderDynamicRate(), h.a.createElement("div", {
                     className: "form-group"
                 }, h.a.createElement("label", null, "\u8282\u70b9\u6807\u7b7e"), h.a.createElement(a["a"], {
                     mode: "tags",
@@ -71008,7 +71374,7 @@
                     sorter: (e,t) => e.alive_ip - t.alive_ip,
                     render: (e,t)=>{
                         var deviceCount = t.alive_ip !== null ? t.alive_ip : 0 ;
-                        var deviceLimit = t.device_limit !== null ? t.device_limit : "∞";
+                        var deviceLimit = t.device_limit !== null ? t.device_limit : "â";
                         return t.ips ? g.a.createElement(f["a"], {
                             placement: "top",
                             title: t.ips
@@ -104403,20 +104769,22 @@
           , B = (n("VeWa"),
         n("umNf"),
         n("8zNj"));
-        class V extends y.a.Component {
+class V extends y.a.Component {
             constructor(e) {
-                super(e),
+                super(e);
+                var t = this.props.record ? I()({}, this.props.record) : {
+                    insecure: 0,
+                    version: 1,
+                    rate: 1
+                };
+                t.dynamic_rate = Array.isArray(t.dynamic_rate) ? t.dynamic_rate.map(e=>I()({}, e)) : [];
                 this.state = {
-                    server: this.props.record || {
-                        insecure: 0,
-                        version: 1,
-                        rate: 1
-                    },
+                    server: t,
                     visible: !1,
                     childDrawer: {
                         visible: !1
                     }
-                }
+                };
             }
             onShow() {
                 this.setState({
@@ -104424,7 +104792,14 @@
                 })
             }
             save() {
-                var e = this.state.server;
+                var e = I()({}, this.state.server);
+                e.dynamic_rate = Array.isArray(e.dynamic_rate) && e.dynamic_rate.length ? e.dynamic_rate.map(function(e) {
+                    return {
+                        start: (e.start || "").trim(),
+                        end: (e.end || "").trim(),
+                        rate: "" === e.rate || null === e.rate || void 0 === e.rate ? e.rate : parseFloat(e.rate)
+                    };
+                }) : null;
                 this.props.dispatch({
                     type: "serverHysteria/save",
                     params: e,
@@ -104449,12 +104824,244 @@
                     })
                 })
             }
+            toggleDynamicRate(e) {
+                var t;
+                if (e) {
+                    var n = this.state.server.rate || 1
+                      , r = Array.isArray(this.state.server.dynamic_rate) && this.state.server.dynamic_rate.length ? this.state.server.dynamic_rate.map(e=>I()({}, e)) : [{
+                        start: "00:00",
+                        end: "24:00",
+                        rate: n
+                    }];
+                    t = r;
+                } else
+                    t = [];
+                this.formChange("dynamic_rate", t)
+            }
+            updateDynamicRate(e, t, n) {
+                var r = Array.isArray(this.state.server.dynamic_rate) ? this.state.server.dynamic_rate.map(e=>I()({}, e)) : [];
+                r[e] = I()({
+                    start: "",
+                    end: "",
+                    rate: this.state.server.rate || 1
+                }, r[e], {
+                    [t]: n
+                }),
+                this.formChange("dynamic_rate", r)
+            }
+            addDynamicRateSegment() {
+                var e = Array.isArray(this.state.server.dynamic_rate) ? this.state.server.dynamic_rate.map(e=>I()({}, e)) : []
+                  , t = e[e.length - 1]
+                  , n = this.state.server.rate || 1;
+                e.push({
+                    start: t && t.end ? t.end : "00:00",
+                    end: t && t.end ? t.end : "00:00",
+                    rate: t && void 0 !== t.rate ? t.rate : n
+                }),
+                this.formChange("dynamic_rate", e)
+            }
+            removeDynamicRateSegment(e) {
+                var t = Array.isArray(this.state.server.dynamic_rate) ? this.state.server.dynamic_rate.map(e=>I()({}, e)) : [];
+                t.splice(e, 1),
+                this.formChange("dynamic_rate", t)
+            }
+            renderDynamicRate() {
+                var e = this
+                  , t = this.state.server
+                  , n = Array.isArray(t.dynamic_rate) ? t.dynamic_rate : []
+                  , r = n.length > 0;
+                return y.a.createElement("div", {
+                    className: "form-group"
+                }, y.a.createElement("label", null, "\u52a8\u6001\u500d\u7387"), y.a.createElement("div", {
+                    className: "d-flex align-items-center mb-2"
+                }, y.a.createElement("label", {
+                    className: "mr-2 mb-0"
+                }, "\u542f\u7528"), y.a.createElement("input", {
+                    type: "checkbox",
+                    checked: r,
+                    onChange: function(t) {
+                        return e.toggleDynamicRate(t.target.checked);
+                    }
+                })), r ? y.a.createElement("div", null, n.map(function(t, n) {
+                    return y.a.createElement("div", {
+                        className: "row align-items-center mb-2",
+                        key: "dynamic-rate-".concat(n)
+                    }, y.a.createElement("div", {
+                        className: "col-3"
+                    }, y.a.createElement("input", {
+                        type: "text",
+                        className: "form-control",
+                        placeholder: "00:00",
+                        value: t.start || "",
+                        onChange: function(t) {
+                            return e.updateDynamicRate(n, "start", t.target.value);
+                        },
+                        maxLength: 5
+                    })), y.a.createElement("div", {
+                        className: "col-3"
+                    }, y.a.createElement("input", {
+                        type: "text",
+                        className: "form-control",
+                        placeholder: "00:00",
+                        value: t.end || "",
+                        onChange: function(t) {
+                            return e.updateDynamicRate(n, "end", t.target.value);
+                        },
+                        maxLength: 5
+                    })), y.a.createElement("div", {
+                        className: "col-3"
+                    }, y.a.createElement("input", {
+                        type: "number",
+                        className: "form-control",
+                        min: "0",
+                        step: "0.01",
+                        value: void 0 !== t.rate ? t.rate : "",
+                        onChange: function(t) {
+                            return e.updateDynamicRate(n, "rate", t.target.value);
+                        }
+                    })), y.a.createElement("div", {
+                        className: "col-3 text-right"
+                    }, y.a.createElement("button", {
+                        type: "button",
+                        className: "btn btn-outline-danger btn-sm",
+                        onClick: function() {
+                            return e.removeDynamicRateSegment(n);
+                        }
+                    }, "\u5220\u9664")));
+                }), y.a.createElement("button", {
+                    type: "button",
+                    className: "btn btn-outline-primary btn-sm",
+                    onClick: function() {
+                        return e.addDynamicRateSegment();
+                    }
+                }, "\u6dfb\u52a0\u65f6\u95f4\u6bb5"), y.a.createElement("small", {
+                    className: "form-text text-muted mt-2"
+                }, "\u65f6\u95f4\u6bb5\u9700\u8981\u65e0\u7a7a\u767d\u8fde\u7eed\u8986\u6574\u5929\u3002")) : y.a.createElement("small", {
+                    className: "form-text text-muted"
+                }, "\u542f\u7528\u540e\u53ef\u6839\u636e\u65f6\u95f4\u6bb5\u8bbe\u7f6e\u4e0d\u540c\u500d\u7387"))
+            }
             formChange(e, t) {
                 this.setState({
                     server: I()({}, this.state.server, {
                         [e]: t
                     })
                 })
+            }
+            toggleDynamicRate(e) {
+                var t;
+                if (e) {
+                    var n = this.state.server.rate || 1
+                      , r = Array.isArray(this.state.server.dynamic_rate) && this.state.server.dynamic_rate.length ? this.state.server.dynamic_rate.map(e=>I()({}, e)) : [{
+                        start: "00:00",
+                        end: "24:00",
+                        rate: n
+                    }];
+                    t = r;
+                } else
+                    t = [];
+                this.formChange("dynamic_rate", t)
+            }
+            updateDynamicRate(e, t, n) {
+                var r = Array.isArray(this.state.server.dynamic_rate) ? this.state.server.dynamic_rate.map(e=>I()({}, e)) : [];
+                r[e] = I()({
+                    start: "",
+                    end: "",
+                    rate: this.state.server.rate || 1
+                }, r[e], {
+                    [t]: n
+                }),
+                this.formChange("dynamic_rate", r)
+            }
+            addDynamicRateSegment() {
+                var e = Array.isArray(this.state.server.dynamic_rate) ? this.state.server.dynamic_rate.map(e=>I()({}, e)) : []
+                  , t = e[e.length - 1]
+                  , n = this.state.server.rate || 1;
+                e.push({
+                    start: t && t.end ? t.end : "00:00",
+                    end: t && t.end ? t.end : "00:00",
+                    rate: t && void 0 !== t.rate ? t.rate : n
+                }),
+                this.formChange("dynamic_rate", e)
+            }
+            removeDynamicRateSegment(e) {
+                var t = Array.isArray(this.state.server.dynamic_rate) ? this.state.server.dynamic_rate.map(e=>I()({}, e)) : [];
+                t.splice(e, 1),
+                this.formChange("dynamic_rate", t)
+            }
+            renderDynamicRate() {
+                var e = this
+                  , t = this.state.server
+                  , n = Array.isArray(t.dynamic_rate) ? t.dynamic_rate : []
+                  , r = n.length > 0;
+                return y.a.createElement("div", {
+                    className: "form-group"
+                }, y.a.createElement("label", null, "\u52a8\u6001\u500d\u7387"), y.a.createElement("div", {
+                    className: "d-flex align-items-center mb-2"
+                }, y.a.createElement("label", {
+                    className: "mr-2 mb-0"
+                }, "\u542f\u7528"), y.a.createElement("input", {
+                    type: "checkbox",
+                    checked: r,
+                    onChange: function(t) {
+                        return e.toggleDynamicRate(t.target.checked);
+                    }
+                })), r ? y.a.createElement("div", null, n.map(function(t, n) {
+                    return y.a.createElement("div", {
+                        className: "row align-items-center mb-2",
+                        key: "dynamic-rate-".concat(n)
+                    }, y.a.createElement("div", {
+                        className: "col-3"
+                    }, y.a.createElement("input", {
+                        type: "text",
+                        className: "form-control",
+                        placeholder: "00:00",
+                        value: t.start || "",
+                        onChange: function(t) {
+                            return e.updateDynamicRate(n, "start", t.target.value);
+                        },
+                        maxLength: 5
+                    })), y.a.createElement("div", {
+                        className: "col-3"
+                    }, y.a.createElement("input", {
+                        type: "text",
+                        className: "form-control",
+                        placeholder: "00:00",
+                        value: t.end || "",
+                        onChange: function(t) {
+                            return e.updateDynamicRate(n, "end", t.target.value);
+                        },
+                        maxLength: 5
+                    })), y.a.createElement("div", {
+                        className: "col-3"
+                    }, y.a.createElement("input", {
+                        type: "number",
+                        className: "form-control",
+                        min: "0",
+                        step: "0.01",
+                        value: void 0 !== t.rate ? t.rate : "",
+                        onChange: function(t) {
+                            return e.updateDynamicRate(n, "rate", t.target.value);
+                        }
+                    })), y.a.createElement("div", {
+                        className: "col-3 text-right"
+                    }, y.a.createElement("button", {
+                        type: "button",
+                        className: "btn btn-outline-danger btn-sm",
+                        onClick: function() {
+                            return e.removeDynamicRateSegment(n);
+                        }
+                    }, "\u5220\u9664")));
+                }), y.a.createElement("button", {
+                    type: "button",
+                    className: "btn btn-outline-primary btn-sm",
+                    onClick: function() {
+                        return e.addDynamicRateSegment();
+                    }
+                }, "\u6dfb\u52a0\u65f6\u95f4\u6bb5"), y.a.createElement("small", {
+                    className: "form-text text-muted mt-2"
+                }, "\u65f6\u95f4\u6bb5\u9700\u8981\u65e0\u7a7a\u767d\u8fde\u7eed\u8986\u76d6\u6574\u5929\u3002")) : y.a.createElement("small", {
+                    className: "form-text text-muted"
+                }, "\u542f\u7528\u540e\u53ef\u6839\u636e\u65f6\u95f4\u6bb5\u8bbe\u7f6e\u4e0d\u540c\u500d\u7387\u3002"))
             }
             render() {
                 var e = this.state.server
@@ -104488,7 +105095,7 @@
                     placeholder: "\u8bf7\u8f93\u5165\u8282\u70b9\u500d\u7387",
                     value: e.rate,
                     onChange: e=>this.formChange("rate", e.target.value)
-                }))), y.a.createElement("div", {
+                }))), this.renderDynamicRate(), y.a.createElement("div", {
                     className: "form-group"
                 }, y.a.createElement("label", null, "\u8282\u70b9\u6807\u7b7e"), y.a.createElement(N["a"], {
                     mode: "tags",
@@ -104539,7 +105146,7 @@
                     placeholder: "\u5730\u5740\u6216IP",
                     value: e.host,
                     onChange: e=>this.formChange("host", e.target.value)
-                }))), y.a.createElement("div", {
+                }))), this.renderDynamicRate(), y.a.createElement("div", {
                     className: "row"
                 }, y.a.createElement("div", {
                     className: "form-group col-md-4 col-xs-12"
@@ -104992,20 +105599,22 @@
                 }))))
             }
         }
-        class z extends y.a.Component {
+class z extends y.a.Component {
             constructor(e) {
-                super(e),
+                super(e);
+                var t = this.props.record ? I()({}, this.props.record) : {
+                    tls: 0,
+                    rate: 1,
+                    flow: null
+                };
+                t.dynamic_rate = Array.isArray(t.dynamic_rate) ? t.dynamic_rate.map(e=>I()({}, e)) : [];
                 this.state = {
-                    server: this.props.record || {
-                        tls: 0,
-                        rate: 1,
-                        flow: null
-                    },
+                    server: t,
                     visible: !1,
                     childDrawer: {
                         visible: !1
                     }
-                }
+                };
             }
             onShow() {
                 if (this.setState({
@@ -105021,8 +105630,15 @@
             }
             save() {
                 try {
-                    var e = this.state.server;
+                    var e = I()({}, this.state.server);
                     e.network_settings = e.network_settings ? "string" === typeof e.network_settings && JSON.parse(e.network_settings) : null,
+                    e.dynamic_rate = Array.isArray(e.dynamic_rate) && e.dynamic_rate.length ? e.dynamic_rate.map(function(e) {
+                        return {
+                            start: (e.start || "").trim(),
+                            end: (e.end || "").trim(),
+                            rate: "" === e.rate || null === e.rate || void 0 === e.rate ? e.rate : parseFloat(e.rate)
+                        };
+                    }) : null,
                     this.props.dispatch({
                         type: "serverVless/save",
                         params: e,
@@ -105053,6 +105669,122 @@
                     })
                 })
             }
+            toggleDynamicRate(e) {
+                var t;
+                if (e) {
+                    var n = this.state.server.rate || 1
+                      , r = Array.isArray(this.state.server.dynamic_rate) && this.state.server.dynamic_rate.length ? this.state.server.dynamic_rate.map(e=>I()({}, e)) : [{
+                        start: "00:00",
+                        end: "24:00",
+                        rate: n
+                    }];
+                    t = r;
+                } else
+                    t = [];
+                this.formChange("dynamic_rate", t)
+            }
+            updateDynamicRate(e, t, n) {
+                var r = Array.isArray(this.state.server.dynamic_rate) ? this.state.server.dynamic_rate.map(e=>I()({}, e)) : [];
+                r[e] = I()({
+                    start: "",
+                    end: "",
+                    rate: this.state.server.rate || 1
+                }, r[e], {
+                    [t]: n
+                }),
+                this.formChange("dynamic_rate", r)
+            }
+            addDynamicRateSegment() {
+                var e = Array.isArray(this.state.server.dynamic_rate) ? this.state.server.dynamic_rate.map(e=>I()({}, e)) : []
+                  , t = e[e.length - 1]
+                  , n = this.state.server.rate || 1;
+                e.push({
+                    start: t && t.end ? t.end : "00:00",
+                    end: t && t.end ? t.end : "00:00",
+                    rate: t && void 0 !== t.rate ? t.rate : n
+                }),
+                this.formChange("dynamic_rate", e)
+            }
+            removeDynamicRateSegment(e) {
+                var t = Array.isArray(this.state.server.dynamic_rate) ? this.state.server.dynamic_rate.map(e=>I()({}, e)) : [];
+                t.splice(e, 1),
+                this.formChange("dynamic_rate", t)
+            }
+            renderDynamicRate() {
+                var e = this
+                  , t = this.state.server
+                  , n = Array.isArray(t.dynamic_rate) ? t.dynamic_rate : []
+                  , r = n.length > 0;
+                return y.a.createElement("div", {
+                    className: "form-group"
+                }, y.a.createElement("label", null, "\u52a8\u6001\u500d\u7387"), y.a.createElement("div", {
+                    className: "d-flex align-items-center mb-2"
+                }, y.a.createElement("label", {
+                    className: "mr-2 mb-0"
+                }, "\u542f\u7528"), y.a.createElement("input", {
+                    type: "checkbox",
+                    checked: r,
+                    onChange: function(t) {
+                        return e.toggleDynamicRate(t.target.checked);
+                    }
+                })), r ? y.a.createElement("div", null, n.map(function(t, n) {
+                    return y.a.createElement("div", {
+                        className: "row align-items-center mb-2",
+                        key: "dynamic-rate-".concat(n)
+                    }, y.a.createElement("div", {
+                        className: "col-3"
+                    }, y.a.createElement("input", {
+                        type: "text",
+                        className: "form-control",
+                        placeholder: "00:00",
+                        value: t.start || "",
+                        onChange: function(t) {
+                            return e.updateDynamicRate(n, "start", t.target.value);
+                        },
+                        maxLength: 5
+                    })), y.a.createElement("div", {
+                        className: "col-3"
+                    }, y.a.createElement("input", {
+                        type: "text",
+                        className: "form-control",
+                        placeholder: "00:00",
+                        value: t.end || "",
+                        onChange: function(t) {
+                            return e.updateDynamicRate(n, "end", t.target.value);
+                        },
+                        maxLength: 5
+                    })), y.a.createElement("div", {
+                        className: "col-3"
+                    }, y.a.createElement("input", {
+                        type: "number",
+                        className: "form-control",
+                        min: "0",
+                        step: "0.01",
+                        value: void 0 !== t.rate ? t.rate : "",
+                        onChange: function(t) {
+                            return e.updateDynamicRate(n, "rate", t.target.value);
+                        }
+                    })), y.a.createElement("div", {
+                        className: "col-3 text-right"
+                    }, y.a.createElement("button", {
+                        type: "button",
+                        className: "btn btn-outline-danger btn-sm",
+                        onClick: function() {
+                            return e.removeDynamicRateSegment(n);
+                        }
+                    }, "\u5220\u9664")));
+                }), y.a.createElement("button", {
+                    type: "button",
+                    className: "btn btn-outline-primary btn-sm",
+                    onClick: function() {
+                        return e.addDynamicRateSegment();
+                    }
+                }, "\u6dfb\u52a0\u65f6\u95f4\u6bb5"), y.a.createElement("small", {
+                    className: "form-text text-muted mt-2"
+                }, "\u65f6\u95f4\u6bb5\u9700\u8981\u65e0\u7a7a\u767d\u8fde\u7eed\u8986\u6574\u5929\u3002")) : y.a.createElement("small", {
+                    className: "form-text text-muted"
+                }, "\u542f\u7528\u540e\u53ef\u6839\u636e\u65f6\u95f4\u6bb5\u8bbe\u7f6e\u4e0d\u540c\u500d\u7387"))
+            }
             renderChildDrawer() {
                 var e = this.state.server
                   , t = e.network_settings
@@ -105074,7 +105806,7 @@
                             }
                         }, null, 4),
                         ws: JSON.stringify({
-                            security: "auto",//不支持vless，vmess可选加密类型：auto、aes-128-gcm、chacha20-poly1305、none
+                            security: "auto",//ä¸æ¯ævlessï¼vmesså¯éå å¯ç±»åï¼autoãaes-128-gcmãchacha20-poly1305ãnone
                             path: "/",
                             headers: {
                                 Host: "xtls.github.io"
@@ -105178,7 +105910,7 @@
                     placeholder: "\u8bf7\u8f93\u5165\u8282\u70b9\u500d\u7387",
                     value: e.rate,
                     onChange: e=>this.formChange("rate", e.target.value)
-                }))), y.a.createElement("div", {
+                }))), this.renderDynamicRate(), y.a.createElement("div", {
                     className: "form-group"
                 }, y.a.createElement("label", null, "\u8282\u70b9\u6807\u7b7e"), y.a.createElement(N["a"], {
                     mode: "tags",
@@ -105382,23 +106114,25 @@
             }
         }
         )(z);
-        class wTuic extends y.a.Component {
+class wTuic extends y.a.Component {
             constructor(e) {
-                super(e),
+                super(e);
+                var t = this.props.record ? I()({}, this.props.record) : {
+                    insecure: 0,
+                    disable_sni: 0,
+                    udp_relay_mode: "native",
+                    zero_rtt_handshake: 0,
+                    congestion_control: "cubic",
+                    rate: 1
+                };
+                t.dynamic_rate = Array.isArray(t.dynamic_rate) ? t.dynamic_rate.map(e=>I()({}, e)) : [];
                 this.state = {
-                    server: this.props.record || {
-                        insecure: 0,
-                        disable_sni: 0,
-                        udp_relay_mode: "native",
-                        zero_rtt_handshake: 0,
-                        congestion_control: "cubic",
-                        rate: 1
-                    },
+                    server: t,
                     visible: !1,
                     childDrawer: {
                         visible: !1
                     }
-                }
+                };
             }
             onShow() {
                 this.setState({
@@ -105406,7 +106140,14 @@
                 })
             }
             save() {
-                var e = this.state.server;
+                var e = I()({}, this.state.server);
+                e.dynamic_rate = Array.isArray(e.dynamic_rate) && e.dynamic_rate.length ? e.dynamic_rate.map(function(t) {
+                    return {
+                        start: (t.start || "").trim(),
+                        end: (t.end || "").trim(),
+                        rate: "" === t.rate || null === t.rate || void 0 === t.rate ? t.rate : parseFloat(t.rate)
+                    };
+                }) : null;
                 this.props.dispatch({
                     type: "serverTuic/save",
                     params: e,
@@ -105427,10 +106168,124 @@
             }
             formChange(e, t) {
                 this.setState({
-                    server: I()({},
-                    this.state.server, { [e] : t
-                    })
+                    server: I()({}, this.state.server, { [e] : t })
                 })
+            }
+            toggleDynamicRate(e) {
+                var t;
+                if (e) {
+                    var n = this.state.server.rate || 1
+                      , r = Array.isArray(this.state.server.dynamic_rate) && this.state.server.dynamic_rate.length ? this.state.server.dynamic_rate.map(e=>I()({}, e)) : [{
+                        start: "00:00",
+                        end: "24:00",
+                        rate: n
+                    }];
+                    t = r;
+                } else
+                    t = [];
+                this.formChange("dynamic_rate", t)
+            }
+            updateDynamicRate(e, t, n) {
+                var r = Array.isArray(this.state.server.dynamic_rate) ? this.state.server.dynamic_rate.map(e=>I()({}, e)) : [];
+                r[e] = I()({
+                    start: "",
+                    end: "",
+                    rate: this.state.server.rate || 1
+                }, r[e], {
+                    [t]: n
+                }),
+                this.formChange("dynamic_rate", r)
+            }
+            addDynamicRateSegment() {
+                var e = Array.isArray(this.state.server.dynamic_rate) ? this.state.server.dynamic_rate.map(e=>I()({}, e)) : []
+                  , t = e[e.length - 1]
+                  , n = this.state.server.rate || 1;
+                e.push({
+                    start: t && t.end ? t.end : "00:00",
+                    end: t && t.end ? t.end : "00:00",
+                    rate: t && void 0 !== t.rate ? t.rate : n
+                }),
+                this.formChange("dynamic_rate", e)
+            }
+            removeDynamicRateSegment(e) {
+                var t = Array.isArray(this.state.server.dynamic_rate) ? this.state.server.dynamic_rate.map(e=>I()({}, e)) : [];
+                t.splice(e, 1),
+                this.formChange("dynamic_rate", t)
+            }
+            renderDynamicRate() {
+                var e = this
+                  , t = this.state.server
+                  , n = Array.isArray(t.dynamic_rate) ? t.dynamic_rate : []
+                  , r = n.length > 0;
+                return y.a.createElement("div", {
+                    className: "form-group"
+                }, y.a.createElement("label", null, "\u52a8\u6001\u500d\u7387"), y.a.createElement("div", {
+                    className: "d-flex align-items-center mb-2"
+                }, y.a.createElement("label", {
+                    className: "mr-2 mb-0"
+                }, "\u542f\u7528"), y.a.createElement("input", {
+                    type: "checkbox",
+                    checked: r,
+                    onChange: function(t) {
+                        return e.toggleDynamicRate(t.target.checked);
+                    }
+                })), r ? y.a.createElement("div", null, n.map(function(t, n) {
+                    return y.a.createElement("div", {
+                        className: "row align-items-center mb-2",
+                        key: "dynamic-rate-".concat(n)
+                    }, y.a.createElement("div", {
+                        className: "col-3"
+                    }, y.a.createElement("input", {
+                        type: "text",
+                        className: "form-control",
+                        placeholder: "00:00",
+                        value: t.start || "",
+                        onChange: function(t) {
+                            return e.updateDynamicRate(n, "start", t.target.value);
+                        },
+                        maxLength: 5
+                    })), y.a.createElement("div", {
+                        className: "col-3"
+                    }, y.a.createElement("input", {
+                        type: "text",
+                        className: "form-control",
+                        placeholder: "00:00",
+                        value: t.end || "",
+                        onChange: function(t) {
+                            return e.updateDynamicRate(n, "end", t.target.value);
+                        },
+                        maxLength: 5
+                    })), y.a.createElement("div", {
+                        className: "col-3"
+                    }, y.a.createElement("input", {
+                        type: "number",
+                        className: "form-control",
+                        min: "0",
+                        step: "0.01",
+                        value: void 0 !== t.rate ? t.rate : "",
+                        onChange: function(t) {
+                            return e.updateDynamicRate(n, "rate", t.target.value);
+                        }
+                    })), y.a.createElement("div", {
+                        className: "col-3 text-right"
+                    }, y.a.createElement("button", {
+                        type: "button",
+                        className: "btn btn-outline-danger btn-sm",
+                        onClick: function() {
+                            return e.removeDynamicRateSegment(n);
+                        }
+                    }, "\u5220\u9664")));
+                }), y.a.createElement("button", {
+                    type: "button",
+                    className: "btn btn-outline-primary btn-sm",
+                    onClick: function() {
+                        return e.addDynamicRateSegment();
+                    }
+                }, "\u6dfb\u52a0\u65f6\u95f4\u6bb5"), y.a.createElement("small", {
+                    className: "form-text text-muted mt-2"
+                }, "\u65f6\u95f4\u6bb5\u9700\u8981\u65e0\u7a7a\u767d\u8fde\u7eed\u8986\u76d6\u6574\u5929\u3002")) : y.a.createElement("small", {
+                    className: "form-text text-muted"
+                }, "\u542f\u7528\u540e\u53ef\u6839\u636e\u65f6\u95f4\u6bb5\u8bbe\u7f6e\u4e0d\u540c\u500d\u7387"))
             }
             render() {
                 var e = this.state.server,
@@ -105717,17 +106572,19 @@
         })(wTuic);
         class wAnyTLS extends y.a.Component {
             constructor(e) {
-                super(e),
+                super(e);
+                var t = this.props.record ? I()({}, this.props.record) : {
+                    insecure: 0,
+                    rate: 1
+                };
+                t.dynamic_rate = Array.isArray(t.dynamic_rate) ? t.dynamic_rate.map(e=>I()({}, e)) : [];
                 this.state = {
-                    server: this.props.record || {
-                        insecure: 0,
-                        rate: 1
-                    },
+                    server: t,
                     visible: !1,
                     childDrawer: {
                         visible: !1
                     }
-                }
+                };
             }
             onShow() {
                 this.setState({
@@ -105735,7 +106592,14 @@
                 })
             }
             save() {
-                var e = this.state.server;
+                var e = I()({}, this.state.server);
+                e.dynamic_rate = Array.isArray(e.dynamic_rate) && e.dynamic_rate.length ? e.dynamic_rate.map(function(t) {
+                    return {
+                        start: (t.start || "").trim(),
+                        end: (t.end || "").trim(),
+                        rate: "" === t.rate || null === t.rate || void 0 === t.rate ? t.rate : parseFloat(t.rate)
+                    };
+                }) : null;
                 this.props.dispatch({
                     type: "serverAnyTLS/save",
                     params: e,
@@ -105801,6 +106665,122 @@
                     })
                 })
             }
+            toggleDynamicRate(e) {
+                var t;
+                if (e) {
+                    var n = this.state.server.rate || 1
+                      , r = Array.isArray(this.state.server.dynamic_rate) && this.state.server.dynamic_rate.length ? this.state.server.dynamic_rate.map(e=>I()({}, e)) : [{
+                        start: "00:00",
+                        end: "24:00",
+                        rate: n
+                    }];
+                    t = r;
+                } else
+                    t = [];
+                this.formChange("dynamic_rate", t)
+            }
+            updateDynamicRate(e, t, n) {
+                var r = Array.isArray(this.state.server.dynamic_rate) ? this.state.server.dynamic_rate.map(e=>I()({}, e)) : [];
+                r[e] = I()({
+                    start: "",
+                    end: "",
+                    rate: this.state.server.rate || 1
+                }, r[e], {
+                    [t]: n
+                }),
+                this.formChange("dynamic_rate", r)
+            }
+            addDynamicRateSegment() {
+                var e = Array.isArray(this.state.server.dynamic_rate) ? this.state.server.dynamic_rate.map(e=>I()({}, e)) : []
+                  , t = e[e.length - 1]
+                  , n = this.state.server.rate || 1;
+                e.push({
+                    start: t && t.end ? t.end : "00:00",
+                    end: t && t.end ? t.end : "00:00",
+                    rate: t && void 0 !== t.rate ? t.rate : n
+                }),
+                this.formChange("dynamic_rate", e)
+            }
+            removeDynamicRateSegment(e) {
+                var t = Array.isArray(this.state.server.dynamic_rate) ? this.state.server.dynamic_rate.map(e=>I()({}, e)) : [];
+                t.splice(e, 1),
+                this.formChange("dynamic_rate", t)
+            }
+            renderDynamicRate() {
+                var e = this
+                  , t = this.state.server
+                  , n = Array.isArray(t.dynamic_rate) ? t.dynamic_rate : []
+                  , r = n.length > 0;
+                return y.a.createElement("div", {
+                    className: "form-group"
+                }, y.a.createElement("label", null, "\u52a8\u6001\u500d\u7387"), y.a.createElement("div", {
+                    className: "d-flex align-items-center mb-2"
+                }, y.a.createElement("label", {
+                    className: "mr-2 mb-0"
+                }, "\u542f\u7528"), y.a.createElement("input", {
+                    type: "checkbox",
+                    checked: r,
+                    onChange: function(t) {
+                        return e.toggleDynamicRate(t.target.checked);
+                    }
+                })), r ? y.a.createElement("div", null, n.map(function(t, n) {
+                    return y.a.createElement("div", {
+                        className: "row align-items-center mb-2",
+                        key: "dynamic-rate-".concat(n)
+                    }, y.a.createElement("div", {
+                        className: "col-3"
+                    }, y.a.createElement("input", {
+                        type: "text",
+                        className: "form-control",
+                        placeholder: "00:00",
+                        value: t.start || "",
+                        onChange: function(t) {
+                            return e.updateDynamicRate(n, "start", t.target.value);
+                        },
+                        maxLength: 5
+                    })), y.a.createElement("div", {
+                        className: "col-3"
+                    }, y.a.createElement("input", {
+                        type: "text",
+                        className: "form-control",
+                        placeholder: "00:00",
+                        value: t.end || "",
+                        onChange: function(t) {
+                            return e.updateDynamicRate(n, "end", t.target.value);
+                        },
+                        maxLength: 5
+                    })), y.a.createElement("div", {
+                        className: "col-3"
+                    }, y.a.createElement("input", {
+                        type: "number",
+                        className: "form-control",
+                        min: "0",
+                        step: "0.01",
+                        value: void 0 !== t.rate ? t.rate : "",
+                        onChange: function(t) {
+                            return e.updateDynamicRate(n, "rate", t.target.value);
+                        }
+                    })), y.a.createElement("div", {
+                        className: "col-3 text-right"
+                    }, y.a.createElement("button", {
+                        type: "button",
+                        className: "btn btn-outline-danger btn-sm",
+                        onClick: function() {
+                            return e.removeDynamicRateSegment(n);
+                        }
+                    }, "\u5220\u9664")));
+                }), y.a.createElement("button", {
+                    type: "button",
+                    className: "btn btn-outline-primary btn-sm",
+                    onClick: function() {
+                        return e.addDynamicRateSegment();
+                    }
+                }, "\u6dfb\u52a0\u65f6\u95f4\u6bb5"), y.a.createElement("small", {
+                    className: "form-text text-muted mt-2"
+                }, "\u65f6\u95f4\u6bb5\u9700\u8981\u65e0\u7a7a\u767d\u8fde\u7eed\u8986\u76d6\u6574\u5929\u3002")) : y.a.createElement("small", {
+                    className: "form-text text-muted"
+                }, "\u542f\u7528\u540e\u53ef\u6839\u636e\u65f6\u95f4\u6bb5\u8bbe\u7f6e\u4e0d\u540c\u500d\u7387"))
+            }
             render() {
                 var e = this.state.server,
                 t = this.props.serverAnyTLS.saveLoading,
@@ -105837,7 +106817,7 @@
                     placeholder: "\u8bf7\u8f93\u5165\u8282\u70b9\u500d\u7387",
                     value: e.rate,
                     onChange: e=>this.formChange("rate", e.target.value)
-                }))), y.a.createElement("div", {
+                }))), this.renderDynamicRate(), y.a.createElement("div", {
                     className: "form-group"
                 },
                 y.a.createElement("label", null, "\u8282\u70b9\u6807\u7b7e"), y.a.createElement(N["a"], {
@@ -106020,21 +107000,23 @@
         })(wAnyTLS);
         class wV2node extends y.a.Component {
             constructor(e) {
-                super(e),
+                super(e);
+                var t = this.props.record ? I()({}, this.props.record) : {
+                    tls: 0,
+                    rate: 1,
+                    network: "tcp",
+                    disable_sni: 0,
+                    zero_rtt_handshake: 0,
+                    flow: null
+                };
+                t.dynamic_rate = Array.isArray(t.dynamic_rate) ? t.dynamic_rate.map(e=>I()({}, e)) : [];
                 this.state = {
-                    server: this.props.record || {
-                        tls: 0,
-                        rate: 1,
-                        network: "tcp",
-                        disable_sni: 0,
-                        zero_rtt_handshake: 0,
-                        flow: null
-                    },
+                    server: t,
                     visible: !1,
                     childDrawer: {
                         visible: !1
                     }
-                }
+                };
             }
             onShow() {
                 this.setState({
@@ -106051,6 +107033,13 @@
             save() {
                 e = JSON.parse(JSON.stringify(this.state.server));
                 e.network_settings = e.network_settings ? ("string" === typeof e.network_settings ? JSON.parse(e.network_settings) : e.network_settings) : null;
+                e.dynamic_rate = Array.isArray(e.dynamic_rate) && e.dynamic_rate.length ? e.dynamic_rate.map(function(t) {
+                    return {
+                        start: (t.start || "").trim(),
+                        end: (t.end || "").trim(),
+                        rate: "" === t.rate || null === t.rate || void 0 === t.rate ? t.rate : parseFloat(t.rate)
+                    };
+                }) : null;
                 delete e.install_command;
                 this.props.dispatch({
                     type: "serverV2node/save",
@@ -106207,9 +107196,7 @@
                     });
                 } else {
                     this.setState({
-                        server: I()({},
-                        this.state.server, { [e] : t
-                        })
+                        server: I()({}, this.state.server, { [e] : t })
                     })
                 }
             }
@@ -106219,6 +107206,122 @@
                         [e]: t
                     })
                 })
+            }
+            toggleDynamicRate(e) {
+                var t;
+                if (e) {
+                    var n = this.state.server.rate || 1
+                      , r = Array.isArray(this.state.server.dynamic_rate) && this.state.server.dynamic_rate.length ? this.state.server.dynamic_rate.map(e=>I()({}, e)) : [{
+                        start: "00:00",
+                        end: "24:00",
+                        rate: n
+                    }];
+                    t = r;
+                } else
+                    t = [];
+                this.formChange("dynamic_rate", t)
+            }
+            updateDynamicRate(e, t, n) {
+                var r = Array.isArray(this.state.server.dynamic_rate) ? this.state.server.dynamic_rate.map(e=>I()({}, e)) : [];
+                r[e] = I()({
+                    start: "",
+                    end: "",
+                    rate: this.state.server.rate || 1
+                }, r[e], {
+                    [t]: n
+                }),
+                this.formChange("dynamic_rate", r)
+            }
+            addDynamicRateSegment() {
+                var e = Array.isArray(this.state.server.dynamic_rate) ? this.state.server.dynamic_rate.map(e=>I()({}, e)) : []
+                  , t = e[e.length - 1]
+                  , n = this.state.server.rate || 1;
+                e.push({
+                    start: t && t.end ? t.end : "00:00",
+                    end: t && t.end ? t.end : "00:00",
+                    rate: t && void 0 !== t.rate ? t.rate : n
+                }),
+                this.formChange("dynamic_rate", e)
+            }
+            removeDynamicRateSegment(e) {
+                var t = Array.isArray(this.state.server.dynamic_rate) ? this.state.server.dynamic_rate.map(e=>I()({}, e)) : [];
+                t.splice(e, 1),
+                this.formChange("dynamic_rate", t)
+            }
+            renderDynamicRate() {
+                var e = this
+                  , t = this.state.server
+                  , n = Array.isArray(t.dynamic_rate) ? t.dynamic_rate : []
+                  , r = n.length > 0;
+                return y.a.createElement("div", {
+                    className: "form-group"
+                }, y.a.createElement("label", null, "\u52a8\u6001\u500d\u7387"), y.a.createElement("div", {
+                    className: "d-flex align-items-center mb-2"
+                }, y.a.createElement("label", {
+                    className: "mr-2 mb-0"
+                }, "\u542f\u7528"), y.a.createElement("input", {
+                    type: "checkbox",
+                    checked: r,
+                    onChange: function(t) {
+                        return e.toggleDynamicRate(t.target.checked);
+                    }
+                })), r ? y.a.createElement("div", null, n.map(function(t, n) {
+                    return y.a.createElement("div", {
+                        className: "row align-items-center mb-2",
+                        key: "dynamic-rate-".concat(n)
+                    }, y.a.createElement("div", {
+                        className: "col-3"
+                    }, y.a.createElement("input", {
+                        type: "text",
+                        className: "form-control",
+                        placeholder: "00:00",
+                        value: t.start || "",
+                        onChange: function(t) {
+                            return e.updateDynamicRate(n, "start", t.target.value);
+                        },
+                        maxLength: 5
+                    })), y.a.createElement("div", {
+                        className: "col-3"
+                    }, y.a.createElement("input", {
+                        type: "text",
+                        className: "form-control",
+                        placeholder: "00:00",
+                        value: t.end || "",
+                        onChange: function(t) {
+                            return e.updateDynamicRate(n, "end", t.target.value);
+                        },
+                        maxLength: 5
+                    })), y.a.createElement("div", {
+                        className: "col-3"
+                    }, y.a.createElement("input", {
+                        type: "number",
+                        className: "form-control",
+                        min: "0",
+                        step: "0.01",
+                        value: void 0 !== t.rate ? t.rate : "",
+                        onChange: function(t) {
+                            return e.updateDynamicRate(n, "rate", t.target.value);
+                        }
+                    })), y.a.createElement("div", {
+                        className: "col-3 text-right"
+                    }, y.a.createElement("button", {
+                        type: "button",
+                        className: "btn btn-outline-danger btn-sm",
+                        onClick: function() {
+                            return e.removeDynamicRateSegment(n);
+                        }
+                    }, "\u5220\u9664")));
+                }), y.a.createElement("button", {
+                    type: "button",
+                    className: "btn btn-outline-primary btn-sm",
+                    onClick: function() {
+                        return e.addDynamicRateSegment();
+                    }
+                }, "\u6dfb\u52a0\u65f6\u95f4\u6bb5"), y.a.createElement("small", {
+                    className: "form-text text-muted mt-2"
+                }, "\u65f6\u95f4\u6bb5\u9700\u8981\u65e0\u7a7a\u767d\u8fde\u7eed\u8986\u6574\u5929\u3002")) : y.a.createElement("small", {
+                    className: "form-text text-muted"
+                }, "\u542f\u7528\u540e\u53ef\u6839\u636e\u65f6\u95f4\u6bb5\u8bbe\u7f6e\u4e0d\u540c\u500d\u7387"))
             }
             render() {
                 var e = this.state.server,
@@ -106256,7 +107359,7 @@
                     placeholder: "\u8bf7\u8f93\u5165\u8282\u70b9\u500d\u7387",
                     value: e.rate,
                     onChange: e=>this.formChange("rate", e.target.value)
-                }))), y.a.createElement("div", {
+                }))), this.renderDynamicRate(), y.a.createElement("div", {
                     className: "form-group"
                 },
                 y.a.createElement("label", null, "\u8282\u70b9\u6807\u7b7e"), y.a.createElement(N["a"], {
@@ -113523,17 +114626,19 @@
           , q = n.n(n("lc5D"));
         class m extends f.a.Component {
             constructor(e) {
-                super(e),
+                super(e);
+                var t = this.props.record ? u()({}, this.props.record) : {
+                    tls: 0,
+                    rate: 1
+                };
+                t.dynamic_rate = Array.isArray(t.dynamic_rate) ? t.dynamic_rate.map(e=>u()({}, e)) : [];
                 this.state = {
-                    server: this.props.record || {
-                        tls: 0,
-                        rate: 1
-                    },
+                    server: t,
                     visible: !1,
                     childDrawer: {
                         visible: !1
                     }
-                }
+                };
             }
             onShow() {
                 if (this.setState({
@@ -113548,8 +114653,15 @@
                 }
             }
             save() {
-                var e = this.state.server;
+                var e = u()({}, this.state.server);
                 e.network_settings = e.network_settings ? "string" === typeof e.network_settings && JSON.parse(e.network_settings) : null;
+                e.dynamic_rate = Array.isArray(e.dynamic_rate) && e.dynamic_rate.length ? e.dynamic_rate.map(function(t) {
+                    return {
+                        start: (t.start || "").trim(),
+                        end: (t.end || "").trim(),
+                        rate: "" === t.rate || null === t.rate || void 0 === t.rate ? t.rate : parseFloat(t.rate)
+                    };
+                }) : null;
                 this.props.dispatch({
                     type: "serverTrojan/save",
                     params: e,
@@ -113627,6 +114739,122 @@
                     })
                 })
             }
+            toggleDynamicRate(e) {
+                var t;
+                if (e) {
+                    var n = this.state.server.rate || 1
+                      , r = Array.isArray(this.state.server.dynamic_rate) && this.state.server.dynamic_rate.length ? this.state.server.dynamic_rate.map(e=>u()({}, e)) : [{
+                        start: "00:00",
+                        end: "24:00",
+                        rate: n
+                    }];
+                    t = r;
+                } else
+                    t = [];
+                this.formChange("dynamic_rate", t)
+            }
+            updateDynamicRate(e, t, n) {
+                var r = Array.isArray(this.state.server.dynamic_rate) ? this.state.server.dynamic_rate.map(e=>u()({}, e)) : [];
+                r[e] = u()({
+                    start: "",
+                    end: "",
+                    rate: this.state.server.rate || 1
+                }, r[e], {
+                    [t]: n
+                }),
+                this.formChange("dynamic_rate", r)
+            }
+            addDynamicRateSegment() {
+                var e = Array.isArray(this.state.server.dynamic_rate) ? this.state.server.dynamic_rate.map(e=>u()({}, e)) : []
+                  , t = e[e.length - 1]
+                  , n = this.state.server.rate || 1;
+                e.push({
+                    start: t && t.end ? t.end : "00:00",
+                    end: t && t.end ? t.end : "00:00",
+                    rate: t && void 0 !== t.rate ? t.rate : n
+                }),
+                this.formChange("dynamic_rate", e)
+            }
+            removeDynamicRateSegment(e) {
+                var t = Array.isArray(this.state.server.dynamic_rate) ? this.state.server.dynamic_rate.map(e=>u()({}, e)) : [];
+                t.splice(e, 1),
+                this.formChange("dynamic_rate", t)
+            }
+            renderDynamicRate() {
+                var e = this
+                  , t = this.state.server
+                  , n = Array.isArray(t.dynamic_rate) ? t.dynamic_rate : []
+                  , r = n.length > 0;
+                return f.a.createElement("div", {
+                    className: "form-group"
+                }, f.a.createElement("label", null, "\u52a8\u6001\u500d\u7387"), f.a.createElement("div", {
+                    className: "d-flex align-items-center mb-2"
+                }, f.a.createElement("label", {
+                    className: "mr-2 mb-0"
+                }, "\u542f\u7528"), f.a.createElement("input", {
+                    type: "checkbox",
+                    checked: r,
+                    onChange: function(t) {
+                        return e.toggleDynamicRate(t.target.checked);
+                    }
+                })), r ? f.a.createElement("div", null, n.map(function(t, n) {
+                    return f.a.createElement("div", {
+                        className: "row align-items-center mb-2",
+                        key: "dynamic-rate-".concat(n)
+                    }, f.a.createElement("div", {
+                        className: "col-3"
+                    }, f.a.createElement("input", {
+                        type: "text",
+                        className: "form-control",
+                        placeholder: "00:00",
+                        value: t.start || "",
+                        onChange: function(t) {
+                            return e.updateDynamicRate(n, "start", t.target.value);
+                        },
+                        maxLength: 5
+                    })), f.a.createElement("div", {
+                        className: "col-3"
+                    }, f.a.createElement("input", {
+                        type: "text",
+                        className: "form-control",
+                        placeholder: "00:00",
+                        value: t.end || "",
+                        onChange: function(t) {
+                            return e.updateDynamicRate(n, "end", t.target.value);
+                        },
+                        maxLength: 5
+                    })), f.a.createElement("div", {
+                        className: "col-3"
+                    }, f.a.createElement("input", {
+                        type: "number",
+                        className: "form-control",
+                        min: "0",
+                        step: "0.01",
+                        value: void 0 !== t.rate ? t.rate : "",
+                        onChange: function(t) {
+                            return e.updateDynamicRate(n, "rate", t.target.value);
+                        }
+                    })), f.a.createElement("div", {
+                        className: "col-3 text-right"
+                    }, f.a.createElement("button", {
+                        type: "button",
+                        className: "btn btn-outline-danger btn-sm",
+                        onClick: function() {
+                            return e.removeDynamicRateSegment(n);
+                        }
+                    }, "\u5220\u9664")));
+                }), f.a.createElement("button", {
+                    type: "button",
+                    className: "btn btn-outline-primary btn-sm",
+                    onClick: function() {
+                        return e.addDynamicRateSegment();
+                    }
+                }, "\u6dfb\u52a0\u65f6\u95f4\u6bb5"), f.a.createElement("small", {
+                    className: "form-text text-muted mt-2"
+                }, "\u65f6\u95f4\u6bb5\u9700\u8981\u65e0\u7a7a\u767d\u8fde\u7eed\u8986\u6574\u5929\u3002")) : f.a.createElement("small", {
+                    className: "form-text text-muted"
+                }, "\u542f\u7528\u540e\u53ef\u6839\u636e\u65f6\u95f4\u6bb5\u8bbe\u7f6e\u4e0d\u540c\u500d\u7387"))
+            }
             render() {
                 var e = this.state.server
                   , t = this.props.serverTrojan.saveLoading
@@ -113657,7 +114885,7 @@
                     placeholder: "\u8bf7\u8f93\u5165\u8282\u70b9\u500d\u7387",
                     value: e.rate,
                     onChange: e=>this.formChange("rate", e.target.value)
-                }))), f.a.createElement("div", {
+                }))), this.renderDynamicRate(), f.a.createElement("div", {
                     className: "form-group"
                 }, f.a.createElement("label", null, "\u8282\u70b9\u6807\u7b7e"), f.a.createElement(s["a"], {
                     mode: "tags",
