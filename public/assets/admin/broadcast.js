@@ -5,11 +5,7 @@
   }
 
   const securePath = window.settings.secure_path.replace(/^\/+|\/+$/g, '');
-<<<<<<< HEAD
   const apiHost = (window.settings.apiHost || window.settings.host || '').replace(/\/+$/, '');
-=======
-  const apiHost = (window.settings.apiHost || window.settings.host || '').replace(/\/+$/, '');
->>>>>>> a635fc3c (feat(admin): add telegram broadcast)
   const apiPrefix = '/api/v1/';
   const basePath = apiPrefix + securePath + '/';
   const apiBase = apiHost ? apiHost + basePath : basePath;
