@@ -4,7 +4,9 @@ namespace App\Http\Controllers\V1\Admin\Server;
 
 use App\Http\Controllers\Controller;
 use App\Models\ServerTuic;
+use App\Utils\DynamicRate;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class TuicController extends Controller
 {
@@ -26,8 +28,20 @@ class TuicController extends Controller
             'disable_sni' => 'required|in:0,1',
             'udp_relay_mode' => 'nullable',
             'zero_rtt_handshake' => 'required|in:0,1',
-            'congestion_control' => 'nullable'
+            'congestion_control' => 'nullable',
+            'dynamic_rate' => 'nullable|array',
+            'dynamic_rate.*.start' => 'required_with:dynamic_rate|string',
+            'dynamic_rate.*.end' => 'required_with:dynamic_rate|string',
+            'dynamic_rate.*.rate' => 'required_with:dynamic_rate|numeric'
         ]);
+
+        try {
+            $params['dynamic_rate'] = DynamicRate::sanitize($params['dynamic_rate'] ?? null);
+        } catch (\InvalidArgumentException $exception) {
+            throw ValidationException::withMessages([
+                'dynamic_rate' => $exception->getMessage()
+            ]);
+        }
 
         if ($request->input('id')) {
             $server = ServerTuic::find($request->input('id'));

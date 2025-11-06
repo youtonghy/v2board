@@ -4,7 +4,9 @@ namespace App\Http\Controllers\V1\Admin\Server;
 
 use App\Http\Controllers\Controller;
 use App\Models\ServerV2node;
+use App\Utils\DynamicRate;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use ParagonIE_Sodium_Compat as SodiumCompat;
 use App\Utils\Helper;
 use Illuminate\Support\Facades\Cache;
@@ -43,8 +45,20 @@ class V2nodeController extends Controller
             'tags' => 'nullable|array',
             'rate' => 'required',
             'show' => 'nullable|in:0,1',
-            'sort' => 'nullable'
+            'sort' => 'nullable',
+            'dynamic_rate' => 'nullable|array',
+            'dynamic_rate.*.start' => 'required_with:dynamic_rate|string',
+            'dynamic_rate.*.end' => 'required_with:dynamic_rate|string',
+            'dynamic_rate.*.rate' => 'required_with:dynamic_rate|numeric'
         ]);
+
+        try {
+            $params['dynamic_rate'] = DynamicRate::sanitize($params['dynamic_rate'] ?? null);
+        } catch (\InvalidArgumentException $exception) {
+            throw ValidationException::withMessages([
+                'dynamic_rate' => $exception->getMessage()
+            ]);
+        }
 
         if (in_array($params['protocol'], ['anytls', 'hysteria2', 'trojan', 'tuic'])) {
             $params['tls'] = 1;

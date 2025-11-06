@@ -8,6 +8,7 @@ use App\Jobs\TrafficFetchJob;
 use App\Models\Order;
 use App\Models\Plan;
 use App\Models\User;
+use App\Utils\DynamicRate;
 
 class UserService
 {
@@ -223,6 +224,8 @@ class UserService
 
     public function trafficFetch(array $server, string $protocol, array $data)
     {
+        $server['dynamic_rate'] = $server['dynamic_rate'] ?? null;
+        $server['rate'] = DynamicRate::resolveActiveRate($server);
         TrafficFetchJob::dispatch($data, $server, $protocol);
         StatUserJob::dispatch($data, $server, $protocol, 'd');
         StatServerJob::dispatch($data, $server, $protocol, 'd');
