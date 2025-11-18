@@ -5651,6 +5651,7 @@
                   , v = (e.themeTemplate,
                 e.email)
                   , y = e.telegram
+                  , k = e.sso || {}
                   , b = e.setTelegramWebhookLoading
                   , w = e.app
                   , x = e.testSendMailLoading
@@ -6500,6 +6501,62 @@
                     placeholder: "https://t.me/xxxxxx",
                     defaultValue: y.telegram_discuss_link,
                     onChange: e=>this.set("telegram", "telegram_discuss_link", e.target.value)
+                })))), f.a.createElement(s["a"].TabPane, {
+                    tab: "SSO",
+                    key: "sso"
+                }, f.a.createElement("div", {
+                    className: ""
+                }, f.a.createElement(m, {
+                    title: "\u542f\u7528SSO\u5355\u70b9\u767b\u5f55",
+                    description: "\u542f\u7528\u540e\u767b\u5f55\u9875\u5c06\u663e\u793a\u5355\u70b9\u767b\u5f55\u5165\u53e3\uff0c\u5f00\u59cbCasdoor\u6388\u6743\u6d41\u7a0b\u3002"
+                }, f.a.createElement(l["a"], {
+                    checked: parseInt(k.sso_login_enable || 0),
+                    onChange: e=>this.set("sso", "sso_login_enable", e ? 1 : 0)
+                })), f.a.createElement(m, {
+                    title: "Casdoor Endpoint",
+                    description: "\u7aef\u70b9\u5730\u5740\uff0c\u9700\u8981\u8bbf\u95ee /.well-known/openid-configuration\uff0c\u4f8b\u5982 https://door.casdoor.com"
+                }, f.a.createElement("input", {
+                    type: "text",
+                    className: "form-control",
+                    placeholder: "https://door.casdoor.com",
+                    defaultValue: k.sso_casdoor_endpoint,
+                    onChange: e=>this.set("sso", "sso_casdoor_endpoint", e.target.value)
+                })), f.a.createElement(m, {
+                    title: "Client ID",
+                    description: "\u4eceCasdoor\u83b7\u53d6\u7684\u5ba2\u6237\u7aefID\u3002"
+                }, f.a.createElement("input", {
+                    type: "text",
+                    className: "form-control",
+                    placeholder: "client id",
+                    defaultValue: k.sso_casdoor_client_id,
+                    onChange: e=>this.set("sso", "sso_casdoor_client_id", e.target.value)
+                })), f.a.createElement(m, {
+                    title: "Client Secret",
+                    description: "\u4eceCasdoor\u83b7\u53d6\u7684\u5ba2\u6237\u7aefSecret\u3002"
+                }, f.a.createElement("input", {
+                    type: "text",
+                    className: "form-control",
+                    placeholder: "client secret",
+                    defaultValue: k.sso_casdoor_client_secret,
+                    onChange: e=>this.set("sso", "sso_casdoor_client_secret", e.target.value)
+                })), f.a.createElement(m, {
+                    title: "\u8303\u56f4(Scope)",
+                    description: "\u627e\u56de\u90ae\u7bb1\u9700\u8981\u5305\u542bopenid profile email\u3002"
+                }, f.a.createElement("input", {
+                    type: "text",
+                    className: "form-control",
+                    placeholder: "openid profile email",
+                    defaultValue: k.sso_casdoor_scope,
+                    onChange: e=>this.set("sso", "sso_casdoor_scope", e.target.value)
+                })), f.a.createElement(m, {
+                    title: "\u56de\u8c03\u5730\u5740",
+                    description: "\u4e0eCasdoor\u5e94\u7528\u4e0a\u914d\u7f6e\u7684\u56de\u8c03\u5730\u5740\u4fdd\u6301\u4e00\u81f4\u3002"
+                }, f.a.createElement("input", {
+                    type: "text",
+                    className: "form-control",
+                    placeholder: k.sso_callback_suggest || "",
+                    defaultValue: k.sso_callback_url,
+                    onChange: e=>this.set("sso", "sso_callback_url", e.target.value)
                 })))), f.a.createElement(s["a"].TabPane, {
                     tab: "APP",
                     key: "app"
@@ -17102,6 +17159,7 @@ class E extends d.a.Component {
             server: {},
             email: {},
             telegram: {},
+            sso: {},
             app: {},
             safe: {},
             tabs: "site",

@@ -288,6 +288,16 @@ class ConfigController extends Controller
                 'telegram_discuss_link' => config('v2board.telegram_discuss_link'),
                 'telegram_login_enable' => config('v2board.telegram_login_enable', 0)
             ],
+            'sso' => [
+                'sso_login_enable' => (int)config('v2board.sso_login_enable', 0),
+                'sso_provider' => config('v2board.sso_provider', 'casdoor'),
+                'sso_casdoor_endpoint' => config('v2board.sso_casdoor_endpoint'),
+                'sso_casdoor_client_id' => config('v2board.sso_casdoor_client_id'),
+                'sso_casdoor_client_secret' => config('v2board.sso_casdoor_client_secret'),
+                'sso_casdoor_scope' => config('v2board.sso_casdoor_scope', 'openid profile email'),
+                'sso_callback_url' => config('v2board.sso_callback_url'),
+                'sso_callback_suggest' => $this->buildDefaultSsoCallbackUrl()
+            ],
             'app' => [
                 'windows_version' => config('v2board.windows_version'),
                 'windows_download_url' => config('v2board.windows_download_url'),
@@ -360,5 +370,16 @@ class ConfigController extends Controller
         return response([
             'data' => true
         ]);
+    }
+
+    private function buildDefaultSsoCallbackUrl(): string
+    {
+        if ($custom = config('v2board.sso_callback_url')) {
+            return $custom;
+        }
+        if ($appUrl = config('v2board.app_url')) {
+            return rtrim($appUrl, '/') . '/api/v1/passport/auth/sso/callback';
+        }
+        return url('/api/v1/passport/auth/sso/callback');
     }
 }

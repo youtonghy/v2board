@@ -42,7 +42,9 @@
                 'fa-IR'
             ],
             logo: '{{$logo}}',
-            telegram_login_enable: {{$telegram_login_enable}}
+            telegram_login_enable: {{$telegram_login_enable}},
+            sso_login_enable: {{$sso_login_enable ?? 0}},
+            sso_provider: '{{$sso_provider ?? 'casdoor'}}'
         }
     </script>
     <script src="/theme/{{$theme}}/assets/i18n/zh-CN.js?v={{$version}}"></script>

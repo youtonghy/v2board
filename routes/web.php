@@ -26,7 +26,9 @@ Route::get('/', function (Request $request) {
         'version' => config('app.version'),
         'description' => config('v2board.app_description', 'V2Board is best'),
         'logo' => config('v2board.logo'),
-        'telegram_login_enable' => (int)config('v2board.telegram_login_enable', 0)
+        'telegram_login_enable' => (int)config('v2board.telegram_login_enable', 0),
+        'sso_login_enable' => (int)config('v2board.sso_login_enable', 0),
+        'sso_provider' => config('v2board.sso_provider', 'casdoor')
     ];
 
     if (!config("theme.{$renderParams['theme']}")) {
