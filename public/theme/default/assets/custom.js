@@ -1,3 +1,18 @@
+function findAuthActionContainer() {
+    var container = document.querySelector('.v2board-auth-box .form-group.mb-0');
+    if (!container) {
+        container = document.querySelector('.form-group.mb-0');
+    }
+    if (!container) {
+        var candidates = document.querySelectorAll('.v2board-auth-box .block-content button.btn');
+        if (candidates.length) {
+            var lastButton = candidates[candidates.length - 1];
+            container = lastButton ? lastButton.parentNode : null;
+        }
+    }
+    return container;
+}
+
 (function () {
     var globalSettings = window.settings || {};
     if (!globalSettings || parseInt(globalSettings.telegram_login_enable, 10) !== 1) {
@@ -122,23 +137,23 @@
         if (!state.button) return;
         state.button.disabled = false;
         state.button.textContent = state.defaultText;
-        state.button.classList.remove('btn-primary');
-        state.button.classList.add('btn-outline-primary');
+        state.button.classList.remove('btn-secondary');
+        state.button.classList.add('btn-primary');
     }
 
     function setButtonLoading() {
         if (!state.button) return;
         state.button.disabled = true;
         state.button.textContent = '发送请求中...';
-        state.button.classList.remove('btn-outline-primary');
-        state.button.classList.add('btn-primary');
+        state.button.classList.remove('btn-primary');
+        state.button.classList.add('btn-secondary');
     }
 
     function setButtonLoggingIn() {
         if (!state.button) return;
         state.button.disabled = true;
         state.button.textContent = '正在登录...';
-        state.button.classList.remove('btn-outline-primary');
+        state.button.classList.remove('btn-secondary');
         state.button.classList.add('btn-primary');
     }
 
@@ -146,7 +161,7 @@
         if (!state.button) return;
         state.button.disabled = true;
         state.button.textContent = '等待 Telegram 确认...';
-        state.button.classList.remove('btn-outline-primary');
+        state.button.classList.remove('btn-secondary');
         state.button.classList.add('btn-primary');
     }
 
@@ -161,15 +176,20 @@
             state.button = null;
         }
         if (state.button) return;
-        var loginButton = document.querySelector('.form-group.mb-0 button.btn-primary');
-        if (!loginButton) return;
+        var formGroup = findAuthActionContainer();
+        if (!formGroup) return;
+        var loginButton = formGroup.querySelector('button.btn-primary');
         var btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = 'btn btn-block btn-outline-primary font-w400 mt-3';
+        btn.className = 'btn btn-block btn-primary font-w400 mt-3';
         btn.setAttribute('data-telegram-login-button', '1');
         btn.textContent = state.defaultText;
         btn.addEventListener('click', onTelegramLoginClick);
-        loginButton.parentNode.appendChild(btn);
+        if (loginButton && loginButton.parentNode) {
+            loginButton.parentNode.appendChild(btn);
+        } else {
+            formGroup.appendChild(btn);
+        }
         state.button = btn;
         setButtonIdle();
     }
@@ -468,6 +488,217 @@
                 closeOverlay(true);
             }
         });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+(function () {
+    var settings = window.settings || {};
+    if (!settings || parseInt(settings.sso_login_enable, 10) !== 1) {
+        return;
+    }
+
+    var ssoState = {
+        button: null,
+        attachTimer: null,
+        loading: false,
+        defaultText: 'SSO 单点登录',
+        displayedError: null
+    };
+
+    function isLoginPage() {
+        var hash = window.location.hash || '';
+        return hash.indexOf('#/login') === 0;
+    }
+
+    function parseHashParams() {
+        var hash = window.location.hash || '';
+        var query = hash.split('?')[1] || '';
+        if (!query) {
+            return null;
+        }
+        try {
+            return new URLSearchParams(query);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function getSsoErrorFromHash() {
+        var params = parseHashParams();
+        if (!params) return null;
+        var error = params.get('sso_error');
+        if (!error) return null;
+        try {
+            return decodeURIComponent(error);
+        } catch (err) {
+            return error;
+        }
+    }
+
+    function showErrorFromHash() {
+        var error = getSsoErrorFromHash();
+        if (!error || error === ssoState.displayedError) {
+            return;
+        }
+        ssoState.displayedError = error;
+        showToast(error, 'error');
+    }
+
+    function getRedirectParam() {
+        var params = parseHashParams();
+        if (!params) return null;
+        var redirect = params.get('redirect');
+        if (!redirect) return null;
+        try {
+            return decodeURIComponent(redirect);
+        } catch (err) {
+            return redirect;
+        }
+    }
+
+    function ensureButton() {
+        if (!isLoginPage()) {
+            removeButton();
+            return;
+        }
+        if (ssoState.button && !document.body.contains(ssoState.button)) {
+            ssoState.button = null;
+        }
+        if (ssoState.button) {
+            return;
+        }
+        var container = findAuthActionContainer();
+        if (!container) return;
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-block btn-primary font-w400 mt-3';
+        btn.textContent = ssoState.defaultText;
+        btn.addEventListener('click', startSsoLogin);
+        container.appendChild(btn);
+        ssoState.button = btn;
+        setButtonIdle();
+    }
+
+    function removeButton() {
+        if (ssoState.button && ssoState.button.parentNode) {
+            ssoState.button.parentNode.removeChild(ssoState.button);
+        }
+        ssoState.button = null;
+        ssoState.loading = false;
+    }
+
+    function setButtonIdle() {
+        if (!ssoState.button) return;
+        ssoState.button.disabled = false;
+        ssoState.button.textContent = ssoState.defaultText;
+        ssoState.button.classList.remove('btn-secondary');
+        ssoState.button.classList.add('btn-primary');
+    }
+
+    function setButtonLoading() {
+        if (!ssoState.button) return;
+        ssoState.button.disabled = true;
+        ssoState.button.textContent = '正在跳转...';
+        ssoState.button.classList.remove('btn-primary');
+        ssoState.button.classList.add('btn-secondary');
+    }
+
+    function showToast(message, type) {
+        var el = document.getElementById('sso-login-toast');
+        if (!el) {
+            el = document.createElement('div');
+            el.id = 'sso-login-toast';
+            el.style.position = 'fixed';
+            el.style.left = '50%';
+            el.style.bottom = '40px';
+            el.style.transform = 'translateX(-50%)';
+            el.style.padding = '10px 18px';
+            el.style.borderRadius = '6px';
+            el.style.color = '#fff';
+            el.style.fontSize = '14px';
+            el.style.lineHeight = '1.4';
+            el.style.maxWidth = '320px';
+            el.style.boxShadow = '0 10px 30px rgba(0,0,0,0.15)';
+            el.style.zIndex = '3333';
+            el.style.opacity = '0';
+            el.style.transition = 'opacity .25s ease, transform .25s ease';
+            document.body.appendChild(el);
+        }
+        var colors = {
+            error: '#dc3545',
+            success: '#16a34a',
+            info: '#0d6efd'
+        };
+        el.textContent = message;
+        el.style.backgroundColor = colors[type] || 'rgba(0,0,0,0.85)';
+        el.style.display = 'block';
+        el.style.transform = 'translate(-50%, 0)';
+        requestAnimationFrame(function () {
+            el.style.opacity = '1';
+        });
+        clearTimeout(showToast._timer);
+        showToast._timer = setTimeout(function () {
+            el.style.opacity = '0';
+            setTimeout(function () {
+                el.style.display = 'none';
+            }, 260);
+        }, 3000);
+    }
+
+    function startSsoLogin() {
+        if (ssoState.loading) {
+            return;
+        }
+        ssoState.loading = true;
+        setButtonLoading();
+        var redirect = getRedirectParam();
+        var url = '/api/v1/passport/auth/sso/init';
+        if (redirect) {
+            url += '?redirect=' + encodeURIComponent(redirect);
+        }
+        fetchJson(url).then(function (body) {
+            var target = body && body.data ? body.data.url : null;
+            if (!target) {
+                throw new Error('服务器未返回登录链接，请稍后重试。');
+            }
+            window.location.href = target;
+        }).catch(function (err) {
+            ssoState.loading = false;
+            setButtonIdle();
+            showToast(err && err.message ? err.message : '请求失败，请稍后再试。', 'error');
+        });
+    }
+
+    function fetchJson(url) {
+        return fetch(url, {
+            method: 'GET',
+            credentials: 'include'
+        }).then(function (response) {
+            return response.json().catch(function () {
+                return {};
+            }).then(function (body) {
+                if (!response.ok) {
+                    var message = body && body.message ? body.message : '请求失败，请稍后再试。';
+                    throw new Error(message);
+                }
+                return body;
+            });
+        });
+    }
+
+    function init() {
+        ensureButton();
+        ssoState.attachTimer = setInterval(ensureButton, 1200);
+        window.addEventListener('hashchange', function () {
+            setTimeout(ensureButton, 150);
+            showErrorFromHash();
+        });
+        setTimeout(showErrorFromHash, 120);
     }
 
     if (document.readyState === 'loading') {

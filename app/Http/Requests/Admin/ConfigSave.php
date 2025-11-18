@@ -112,6 +112,14 @@ class ConfigSave extends FormRequest
         'password_limit_enable' => 'in:0,1',
         'password_limit_count' => 'integer',
         'password_limit_expire' => 'integer',
+        // sso
+        'sso_login_enable' => 'in:0,1',
+        'sso_provider' => 'nullable|in:casdoor',
+        'sso_casdoor_endpoint' => 'nullable|url',
+        'sso_casdoor_client_id' => 'nullable|string',
+        'sso_casdoor_client_secret' => 'nullable|string',
+        'sso_casdoor_scope' => 'nullable|string',
+        'sso_callback_url' => 'nullable|url',
     ];
     /**
      * Get the validation rules that apply to the request.
@@ -123,7 +131,7 @@ class ConfigSave extends FormRequest
         $rules = self::RULES;
 
         $rules['deposit_bounus'] = array_merge(
-            is_array($rules['deposit_bounus']) ? $rules['deposit_bounus'] : (array)$rules['deposit_bounus'],
+            $this->normalizeRule($rules['deposit_bounus']),
             [function ($attribute, $value, $fail) {
                 if (!is_array($value)) {
                     return;
@@ -139,7 +147,7 @@ class ConfigSave extends FormRequest
             }]
         );
         $rules['email_oauth_client_id'] = array_merge(
-            is_array($rules['email_oauth_client_id']) ? $rules['email_oauth_client_id'] : [$rules['email_oauth_client_id']],
+            $this->normalizeRule($rules['email_oauth_client_id']),
             [function ($attribute, $value, $fail) {
                 if ((int)$this->input('email_oauth_enable', config('v2board.email_oauth_enable', 0)) !== 1) {
                     return;
@@ -150,7 +158,7 @@ class ConfigSave extends FormRequest
             }]
         );
         $rules['email_oauth_client_secret'] = array_merge(
-            is_array($rules['email_oauth_client_secret']) ? $rules['email_oauth_client_secret'] : [$rules['email_oauth_client_secret']],
+            $this->normalizeRule($rules['email_oauth_client_secret']),
             [function ($attribute, $value, $fail) {
                 if ((int)$this->input('email_oauth_enable', config('v2board.email_oauth_enable', 0)) !== 1) {
                     return;
@@ -161,13 +169,49 @@ class ConfigSave extends FormRequest
             }]
         );
         $rules['email_oauth_refresh_token'] = array_merge(
-            is_array($rules['email_oauth_refresh_token']) ? $rules['email_oauth_refresh_token'] : [$rules['email_oauth_refresh_token']],
+            $this->normalizeRule($rules['email_oauth_refresh_token']),
             [function ($attribute, $value, $fail) {
                 if ((int)$this->input('email_oauth_enable', config('v2board.email_oauth_enable', 0)) !== 1) {
                     return;
                 }
                 if (empty($value)) {
                     $fail('启用OAuth 2.0时，Refresh Token不能为空');
+                }
+            }]
+        );
+        $rules['sso_casdoor_endpoint'] = array_merge(
+            $this->normalizeRule($rules['sso_casdoor_endpoint']),
+            [function ($attribute, $value, $fail) {
+                if ((int)$this->input('sso_login_enable', config('v2board.sso_login_enable', 0)) !== 1) {
+                    return;
+                }
+                $endpoint = $value ?: config('v2board.sso_casdoor_endpoint');
+                if (empty($endpoint)) {
+                    $fail('启用SSO时，Casdoor Endpoint不能为空');
+                }
+            }]
+        );
+        $rules['sso_casdoor_client_id'] = array_merge(
+            $this->normalizeRule($rules['sso_casdoor_client_id']),
+            [function ($attribute, $value, $fail) {
+                if ((int)$this->input('sso_login_enable', config('v2board.sso_login_enable', 0)) !== 1) {
+                    return;
+                }
+                $clientId = $value ?: config('v2board.sso_casdoor_client_id');
+                if (empty($clientId)) {
+                    $fail('启用SSO时，Casdoor Client ID不能为空');
+                }
+            }]
+        );
+        $rules['sso_casdoor_client_secret'] = array_merge(
+            $this->normalizeRule($rules['sso_casdoor_client_secret']),
+            [function ($attribute, $value, $fail) {
+                if ((int)$this->input('sso_login_enable', config('v2board.sso_login_enable', 0)) !== 1) {
+                    return;
+                }
+                $clientSecret = $value ?: config('v2board.sso_casdoor_client_secret');
+                if (empty($clientSecret)) {
+                    $fail('启用SSO时，Casdoor Client Secret不能为空');
                 }
             }]
         );
@@ -188,5 +232,16 @@ class ConfigSave extends FormRequest
             'secure_path.min' => '后台路径长度最小为8位',
             'secure_path.regex' => '后台路径只能为字母或数字',
         ];
+    }
+
+    private function normalizeRule($rule): array
+    {
+        if (is_array($rule)) {
+            return $rule;
+        }
+        if (is_string($rule)) {
+            return array_filter(explode('|', $rule));
+        }
+        return (array)$rule;
     }
 }
