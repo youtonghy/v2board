@@ -120,6 +120,7 @@ class ConfigSave extends FormRequest
         'sso_casdoor_client_secret' => 'nullable|string',
         'sso_casdoor_scope' => 'nullable|string',
         'sso_callback_url' => 'nullable|url',
+        'sso_auto_register' => 'nullable|in:0,1',
     ];
     /**
      * Get the validation rules that apply to the request.

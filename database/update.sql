@@ -20,6 +20,13 @@ ALTER TABLE `v2_user`
 ADD `commission_rate` int(11) NULL AFTER `password`;
 
 ALTER TABLE `v2_user`
+ADD `sso_provider` varchar(32) NULL AFTER `token`,
+ADD `sso_subject` varchar(191) NULL AFTER `sso_provider`;
+
+ALTER TABLE `v2_user`
+ADD UNIQUE `v2_user_sso_unique` (`sso_provider`, `sso_subject`);
+
+ALTER TABLE `v2_user`
 ADD `balance` int(11) NOT NULL DEFAULT '0' AFTER `password`;
 
 CREATE TABLE `v2_notice` (

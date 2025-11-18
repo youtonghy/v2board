@@ -6540,6 +6540,12 @@
                     defaultValue: k.sso_casdoor_client_secret,
                     onChange: e=>this.set("sso", "sso_casdoor_client_secret", e.target.value)
                 })), f.a.createElement(m, {
+                    title: "\u81ea\u52a8\u6ce8\u518c\u65b0\u7528\u6237",
+                    description: "\u5173\u95ed\u540e\u65b0\u7528\u6237\u5fc5\u987b\u5148\u5728\u4e2a\u4eba\u4e2d\u5fc3\u7ed1\u5b9a SSO \u540e\u624d\u80fd\u7528 SSO \u767b\u5f55\u3002"
+                }, f.a.createElement(l["a"], {
+                    checked: parseInt(k.sso_auto_register || 0),
+                    onChange: e=>this.set("sso", "sso_auto_register", e ? 1 : 0)
+                })), f.a.createElement(m, {
                     title: "\u8303\u56f4(Scope)",
                     description: "\u627e\u56de\u90ae\u7bb1\u9700\u8981\u5305\u542bopenid profile email\u3002"
                 }, f.a.createElement("input", {

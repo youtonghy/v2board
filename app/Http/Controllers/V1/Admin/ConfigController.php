@@ -296,6 +296,7 @@ class ConfigController extends Controller
                 'sso_casdoor_client_secret' => config('v2board.sso_casdoor_client_secret'),
                 'sso_casdoor_scope' => config('v2board.sso_casdoor_scope', 'openid profile email'),
                 'sso_callback_url' => config('v2board.sso_callback_url'),
+                'sso_auto_register' => (int)config('v2board.sso_auto_register', 1),
                 'sso_callback_suggest' => $this->buildDefaultSsoCallbackUrl()
             ],
             'app' => [

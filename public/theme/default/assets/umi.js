@@ -15884,7 +15884,26 @@
                 }),
                 this.props.dispatch({
                     type: "comm/config"
-                })
+                }),
+                this.handleSsoHashMessage()
+            }
+            handleSsoHashMessage() {
+                var e = window.location.hash || "";
+                if (!e || e.indexOf("?") === -1)
+                    return;
+                var t = e.split("?")[1];
+                try {
+                    var n = new URLSearchParams(t)
+                      , r = n.get("sso_message")
+                      , o = n.get("sso_error");
+                    r ? c["a"].success(r) : o && c["a"].error(o);
+                    if (r || o)
+                        if (window.history && window.history.replaceState) {
+                            var i = e.split("?")[0];
+                            window.history.replaceState(null, document.title, window.location.href.split("#")[0] + i)
+                        } else
+                            window.location.hash = e.split("?")[0]
+                } catch (a) {}
             }
             changePassword() {
                 if (this.refs.re_password.value !== this.refs.new_password.value)
@@ -15964,6 +15983,47 @@
                                 });
                             }
                         });
+                    },
+                    onCancel() {},
+                    okText: Object(m["formatMessage"])({
+                        id: "\u786e\u8ba4"
+                    }),
+                    cancelText: Object(m["formatMessage"])({
+                        id: "\u53d6\u6d88"
+                    })
+                })
+            }
+            bindSso() {
+                Object(d["a"])("/user/sso/init").then(e=>{
+                    if (200 === e.code && e.data && e.data.url) {
+                        window.location.href = e.data.url;
+                        return;
+                    }
+                    e.message && c["a"].error(e.message);
+                }
+                )
+            }
+            unbindSso() {
+                var e = this;
+                s["a"].confirm({
+                    title: Object(m["formatMessage"])({
+                        id: "\u786e\u5b9a\u8981\u89e3\u9664SSO\u7ed1\u5b9a\uff1f"
+                    }),
+                    content: Object(m["formatMessage"])({
+                        id: "\u89e3\u9664\u540e\u5c06\u65e0\u6cd5\u4f7f\u7528SSO\u767b\u5f55\uff0c\u9700\u8981\u91cd\u65b0\u7ed1\u5b9a\u3002"
+                    }),
+                    onOk() {
+                        Object(d["a"])("/user/sso/unbind").then(t=>{
+                            if (200 === t.code) {
+                                c["a"].success(Object(m["formatMessage"])({
+                                    id: "SSO\u7ed1\u5b9a\u5df2\u89e3\u9664"
+                                }));
+                                e.props.dispatch({
+                                    type: "user/getUserInfo"
+                                })
+                            }
+                        }
+                        )
                     },
                     onCancel() {},
                     okText: Object(m["formatMessage"])({
@@ -16222,7 +16282,48 @@
                     className: "block-options"
                 }, Object(m["formatMessage"])({
                     id: "Telegram ID: " + String(t.telegram_id)
-                })))) : l.a.createElement(l.a.Fragment, null), r.telegram_discuss_link ? l.a.createElement("div", {
+                })))) : l.a.createElement(l.a.Fragment, null), r.sso_login_enable ? (!t.sso_subject ? l.a.createElement("div", {
+                    className: "block block-rounded bind_sso"
+                }, l.a.createElement("div", {
+                    className: "block-header block-header-default"
+                }, l.a.createElement("h3", {
+                    className: "block-title"
+                }, Object(m["formatMessage"])({
+                    id: "\u7ed1\u5b9aSSO"
+                })), l.a.createElement("div", {
+                    className: "block-options"
+                }, l.a.createElement("button", {
+                    type: "button",
+                    className: "btn btn-primary btn-sm btn-primary btn-rounded px-3",
+                    onClick: ()=>this.bindSso()
+                }, Object(m["formatMessage"])({
+                    id: "\u7acb\u5373\u7ed1\u5b9a"
+                })))), l.a.createElement("div", {
+                    className: "block-content text-muted"
+                }, Object(m["formatMessage"])({
+                    id: r.sso_auto_register ? "\u7ed1\u5b9a\u540e\u53ef\u4ee5\u76f4\u63a5\u4f7f\u7528SSO\u767b\u5f55" : "\u672a\u7ed1\u5b9a\u5c06\u65e0\u6cd5\u4f7f\u7528SSO\u767b\u5f55"
+                }))) : l.a.createElement("div", {
+                    className: "block block-rounded unbind_sso"
+                }, l.a.createElement("div", {
+                    className: "block-header block-header-default"
+                }, l.a.createElement("h3", {
+                    className: "block-title"
+                }, Object(m["formatMessage"])({
+                    id: "\u7ed1\u5b9aSSO"
+                })), l.a.createElement("div", {
+                    className: "block-options"
+                }, l.a.createElement(a["a"], {
+                    type: "danger",
+                    onClick: ()=>this.unbindSso()
+                }, Object(m["formatMessage"])({
+                    id: "\u89e3\u9664\u7ed1\u5b9a"
+                })))), l.a.createElement("div", {
+                    className: "block-content"
+                }, Object(m["formatMessage"])({
+                    id: "\u5f53\u524d\u7ed1\u5b9aID"
+                }), ": ", l.a.createElement("span", {
+                    className: "font-weight-bold"
+                }, t.sso_subject || "-")))) : l.a.createElement(l.a.Fragment, null), r.telegram_discuss_link ? l.a.createElement("div", {
                     className: "block block-rounded join_telegram_disscuss"
                 }, l.a.createElement("div", {
                     className: "block-header block-header-default"
