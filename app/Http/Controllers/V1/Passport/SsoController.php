@@ -13,18 +13,93 @@ use Illuminate\Support\Str;
 
 class SsoController extends Controller
 {
+    private const MODE_LOGIN = 'login';
+    private const MODE_BIND = 'bind';
+
     public function init(Request $request, CasdoorService $casdoorService)
     {
         $this->assertSsoEnabled();
 
         $redirect = $this->sanitizeRedirect($request->input('redirect'));
+        return $this->respondAuthorizeUrl($casdoorService, [
+            'redirect' => $redirect,
+            'mode' => self::MODE_LOGIN,
+        ]);
+    }
+
+    public function bindInit(Request $request, CasdoorService $casdoorService)
+    {
+        $this->assertSsoEnabled();
+
+        return $this->respondAuthorizeUrl($casdoorService, [
+            'mode' => self::MODE_BIND,
+            'user_id' => $request->user['id'],
+        ]);
+    }
+
+    public function callback(Request $request, CasdoorService $casdoorService)
+    {
+        $this->assertSsoEnabled();
+
+        if ($error = $request->input('error')) {
+            return $this->redirectFlowError([], $request->input('error_description', $error));
+        }
+
+        $state = (string)$request->input('state');
+        $code = (string)$request->input('code');
+        if ($state === '' || $code === '') {
+            return $this->redirectFlowError([], '缺少必要的授权参数');
+        }
+
+        $statePayload = Cache::pull($this->stateCacheKey($state));
+        if (!$statePayload) {
+            return $this->redirectToLoginError('登录请求已失效，请重试');
+        }
+
+        try {
+            $tokenData = $casdoorService->exchangeCode($code);
+        } catch (\Throwable $e) {
+            return $this->redirectFlowError($statePayload, $e->getMessage());
+        }
+
+        $accessToken = $tokenData['access_token'] ?? null;
+        if (!$accessToken) {
+            return $this->redirectFlowError($statePayload, 'SSO 返回的令牌无效');
+        }
+
+        try {
+            $profile = $casdoorService->fetchUserInfo($accessToken);
+        } catch (\Throwable $e) {
+            return $this->redirectFlowError($statePayload, $e->getMessage());
+        }
+
+        $mode = $statePayload['mode'] ?? self::MODE_LOGIN;
+        if ($mode === self::MODE_BIND) {
+            return $this->handleBindCallback($statePayload, $profile);
+        }
+
+        $user = $this->findOrCreateUser($profile);
+        if ($user->banned) {
+            return $this->redirectToLoginError(__('Your account has been suspended'));
+        }
+
+        $user->last_login_at = time();
+        $user->save();
+
+        $verify = Helper::guid();
+        Cache::put(CacheKey::get('TEMP_TOKEN', $verify), $user->id, 120);
+        $redirect = $statePayload['redirect'] ?? 'dashboard';
+
+        return redirect()->to($this->buildSpaLoginUrl($verify, $redirect));
+    }
+
+    protected function respondAuthorizeUrl(CasdoorService $casdoorService, array $payload)
+    {
         $state = Helper::guid();
         $nonce = Helper::guid();
-        Cache::put($this->stateCacheKey($state), [
-            'redirect' => $redirect,
-            'nonce' => $nonce,
-            'created_at' => time()
-        ], 300);
+        $payload['nonce'] = $nonce;
+        $payload['created_at'] = time();
+        Cache::put($this->stateCacheKey($state), $payload, 300);
 
         try {
             $url = $casdoorService->getAuthorizeUrl($state, $nonce);
@@ -40,77 +115,94 @@ class SsoController extends Controller
         ]);
     }
 
-    public function callback(Request $request, CasdoorService $casdoorService)
+    protected function handleBindCallback(array $statePayload, array $profile)
     {
-        $this->assertSsoEnabled();
-
-        if ($error = $request->input('error')) {
-            return $this->redirectWithError($request->input('error_description', $error));
+        $userId = (int)($statePayload['user_id'] ?? 0);
+        if ($userId <= 0) {
+            return $this->redirectToProfileError('绑定信息已失效，请重试');
         }
-
-        $state = (string)$request->input('state');
-        $code = (string)$request->input('code');
-        if ($state === '' || $code === '') {
-            return $this->redirectWithError('缺少必要的授权参数');
+        $user = User::find($userId);
+        if (!$user) {
+            return $this->redirectToProfileError('用户不存在或已删除');
         }
-
-        $statePayload = Cache::pull($this->stateCacheKey($state));
-        if (!$statePayload) {
-            return $this->redirectWithError('登录请求已失效，请重试');
+        $subject = $this->extractSubject($profile);
+        if ($subject === '') {
+            return $this->redirectToProfileError('SSO 返回的用户标识为空，无法完成绑定');
         }
-
         try {
-            $tokenData = $casdoorService->exchangeCode($code);
+            $this->attachSubjectToUser($user, $subject);
         } catch (\Throwable $e) {
-            return $this->redirectWithError($e->getMessage());
+            return $this->redirectToProfileError($e->getMessage());
         }
-
-        $accessToken = $tokenData['access_token'] ?? null;
-        if (!$accessToken) {
-            return $this->redirectWithError('SSO 返回的令牌无效');
-        }
-
-        try {
-            $profile = $casdoorService->fetchUserInfo($accessToken);
-        } catch (\Throwable $e) {
-            return $this->redirectWithError($e->getMessage());
-        }
-
-        $user = $this->findOrCreateUser($profile);
-        if ($user->banned) {
-            return $this->redirectWithError(__('Your account has been suspended'));
-        }
-
-        $user->last_login_at = time();
-        $user->save();
-
-        $verify = Helper::guid();
-        Cache::put(CacheKey::get('TEMP_TOKEN', $verify), $user->id, 120);
-        $redirect = $statePayload['redirect'] ?? 'dashboard';
-
-        return redirect()->to($this->buildSpaLoginUrl($verify, $redirect));
+        return $this->redirectToProfileSuccess('SSO 绑定成功');
     }
 
     protected function findOrCreateUser(array $profile): User
     {
+        $subject = $this->extractSubject($profile);
+        $user = null;
+        if ($subject !== '') {
+            $user = User::where('sso_provider', 'casdoor')
+                ->where('sso_subject', $subject)
+                ->first();
+        }
+
         $email = (string)($profile['email'] ?? '');
+        if (!$user && $email !== '') {
+            $user = User::where('email', $email)->first();
+        }
+
+        if ($user) {
+            if ($subject !== '' && $user->sso_subject !== $subject) {
+                $this->attachSubjectToUser($user, $subject);
+            }
+            return $user;
+        }
+
+        if ((int)config('v2board.sso_auto_register', 1) !== 1) {
+            abort(403, __('SSO账号尚未绑定，请先在个人中心绑定后再登录'));
+        }
+
         if ($email === '') {
             abort(500, 'SSO 未返回邮箱地址，无法完成登录');
         }
 
-        $user = User::where('email', $email)->first();
-        if ($user) {
-            return $user;
-        }
+        return $this->createUserFromProfile($profile, $subject);
+    }
 
+    protected function createUserFromProfile(array $profile, string $subject): User
+    {
         $user = new User();
-        $user->email = $email;
+        $user->email = (string)$profile['email'];
         $user->password = password_hash(Str::random(48), PASSWORD_DEFAULT);
         $user->uuid = Helper::guid(true);
         $user->token = Helper::guid();
         $user->remarks = 'SSO:' . ($profile['name'] ?? $profile['preferred_username'] ?? 'casdoor');
+        if ($subject !== '') {
+            $user->sso_provider = 'casdoor';
+            $user->sso_subject = $subject;
+        }
         $user->save();
         return $user;
+    }
+
+    protected function attachSubjectToUser(User $user, string $subject): void
+    {
+        if (User::where('sso_provider', 'casdoor')
+            ->where('sso_subject', $subject)
+            ->where('id', '!=', $user->id)
+            ->exists()
+        ) {
+            throw new \RuntimeException('该 SSO 账户已绑定其他用户');
+        }
+        $user->sso_provider = 'casdoor';
+        $user->sso_subject = $subject;
+        $user->save();
+    }
+
+    protected function extractSubject(array $profile): string
+    {
+        return trim((string)($profile['sub'] ?? $profile['id'] ?? ''));
     }
 
     protected function sanitizeRedirect(?string $redirect): string
@@ -136,14 +228,31 @@ class SsoController extends Controller
         return url($path);
     }
 
-    protected function redirectWithError(string $message)
+    protected function redirectToLoginError(string $message)
     {
-        $message = trim($message);
-        if ($message === '') {
-            $message = '单点登录失败，请重试';
-        }
-        $message = mb_substr($message, 0, 120);
+        $message = $this->normalizeMessage($message, '单点登录失败，请重试');
         $target = '/#/login?sso_error=' . urlencode($message);
+        if ($appUrl = config('v2board.app_url')) {
+            return redirect()->to(rtrim($appUrl, '/') . $target);
+        }
+        return redirect()->to(url($target));
+    }
+
+    protected function redirectToProfileSuccess(string $message)
+    {
+        $message = $this->normalizeMessage($message, 'SSO 绑定成功');
+        return $this->redirectToProfile('sso_message', $message);
+    }
+
+    protected function redirectToProfileError(string $message)
+    {
+        $message = $this->normalizeMessage($message, 'SSO 绑定失败，请重试');
+        return $this->redirectToProfile('sso_error', $message);
+    }
+
+    protected function redirectToProfile(string $key, string $message)
+    {
+        $target = '/#/profile?' . $key . '=' . urlencode($message);
         if ($appUrl = config('v2board.app_url')) {
             return redirect()->to(rtrim($appUrl, '/') . $target);
         }
@@ -163,5 +272,23 @@ class SsoController extends Controller
         if (config('v2board.sso_provider', 'casdoor') !== 'casdoor') {
             abort(400, '当前仅支持 Casdoor SSO');
         }
+    }
+
+    protected function redirectFlowError(array $statePayload, string $message)
+    {
+        $mode = $statePayload['mode'] ?? self::MODE_LOGIN;
+        if ($mode === self::MODE_BIND) {
+            return $this->redirectToProfileError($message);
+        }
+        return $this->redirectToLoginError($message);
+    }
+
+    protected function normalizeMessage(string $message, string $fallback): string
+    {
+        $message = trim($message);
+        if ($message === '') {
+            $message = $fallback;
+        }
+        return mb_substr($message, 0, 120);
     }
 }

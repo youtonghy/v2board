@@ -282,7 +282,9 @@ class UserController extends Controller
                 'discount',
                 'commission_rate',
                 'telegram_id',
-                'uuid'
+                'uuid',
+                'sso_subject',
+                'sso_provider'
             ])
             ->first();
         if (!$user) {
@@ -362,6 +364,22 @@ class UserController extends Controller
         }
         if (!$user->update(['telegram_id' => null])) {
             abort(500, __('Unbind telegram failed'));
+        }
+        return response([
+            'data' => true
+        ]);
+    }
+
+    public function unbindSso(Request $request)
+    {
+        $user = User::find($request->user['id']);
+        if (!$user) {
+            abort(500, __('The user does not exist'));
+        }
+        $user->sso_provider = null;
+        $user->sso_subject = null;
+        if (!$user->save()) {
+            abort(500, __('Save failed'));
         }
         return response([
             'data' => true

@@ -586,13 +586,16 @@ CREATE TABLE `v2_user` (
                            `remind_expire` tinyint(4) DEFAULT '1',
                            `remind_traffic` tinyint(4) DEFAULT '1',
                            `token` char(32) NOT NULL,
+                           `sso_provider` varchar(32) DEFAULT NULL,
+                           `sso_subject` varchar(191) DEFAULT NULL,
                            `expired_at` bigint(20) DEFAULT '0',
                            `remarks` text,
                            `created_at` int(11) NOT NULL,
                            `updated_at` int(11) NOT NULL,
                            PRIMARY KEY (`id`),
                            UNIQUE KEY `email` (`email`),
-                           UNIQUE KEY `token` (`token`)
+                           UNIQUE KEY `token` (`token`),
+                           UNIQUE KEY `v2_user_sso_unique` (`sso_provider`,`sso_subject`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
