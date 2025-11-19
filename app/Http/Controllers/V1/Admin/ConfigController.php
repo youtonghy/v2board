@@ -232,6 +232,8 @@ class ConfigController extends Controller
                 'app_url' => config('v2board.app_url'),
                 'subscribe_url' => config('v2board.subscribe_url'),
                 'subscribe_path' => config('v2board.subscribe_path'),
+                'subscribe_ua_whitelist_enable' => (int)config('v2board.subscribe_ua_whitelist_enable', 0),
+                'subscribe_ua_whitelist' => config('v2board.subscribe_ua_whitelist', Dict::SUBSCRIBE_UA_WHITELIST_DEFAULT),
                 'try_out_plan_id' => (int)config('v2board.try_out_plan_id', 0),
                 'try_out_hour' => (int)config('v2board.try_out_hour', 1),
                 'tos_url' => config('v2board.tos_url'),

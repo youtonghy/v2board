@@ -5604,6 +5604,12 @@
             }
         }
         class g extends f.a.Component {
+            constructor(e) {
+                super(e),
+                this.state = {
+                    subscribeUaInput: ""
+                }
+            }
             componentDidMount() {
                 this.props.dispatch({
                     type: "config/fetch"
@@ -5638,6 +5644,82 @@
                 }
                 .bind(this), 1500)
             }
+            appendSubscribeUaValue() {
+                this.addSubscribeUaTag(this.state.subscribeUaInput)
+            }
+            handleSubscribeUaInputKeyDown(e) {
+                ("Enter" === e.key || 13 === e.keyCode || "," === e.key) && (e.preventDefault(),
+                this.addSubscribeUaTag(e.target.value))
+            }
+            addSubscribeUaTag(e) {
+                var t = (e || "").trim();
+                if (!t)
+                    return;
+                var n = this.props.config
+                  , r = n && n.site && Array.isArray(n.site.subscribe_ua_whitelist) ? n.site.subscribe_ua_whitelist.slice() : [];
+                if (-1 !== r.indexOf(t))
+                    return this.setState({
+                        subscribeUaInput: ""
+                    });
+                r.push(t),
+                this.set("site", "subscribe_ua_whitelist", r),
+                this.setState({
+                    subscribeUaInput: ""
+                })
+            }
+            removeSubscribeUaTag(e) {
+                var t = this.props.config
+                  , n = t && t.site && Array.isArray(t.site.subscribe_ua_whitelist) ? t.site.subscribe_ua_whitelist.slice() : [];
+                n.length > e && (n.splice(e, 1),
+                this.set("site", "subscribe_ua_whitelist", n))
+            }
+            renderSubscribeUaWhitelistBlock(t) {
+                if (1 !== parseInt(t.subscribe_ua_whitelist_enable))
+                    return null;
+                var n = Array.isArray(t.subscribe_ua_whitelist) ? t.subscribe_ua_whitelist : []
+                  , r = this.state && this.state.subscribeUaInput ? this.state.subscribeUaInput : ""
+                  , c = n.length ? n.map((t,n)=>f.a.createElement("span", {
+                    key: "ua-".concat(n),
+                    className: "badge badge-primary mr-2",
+                    style: {
+                        fontSize: 12
+                    }
+                }, t, f.a.createElement("span", {
+                    style: {
+                        cursor: "pointer",
+                        marginLeft: 6
+                    },
+                    onClick: ()=>this.removeSubscribeUaTag(n)
+                }, "\u00d7"))) : f.a.createElement("span", {
+                    className: "text-muted"
+                }, "\u6682\u65e0UA\u767d\u540d\u5355");
+                return f.a.createElement(m, {
+                    isChildren: !0,
+                    title: "UA\u767d\u540d\u5355\u89c4\u5219",
+                    description: "\u6bcf\u4e2aUA\u4e00\u4e2a\u6807\u7b7e\uff0c\u652f\u6301\u6dfb\u52a0\u548c\u5220\u9664\u3002"
+                }, f.a.createElement("div", {
+                    className: "text-left"
+                }, f.a.createElement("div", {
+                    className: "mb-2"
+                }, c), f.a.createElement("div", {
+                    className: "input-group"
+                }, f.a.createElement("input", {
+                    type: "text",
+                    className: "form-control",
+                    placeholder: "\u8f93\u5165UA\u5173\u952e\u5b57\u540e\u56de\u8f66",
+                    value: r,
+                    onChange: e=>this.setState({
+                        subscribeUaInput: e.target.value
+                    }),
+                    onKeyDown: e=>this.handleSubscribeUaInputKeyDown(e)
+                }), f.a.createElement("div", {
+                    className: "input-group-append"
+                }, f.a.createElement("button", {
+                    type: "button",
+                    className: "btn btn-primary",
+                    onClick: ()=>this.appendSubscribeUaValue()
+                }, "\u6dfb\u52a0")))))
+            }
             render() {
                 var e = this.props.config
                   , t = e.site
@@ -5656,7 +5738,8 @@
                   , w = e.app
                   , x = e.testSendMailLoading
                   , _ = e.safe
-                  , E = this.props.plan.plans;
+                  , E = this.props.plan.plans
+                  , R = this.renderSubscribeUaWhitelistBlock(t);
                 return f.a.createElement(d["a"], i()({}, this.props, {
                     title: "\u7cfb\u7edf\u914d\u7f6e"
                 }), f.a.createElement("div", {
@@ -5734,6 +5817,12 @@
                     defaultValue: t.subscribe_path,
                     onChange: e => this.set("site", "subscribe_path", e.target.value)
                 })), f.a.createElement(m, {
+                    title: "UA\u767d\u540d\u5355\u6a21\u5f0f",
+                    description: "\u542f\u7528\u540e\u4ec5\u5141\u8bb8\u5728\u5217\u8868\u4e2d\u7684\u5ba2\u6237\u7aefUA\u8bbf\u95ee\u8ba2\u9605\u3002"
+                }, f.a.createElement(l["a"], {
+                    checked: parseInt(t.subscribe_ua_whitelist_enable),
+                    onChange: e => this.set("site", "subscribe_ua_whitelist_enable", e ? 1 : 0)
+                })), R, f.a.createElement(m, {
                     title: "\u7528\u6237\u6761\u6b3e(TOS)URL",
                     description: "\u7528\u4e8e\u8df3\u8f6c\u5230\u7528\u6237\u6761\u6b3e(TOS)"
                 }, f.a.createElement("input", {
@@ -17223,6 +17312,9 @@ class E extends d.a.Component {
                                 case 9:
                                     return "string" === typeof (null === (t = o.data.invite) || void 0 === t ? void 0 : t.commission_withdraw_method) && (o.data.invite.commission_withdraw_method = o.data.invite.commission_withdraw_method.split(",")),
                                     "string" === typeof (null === (i = o.data.site) || void 0 === i ? void 0 : i.email_whitelist_suffix) && (o.data.site.email_whitelist_suffix = o.data.site.email_whitelist_suffix.split(",")),
+                                    "string" === typeof (null === (i = o.data.site) || void 0 === i ? void 0 : i.subscribe_ua_whitelist) && (o.data.site.subscribe_ua_whitelist = o.data.site.subscribe_ua_whitelist.split(/\n|,/).map(function(e) {
+                                        return e.trim()
+                                    }).filter(Boolean)),
                                     "string" === typeof (null === (j = o.data.deposit) || void 0 === j ? void 0 : j.deposit_bounus) && (o.data.deposit.deposit_bounus = o.data.deposit.deposit_bounus.split(",")),
                                     e.next = 13,
                                     r({
