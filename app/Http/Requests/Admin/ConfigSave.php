@@ -36,6 +36,8 @@ class ConfigSave extends FormRequest
         'app_url' => 'nullable|url',
         'subscribe_url' => 'nullable',
         'subscribe_path' => 'nullable|regex:/^\\//',
+        'subscribe_ua_whitelist_enable' => 'in:0,1',
+        'subscribe_ua_whitelist' => 'nullable|array',
         'try_out_enable' => 'in:0,1',
         'try_out_plan_id' => 'integer',
         'try_out_hour' => 'numeric',

@@ -20,4 +20,32 @@ class Dict
         'USDT',
         'Paypal'
     ];
+
+    CONST SUBSCRIBE_UA_WHITELIST_DEFAULT = [
+        'clash',
+        'clashmeta',
+        'clash-meta',
+        'clash verge',
+        'clashverge',
+        'sing-box',
+        'singbox',
+        'shadowrocket',
+        'quantumult',
+        'quantumult x',
+        'surge',
+        'loon',
+        'stash',
+        'sagernet',
+        'passwall',
+        'hiddify',
+        'v2rayn',
+        'v2rayng',
+        'v2ray',
+        'v2raytun',
+        'ssrplus',
+        'shadowsocks',
+        'surfboard',
+        'nekobox',
+        'nekoray'
+    ];
 }
