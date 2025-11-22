@@ -1,0 +1,837 @@
+:root {
+  --mono-primary: #111111;
+  --mono-primary-hover: #2a2a2a;
+  --mono-surface: #ffffff;
+  --mono-muted: #6b6b6b;
+  --mono-body: #f4f4f4;
+  --mono-border: #d8d8d8;
+  --mono-text: #1c1c1c;
+  --mono-header: #111111;
+  --mono-sidebar: #f7f7f7;
+  --mono-card-shadow: 0 18px 48px rgba(0, 0, 0, 0.05);
+}
+
+* {
+  box-shadow: none !important;
+}
+
+html,
+body,
+#root,
+#page-container,
+#main-container {
+  background-color: var(--mono-body) !important;
+  color: var(--mono-text) !important;
+  font-family: "Inter", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+}
+
+html {
+  --antd-wave-shadow-color: var(--mono-primary);
+}
+
+a,
+.ant-typography a {
+  color: var(--mono-text) !important;
+  text-decoration: none;
+}
+
+a:hover,
+.ant-typography a:hover {
+  color: #4a4a4a !important;
+}
+
+/* OneUI layout */
+.content,
+.content-full,
+.bg-gray-lighter,
+.bg-body-light {
+  background: var(--mono-body) !important;
+  color: var(--mono-text) !important;
+}
+
+#page-header {
+  background: var(--mono-header) !important;
+  color: #f8f8f8 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+}
+
+#page-header .content-header,
+#page-header .content-header a,
+#page-header .content-header .btn,
+#page-header .content-header i,
+#page-header .content-header span,
+#page-header .text-muted {
+  color: #f8f8f8 !important;
+}
+
+#page-header .btn-dual,
+#page-header .btn-light,
+#page-header .btn-secondary,
+#page-header .btn-hero {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+}
+
+#page-header .btn-dual:hover,
+#page-header .btn-light:hover,
+#page-header .btn-secondary:hover,
+#page-header .btn-hero:hover {
+  background: rgba(255, 255, 255, 0.24) !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+}
+
+#sidebar {
+  background: var(--mono-sidebar) !important;
+  border-right: 1px solid var(--mono-border) !important;
+  color: var(--mono-muted) !important;
+  box-shadow: 20px 0 40px rgba(0, 0, 0, 0.04) !important;
+}
+
+#sidebar .sidebar-content,
+#sidebar .content-side {
+  background: transparent !important;
+}
+
+#sidebar .smini-hidden {
+  display: none !important;
+}
+
+#sidebar.mono-sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+#sidebar .mono-sidebar-brand {
+  padding: 1.4rem 1.5rem 1.1rem;
+  background: linear-gradient(135deg, var(--mono-primary), #2c2c2c) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #f7f7f7 !important;
+}
+
+#sidebar .mono-brand-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: #f7f7f7 !important;
+  text-decoration: none;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  flex: 1;
+  min-width: 0;
+}
+
+#sidebar .mono-brand-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+#sidebar .mono-brand-text {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mono-sidebar-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.2rem 1.2rem 1.4rem;
+}
+
+.mono-sidebar-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.mono-sidebar-scroll::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.mono-sidebar-footer {
+  padding: 1rem 1.2rem 1.4rem;
+  font-size: 0.75rem;
+  color: var(--mono-muted);
+}
+
+.mono-sidebar-footer .v2board-copyright {
+  color: inherit !important;
+  font-weight: 500;
+}
+
+#sidebar .nav-main-heading {
+  color: var(--mono-muted) !important;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  margin: 1.2rem 0 0.4rem;
+}
+
+#sidebar .nav-main-link {
+  color: var(--mono-muted) !important;
+  border-radius: 12px;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+}
+
+#sidebar .nav-main-link .nav-main-link-icon {
+  color: var(--mono-muted) !important;
+  font-size: 1rem;
+  width: 1.25rem;
+  text-align: center;
+  transition: color 0.2s ease;
+}
+
+#sidebar .nav-main-link:hover,
+#sidebar .nav-main-link:focus,
+#sidebar .nav-main-link.active {
+  background: #e6e6e6 !important;
+  color: var(--mono-text) !important;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+#sidebar .nav-main-link:hover .nav-main-link-icon,
+#sidebar .nav-main-link.active .nav-main-link-icon {
+  color: var(--mono-text) !important;
+}
+
+#sidebar .mono-nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+#sidebar .mono-nav-list .nav-main-item {
+  margin-bottom: 0.2rem;
+}
+
+#sidebar .mono-nav-list .nav-main-link-name {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.block,
+.block.block-rounded,
+.block.block-transparent,
+.block.bg-image,
+.card,
+.list-group-item {
+  background: var(--mono-surface) !important;
+  border: 1px solid var(--mono-border) !important;
+  color: var(--mono-text) !important;
+  box-shadow: var(--mono-card-shadow);
+}
+
+.block-header,
+.block-title,
+.block-content,
+.block-content-full {
+  background: transparent !important;
+  color: var(--mono-text) !important;
+}
+
+.bg-white {
+  background: var(--mono-surface) !important;
+  color: var(--mono-text) !important;
+}
+
+.text-muted {
+  color: var(--mono-muted) !important;
+}
+
+.text-primary,
+.font-w600,
+a.text-primary {
+  color: var(--mono-primary) !important;
+}
+
+.bg-primary,
+.badge-primary,
+.label-primary,
+.btn-primary,
+.progress-bar,
+.custom-control-input:checked~.custom-control-label::before,
+.custom-checkbox .custom-control-input:checked~.custom-control-label::before {
+  background: var(--mono-primary) !important;
+  border-color: var(--mono-primary) !important;
+  color: #ffffff !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+  background: var(--mono-primary-hover) !important;
+  border-color: var(--mono-primary-hover) !important;
+  color: #ffffff !important;
+}
+
+.btn-secondary,
+.btn-alt-primary,
+.btn-outline-primary,
+.btn-secondary:focus,
+.btn-alt-primary:focus,
+.btn-outline-primary:focus {
+  background: #e5e5e5 !important;
+  border-color: #cdcdcd !important;
+  color: var(--mono-text) !important;
+}
+
+.btn-secondary:hover,
+.btn-alt-primary:hover,
+.btn-outline-primary:hover {
+  background: #d4d4d4 !important;
+  border-color: #c0c0c0 !important;
+  color: var(--mono-text) !important;
+}
+
+.btn-outline-primary {
+  background: transparent !important;
+  border-color: var(--mono-primary) !important;
+  color: var(--mono-primary) !important;
+}
+
+.btn-outline-primary:hover {
+  color: #ffffff !important;
+  background: var(--mono-primary) !important;
+}
+
+.form-control,
+.form-control:focus,
+.form-control:active,
+.custom-select,
+.custom-select:focus,
+.input-group-text {
+  background: var(--mono-surface) !important;
+  border-color: var(--mono-border) !important;
+  color: var(--mono-text) !important;
+  box-shadow: none !important;
+}
+
+.form-control:focus,
+.custom-select:focus {
+  border-color: var(--mono-primary) !important;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08) !important;
+}
+
+.form-control::placeholder,
+.custom-select::placeholder,
+.input-group-text,
+.form-control-plaintext {
+  color: var(--mono-muted) !important;
+}
+
+.progress {
+  background: #dedede !important;
+  border-radius: 999px !important;
+}
+
+.badge,
+.label {
+  border-radius: 999px !important;
+  padding: 0.35rem 0.75rem !important;
+}
+
+.table,
+.table th,
+.table td,
+.table thead th {
+  border-color: var(--mono-border) !important;
+  color: var(--mono-text) !important;
+}
+
+.table thead th,
+.table thead td {
+  background: #f1f1f1 !important;
+  color: var(--mono-muted) !important;
+}
+
+.timeline-event-icon,
+.text-success,
+.text-info {
+  color: var(--mono-text) !important;
+}
+
+.v2board-background {
+  background-color: var(--mono-body);
+  filter: grayscale(1);
+  opacity: 0.35;
+}
+
+.v2board-auth-box .block,
+.v2board-auth-box .block .bg-white,
+.v2board-auth-box .block .bg-gray-lighter,
+.v2board-auth-box .block-content {
+  background: var(--mono-surface) !important;
+  color: var(--mono-text) !important;
+  border-color: var(--mono-border) !important;
+  box-shadow: var(--mono-card-shadow);
+}
+
+.v2board-auth-box .form-control {
+  background: var(--mono-body) !important;
+  border-color: var(--mono-border) !important;
+  color: var(--mono-text) !important;
+}
+
+.v2board-auth-box .text-muted,
+.v2board-auth-box .font-size-sm,
+.v2board-login-i18n-btn {
+  color: var(--mono-muted) !important;
+}
+
+.v2board-auth-box .bg-gray-lighter {
+  background: var(--mono-body) !important;
+  border-top: 1px solid var(--mono-border) !important;
+}
+
+.ant-layout,
+.ant-layout-content,
+.ant-pro-basicLayout-content {
+  background: var(--mono-body) !important;
+}
+
+.ant-layout-header,
+.ant-pro-global-header,
+.ant-pro-top-nav-header,
+.ant-pro-page-header-wrap-page-header-warp,
+.ant-pro-page-container-children-content {
+  background: var(--mono-surface) !important;
+  color: var(--mono-text) !important;
+  border-bottom: 1px solid var(--mono-border) !important;
+}
+
+.ant-pro-global-header .ant-pro-global-header-index-right,
+.ant-pro-global-header .action {
+  color: var(--mono-text) !important;
+}
+
+.ant-layout-footer {
+  background: var(--mono-surface) !important;
+  color: var(--mono-muted) !important;
+}
+
+.ant-pro-top-nav-header,
+.ant-pro-top-nav-header.light,
+.ant-pro-top-nav-header .ant-pro-top-nav-header-main,
+.ant-pro-top-nav-header.light .ant-pro-top-nav-header-main,
+.ant-pro-top-nav-header .ant-pro-top-nav-header-main .ant-pro-top-nav-header-left {
+  background: var(--mono-surface) !important;
+  color: var(--mono-text) !important;
+  border-bottom: 1px solid var(--mono-border) !important;
+}
+
+.ant-pro-top-nav-header-logo,
+.ant-pro-top-nav-header-logo h1,
+.ant-pro-top-nav-header-logo span {
+  color: var(--mono-text) !important;
+}
+
+.ant-pro-top-nav-header .ant-menu,
+.ant-pro-top-nav-header.light .ant-menu {
+  background: transparent !important;
+}
+
+.ant-pro-top-nav-header .ant-menu-item,
+.ant-pro-top-nav-header .ant-menu-submenu-title,
+.ant-pro-top-nav-header .ant-menu-item a {
+  color: var(--mono-text) !important;
+}
+
+.ant-pro-top-nav-header .ant-menu-item-selected,
+.ant-pro-top-nav-header .ant-menu-item-active,
+.ant-pro-top-nav-header .ant-menu-item:hover {
+  background: #e7e7e7 !important;
+  color: var(--mono-text) !important;
+}
+
+.ant-card,
+.ant-modal-content,
+.ant-drawer-content,
+.ant-popover-inner,
+.ant-dropdown-menu,
+.ant-pro-grid-content,
+.ant-pro-basicLayout-content .ant-page-header {
+  background: var(--mono-surface) !important;
+  color: var(--mono-text) !important;
+  border-color: var(--mono-border) !important;
+}
+
+.ant-card-head-title,
+.ant-card-extra,
+.ant-descriptions-title,
+.ant-statistic-title,
+.ant-typography,
+.ant-typography strong {
+  color: var(--mono-text) !important;
+}
+
+.ant-pro-sider-menu,
+.ant-layout-sider,
+.ant-menu-dark,
+.ant-menu-dark .ant-menu-inline.ant-menu-sub {
+  background: #0d0d0d !important;
+  color: #f5f5f5 !important;
+}
+
+.ant-pro-sider-menu-logo,
+.ant-pro-sider-menu-logo h1,
+.ant-pro-sider-menu-header {
+  background: #0d0d0d !important;
+  color: #f5f5f5 !important;
+}
+
+.ant-menu-dark .ant-menu-item,
+.ant-menu-dark .ant-menu-submenu-title,
+.ant-menu-dark .ant-menu-item>a {
+  color: #dcdcdc !important;
+}
+
+.ant-menu-dark .ant-menu-item-selected,
+.ant-menu-dark .ant-menu-submenu-title:hover,
+.ant-menu-dark .ant-menu-item:hover {
+  background: #191919 !important;
+  color: #ffffff !important;
+}
+
+.ant-menu-dark .ant-menu-item-selected::after {
+  border-right: 3px solid var(--mono-surface) !important;
+}
+
+.ant-menu-light,
+.ant-menu-light .ant-menu-inline.ant-menu-sub {
+  background: var(--mono-surface) !important;
+  color: var(--mono-text) !important;
+}
+
+.ant-menu-light .ant-menu-item,
+.ant-menu-light .ant-menu-item>a,
+.ant-menu-light .ant-menu-submenu-title {
+  color: var(--mono-muted) !important;
+}
+
+.ant-menu-light .ant-menu-item-selected,
+.ant-menu-light .ant-menu-item-active,
+.ant-menu-light .ant-menu-submenu-title:hover,
+.ant-menu-light .ant-menu-item:hover {
+  background: #ededed !important;
+  color: var(--mono-text) !important;
+}
+
+.ant-menu-light .ant-menu-item-selected::after {
+  border-right: 3px solid var(--mono-primary) !important;
+}
+
+.ant-pro-sider-menu.light {
+  background: var(--mono-surface) !important;
+}
+
+.ant-pro-sider-menu.light .ant-pro-sider-menu-logo h1,
+.ant-pro-sider-menu.light .ant-pro-sider-menu-logo {
+  color: var(--mono-text) !important;
+}
+
+.ant-btn {
+  background: var(--mono-surface) !important;
+  border-color: var(--mono-border) !important;
+  color: var(--mono-text) !important;
+}
+
+.ant-btn:hover,
+.ant-btn:focus {
+  border-color: var(--mono-text) !important;
+  color: var(--mono-text) !important;
+}
+
+.ant-btn-primary,
+.ant-switch-checked,
+.ant-slider-track,
+.ant-slider-handle,
+.ant-progress-bg,
+.ant-radio-button-wrapper-checked,
+.ant-tabs-ink-bar,
+.ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn,
+.ant-select-item-option-selected:not(.ant-select-item-option-disabled),
+.ant-pagination-item-active a,
+.ant-pagination-item-active {
+  background: var(--mono-primary) !important;
+  border-color: var(--mono-primary) !important;
+  color: #ffffff !important;
+}
+
+.ant-btn-primary:hover,
+.ant-btn-primary:focus {
+  background: var(--mono-primary-hover) !important;
+  border-color: var(--mono-primary-hover) !important;
+}
+
+.ant-btn-primary[disabled] {
+  background: #a0a0a0 !important;
+  border-color: #a0a0a0 !important;
+}
+
+.ant-input,
+.ant-input-number,
+.ant-select-selector,
+.ant-picker,
+.ant-picker-panel-container,
+.ant-form-item,
+.ant-alert,
+.ant-pagination,
+.ant-switch,
+.ant-statistic,
+.ant-table,
+.ant-descriptions,
+.ant-list,
+.ant-tabs-nav,
+.ant-page-header {
+  border-color: var(--mono-border) !important;
+  color: var(--mono-text) !important;
+}
+
+.ant-input,
+.ant-select-selector,
+.ant-picker,
+.ant-input-affix-wrapper {
+  background: var(--mono-surface) !important;
+  border-color: var(--mono-border) !important;
+  color: var(--mono-text) !important;
+}
+
+.ant-input::placeholder,
+.ant-select-selection-placeholder,
+.ant-picker-input>input::placeholder {
+  color: var(--mono-muted) !important;
+}
+
+.ant-table-thead>tr>th {
+  background: #f8f8f8 !important;
+  color: var(--mono-muted) !important;
+}
+
+.ant-table-tbody>tr>td {
+  background: var(--mono-surface) !important;
+  color: var(--mono-text) !important;
+}
+
+.ant-table-tbody>tr.ant-table-row:hover>td {
+  background: #ededed !important;
+}
+
+.ant-list-item,
+.ant-descriptions-item-content,
+.ant-descriptions-item-label {
+  color: var(--mono-text) !important;
+  border-color: var(--mono-border) !important;
+}
+
+.ant-tag,
+.ant-badge-count,
+.ant-badge-dot,
+.ant-alert-success,
+.ant-alert-info,
+.ant-alert-warning,
+.ant-alert-error,
+.ant-empty-description,
+.ant-message-notice-content,
+.ant-notification-notice,
+.ant-tooltip-inner {
+  background: var(--mono-surface) !important;
+  color: var(--mono-text) !important;
+  border-color: var(--mono-border) !important;
+}
+
+.ant-message-notice-content,
+.ant-notification-notice {
+  border-radius: 8px !important;
+}
+
+.ant-tabs-tab-btn,
+.ant-tabs-extra-content,
+.ant-pagination-item,
+.ant-pagination-prev,
+.ant-pagination-next {
+  color: var(--mono-text) !important;
+}
+
+.ant-pagination-item:hover,
+.ant-pagination-prev:hover a,
+.ant-pagination-next:hover a {
+  border-color: var(--mono-text) !important;
+  color: var(--mono-text) !important;
+}
+
+.ant-steps-item-title,
+.ant-timeline-item-content,
+.ant-comment-content {
+  color: var(--mono-text) !important;
+}
+
+.ant-skeleton,
+.ant-skeleton-paragraph>li,
+.ant-skeleton-title {
+  background: #ebebeb !important;
+}
+
+.ant-statistic-content-prefix,
+.ant-statistic-content-suffix {
+  color: var(--mono-text) !important;
+}
+
+/* Plan Page Styles */
+.mono-plan-page .ant-pro-page-container-children-content {
+  background: transparent !important;
+  border: none !important;
+}
+
+.mono-plan-page .ant-card {
+  background: var(--mono-surface) !important;
+  border: 1px solid var(--mono-border) !important;
+  box-shadow: var(--mono-card-shadow) !important;
+}
+
+.mono-plan-page .plan-card-title,
+.mono-plan-page .plan-card-price {
+  color: var(--mono-text) !important;
+}
+
+.mono-plan-page .plan-card-features li {
+  color: var(--mono-muted) !important;
+}
+
+.mono-plan-page .ant-btn-primary {
+  background: var(--mono-primary) !important;
+  border-color: var(--mono-primary) !important;
+  color: #fff !important;
+}
+
+.mono-plan-page .ant-btn-primary:hover {
+  background: var(--mono-primary-hover) !important;
+  border-color: var(--mono-primary-hover) !important;
+}
+
+/* Plan Detail Page Specifics */
+.mono-plan-page .ant-descriptions-item-label,
+.mono-plan-page .ant-descriptions-item-content,
+.mono-plan-page .ant-typography,
+.mono-plan-page h1,
+.mono-plan-page h2,
+.mono-plan-page h3,
+.mono-plan-page h4,
+.mono-plan-page h5,
+.mono-plan-page h6,
+.mono-plan-page div,
+.mono-plan-page span {
+  color: var(--mono-text) !important;
+}
+
+.mono-plan-page .ant-radio-wrapper,
+.mono-plan-page .ant-checkbox-wrapper {
+  color: var(--mono-text) !important;
+}
+
+.mono-plan-page .ant-radio-checked .ant-radio-inner,
+.mono-plan-page .ant-checkbox-checked .ant-checkbox-inner {
+  border-color: var(--mono-primary) !important;
+  background-color: var(--mono-primary) !important;
+}
+
+.mono-plan-page .ant-radio-inner::after {
+  background-color: #fff !important;
+}
+
+.mono-plan-page .ant-radio-wrapper:hover .ant-radio,
+.mono-plan-page .ant-checkbox-wrapper:hover .ant-checkbox-inner,
+.mono-plan-page .ant-radio:hover .ant-radio-inner,
+.mono-plan-page .ant-checkbox:hover .ant-checkbox-inner {
+  border-color: var(--mono-primary) !important;
+}
+
+/* Fix selection borders if they are blue */
+.mono-plan-page .ant-card-bordered,
+.mono-plan-page .ant-list-item {
+  border-color: var(--mono-border) !important;
+}
+
+.mono-plan-page .ant-pro-check-card-checked {
+  background-color: transparent !important;
+  border-color: var(--mono-primary) !important;
+}
+
+.mono-plan-page .ant-pro-check-card-checked::after {
+  background-color: var(--mono-primary) !important;
+}
+
+/* Ensure inputs are visible */
+.mono-plan-page .ant-input-number,
+.mono-plan-page .ant-input {
+  color: var(--mono-text) !important;
+  background: var(--mono-surface) !important;
+  border-color: var(--mono-border) !important;
+}
+
+/* Force Order Button Visibility */
+.mono-plan-page .btn-primary,
+.mono-plan-page .ant-btn-primary {
+  background-color: var(--mono-primary) !important;
+  border-color: var(--mono-primary) !important;
+  color: #ffffff !important;
+  /* Force white text */
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+
+.mono-plan-page .btn-primary:hover,
+.mono-plan-page .ant-btn-primary:hover,
+.mono-plan-page .btn-primary:focus,
+.mono-plan-page .ant-btn-primary:focus {
+  background-color: var(--mono-primary-hover) !important;
+  border-color: var(--mono-primary-hover) !important;
+  color: #ffffff !important;
+}
+
+/* Payment Cycle / Check Card Styling */
+.mono-plan-page .ant-pro-check-card {
+  background-color: var(--mono-surface) !important;
+  border-color: var(--mono-border) !important;
+  color: var(--mono-text) !important;
+}
+
+.mono-plan-page .ant-pro-check-card-checked {
+  background-color: var(--mono-surface) !important;
+  /* Keep background surface, border indicates selection */
+  border-color: var(--mono-primary) !important;
+}
+
+.mono-plan-page .ant-pro-check-card-checked::after {
+  background-color: var(--mono-primary) !important;
+  /* The checkmark triangle background */
+}
+
+.mono-plan-page .ant-pro-check-card:hover {
+  border-color: var(--mono-primary) !important;
+}
+
+.mono-plan-page .ant-pro-check-card .ant-pro-check-card-description {
+  color: var(--mono-text-secondary) !important;
+}
+
+.mono-plan-page .ant-pro-check-card-checked .ant-typography {
+  color: var(--mono-primary) !important;
+  /* Highlight text when selected if desired, or keep mono-text */
+}

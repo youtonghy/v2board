@@ -1,0 +1,317 @@
+/* Ocean Theme Custom CSS */
+
+:root {
+    --ocean-primary: #4FC3F7;
+    --ocean-primary-dark: #039BE5;
+    --ocean-bg: #E1F5FE;
+    --ocean-card-bg: #FFFFFF;
+    --ocean-text: #01579B;
+    --ocean-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    --ocean-border-radius: 20px;
+}
+
+body {
+    background-color: var(--ocean-bg) !important;
+    color: var(--ocean-text);
+    font-family: 'Nunito', sans-serif;
+    /* Friendly rounded font if available, fallback to sans-serif */
+}
+
+/* 3D Card Effect - Enhanced */
+.ant-card,
+.card,
+.block {
+    border-radius: var(--ocean-border-radius) !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05), 0 0 0 2px #ffffff !important;
+    /* White border for pop */
+    border: none !important;
+    background-color: var(--ocean-card-bg);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    overflow: visible !important;
+    /* Allow shadow to spill */
+}
+
+.ant-card:hover,
+.card:hover,
+.block:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.1), 0 0 0 2px #ffffff !important;
+}
+
+/* Buttons */
+.ant-btn,
+.btn,
+.am-button {
+    border-radius: 50px !important;
+    /* Pill shape */
+    border: none !important;
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.1) !important;
+    /* 3D press effect */
+    font-weight: bold;
+    transition: all 0.1s;
+}
+
+.ant-btn-primary,
+.btn-primary,
+.am-button-primary {
+    background-color: var(--ocean-primary) !important;
+    color: white !important;
+}
+
+.ant-btn:active,
+.btn:active,
+.am-button:active {
+    transform: translateY(4px);
+    box-shadow: none !important;
+}
+
+/* Inputs */
+.ant-input,
+.form-control,
+.am-list-item .am-input-control input {
+    border-radius: 15px !important;
+    background-color: #F1F8E9;
+    /* Very light tint */
+    border: 2px solid transparent !important;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+    padding: 10px 15px;
+}
+
+.ant-input:focus,
+.form-control:focus {
+    background-color: #fff;
+    border-color: var(--ocean-primary) !important;
+    box-shadow: 0 0 0 4px rgba(79, 195, 247, 0.2) !important;
+}
+
+/* Sidebar / Header (if applicable) */
+.ant-layout-sider,
+.sidebar {
+    background-color: white !important;
+    border-right: none !important;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.05);
+}
+
+.ant-layout-header,
+.header {
+    background-color: rgba(255, 255, 255, 0.8) !important;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+/* Typography */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    color: var(--ocean-primary-dark);
+    font-weight: 800 !important;
+    letter-spacing: -0.5px;
+}
+
+/* List Items */
+.am-list-item {
+    border-radius: 15px;
+    margin-bottom: 10px;
+    background: transparent;
+}
+
+.am-list-body {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.am-list-body::before,
+.am-list-body::after {
+    display: none !important;
+}
+
+/* Login Page Specific Styles */
+.v2board-login-page #root {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+/* Login Form Container */
+/* Targeting the likely container based on subagent analysis */
+.v2board-login-page #root>div>div>div>div>div {
+    background: var(--ocean-card-bg);
+    padding: 40px;
+    border-radius: var(--ocean-border-radius);
+    box-shadow: var(--ocean-shadow);
+    border: 2px solid #fff;
+    max-width: 450px;
+    width: 100%;
+}
+
+/* Login Inputs */
+.v2board-login-page .form-control {
+    border-radius: 15px !important;
+    background-color: #f3f8ff !important;
+    border: 2px solid transparent !important;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+    padding: 12px 18px !important;
+    height: auto !important;
+}
+
+/* Login Buttons */
+.v2board-login-page .btn {
+    border-radius: 50px !important;
+    padding: 10px 20px !important;
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.1) !important;
+    font-weight: bold;
+    transition: all 0.1s;
+}
+
+.v2board-login-page .btn-primary {
+    background-color: var(--ocean-primary) !important;
+    border-color: var(--ocean-primary) !important;
+    color: white !important;
+}
+
+.v2board-login-page .btn:active {
+    transform: translateY(4px);
+    box-shadow: none !important;
+}
+
+/* Title Styling */
+.v2board-login-page .font-size-h1 span {
+    color: var(--ocean-primary-dark);
+    font-weight: 800;
+}
+
+/* Plan Page Card Styles */
+.block.block-link-pop.block-rounded {
+    border-radius: var(--ocean-border-radius) !important;
+    box-shadow: var(--ocean-shadow) !important;
+    border: 2px solid #fff !important;
+    background-color: var(--ocean-card-bg);
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.block.block-link-pop.block-rounded:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.1) !important;
+}
+
+.block.block-link-pop.block-rounded .btn-alt-primary {
+    border-radius: 50px !important;
+    border: none !important;
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.1) !important;
+    font-weight: bold;
+    transition: all 0.1s;
+    background-color: var(--ocean-primary) !important;
+    color: white !important;
+}
+
+.block.block-link-pop.block-rounded .btn-alt-primary:active {
+    transform: translateY(4px);
+    box-shadow: none !important;
+}
+
+/* Circular Traffic Progress Styles */
+.ocean-circular-progress {
+    display: flex;
+    flex-direction: row;
+    /* Side by side */
+    align-items: center;
+    justify-content: space-between;
+    /* Space out */
+    padding: 10px 20px;
+}
+
+.circular-chart-container {
+    width: 80px;
+    /* Smaller chart */
+    height: 80px;
+    margin-bottom: 0;
+    margin-left: 20px;
+}
+
+.circular-chart {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.circle-bg {
+    fill: none;
+    stroke: #eee;
+    stroke-width: 3;
+}
+
+.circle {
+    fill: none;
+    stroke-width: 3;
+    stroke-linecap: round;
+    animation: progress 1s ease-out forwards;
+    stroke: var(--ocean-primary);
+    /* Blue for used */
+}
+
+.percentage {
+    fill: var(--ocean-primary-dark);
+    font-family: sans-serif;
+    font-weight: bold;
+    font-size: 0.6em;
+    text-anchor: middle;
+}
+
+.traffic-info {
+    display: flex;
+    flex-direction: column;
+    /* Stack data vertically */
+    align-items: flex-start;
+    font-size: 14px;
+    color: #666;
+    background: transparent;
+    /* Remove bg */
+    padding: 0;
+    box-shadow: none;
+    flex: 1;
+}
+
+.traffic-item {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin: 5px 0;
+    width: 100%;
+}
+
+.traffic-item .label {
+    font-size: 12px;
+    color: #999;
+    margin-right: 10px;
+    width: 40px;
+    /* Fixed width for alignment */
+}
+
+.traffic-item .value {
+    font-weight: bold;
+    color: #333;
+    font-size: 16px;
+}
+
+.traffic-item .value.used {
+    color: var(--ocean-primary);
+}
+
+.traffic-divider {
+    display: none;
+    /* Hide divider */
+}
+
+@keyframes progress {
+    0% {
+        stroke-dasharray: 0 100;
+    }
+}
