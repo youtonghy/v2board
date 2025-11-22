@@ -12,6 +12,7 @@ use App\Models\Plan;
 use App\Models\User;
 use App\Services\AuthService;
 use App\Services\TelegramService;
+use App\Services\TurnstileService;
 use App\Utils\CacheKey;
 use App\Utils\Dict;
 use App\Utils\Helper;
@@ -198,13 +199,7 @@ class AuthController extends Controller
                 ]));
             }
         }
-        if ((int)config('v2board.recaptcha_enable', 0)) {
-            $recaptcha = new ReCaptcha(config('v2board.recaptcha_key'));
-            $recaptchaResp = $recaptcha->verify($request->input('recaptcha_data'));
-            if (!$recaptchaResp->isSuccess()) {
-                abort(500, __('Invalid code is incorrect'));
-            }
-        }
+        $this->ensureCaptchaPassed($request);
         if ((int)config('v2board.email_whitelist_enable', 0)) {
             if (!Helper::emailSuffixVerify(
                 $request->input('email'),
@@ -305,6 +300,8 @@ class AuthController extends Controller
     {
         $email = $request->input('email');
         $password = $request->input('password');
+
+        $this->ensureCaptchaPassed($request);
 
         if ((int)config('v2board.password_limit_enable', 1)) {
             $passwordErrorCount = (int)Cache::get(CacheKey::get('PASSWORD_ERROR_LIMIT', $email), 0);
@@ -425,5 +422,23 @@ class AuthController extends Controller
         return response([
             'data' => true
         ]);
+    }
+
+    private function ensureCaptchaPassed(Request $request): void
+    {
+        if ((int)config('v2board.turnstile_enable', 0) === 1) {
+            $token = $request->input('turnstile_token') ?? $request->input('recaptcha_data');
+            if (!TurnstileService::verify($token, $request->ip())) {
+                abort(500, __('Invalid code is incorrect'));
+            }
+            return;
+        }
+        if ((int)config('v2board.recaptcha_enable', 0)) {
+            $recaptcha = new ReCaptcha(config('v2board.recaptcha_key'));
+            $recaptchaResp = $recaptcha->verify($request->input('recaptcha_data'));
+            if (!$recaptchaResp->isSuccess()) {
+                abort(500, __('Invalid code is incorrect'));
+            }
+        }
     }
 }

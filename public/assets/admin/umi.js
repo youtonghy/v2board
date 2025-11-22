@@ -5956,6 +5956,32 @@
                     defaultValue: _.recaptcha_site_key,
                     onChange: e=>this.set("safe", "recaptcha_site_key", e.target.value)
                 }))) : "", f.a.createElement(m, {
+                    title: "Cloudflare Turnstile",
+                    description: "\u5f00\u542f\u540e\u5728\u767b\u5f55\u548c\u6ce8\u518c\u65f6\u542f\u7528Turnstile\u9a8c\u8bc1\u7801\u3002"
+                }, f.a.createElement(l["a"], {
+                    checked: parseInt(_.turnstile_enable),
+                    onChange: e=>this.set("safe", "turnstile_enable", e ? 1 : 0)
+                })), _.turnstile_enable ? f.a.createElement(f.a.Fragment, null, f.a.createElement(m, {
+                    isChildren: !0,
+                    title: "Secret Key",
+                    description: "Turnstile Secret Key"
+                }, f.a.createElement("input", {
+                    type: "text",
+                    className: "form-control",
+                    placeholder: "\u8bf7\u8f93\u5165",
+                    defaultValue: _.turnstile_secret_key,
+                    onChange: e=>this.set("safe", "turnstile_secret_key", e.target.value)
+                })), f.a.createElement(m, {
+                    isChildren: !0,
+                    title: "Site Key",
+                    description: "Turnstile Site Key"
+                }, f.a.createElement("input", {
+                    type: "text",
+                    className: "form-control",
+                    placeholder: "\u8bf7\u8f93\u5165",
+                    defaultValue: _.turnstile_site_key,
+                    onChange: e=>this.set("safe", "turnstile_site_key", e.target.value)
+                }))) : "", f.a.createElement(m, {
                     title: "IP\u6ce8\u518c\u9650\u5236",
                     description: "\u5f00\u542f\u540e\u5982\u679cIP\u6ce8\u518c\u8d26\u6237\u8fbe\u5230\u89c4\u5219\u8981\u6c42\u5c06\u4f1a\u88ab\u9650\u5236\u6ce8\u518c\uff0c\u8bf7\u6ce8\u610fIP\u5224\u65ad\u53ef\u80fd\u56e0\u4e3aCDN\u6216\u524d\u7f6e\u4ee3\u7406\u5bfc\u81f4\u95ee\u9898\u3002"
                 }, f.a.createElement(l["a"], {
