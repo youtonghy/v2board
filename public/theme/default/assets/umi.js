@@ -18416,13 +18416,21 @@
                 super(e),
                 this.state = {
                     visible: !1
-                }
+                },
+                this.turnstileId = null,
+                this.turnstileContainer = null
+            }
+            componentDidUpdate() {
+                this.renderTurnstile()
             }
             show() {
                 this.key = Math.random(),
                 this.props.visible ? this.setState({
                     visible: !0
-                }) : "function" === typeof this.props.callback && this.props.callback()
+                }, ()=>{
+                    this.renderTurnstile()
+                }
+                ) : "function" === typeof this.props.callback && this.props.callback()
             }
             handle(e) {
                 setTimeout(()=>{
@@ -18436,8 +18444,43 @@
                     visible: !1
                 })
             }
-            render() {
+            renderTurnstile() {
+                if (!this.state.visible || !this.isTurnstileEnabled() || !this.turnstileContainer)
+                    return;
+                var e = this.props.guest.commConfig.turnstile_site_key;
+                if (!e)
+                    return;
+                if (this.turnstileId && window.turnstile && window.turnstile.reset) {
+                    window.turnstile.reset(this.turnstileId);
+                    return;
+                }
+                if (window.turnstile && window.turnstile.render) {
+                    this.turnstileId = window.turnstile.render(this.turnstileContainer, {
+                        sitekey: e,
+                        callback: t=>this.handle(t)
+                    });
+                    return;
+                }
+                if (!document.querySelector('script[data-turnstile-script]')) {
+                    var t = document.createElement("script");
+                    t.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit",
+                    t.async = !0,
+                    t.defer = !0,
+                    t.setAttribute("data-turnstile-script", "1"),
+                    t.onload = ()=>{
+                        this.renderTurnstile()
+                    }
+                    ,
+                    document.body.appendChild(t)
+                }
+            }
+            isTurnstileEnabled() {
                 var e = this.props.guest.commConfig;
+                return !!(e && e.is_turnstile);
+            }
+            render() {
+                var e = this.props.guest.commConfig
+                  , t = this.isTurnstileEnabled();
                 return i.a.createElement(i.a.Fragment, null, i.a.cloneElement(this.props.children, {
                     onClick: ()=>this.show()
                 }), i.a.createElement(r["a"], {
@@ -18447,7 +18490,12 @@
                     footer: !1,
                     closable: !1,
                     centered: !0
-                }, i.a.createElement(S, {
+                }, t ? i.a.createElement("div", {
+                    ref: e=>{
+                        this.turnstileContainer = e,
+                        this.renderTurnstile()
+                    }
+                }) : i.a.createElement(S, {
                     sitekey: e.recaptcha_site_key,
                     onChange: e=>this.handle(e)
                 })))
@@ -35471,17 +35519,23 @@
           , s = n("/MKj")
           , c = n("3a4m")
           , u = n.n(c)
+          , d = n("FOAQ")
           , l = n("Y2fQ")
           , f = n("TEnU")
           , p = n("tI4l");
-        class d extends a.a.Component {
+        class h extends a.a.Component {
             constructor(e) {
                 super(e),
                 this.state = {},
                 this.keyDown = this.keyDown.bind(this)
             }
             keyDown(e) {
-                13 === e.keyCode && this.login()
+                if (13 === e.keyCode) {
+                    var t = (this.props.guest || {}).commConfig || {};
+                    if (t.is_recaptcha || t.is_turnstile)
+                        return;
+                    this.login()
+                }
             }
             componentDidMount() {
                 var e = this.props.location.query.verify
@@ -35492,6 +35546,9 @@
                     redirect: t
                 }),
                 this.props.dispatch({
+                    type: "guest/getCommConfig"
+                }),
+                this.props.dispatch({
                     type: "user/checkLogin",
                     redirect: t
                 }),
@@ -35500,17 +35557,19 @@
             componentWillUnmount() {
                 window.removeEventListener("keydown", this.keyDown, !1)
             }
-            login() {
-                var e = this.props.location.query.redirect;
+            login(e) {
+                var t = this.props.location.query.redirect;
                 this.props.dispatch({
                     type: "passport/login",
                     email: this.refs.email.value,
                     password: this.refs.password.value,
-                    redirect: e
+                    redirect: t,
+                    recaptchaData: e
                 })
             }
             render() {
-                var e = this.props.passport.loginLoading;
+                var e = this.props.passport.loginLoading
+                  , t = (this.props.guest || {}).commConfig || {};
                 return a.a.createElement("div", {
                     id: "page-container"
                 }, a.a.createElement("main", {
@@ -35573,6 +35632,9 @@
                     ref: "password"
                 })), a.a.createElement("div", {
                     className: "form-group mb-0"
+                }, a.a.createElement(d["a"], {
+                    visible: t.is_recaptcha || t.is_turnstile,
+                    callback: n=>this.login(n)
                 }, a.a.createElement("button", {
                     disabled: e,
                     type: "submit",
@@ -35584,7 +35646,7 @@
                     className: "si si-login mr-1"
                 }), Object(l["formatMessage"])({
                     id: "\u767b\u5165"
-                }))))))), a.a.createElement("div", {
+                })))))))), a.a.createElement("div", {
                     className: "text-left bg-gray-lighter p-3 px-4"
                 }, a.a.createElement("a", {
                     className: "font-size-sm text-muted",
@@ -35613,12 +35675,14 @@
             }
         }
         t["default"] = Object(s["c"])(e=>{
-            var t = e.passport;
+            var t = e.passport
+              , n = e.guest;
             return {
-                passport: t
+                passport: t,
+                guest: n
             }
         }
-        )(d)
+        )(h)
     },
     ap3T: function(e, t, n) {
         "use strict";
@@ -35794,7 +35858,7 @@
                 })), i.a.createElement("div", {
                     className: "col-3"
                 }, i.a.createElement(u["a"], {
-                    visible: c.is_recaptcha,
+                    visible: c.is_recaptcha || c.is_turnstile,
                     callback: e=>this.sendEmailVerify(e)
                 }, i.a.createElement("button", {
                     type: "submit",
@@ -35860,7 +35924,7 @@
                 })))), i.a.createElement("div", {
                     className: "form-group mb-0"
                 }, i.a.createElement(u["a"], {
-                    visible: c.is_recaptcha,
+                    visible: c.is_recaptcha || c.is_turnstile,
                     callback: e=>this.register(e)
                 }, i.a.createElement("button", {
                     disabled: n || c.tos_url && !this.state.tosChecked,
@@ -50469,7 +50533,7 @@
                 })), i.a.createElement("div", {
                     className: "col-3"
                 }, i.a.createElement(u["a"], {
-                    visible: o.is_recaptcha,
+                    visible: o.is_recaptcha || o.is_turnstile,
                     callback: e=>this.sendEmailVerify(e)
                 }, i.a.createElement("button", {
                     type: "submit",
@@ -57572,7 +57636,7 @@
                 },
                 login(e, t) {
                     return u().mark(function n() {
-                        var r, o, a, l, f;
+                        var r, o, a, l, f, p;
                         return u().wrap(function(n) {
                             while (1)
                                 switch (n.prev = n.next) {
@@ -57580,6 +57644,7 @@
                                     return r = e.email,
                                     o = e.password,
                                     a = e.redirect,
+                                    f = e.recaptchaData,
                                     l = t.put,
                                     n.next = 4,
                                     l({
@@ -57590,12 +57655,15 @@
                                     });
                                 case 4:
                                     return n.next = 6,
-                                    Object(i["b"])("/passport/auth/login", {
+                                    p = {
                                         email: r,
                                         password: o
-                                    });
+                                    },
+                                    f && (p["recaptcha_data"] = f,
+                                    p["turnstile_token"] = f),
+                                    Object(i["b"])("/passport/auth/login", p);
                                 case 6:
-                                    return f = n.sent,
+                                    return p = n.sent,
                                     n.next = 9,
                                     l({
                                         type: "setState",
@@ -57604,13 +57672,13 @@
                                         }
                                     });
                                 case 9:
-                                    if (200 === f.code) {
+                                    if (200 === p.code) {
                                         n.next = 11;
                                         break
                                     }
                                     return n.abrupt("return");
                                 case 11:
-                                    return Object(c["p"])(f.data.auth_data),
+                                    return Object(c["p"])(p.data.auth_data),
                                     n.next = 14,
                                     l({
                                         type: "user/getUserInfo"
@@ -57651,7 +57719,8 @@
                                         invite_code: a,
                                         email_code: c
                                     },
-                                    l && (p["recaptcha_data"] = l),
+                                    l && (p["recaptcha_data"] = l,
+                                    p["turnstile_token"] = l),
                                     n.next = 8,
                                     Object(i["b"])("/passport/auth/register", p);
                                 case 8:
@@ -57699,7 +57768,8 @@
                                 case 4:
                                     return l = {},
                                     l["email"] = r,
-                                    a && (l["recaptcha_data"] = a),
+                                    a && (l["recaptcha_data"] = a,
+                                    l["turnstile_token"] = a),
                                     l["isforget"] = e.isforget,
                                     n.next = 9,
                                     Object(i["b"])("/passport/comm/sendEmailVerify", l);

@@ -105,6 +105,9 @@ class ConfigSave extends FormRequest
         'recaptcha_enable' => 'in:0,1',
         'recaptcha_key' => '',
         'recaptcha_site_key' => '',
+        'turnstile_enable' => 'in:0,1',
+        'turnstile_secret_key' => 'nullable|string',
+        'turnstile_site_key' => 'nullable|string',
         'email_verify' => 'in:0,1',
         'safe_mode_enable' => 'in:0,1',
         'register_limit_by_ip_enable' => 'in:0,1',
@@ -215,6 +218,30 @@ class ConfigSave extends FormRequest
                 $clientSecret = $value ?: config('v2board.sso_casdoor_client_secret');
                 if (empty($clientSecret)) {
                     $fail('启用SSO时，Casdoor Client Secret不能为空');
+                }
+            }]
+        );
+        $rules['turnstile_secret_key'] = array_merge(
+            $this->normalizeRule($rules['turnstile_secret_key']),
+            [function ($attribute, $value, $fail) {
+                if ((int)$this->input('turnstile_enable', config('v2board.turnstile_enable', 0)) !== 1) {
+                    return;
+                }
+                $secretKey = $value ?: config('v2board.turnstile_secret_key');
+                if (empty($secretKey)) {
+                    $fail('启用验证码时，Turnstile Secret Key不能为空');
+                }
+            }]
+        );
+        $rules['turnstile_site_key'] = array_merge(
+            $this->normalizeRule($rules['turnstile_site_key']),
+            [function ($attribute, $value, $fail) {
+                if ((int)$this->input('turnstile_enable', config('v2board.turnstile_enable', 0)) !== 1) {
+                    return;
+                }
+                $siteKey = $value ?: config('v2board.turnstile_site_key');
+                if (empty($siteKey)) {
+                    $fail('启用验证码时，Turnstile Site Key不能为空');
                 }
             }]
         );

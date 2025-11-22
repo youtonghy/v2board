@@ -15,7 +15,9 @@ class AuthLogin extends FormRequest
     {
         return [
             'email' => 'required|email:strict',
-            'password' => 'required|min:8'
+            'password' => 'required|min:8',
+            'turnstile_token' => 'nullable|string',
+            'recaptcha_data' => 'nullable|string'
         ];
     }
 

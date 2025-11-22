@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Utils\CacheKey;
 use App\Utils\Dict;
 use App\Utils\Helper;
+use App\Services\TurnstileService;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -36,13 +37,7 @@ class CommController extends Controller
         }
         RateLimiter::hit($ip, 60);
 
-        if ((int)config('v2board.recaptcha_enable', 0)) {
-            $recaptcha = new ReCaptcha(config('v2board.recaptcha_key'));
-            $recaptchaResp = $recaptcha->verify($request->input('recaptcha_data'));
-            if (!$recaptchaResp->isSuccess()) {
-                abort(500, __('Invalid code is incorrect'));
-            }
-        }
+        $this->ensureCaptchaPassed($request);
         $email = $request->input('email');
         $isforget = $request->input('isforget');
         $email_exists = User::where('email', $email)->exists();
@@ -92,6 +87,24 @@ class CommController extends Controller
         return response([
             'data' => true
         ]);
+    }
+
+    private function ensureCaptchaPassed(Request $request): void
+    {
+        if ((int)config('v2board.turnstile_enable', 0) === 1) {
+            $token = $request->input('turnstile_token') ?? $request->input('recaptcha_data');
+            if (!TurnstileService::verify($token, $request->ip())) {
+                abort(500, __('Invalid code is incorrect'));
+            }
+            return;
+        }
+        if ((int)config('v2board.recaptcha_enable', 0)) {
+            $recaptcha = new ReCaptcha(config('v2board.recaptcha_key'));
+            $recaptchaResp = $recaptcha->verify($request->input('recaptcha_data'));
+            if (!$recaptchaResp->isSuccess()) {
+                abort(500, __('Invalid code is incorrect'));
+            }
+        }
     }
 
     public function pv(Request $request)
