@@ -496,6 +496,56 @@ function findAuthActionContainer() {
         init();
     }
 })();
+// Dashboard shortcuts grid enhancer
+(function () {
+    function applyShortcutGrid() {
+        var hash = window.location.hash || '';
+        if (hash.indexOf('#/dashboard') !== 0) {
+            return;
+        }
+
+        var titles = document.querySelectorAll('.block-title');
+        var shortcutsBlock = null;
+        for (var i = 0; i < titles.length; i++) {
+            var text = (titles[i].textContent || '').trim().toLowerCase();
+            if (text.indexOf('捷径') !== -1 || text.indexOf('shortcut') !== -1) {
+                shortcutsBlock = titles[i].closest('.block');
+                break;
+            }
+        }
+        if (!shortcutsBlock) {
+            return;
+        }
+
+        var container = shortcutsBlock.querySelector('.block-content .mb-3');
+        if (!container) {
+            return;
+        }
+
+        var items = container.querySelectorAll('.v2board-shortcuts-item');
+        if (!items.length) {
+            return;
+        }
+
+        if (!container.classList.contains('ocean-shortcuts-grid')) {
+            container.classList.add('ocean-shortcuts-grid');
+        }
+    }
+
+    function initShortcutGrid() {
+        applyShortcutGrid();
+        setInterval(applyShortcutGrid, 1000);
+        window.addEventListener('hashchange', function () {
+            setTimeout(applyShortcutGrid, 200);
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initShortcutGrid);
+    } else {
+        initShortcutGrid();
+    }
+})();
 (function () {
     var settings = window.settings || {};
     if (!settings || parseInt(settings.sso_login_enable, 10) !== 1) {
@@ -698,7 +748,6 @@ function findAuthActionContainer() {
             setTimeout(ensureButton, 150);
             showErrorFromHash();
         });
-        window.addEventListener('hashchange', updateBodyClass);
         setTimeout(showErrorFromHash, 120);
     }
 
@@ -708,13 +757,3 @@ function findAuthActionContainer() {
         init();
     }
 })();
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', updateBodyClass);
-} else {
-    updateBodyClass();
-}
-
-// Also try immediately
-initCircularProgress();
-}) ();
