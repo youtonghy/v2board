@@ -1,0 +1,1506 @@
+document.addEventListener('alpine:init', () => {
+    Alpine.data('app', () => ({
+        view: 'dashboard',
+        user: {
+            email: 'Loading...',
+            balance: 0,
+            d: 0,
+            u: 0,
+            transfer_enable: 0,
+            plan_id: null,
+            commission_balance: 0,
+            telegram_id: null,
+            sso_id: null,
+            sso_subject: null,
+            sso_provider: null,
+            uuid: '',
+            token: ''
+        },
+        plans: [],
+        orders: [],
+        tickets: [],
+        invites: {
+            codes: [],
+            stat: []
+        },
+        traffics: [],
+        trafficsLoaded: false,
+        knowledge: {
+            categories: {},
+            currentArticle: null
+        },
+        servers: [],
+        notices: [],
+        showNotices: true,
+        paymentMethods: [],
+        serverModalOpen: false,
+        selectedServer: null,
+        dialog: {
+            open: false,
+            title: '',
+            message: '',
+            confirmText: 'OK',
+            cancelText: null,
+            onConfirm: null,
+            onCancel: null
+        },
+
+        selectedPlan: null,
+        selectedPeriod: 'month_price',
+        loading: false,
+        
+        // Payment
+        currentOrder: null,
+        selectedPaymentMethod: null,
+        
+        // Mobile menu
+        mobileMenuOpen: false,
+        
+        // Subscription modal
+        showSubscriptionModal: false,
+        
+        // Telegram Login
+        telegram_login_enable: window.settings?.telegram_login_enable || 0,
+        showTelegramLogin: false,
+        telegramForm: { email: '' },
+        telegramLoading: false,
+        telegramWaiting: false,
+        telegramMessage: '',
+        telegramMessageType: 'info',
+        telegramPendingToken: null,
+        telegramPollingTimer: null,
+        telegramPollingAttempts: 0,
+        telegramPollingMaxAttempts: 40,
+        
+        // SSO Login
+        sso_login_enable: window.settings?.sso_login_enable || 0,
+        sso_provider: window.settings?.sso_provider || 'casdoor',
+        ssoLoading: false,
+
+        // Forms
+        authForm: { email: '', password: '', invite_code: '', email_code: '' },
+        ticketForm: { subject: '', level: 1, message: '' },
+        ticketReplyForm: { id: null, message: '' },
+        passwordForm: { old_password: '', new_password: '' },
+        redeemForm: { code: '' },
+        redeemResult: { success: false, message: '' },
+
+        // Details Views
+        selectedTicket: null,
+
+        // Captcha
+        siteConfig: {},
+        captcha: {
+            token: '',
+            loginWidget: null,
+            registerWidget: null
+        },
+
+        init() {
+            // Check for Telegram verify code first
+            this.checkTelegramVerify();
+            
+            this.fetchSiteConfig().then(() => {
+                this.fetchUserInfo();
+            });
+            
+            // Check for SSO errors
+            this.checkSsoError();
+            
+            // Watch for hash changes to check SSO errors
+            window.addEventListener('hashchange', () => {
+                this.checkSsoError();
+            });
+
+            this.$watch('view', (value) => {
+                this.$nextTick(() => {
+                    if (value === 'login') {
+                        this.renderCaptcha('captcha-login', 'loginWidget');
+                        // Check for verify code when entering login page
+                        this.checkTelegramVerify();
+                    }
+                    if (value === 'register') this.renderCaptcha('captcha-register', 'registerWidget');
+                    if (value === 'payment') {
+                        console.log('Payment view opened');
+                        console.log('Current order:', this.currentOrder);
+                        console.log('Available payment methods:', this.paymentMethods);
+                        console.log('Selected payment method:', this.selectedPaymentMethod);
+                    }
+                    if (value === 'transfer' && !this.trafficsLoaded) {
+                        this.fetchTraffics();
+                    }
+                });
+            });
+            
+            // Watch for Telegram login modal open
+            this.$watch('showTelegramLogin', (value) => {
+                if (value) {
+                    // Auto-fill email from login form if available
+                    if (this.authForm.email) {
+                        this.telegramForm.email = this.authForm.email;
+                    }
+                    // Reset states
+                    this.telegramMessage = '';
+                    this.telegramLoading = false;
+                    this.telegramWaiting = false;
+                } else {
+                    // Cleanup when closing
+                    this.stopTelegramPolling();
+                    this.telegramForm.email = '';
+                    this.telegramMessage = '';
+                    this.telegramLoading = false;
+                    this.telegramWaiting = false;
+                }
+            });
+        },
+
+        async request(url, options = {}) {
+            const headers = options.headers || {};
+            const token = localStorage.getItem('auth_data');
+            if (token) {
+                headers['Authorization'] = token;
+            }
+            // Ensure Content-Type is set for POST requests if not already
+            if (options.method === 'POST' && !headers['Content-Type']) {
+                headers['Content-Type'] = 'application/json';
+            }
+            options.headers = headers;
+
+            try {
+                const response = await fetch(url, options);
+                if (response.status === 401 || response.status === 403) {
+                    localStorage.removeItem('auth_data');
+                    this.view = 'login';
+                    // Don't throw, just return null or handle gracefully
+                    return null;
+                }
+                return response;
+            } catch (error) {
+                console.error('Request error:', error);
+                throw error;
+            }
+        },
+
+        async safeJsonParse(response) {
+            if (!response) return null;
+            
+            // Check response status
+            if (!response.ok) {
+                console.error('Response not OK:', response.status, response.statusText);
+                return null;
+            }
+            
+            try {
+                // Validate Content-Type
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    console.warn('Non-JSON response, content-type:', contentType);
+                    const text = await response.text();
+                    console.warn('Response preview:', text.substring(0, 200));
+                    return null;
+                }
+                
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('JSON parse error:', error);
+                if (error instanceof SyntaxError) {
+                    console.error('Invalid JSON - the API might be returning HTML or malformed data');
+                }
+                return null;
+            }
+        },
+
+        async fetchSiteConfig() {
+            try {
+                const response = await fetch('/api/v1/guest/comm/config'); // Public endpoint, no auth needed
+                const data = await response.json();
+                if (data.data) {
+                    this.siteConfig = data.data;
+                    if (this.siteConfig.is_recaptcha || this.siteConfig.is_turnstile) {
+                        this.loadCaptchaScript();
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching site config:', error);
+            }
+        },
+
+        loadCaptchaScript() {
+            if (this.siteConfig.is_turnstile) {
+                const script = document.createElement('script');
+                script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+                script.async = true;
+                script.defer = true;
+                document.head.appendChild(script);
+            } else if (this.siteConfig.is_recaptcha) {
+                const script = document.createElement('script');
+                script.src = 'https://www.google.com/recaptcha/api.js?render=explicit';
+                script.async = true;
+                script.defer = true;
+                document.head.appendChild(script);
+            }
+        },
+
+        renderCaptcha(containerId, widgetKey) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.innerHTML = ''; // Clear previous
+            this.captcha.token = ''; // Reset token
+
+            if (this.siteConfig.is_turnstile) {
+                if (window.turnstile) {
+                    this.captcha[widgetKey] = turnstile.render('#' + containerId, {
+                        sitekey: this.siteConfig.turnstile_site_key,
+                        callback: (token) => { this.captcha.token = token; }
+                    });
+                } else {
+                    setTimeout(() => this.renderCaptcha(containerId, widgetKey), 500);
+                }
+            } else if (this.siteConfig.is_recaptcha) {
+                if (window.grecaptcha) {
+                    this.captcha[widgetKey] = grecaptcha.render(containerId, {
+                        sitekey: this.siteConfig.recaptcha_site_key,
+                        callback: (token) => { this.captcha.token = token; }
+                    });
+                } else {
+                    setTimeout(() => this.renderCaptcha(containerId, widgetKey), 500);
+                }
+            }
+        },
+
+        async fetchUserInfo() {
+            try {
+                const response = await this.request('/api/v1/user/info');
+                if (!response) return; // Handled by request (401)
+
+                const data = await this.safeJsonParse(response);
+                if (data && data.data) {
+                    const ssoSubject = data.data.sso_subject || data.data.sso_id || data.data.casdoor_user_id || null;
+                    const ssoProvider = data.data.sso_provider || this.user.sso_provider || 'casdoor';
+                    // Merge user data, ensuring sso_id is included
+                    this.user = { 
+                        ...this.user, 
+                        ...data.data,
+                        // Normalize SSO fields for UI
+                        sso_subject: ssoSubject,
+                        sso_provider: ssoProvider,
+                        sso_id: ssoSubject
+                    };
+                    console.log('User info loaded:', this.user); // Debug log
+                    
+                    // Only fetch other data if logged in
+                    this.fetchPlans();
+                    this.fetchOrders();
+                    this.fetchTickets();
+                    this.fetchInvites();
+                    this.fetchKnowledge();
+                    this.fetchServers();
+                    this.fetchNotices();
+                    this.fetchPaymentMethods();
+                    this.fetchSubscribe();
+                }
+            } catch (error) {
+                console.error('Error fetching user info:', error);
+            }
+        },
+
+        async login() {
+            this.loading = true;
+            try {
+                const params = {
+                    email: this.authForm.email,
+                    password: this.authForm.password
+                };
+                if (this.siteConfig.is_turnstile) params.turnstile_token = this.captcha.token;
+                else if (this.siteConfig.is_recaptcha) params.recaptcha_data = this.captcha.token;
+
+                const response = await fetch('/api/v1/passport/auth/login', { // Login is public
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(params)
+                });
+                const data = await response.json();
+                if (data.data) {
+                    localStorage.setItem('auth_data', data.data.auth_data); // Save token
+                    // Also set authorization for admin panel compatibility
+                    localStorage.setItem('authorization', data.data.auth_data);
+                    this.fetchUserInfo();
+                    this.view = 'dashboard';
+                    this.authForm.password = ''; // Clear password
+                } else {
+                    this.showMessage(data.message || 'Login failed');
+                    // Reset captcha on failure
+                    if (this.siteConfig.is_turnstile && window.turnstile) turnstile.reset(this.captcha.loginWidget);
+                    if (this.siteConfig.is_recaptcha && window.grecaptcha) grecaptcha.reset(this.captcha.loginWidget);
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                this.showMessage('Login failed');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async register() {
+            this.loading = true;
+            try {
+                const params = {
+                    email: this.authForm.email,
+                    password: this.authForm.password,
+                    invite_code: this.authForm.invite_code,
+                    email_code: this.authForm.email_code
+                };
+                if (this.siteConfig.is_turnstile) params.turnstile_token = this.captcha.token;
+                else if (this.siteConfig.is_recaptcha) params.recaptcha_data = this.captcha.token;
+
+                const response = await fetch('/api/v1/passport/auth/register', { // Register is public
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(params)
+                });
+                const data = await response.json();
+                if (data.data) {
+                    localStorage.setItem('auth_data', data.data.auth_data); // Save token (auto login)
+                    // Also set authorization for admin panel compatibility
+                    localStorage.setItem('authorization', data.data.auth_data);
+                    this.showMessage('Registration successful!');
+                    this.fetchUserInfo();
+                    this.view = 'dashboard';
+                } else {
+                    this.showMessage(data.message || 'Registration failed');
+                    // Reset captcha on failure
+                    if (this.siteConfig.is_turnstile && window.turnstile) turnstile.reset(this.captcha.registerWidget);
+                    if (this.siteConfig.is_recaptcha && window.grecaptcha) grecaptcha.reset(this.captcha.registerWidget);
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                this.showMessage('Registration failed');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async sendEmailVerify() {
+            if (!this.authForm.email) {
+                this.showMessage('Please enter your email first.');
+                return;
+            }
+            this.loading = true;
+            try {
+                const params = { email: this.authForm.email };
+                if (this.siteConfig.is_turnstile) params.turnstile_token = this.captcha.token;
+                else if (this.siteConfig.is_recaptcha) params.recaptcha_data = this.captcha.token;
+
+                const response = await fetch('/api/v1/passport/comm/sendEmailVerify', { // Public
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(params)
+                });
+                const data = await response.json();
+                if (data.data) {
+                    this.showMessage('Verification code sent to your email.');
+                } else {
+                    this.showMessage(data.message || 'Failed to send verification code.');
+                }
+            } catch (error) {
+                console.error('Send email error:', error);
+                this.showMessage('Failed to send verification code.');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async logout() {
+            localStorage.removeItem('auth_data');
+            localStorage.removeItem('authorization');
+            window.location.reload();
+        },
+
+        async fetchSubscribe() {
+            try {
+                const response = await this.request('/api/v1/user/getSubscribe');
+                if (!response) return;
+                const data = await response.json();
+                if (data.data) {
+                    this.user = { ...this.user, ...data.data };
+                }
+            } catch (error) {
+                console.error('Error fetching subscribe info:', error);
+            }
+        },
+
+        async fetchPlans() {
+            try {
+                const response = await this.request('/api/v1/user/plan/fetch');
+                if (!response) return;
+                const data = await this.safeJsonParse(response);
+                if (data && data.data) {
+                    this.plans = data.data;
+                    // Auto-select first plan if available
+                    if (this.plans.length > 0) {
+                        this.selectPlan(this.plans[0]);
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching plans:', error);
+            }
+        },
+
+        async fetchOrders() {
+            try {
+                const response = await this.request('/api/v1/user/order/fetch');
+                if (!response) return;
+                const data = await this.safeJsonParse(response);
+                if (data && data.data) {
+                    this.orders = data.data;
+                }
+            } catch (error) {
+                console.error('Error fetching orders:', error);
+            }
+        },
+
+        async fetchTickets() {
+            try {
+                const response = await this.request('/api/v1/user/ticket/fetch');
+                if (!response) return;
+                const data = await response.json();
+                if (data.data) {
+                    this.tickets = data.data;
+                }
+            } catch (error) {
+                console.error('Error fetching tickets:', error);
+            }
+        },
+
+        async fetchInvites() {
+            try {
+                const response = await this.request('/api/v1/user/invite/fetch');
+                if (!response) return;
+                const data = await response.json();
+                if (data.data) {
+                    this.invites = data.data;
+                }
+            } catch (error) {
+                console.error('Error fetching invites:', error);
+            }
+        },
+
+        async fetchKnowledge() {
+            try {
+                const response = await this.request('/api/v1/user/knowledge/fetch?language=en-US');
+                if (!response) return;
+                const data = await response.json();
+                if (data.data) {
+                    this.knowledge.categories = data.data;
+                }
+            } catch (error) {
+                console.error('Error fetching knowledge:', error);
+            }
+        },
+
+        async fetchServers() {
+            try {
+                const response = await this.request('/api/v1/user/server/fetch');
+                if (!response) return;
+                const data = await response.json();
+                if (data.data) {
+                    this.servers = data.data.map((s) => {
+                        const hasIsOnline = s.is_online !== undefined;
+                        const fromFlag = hasIsOnline ? Number(s.is_online) === 1 : null;
+                        const fromOnline = s.online !== undefined ? !!s.online : null;
+                        const fromLastCheck = s.last_check_at ? (Date.now() / 1000 - s.last_check_at) <= 300 : null;
+                        const online = [fromFlag, fromOnline, fromLastCheck].find(v => v !== null);
+                        return {
+                            ...s,
+                            online: online !== null ? online : true
+                        };
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching servers:', error);
+            }
+        },
+
+        async fetchTraffics() {
+            try {
+                const response = await this.request('/api/v1/user/stat/getTrafficLog');
+                if (!response) return;
+                const data = await response.json();
+                if (data.data) {
+                    this.traffics = Array.isArray(data.data) ? data.data : [];
+                    this.trafficsLoaded = true;
+                }
+            } catch (error) {
+                console.error('Error fetching traffic log:', error);
+            }
+        },
+
+        async fetchNotices() {
+            try {
+                const response = await this.request('/api/v1/user/notice/fetch');
+                if (!response) return;
+                const data = await response.json();
+                if (data.data) {
+                    this.notices = data.data;
+                    const version = this.getNoticesVersion(this.notices);
+                    const dismissedVersion = localStorage.getItem('fantastic_notices_version');
+                    this.showNotices = !(dismissedVersion && dismissedVersion === version);
+                }
+            } catch (error) {
+                console.error('Error fetching notices:', error);
+            }
+        },
+
+        async fetchPaymentMethods() {
+            try {
+                console.log('Fetching payment methods...');
+                const response = await this.request('/api/v1/user/order/getPaymentMethod');
+                if (!response) {
+                    console.warn('No response from payment methods API (possibly 401/403)');
+                    this.paymentMethods = [];
+                    return;
+                }
+                
+                const data = await this.safeJsonParse(response);
+                if (!data) {
+                    console.error('Failed to parse payment methods response');
+                    this.paymentMethods = [];
+                    return;
+                }
+                
+                console.log('Payment methods response:', data);
+                if (data.data) {
+                    this.paymentMethods = Array.isArray(data.data) ? data.data : [];
+                    console.log('✓ Payment methods loaded:', this.paymentMethods.length, this.paymentMethods);
+                    if (this.paymentMethods.length === 0) {
+                        console.warn('⚠ No payment methods configured. Please check admin panel.');
+                    }
+                } else {
+                    console.warn('No payment methods data in response:', data);
+                    this.paymentMethods = [];
+                }
+            } catch (error) {
+                console.error('Error fetching payment methods:', error);
+                this.paymentMethods = [];
+            }
+        },
+
+        selectPlan(plan) {
+            this.selectedPlan = plan;
+            // Auto-pick the shortest available billing period
+            const periods = [
+                'month_price',
+                'quarter_price', 
+                'half_year_price',
+                'year_price',
+                'two_year_price',
+                'three_year_price',
+                'onetime_price',
+                'reset_price'
+            ];
+            
+            // Iterate periods and select the first available option (shortest period)
+            // Note: zero-priced plans are valid; only check for non-null/undefined
+            for (const period of periods) {
+                if (plan[period] !== null && plan[period] !== undefined) {
+                    this.selectedPeriod = period;
+                    break;
+                }
+            }
+        },
+
+        async subscribe() {
+            if (!this.selectedPlan) return;
+            this.loading = true;
+            try {
+                const response = await this.request('/api/v1/user/order/save', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        plan_id: this.selectedPlan.id,
+                        period: this.selectedPeriod
+                    })
+                });
+                if (!response) return;
+                const data = await response.json();
+                if (data.data) {
+                    this.showMessage('Order created! Trade No: ' + data.data);
+                    this.fetchOrders();
+                    this.view = 'orders';
+                } else {
+                    this.showMessage('Error: ' + (data.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error subscribing:', error);
+                this.showMessage('Failed to subscribe');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async subscribeWithPlan(plan, periodKey) {
+            if (!plan || !periodKey) return;
+            this.selectedPlan = plan;
+            this.selectedPeriod = periodKey;
+            await this.subscribe();
+        },
+
+        async goToPayment(order) {
+            this.currentOrder = order;
+            this.view = 'payment';
+            // Refresh payment methods so they are up to date
+            await this.fetchPaymentMethods();
+            // Auto-select the first payment method
+            if (this.paymentMethods.length > 0) {
+                this.selectedPaymentMethod = this.paymentMethods[0].id;
+                console.log('Auto-selected payment method:', this.paymentMethods[0].name, 'ID:', this.selectedPaymentMethod);
+            } else {
+                this.selectedPaymentMethod = null;
+                console.warn('No payment methods available');
+            }
+        },
+
+        async confirmPayment() {
+            if (!this.currentOrder || !this.selectedPaymentMethod) {
+                this.showMessage('Please choose a payment method');
+                return;
+            }
+            await this.checkout(this.currentOrder.trade_no, this.selectedPaymentMethod);
+        },
+
+        selectPaymentMethod(method) {
+            if (!method || !method.id) return;
+            this.selectedPaymentMethod = method.id;
+            console.log('Selected payment method:', method.name, 'ID:', method.id);
+        },
+
+        getPaymentFeeText(method) {
+            if (!method) return '';
+            const parts = [];
+            if (method.handling_fee_fixed && method.handling_fee_fixed > 0) {
+                parts.push('Fixed ¥' + (method.handling_fee_fixed / 100).toFixed(2));
+            }
+            if (method.handling_fee_percent && method.handling_fee_percent > 0) {
+                parts.push(method.handling_fee_percent + '%');
+            }
+            return parts.length > 0 ? 'Fee: ' + parts.join(' + ') : '';
+        },
+
+        async checkout(tradeNo, methodId) {
+            this.loading = true;
+            try {
+                const response = await this.request('/api/v1/user/order/checkout', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        trade_no: tradeNo,
+                        method: methodId
+                    })
+                });
+                if (!response) return;
+                const data = await response.json();
+                if (data.data) {
+                    if (data.type === -1) {
+                        this.showMessage('Payment successful!');
+                        this.fetchOrders();
+                        this.fetchUserInfo();
+                        this.view = 'orders';
+                    } else {
+                        window.location.href = data.data;
+                    }
+                } else {
+                    this.showMessage('Error: ' + (data.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error checking out:', error);
+                this.showMessage('Payment failed');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async cancelOrder(order) {
+            if (!order || !order.trade_no) return;
+            const ok = await this.showConfirm('Cancel this order?');
+            if (!ok) return;
+            this.loading = true;
+            try {
+                const response = await this.request('/api/v1/user/order/cancel', {
+                    method: 'POST',
+                    body: JSON.stringify({ trade_no: order.trade_no })
+                });
+                if (!response) return;
+                const data = await response.json();
+                if (data.data === true || data.message === 'success') {
+                    this.showMessage('Order cancelled');
+                    this.fetchOrders();
+                } else {
+                    this.showMessage('Error: ' + (data.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error cancelling order:', error);
+                this.showMessage('Cancel failed');
+            } finally {
+                this.loading = false;
+            }
+        },
+        
+        getOrderPlanName(order) {
+            if (!order || !order.plan_id) return 'Unknown plan';
+            const plan = this.plans.find(p => p.id === order.plan_id);
+            return plan ? plan.name : 'Plan #' + order.plan_id;
+        },
+        
+        getOrderStatusColor(status) {
+            const colors = {
+                0: '#ffa502', // Pending - Orange
+                1: '#26de81', // Paid - Green
+                2: '#fc5c65', // Cancelled - Red
+                3: '#a55eea'  // Commission - Purple
+            };
+            return colors[status] || '#95a5a6';
+        },
+
+        async createTicket() {
+            this.loading = true;
+            try {
+                const response = await this.request('/api/v1/user/ticket/save', {
+                    method: 'POST',
+                    body: JSON.stringify(this.ticketForm)
+                });
+                if (!response) return;
+                const data = await response.json();
+                if (data.data) {
+                    this.showMessage('Ticket created!');
+                    this.ticketForm = { subject: '', level: 1, message: '' };
+                    this.fetchTickets();
+                } else {
+                    this.showMessage('Error: ' + (data.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error creating ticket:', error);
+                this.showMessage('Failed to create ticket');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async viewTicket(ticket) {
+            this.loading = true;
+            try {
+                const response = await this.request(`/api/v1/user/ticket/fetch?id=${ticket.id}`);
+                if (!response) return;
+                const data = await response.json();
+                if (data.data) {
+                    this.selectedTicket = data.data;
+                    this.ticketReplyForm.id = ticket.id;
+                    this.view = 'ticket_detail';
+                }
+            } catch (error) {
+                console.error('Error fetching ticket details:', error);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async replyTicket() {
+            if (!this.ticketReplyForm.message) return;
+            this.loading = true;
+            try {
+                const response = await this.request('/api/v1/user/ticket/reply', {
+                    method: 'POST',
+                    body: JSON.stringify(this.ticketReplyForm)
+                });
+                if (!response) return;
+                const data = await response.json();
+                if (data.data) {
+                    this.ticketReplyForm.message = '';
+                    this.viewTicket({ id: this.ticketReplyForm.id }); // Refresh details
+                } else {
+                    this.showMessage('Error: ' + (data.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error replying to ticket:', error);
+                this.showMessage('Failed to reply');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async generateInvite() {
+            this.loading = true;
+            try {
+                const response = await this.request('/api/v1/user/invite/save');
+                if (!response) return;
+                const data = await response.json();
+                if (data.data) {
+                    this.fetchInvites();
+                } else {
+                    this.showMessage(data.message || 'Failed');
+                }
+            } catch (e) {
+                this.showMessage('Error');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async viewArticle(id) {
+            this.loading = true;
+            try {
+                const response = await this.request(`/api/v1/user/knowledge/fetch?id=${id}`);
+                if (!response) return;
+                const data = await response.json();
+                if (data.data) {
+                    this.knowledge.currentArticle = data.data;
+                    this.view = 'knowledge_detail';
+                }
+            } catch (error) {
+                console.error('Error fetching article:', error);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async changePassword() {
+            this.loading = true;
+            try {
+                const response = await this.request('/api/v1/user/change_password', {
+                    method: 'POST',
+                    body: JSON.stringify(this.passwordForm)
+                });
+                if (!response) return;
+                const data = await response.json();
+                if (data.data) {
+                    this.showMessage('Password changed successfully!');
+                    this.passwordForm = { old_password: '', new_password: '' };
+                } else {
+                    this.showMessage('Error: ' + (data.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error changing password:', error);
+                this.showMessage('Failed to change password');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async resetSecurity() {
+            const ok = await this.showConfirm('Are you sure you want to reset your subscription URL and Token?');
+            if (!ok) return;
+            this.loading = true;
+            try {
+                const response = await this.request('/api/v1/user/reset_security');
+                if (!response) return;
+                const data = await response.json();
+                if (data.data) {
+                    this.showMessage('Security reset successful!');
+                    this.fetchSubscribe();
+                } else {
+                    this.showMessage('Error: ' + (data.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error resetting security:', error);
+                this.showMessage('Failed to reset security');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        copySubscribeUrl() {
+            if (this.user.subscribe_url) {
+                navigator.clipboard.writeText(this.user.subscribe_url).then(() => {
+                    this.showMessage('Subscription URL copied to clipboard!');
+                });
+            }
+        },
+        
+        showNotification(message) {
+            this.showMessage(message);
+        },
+        
+        // Telegram Login Functions
+        submitTelegramLogin() {
+            const email = this.telegramForm.email?.trim();
+            if (!email) {
+                this.telegramMessage = 'Please enter your email address';
+                this.telegramMessageType = 'error';
+                return;
+            }
+            
+            this.telegramMessage = '';
+            this.stopTelegramPolling();
+            this.telegramLoading = true;
+            
+            const redirect = this.getRedirectParam();
+            const payload = { email };
+            if (redirect) payload.redirect = redirect;
+            
+            fetch('/api/v1/passport/auth/loginWithTelegram', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.data && data.data.token) {
+                    this.telegramMessage = 'Request sent, please approve in Telegram';
+                    this.telegramMessageType = 'info';
+                    this.telegramLoading = false;
+                    this.telegramWaiting = true;
+                    this.startTelegramPolling(data.data.token, redirect);
+                } else {
+                    throw new Error(data.message || 'Request failed, please try again later');
+                }
+            })
+            .catch(error => {
+                this.telegramLoading = false;
+                this.telegramMessage = error.message || 'Request failed, please try again later';
+                this.telegramMessageType = 'error';
+            });
+        },
+        
+        startTelegramPolling(token, redirect) {
+            this.stopTelegramPolling();
+            this.telegramPendingToken = token;
+            this.telegramPollingAttempts = 0;
+            this.telegramPollingTimer = setInterval(() => {
+                this.pollTelegramLogin(token, redirect);
+            }, 3000);
+        },
+        
+        stopTelegramPolling() {
+            if (this.telegramPollingTimer) {
+                clearInterval(this.telegramPollingTimer);
+                this.telegramPollingTimer = null;
+            }
+            this.telegramPendingToken = null;
+            this.telegramPollingAttempts = 0;
+        },
+        
+        pollTelegramLogin(token, redirect) {
+            if (!token) return;
+            
+            this.telegramPollingAttempts++;
+            if (this.telegramPollingAttempts > this.telegramPollingMaxAttempts) {
+                this.stopTelegramPolling();
+                this.telegramWaiting = false;
+                this.telegramMessage = 'Login request timed out, please try again';
+                this.telegramMessageType = 'error';
+                return;
+            }
+            
+            fetch(`/api/v1/passport/auth/checkTelegramLogin?token=${encodeURIComponent(token)}`)
+            .then(res => res.json())
+            .then(data => {
+                const status = data.data?.status || 'pending';
+                
+                if (status === 'pending') {
+                    return;
+                }
+                
+                if (status === 'approved' && data.data.verify_code) {
+                    const redirectTarget = data.data.redirect || redirect || this.getRedirectParam() || 'dashboard';
+                    this.stopTelegramPolling();
+                    this.telegramMessage = 'Approved, signing you in...';
+                    this.telegramMessageType = 'success';
+                    
+                    // Use verify_code directly to sign in
+                    setTimeout(async () => {
+                        this.showTelegramLogin = false;
+                        await this.loginWithVerifyCode(data.data.verify_code, redirectTarget);
+                    }, 500);
+                    return;
+                }
+                
+                this.stopTelegramPolling();
+                this.telegramWaiting = false;
+                
+                if (status === 'rejected') {
+                    this.telegramMessage = 'Request was rejected';
+                    this.telegramMessageType = 'error';
+                } else if (status === 'expired') {
+                    this.telegramMessage = 'Login request expired, please try again';
+                    this.telegramMessageType = 'error';
+                } else {
+                    this.telegramMessage = 'Request failed, please try again later';
+                    this.telegramMessageType = 'error';
+                }
+            })
+            .catch(error => {
+                this.stopTelegramPolling();
+                this.telegramWaiting = false;
+                this.telegramMessage = error.message || 'Request failed, please try again later';
+                this.telegramMessageType = 'error';
+            });
+        },
+        
+        getRedirectParam() {
+            const hash = window.location.hash || '';
+            const query = hash.split('?')[1] || '';
+            if (!query) return null;
+            try {
+                const params = new URLSearchParams(query);
+                const redirect = params.get('redirect');
+                return redirect ? decodeURIComponent(redirect) : null;
+            } catch (err) {
+                return null;
+            }
+        },
+
+        normalizeRedirectTarget(target) {
+            if (!target) return 'dashboard';
+            const cleaned = String(target).trim();
+            const normalized = cleaned.replace(/^\/?#?\/?/, '');
+            return normalized || 'dashboard';
+        },
+
+        getNoticesVersion(notices = []) {
+            if (!Array.isArray(notices) || notices.length === 0) return '';
+            return notices.map(n => n.id || '').join('-');
+        },
+
+        dismissNotices() {
+            const version = this.getNoticesVersion(this.notices);
+            if (version) {
+                localStorage.setItem('fantastic_notices_version', version);
+            }
+            this.showNotices = false;
+        },
+
+        openServerModal(server) {
+            this.selectedServer = server;
+            this.serverModalOpen = true;
+        },
+
+        async redeemCode() {
+            if (!this.redeemForm.code.trim()) {
+                this.showMessage('Please enter a redeem code');
+                return;
+            }
+            this.loading = true;
+            try {
+                const response = await this.request('/api/v1/user/redeemgiftcard', {
+                    method: 'POST',
+                    body: JSON.stringify({ giftcard: this.redeemForm.code.trim() })
+                });
+                if (!response) return;
+                const data = await response.json();
+                if (data.data === true) {
+                    this.redeemResult = { success: true, message: 'Redeemed successfully' };
+                    this.redeemForm.code = '';
+                    this.fetchUserInfo();
+                } else {
+                    this.redeemResult = { success: false, message: data.message || 'Redeem failed' };
+                }
+            } catch (error) {
+                console.error('Error redeeming code:', error);
+                this.redeemResult = { success: false, message: 'Redeem failed' };
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        openDialog(payload = {}) {
+            this.dialog = {
+                open: true,
+                title: payload.title || 'Notice',
+                message: payload.message || '',
+                confirmText: payload.confirmText || 'OK',
+                cancelText: payload.cancelText || null,
+                onConfirm: payload.onConfirm || null,
+                onCancel: payload.onCancel || null
+            };
+        },
+
+        showMessage(message, title = 'Notice') {
+            this.openDialog({ title, message, confirmText: 'OK', cancelText: null });
+        },
+
+        showConfirm(message, title = 'Confirm') {
+            return new Promise((resolve) => {
+                this.openDialog({
+                    title,
+                    message,
+                    confirmText: 'Confirm',
+                    cancelText: 'Cancel',
+                    onConfirm: () => resolve(true),
+                    onCancel: () => resolve(false)
+                });
+            });
+        },
+
+        handleDialogConfirm() {
+            const cb = this.dialog.onConfirm;
+            this.dialog.open = false;
+            this.dialog.onConfirm = null;
+            this.dialog.onCancel = null;
+            if (typeof cb === 'function') cb();
+        },
+
+        handleDialogCancel() {
+            const cb = this.dialog.onCancel;
+            this.dialog.open = false;
+            this.dialog.onConfirm = null;
+            this.dialog.onCancel = null;
+            if (typeof cb === 'function') cb();
+        },
+
+        getTimeRemainingPercentage() {
+            const remainingSeconds = this.getRemainingSeconds();
+            const cycleSeconds = this.getCycleDurationSeconds();
+            if (cycleSeconds <= 0) return 0;
+            const pct = Math.round((remainingSeconds / cycleSeconds) * 100);
+            return Math.min(100, Math.max(0, pct));
+        },
+
+        getRemainingSeconds() {
+            const exp = Number(this.user.expired_at || 0);
+            if (!exp) return 0;
+            const nowSec = Date.now() / 1000;
+            return Math.max(0, exp - nowSec);
+        },
+
+        getCycleDurationSeconds() {
+            const resetDay = Number(this.user.reset_day);
+            if (resetDay && resetDay > 0) return resetDay * 86400;
+            // fallback: use 30 days if not provided
+            return 30 * 86400;
+        },
+
+        formatRemainingTime() {
+            const seconds = this.getRemainingSeconds();
+            if (!seconds) return 'Expired';
+            const days = Math.floor(seconds / 86400);
+            const hours = Math.floor((seconds % 86400) / 3600);
+            if (days > 0) return `${days}d ${hours}h`;
+            const mins = Math.floor((seconds % 3600) / 60);
+            return `${hours}h ${mins}m`;
+        },
+
+        formatDateTime(ts) {
+            if (!ts) return '-';
+            const d = new Date(ts * 1000);
+            return d.toLocaleString('en-US');
+        },
+        
+        // Check for Telegram verify code and auto-login
+        checkTelegramVerify() {
+            const hash = window.location.hash || '';
+            const query = hash.split('?')[1] || '';
+            if (!query) return;
+            
+            try {
+                const params = new URLSearchParams(query);
+                const verifyCode = params.get('verify');
+                if (verifyCode) {
+                    // Found verify code, attempt auto-login
+                    this.loginWithVerifyCode(verifyCode);
+                }
+            } catch (err) {
+                console.error('Error checking telegram verify:', err);
+            }
+        },
+        
+        // Login with verify code from Telegram
+        async loginWithVerifyCode(verifyCode, redirectTarget = null) {
+            if (this.loading) return;
+            
+            this.loading = true;
+            try {
+                const response = await fetch(`/api/v1/passport/auth/token2Login?verify=${encodeURIComponent(verifyCode)}`);
+                const data = await response.json();
+                
+                if (data.data && data.data.auth_data) {
+                    localStorage.setItem('auth_data', data.data.auth_data);
+                    localStorage.setItem('authorization', data.data.auth_data);
+                    
+                    // Clean URL and redirect
+                    const redirect = this.normalizeRedirectTarget(redirectTarget || this.getRedirectParam() || 'dashboard');
+                    this.view = redirect; // Ensure UI switches away from login
+                    window.location.hash = `#/${redirect}`;
+                    // Kick off a user refresh but don't block navigation
+                    this.fetchUserInfo().catch((err) => console.error('Post-login fetchUserInfo error:', err));
+
+                    // Refresh once to ensure all auth-aware components rehydrate
+                    setTimeout(() => window.location.reload(), 200);
+                } else {
+                    this.showMessage('Login failed: ' + (data.message || 'Invalid verify code'));
+                    // Clean URL on error
+                    window.location.hash = '#/login';
+                }
+            } catch (error) {
+                console.error('Error logging in with verify code:', error);
+                this.showMessage('Login failed, please retry');
+                window.location.hash = '#/login';
+            } finally {
+                this.loading = false;
+            }
+        },
+        
+        // SSO Login Functions
+        startSsoLogin() {
+            if (this.ssoLoading) return;
+            
+            this.ssoLoading = true;
+            const redirect = this.getRedirectParam();
+            let url = '/api/v1/passport/auth/sso/init';
+            if (redirect) {
+                url += `?redirect=${encodeURIComponent(redirect)}`;
+            }
+            
+            fetch(url, {
+                method: 'GET',
+                credentials: 'include'
+            })
+            .then(res => res.json())
+            .then(data => {
+                const target = data?.data?.url;
+                if (!target) {
+                    throw new Error('Server did not return a login link, please try again later');
+                }
+                window.location.href = target;
+            })
+            .catch(error => {
+                this.ssoLoading = false;
+                this.showMessage(error.message || 'Request failed, please try again later');
+            });
+        },
+        
+        checkSsoError() {
+            const hash = window.location.hash || '';
+            const [rawPath, query = ''] = (hash.replace(/^#/, '')).split('?');
+            if (!query) return;
+            
+            try {
+                const params = new URLSearchParams(query);
+                const error = params.get('sso_error');
+                const message = params.get('sso_message');
+                const basePath = (rawPath || 'login').replace(/^\/?/, '');
+                const cleanHash = '#/' + basePath;
+                
+                if (error) {
+                    const decodedError = decodeURIComponent(error);
+                    this.showMessage('SSO action failed: ' + decodedError);
+                    if (basePath === 'profile') this.view = 'profile';
+                    if (basePath === 'login') this.view = 'login';
+                    window.location.hash = cleanHash;
+                    return;
+                }
+                
+                if (message) {
+                    const decodedMsg = decodeURIComponent(message);
+                    this.showMessage(decodedMsg || 'SSO action completed');
+                    // Refresh user info to reflect binding status
+                    this.fetchUserInfo();
+                    if (basePath === 'profile') this.view = 'profile';
+                    window.location.hash = cleanHash;
+                }
+            } catch (err) {
+                console.error('Error checking SSO messages:', err);
+            }
+        },
+        
+        // Telegram Binding
+        async bindTelegram() {
+            this.loading = true;
+            try {
+                const response = await this.request('/api/v1/user/telegram/bind');
+                if (!response) return;
+                const data = await response.json();
+                if (data.data) {
+                    if (data.data.url) {
+                        // If a URL is returned, open the Telegram Bot binding link
+                        window.open(data.data.url, '_blank');
+                        this.showMessage('Please complete the Telegram binding in the new page');
+                    } else {
+                        this.showMessage('Binding request sent, please finish in the Telegram Bot');
+                    }
+                } else {
+                    this.showMessage('Error: ' + (data.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error binding Telegram:', error);
+                this.showMessage('Binding failed, please try again later');
+            } finally {
+                this.loading = false;
+            }
+        },
+        
+        async unbindTelegram() {
+            const ok = await this.showConfirm('Are you sure you want to unbind the Telegram account?');
+            if (!ok) return;
+            this.loading = true;
+            try {
+                const response = await this.request('/api/v1/user/telegram/unbind', {
+                    method: 'POST'
+                });
+                if (!response) return;
+                const data = await response.json();
+                if (data.data === true || data.message === 'success' || response.status === 200) {
+                    this.showMessage('Telegram account has been unbound');
+                    this.user.telegram_id = null;
+                    // Refresh user info
+                    await this.fetchUserInfo();
+                } else {
+                    this.showMessage('Error: ' + (data.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error unbinding Telegram:', error);
+                this.showMessage('Unbinding failed, please try again later');
+            } finally {
+                this.loading = false;
+            }
+        },
+        
+        // SSO Binding
+        async bindSSO() {
+            if (this.loading) return;
+            this.loading = true;
+            try {
+                const response = await this.request('/api/v1/user/sso/init', { method: 'GET' });
+                if (!response) {
+                    this.loading = false;
+                    return;
+                }
+                const data = await response.json();
+                const target = data?.data?.url;
+                if (!target) {
+                    throw new Error(data?.message || 'Server did not return a binding link, please try again later');
+                }
+                window.location.href = target;
+            } catch (error) {
+                console.error('Error binding SSO:', error);
+                this.showMessage('Binding failed, please try again later');
+                this.loading = false;
+            } finally {
+                // Reset loading state if we are still on the page (in case redirect failed)
+                this.loading = false;
+            }
+        },
+        
+        async unbindSSO() {
+            const ok = await this.showConfirm('Are you sure you want to unbind the SSO account?');
+            if (!ok) return;
+            this.loading = true;
+            try {
+                const response = await this.request('/api/v1/user/sso/unbind', {
+                    method: 'POST'
+                });
+                if (!response) return;
+                const data = await response.json();
+                if (data.data === true || data.message === 'success' || response.status === 200) {
+                    this.showMessage('SSO account has been unbound');
+                    this.user.sso_id = null;
+                    this.user.sso_subject = null;
+                    this.user.sso_provider = null;
+                    this.user.casdoor_user_id = null;
+                    // Refresh user info
+                    await this.fetchUserInfo();
+                } else {
+                    this.showMessage('Error: ' + (data.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error unbinding SSO:', error);
+                this.showMessage('Unbinding failed, please try again later');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        formatBytes(bytes, decimals = 2) {
+            if (!+bytes) return '0 Bytes';
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+        },
+
+        getPeriodName(key) {
+            const map = {
+                'month_price': 'Monthly',
+                'quarter_price': 'Quarterly',
+                'half_year_price': 'Semi-Annually',
+                'year_price': 'Annually',
+                'two_year_price': 'Biennially',
+                'three_year_price': 'Triennially',
+                'onetime_price': 'One Time',
+                'reset_price': 'Reset Data'
+            };
+            return map[key] || key;
+        },
+
+        getOrderStatus(status) {
+            const map = {
+                0: 'Pending',
+                1: 'Paid',
+                2: 'Cancelled',
+                3: 'Commission'
+            };
+            return map[status] || 'Unknown';
+        },
+
+        getTicketStatus(status) {
+            const map = {
+                0: 'Pending',
+                1: 'Answered',
+                2: 'Closed'
+            };
+            return map[status] || 'Unknown';
+        },
+        
+        getCurrentBreadcrumb() {
+            const breadcrumbs = {
+                'dashboard': 'Dashboard',
+                'servers': 'Dashboard / Servers',
+                'plan': 'Shop / Plans',
+                'orders': 'Shop / Orders',
+                'payment': 'Shop / Payment',
+                'tickets': 'Support / Tickets',
+                'ticket_detail': 'Support / Ticket Detail',
+                'knowledge': 'Support / Knowledge Base',
+                'knowledge_detail': 'Support / Article',
+                'profile': 'Profile / Settings',
+                'invites': 'Profile / Invites'
+            };
+            return breadcrumbs[this.view] || 'Dashboard';
+        },
+
+        getCurrentPlanName() {
+            if (!this.user.plan_id) return 'No plan';
+            const plan = this.plans.find(p => p.id === this.user.plan_id);
+            return plan ? plan.name : 'Plan #' + this.user.plan_id;
+        },
+
+        getPeriodNameShort(key) {
+            const map = {
+                'month_price': 'MO',
+                'quarter_price': 'QTR',
+                'half_year_price': 'H1',
+                'year_price': 'YR',
+                'two_year_price': '2YR',
+                'three_year_price': '3YR',
+                'onetime_price': 'ONE',
+                'reset_price': 'RST'
+            };
+            return map[key] || this.getPeriodName(key);
+        },
+
+        getTrafficUsedPercentage() {
+            const used = this.user.d + this.user.u;
+            const total = this.user.transfer_enable;
+            if (!total || total === 0) return 0;
+            const percentage = Math.round((used / total) * 100);
+            return Math.min(percentage, 100);
+        },
+
+        getTrafficRemainingPercentage() {
+            const used = this.user.d + this.user.u;
+            const remaining = this.user.transfer_enable - used;
+            const total = this.user.transfer_enable;
+            if (!total || total === 0) return 0;
+            const percentage = Math.round((remaining / total) * 100);
+            return Math.max(Math.min(percentage, 100), 0);
+        }
+    }))
+});
