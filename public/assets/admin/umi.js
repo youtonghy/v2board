@@ -110293,9 +110293,10 @@ class wTuic extends y.a.Component {
                 login(e, t) {
                     var n = e.email
                       , r = e.password
+                      , a = e.recaptchaData
                       , i = t.put;
                     return c().mark(function e() {
-                        var t;
+                        var t, d;
                         return c().wrap(function(e) {
                             while (1)
                                 switch (e.prev = e.next) {
@@ -110309,10 +110310,13 @@ class wTuic extends y.a.Component {
                                     });
                                 case 2:
                                     return e.next = 4,
-                                    Object(o["b"])("/passport/auth/login", {
+                                    d = {
                                         email: n,
                                         password: r
-                                    });
+                                    },
+                                    a && (d["recaptcha_data"] = a,
+                                    d["turnstile_token"] = a),
+                                    Object(o["b"])("/passport/auth/login", d);
                                 case 4:
                                     return t = e.sent,
                                     e.next = 7,

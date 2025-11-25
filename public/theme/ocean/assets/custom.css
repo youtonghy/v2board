@@ -521,3 +521,218 @@ h6 {
     font-size: 24px;
     opacity: 0.28;
 }
+
+/* Node Page Card Layout */
+.ocean-node-table-hidden {
+    display: none !important;
+}
+
+.ocean-node-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 20px;
+    padding: 20px 0;
+}
+
+.ocean-node-card {
+    background: #fff;
+    border-radius: 24px;
+    padding: 20px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    border: none !important;
+    aspect-ratio: 1 / 1 !important;
+    height: auto !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.ocean-node-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.12);
+}
+
+.ocean-node-card.online {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%) !important;
+    color: #0d47a1;
+}
+
+.ocean-node-card.offline {
+    background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%) !important;
+    color: #b71c1c;
+}
+
+.ocean-node-card::before {
+    display: none !important;
+}
+
+.ocean-node-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.ocean-node-name {
+    font-size: 16px;
+    font-weight: 800;
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-height: 1.4;
+    max-width: 100%;
+    color: inherit;
+}
+
+.ocean-node-status-icon {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.6);
+    padding: 4px 8px;
+    border-radius: 8px;
+    backdrop-filter: blur(4px);
+}
+
+.ocean-node-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.ocean-node-rate {
+    display: flex;
+    flex-direction: column;
+}
+
+.ocean-node-rate small {
+    font-size: 12px;
+    opacity: 0.7;
+    margin-bottom: 2px;
+    color: inherit;
+}
+
+.ocean-node-rate strong {
+    font-size: 24px;
+    font-weight: 900;
+    color: inherit;
+}
+
+/* Popup Modal */
+.ocean-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s;
+}
+
+.ocean-modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.ocean-modal {
+    background: #fff;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 400px;
+    padding: 24px;
+    transform: translateY(20px);
+    transition: transform 0.3s;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+}
+
+.ocean-modal-overlay.active .ocean-modal {
+    transform: translateY(0);
+}
+
+.ocean-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.ocean-modal-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: #333;
+}
+
+.ocean-modal-close {
+    background: #f5f5f5;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: #666;
+    transition: background 0.2s;
+}
+
+.ocean-modal-close:hover {
+    background: #eee;
+}
+
+.ocean-modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.ocean-modal-item {
+    background: #f8f9fa;
+    padding: 12px 16px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ocean-modal-label {
+    font-size: 14px;
+    color: #666;
+    font-weight: 600;
+}
+
+.ocean-modal-value {
+    font-size: 15px;
+    font-weight: 700;
+    color: #333;
+}
+
+.ocean-tag {
+    display: inline-block;
+    padding: 4px 8px;
+    background: #e3f2fd;
+    color: #1976d2;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-right: 6px;
+}

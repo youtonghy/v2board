@@ -5,7 +5,7 @@
     <link rel="stylesheet" href="/theme/{{$theme}}/assets/components.chunk.css?v={{$version}}">
     <link rel="stylesheet" href="/theme/{{$theme}}/assets/umi.css?v={{$version}}">
     @if (file_exists(public_path("/theme/{$theme}/assets/custom.css")))
-        <link rel="stylesheet" href="/theme/{{$theme}}/assets/custom.css?v={{$version}}">
+        <link rel="stylesheet" href="/theme/{{$theme}}/assets/custom.css?v={{$version}}&t={{time()}}">
     @endif
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no">
@@ -63,7 +63,7 @@
 <script src="/theme/{{$theme}}/assets/components.async.js?v={{$version}}"></script>
 <script src="/theme/{{$theme}}/assets/umi.js?v={{$version}}"></script>
 @if (file_exists(public_path("/theme/{$theme}/assets/custom.js")))
-    <script src="/theme/{{$theme}}/assets/custom.js?v={{$version}}"></script>
+    <script src="/theme/{{$theme}}/assets/custom.js?v={{$version}}&t={{time()}}"></script>
 @endif
 <script>
 /* Circular Traffic Progress - Inline Force */

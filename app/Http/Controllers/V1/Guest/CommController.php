@@ -22,6 +22,8 @@ class CommController extends Controller
                 'is_turnstile' => (int)config('v2board.turnstile_enable', 0) ? 1 : 0,
                 'recaptcha_site_key' => config('v2board.recaptcha_site_key'),
                 'turnstile_site_key' => config('v2board.turnstile_site_key'),
+                'telegram_login_enable' => (int)config('v2board.telegram_login_enable', 0),
+                'sso_login_enable' => (int)config('v2board.sso_login_enable', 0),
                 'app_description' => config('v2board.app_description'),
                 'app_url' => config('v2board.app_url'),
                 'logo' => config('v2board.logo'),
