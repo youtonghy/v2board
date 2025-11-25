@@ -757,3 +757,240 @@ function findAuthActionContainer() {
         init();
     }
 })();
+// Node Page Card Layout Enhancer
+(function () {
+    var state = {
+        popup: null,
+        grid: null,
+        observer: null,
+        lastPath: ''
+    };
+
+    function isNodePage() {
+        var hash = window.location.hash || '';
+        return hash.indexOf('#/node') === 0;
+    }
+
+    function createPopup() {
+        if (state.popup) return state.popup;
+
+        var overlay = document.createElement('div');
+        overlay.className = 'ocean-modal-overlay';
+        overlay.innerHTML = `
+            <div class="ocean-modal">
+                <div class="ocean-modal-header">
+                    <div class="ocean-modal-title">节点详情</div>
+                    <button class="ocean-modal-close">×</button>
+                </div>
+                <div class="ocean-modal-body">
+                    <div class="ocean-modal-item">
+                        <span class="ocean-modal-label">倍率</span>
+                        <span class="ocean-modal-value" data-role="rate">-</span>
+                    </div>
+                    <div class="ocean-modal-item">
+                        <span class="ocean-modal-label">标签</span>
+                        <span class="ocean-modal-value" data-role="tags">-</span>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        overlay.querySelector('.ocean-modal-close').addEventListener('click', function () {
+            closePopup();
+        });
+
+        overlay.addEventListener('click', function (e) {
+            if (e.target === overlay) closePopup();
+        });
+
+        document.body.appendChild(overlay);
+        state.popup = overlay;
+        return overlay;
+    }
+
+    function openPopup(data) {
+        var popup = createPopup();
+        popup.querySelector('[data-role="rate"]').textContent = data.rate;
+
+        var tagsContainer = popup.querySelector('[data-role="tags"]');
+        tagsContainer.innerHTML = '';
+        if (data.tags && data.tags.length) {
+            data.tags.forEach(function (tag) {
+                var span = document.createElement('span');
+                span.className = 'ocean-tag';
+                span.textContent = tag;
+                tagsContainer.appendChild(span);
+            });
+        } else {
+            tagsContainer.textContent = '无';
+        }
+
+        requestAnimationFrame(function () {
+            popup.classList.add('active');
+        });
+    }
+
+    function closePopup() {
+        if (!state.popup) return;
+        state.popup.classList.remove('active');
+    }
+
+    function parseNodeTable(table) {
+        var rows = table.querySelectorAll('tbody tr');
+        var nodes = [];
+
+        rows.forEach(function (row) {
+            var cells = row.querySelectorAll('td');
+            if (cells.length < 4) return;
+
+            // Name
+            var name = cells[0].textContent.trim();
+
+            // Status
+            var statusDot = cells[1].querySelector('.ant-badge-status-dot');
+            var isOnline = false;
+            if (statusDot) {
+                if (statusDot.classList.contains('ant-badge-status-processing') || statusDot.classList.contains('ant-badge-status-success')) {
+                    isOnline = true;
+                }
+            }
+
+            // Rate
+            var rate = cells[2].textContent.trim();
+
+            // Tags
+            var tags = [];
+            var tagElements = cells[3].querySelectorAll('.ant-tag');
+            tagElements.forEach(function (t) {
+                tags.push(t.textContent.trim());
+            });
+            if (tags.length === 0) {
+                var text = cells[3].textContent.trim();
+                if (text && text !== '-') tags.push(text);
+            }
+
+            nodes.push({
+                name: name,
+                isOnline: isOnline,
+                rate: rate,
+                tags: tags
+            });
+        });
+
+        return nodes;
+    }
+
+    function renderCards(nodes, container) {
+        container.innerHTML = '';
+        nodes.forEach(function (node) {
+            var card = document.createElement('div');
+            card.className = 'ocean-node-card ' + (node.isOnline ? 'online' : 'offline');
+
+            // Inline styles to bypass cache/specificity issues
+            card.style.border = 'none';
+            card.style.aspectRatio = '1 / 1';
+            card.style.height = 'auto';
+            card.style.display = 'flex';
+            card.style.flexDirection = 'column';
+            card.style.justifyContent = 'space-between';
+
+            if (node.isOnline) {
+                card.style.background = 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)';
+                card.style.color = '#0d47a1';
+            } else {
+                card.style.background = 'linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)';
+                card.style.color = '#b71c1c';
+            }
+
+            var statusHtml = node.isOnline
+                ? '<span style="color: #0d47a1;">在线</span>'
+                : '<span style="color: #b71c1c;">离线</span>';
+
+            card.innerHTML = `
+                <div class="ocean-node-header">
+                    <div class="ocean-node-name" title="${node.name}">${node.name}</div>
+                    <div class="ocean-node-status-icon">
+                        ${statusHtml}
+                    </div>
+                </div>
+                <div class="ocean-node-info">
+                    <div class="ocean-node-rate">
+                        <small>倍率</small>
+                        <strong>${node.rate}</strong>
+                    </div>
+                </div>
+            `;
+            card.addEventListener('click', function () {
+                openPopup(node);
+            });
+            container.appendChild(card);
+        });
+    }
+
+    function initNodeCards() {
+        if (!isNodePage()) {
+            if (state.grid) {
+                state.grid.style.display = 'none';
+            }
+            return;
+        }
+
+        var table = document.querySelector('.ant-table-wrapper table');
+        if (!table) {
+            // Try finding just the table if wrapper not found
+            table = document.querySelector('.ant-table table');
+        }
+        if (!table) return;
+
+        // Hide original table
+        // Try wrapper first
+        var wrapper = table.closest('.ant-table-wrapper');
+        if (wrapper) {
+            if (!wrapper.classList.contains('ocean-node-table-hidden')) {
+                wrapper.classList.add('ocean-node-table-hidden');
+            }
+        } else {
+            // Hide table directly if no wrapper
+            if (!table.classList.contains('ocean-node-table-hidden')) {
+                table.classList.add('ocean-node-table-hidden');
+            }
+        }
+
+        // Create or get grid container
+        if (!state.grid) {
+            state.grid = document.createElement('div');
+            state.grid.className = 'ocean-node-grid';
+
+            // Insert after the table (or wrapper)
+            var target = wrapper || table;
+            if (target && target.parentNode) {
+                target.parentNode.insertBefore(state.grid, target.nextSibling);
+            }
+        }
+        state.grid.style.display = 'grid';
+        // Ensure grid columns are set correctly for square cards
+        state.grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(160px, 1fr))';
+
+        var nodes = parseNodeTable(table);
+        renderCards(nodes, state.grid);
+    }
+
+    function init() {
+        // Run initially
+        initNodeCards();
+
+        // Poll every 1 second
+        setInterval(initNodeCards, 1000);
+
+        // Handle hash changes
+        window.addEventListener('hashchange', function () {
+            setTimeout(initNodeCards, 200);
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();

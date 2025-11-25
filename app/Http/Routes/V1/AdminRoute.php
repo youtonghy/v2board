@@ -128,6 +128,7 @@ class AdminRoute
             $router->get ('/stat/getStatUser', 'V1\\Admin\\StatController@getStatUser');
             $router->get ('/stat/getRanking', 'V1\\Admin\\StatController@getRanking');
             $router->get ('/stat/getStatRecord', 'V1\\Admin\\StatController@getStatRecord');
+            $router->get ('/stat/getTodayTrafficOverview', 'V1\\Admin\\StatController@getTodayTrafficOverview');
             // Notice
             $router->get ('/notice/fetch', 'V1\\Admin\\NoticeController@fetch');
             $router->post('/notice/save', 'V1\\Admin\\NoticeController@save');
