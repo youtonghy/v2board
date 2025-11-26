@@ -27,6 +27,8 @@ class CommController extends Controller
                 'app_description' => config('v2board.app_description'),
                 'app_url' => config('v2board.app_url'),
                 'logo' => config('v2board.logo'),
+                'currency' => config('v2board.currency', 'CNY'),
+                'currency_symbol' => config('v2board.currency_symbol', '¥'),
             ]
         ]);
     }

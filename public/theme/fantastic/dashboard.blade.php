@@ -234,8 +234,18 @@
                 <div class="notice-carousel" aria-label="Announcements">
                     <template x-for="notice in notices" :key="notice.id">
                         <div class="notice-card-item">
-                            <strong x-text="notice.title"></strong>
-                            <p x-text="notice.content"></p>
+                            <div class="notice-header">
+                                <strong x-text="notice.title"></strong>
+                                <div class="notice-tags" x-show="notice.tags && notice.tags.length > 0">
+                                    <template x-for="tag in (notice.tags || [])" :key="tag">
+                                        <span class="notice-tag" x-text="tag"></span>
+                                    </template>
+                                </div>
+                            </div>
+                            <div class="notice-image" x-show="notice.img_url">
+                                <img :src="notice.img_url" :alt="notice.title" loading="lazy">
+                            </div>
+                            <div class="notice-content" x-html="notice.content"></div>
                         </div>
                     </template>
                 </div>
@@ -245,7 +255,7 @@
             <div x-show="view === 'dashboard'" class="view-dashboard">
                 <div class="card welcome-card">
                     <h1>Welcome back, <span x-text="user.email"></span></h1>
-                    <p>Your subscription is <span x-text="user.plan_id ? 'Active' : 'Inactive'"></span></p>
+                    <p>Your subscription is <span :class="getSubscriptionStatusClass()" x-text="getSubscriptionStatusText()"></span></p>
                     <div x-show="user.plan_id" style="margin-top: 0.5rem;">
                         <p style="font-size: 1.1rem; color: var(--primary-color); font-weight: 600;">
                             Current Plan: <span x-text="getCurrentPlanName()"></span>
@@ -315,7 +325,7 @@
                             <div class="plan-period-actions">
                                 <template x-for="key in ['month_price', 'quarter_price', 'half_year_price', 'year_price', 'two_year_price', 'three_year_price', 'onetime_price', 'reset_price']">
                                     <div class="plan-period-row" x-show="plan[key] !== null && plan[key] !== undefined">
-                                        <button class="btn-3d btn-sm" @click="subscribeWithPlan(plan, key)" :disabled="loading" x-text="loading ? 'Processing...' : getPeriodNameShort(key) + ' · ¥' + (plan[key] / 100)"></button>
+                                        <button class="btn-3d btn-sm" @click="subscribeWithPlan(plan, key)" :disabled="loading" x-text="loading ? 'Processing...' : getPeriodNameShort(key) + ' · ' + formatCurrency(plan[key])"></button>
                                     </div>
                                 </template>
                             </div>
@@ -362,7 +372,7 @@
                             <template x-for="order in orders" :key="order.trade_no">
                                 <tr>
                                 <td x-text="order.trade_no"></td>
-                                <td><span style="font-weight: 700; color: var(--primary-color);" x-text="'¥' + (order.total_amount / 100)"></span></td>
+                                <td><span style="font-weight: 700; color: var(--primary-color);" x-text="formatCurrency(order.total_amount)"></span></td>
                                 <td x-text="getPeriodName(order.period)"></td>
                                 <td><span class="status-badge" :style="'background: ' + getOrderStatusColor(order.status)" x-text="getOrderStatus(order.status)"></span></td>
                                 <td>
@@ -403,6 +413,66 @@
             <!-- Transfer Data View -->
             <div x-show="view === 'transfer'" class="view-transfer" style="display: none;">
                 <h2>Transfer Data</h2>
+
+                <!-- Traffic Heatmap -->
+                <div class="card heatmap-card">
+                    <div class="heatmap-header">
+                        <h3>Traffic Heatmap</h3>
+                        <div class="heatmap-legend">
+                            <span class="legend-label">Less</span>
+                            <div class="legend-item level-0"></div>
+                            <div class="legend-item level-1"></div>
+                            <div class="legend-item level-2"></div>
+                            <div class="legend-item level-3"></div>
+                            <div class="legend-item level-4"></div>
+                            <div class="legend-item level-5"></div>
+                            <div class="legend-item level-6"></div>
+                            <span class="legend-label">More</span>
+                        </div>
+                    </div>
+                    <div class="heatmap-container">
+                        <div class="heatmap-months">
+                            <template x-for="month in getHeatmapMonths()" :key="month">
+                                <span class="month-label" x-text="month"></span>
+                            </template>
+                        </div>
+                        <div class="heatmap-wrapper">
+                            <div class="heatmap-days">
+                                <span>Mon</span>
+                                <span>Wed</span>
+                                <span>Fri</span>
+                            </div>
+                            <div class="heatmap-grid">
+                                <template x-for="(week, weekIndex) in getHeatmapData()" :key="weekIndex">
+                                    <div class="heatmap-week">
+                                        <template x-for="(day, dayIndex) in week" :key="dayIndex">
+                                            <div class="heatmap-day"
+                                                 :class="'level-' + day.level"
+                                                 :title="day.date + ': ' + formatBytes(day.traffic)"
+                                                 x-show="day.visible">
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="heatmap-stats">
+                        <div class="stat-item">
+                            <span class="stat-value" x-text="formatBytes(getTotalTraffic())"></span>
+                            <span class="stat-label">Total (This Period)</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" x-text="formatBytes(getAverageDailyTraffic())"></span>
+                            <span class="stat-label">Daily Average</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" x-text="formatBytes(getMaxDailyTraffic())"></span>
+                            <span class="stat-label">Peak Day</span>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="card">
                     <h3>Traffic Details (This Month)</h3>
                     <div class="table-wrapper">
@@ -468,7 +538,7 @@
                         </div>
                         <div class="order-amount">
                             <span class="label">Amount Due</span>
-                            <span class="amount" x-text="'¥' + (currentOrder.total_amount / 100)"></span>
+                            <span class="amount" x-text="formatCurrency(currentOrder.total_amount)"></span>
                         </div>
                     </div>
 
@@ -540,10 +610,10 @@
                     
                     <!-- Payment Button -->
                     <div class="payment-action">
-                        <button class="btn-3d btn-primary btn-payment" 
-                                @click="confirmPayment()" 
+                        <button class="btn-3d btn-primary btn-payment"
+                                @click="confirmPayment()"
                                 :disabled="!selectedPaymentMethod || loading || couponApplying"
-                                x-text="loading ? 'Processing...' : 'Confirm Payment ¥' + (currentOrder.total_amount / 100)">
+                                x-text="loading ? 'Processing...' : 'Confirm Payment ' + formatCurrency(currentOrder.total_amount)">
                         </button>
                     </div>
                 </div>
@@ -563,7 +633,7 @@
                     </div>
                     <div class="card stat-card">
                         <h3>Available Commission</h3>
-                        <div class="value" x-text="invites.stat[4] / 100 || 0"></div>
+                        <div class="value" x-text="formatCurrency(invites.stat[4] || 0)"></div>
                     </div>
                 </div>
                 
