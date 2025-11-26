@@ -828,7 +828,7 @@ document.addEventListener('alpine:init', () => {
         describeCoupon(coupon) {
             if (!coupon) return '';
             const value = Number(coupon.value || 0);
-            if (coupon.type === 1) return '-¥' + (value / 100).toFixed(2);
+            if (coupon.type === 1) return '-' + this.formatCurrency(value);
             if (coupon.type === 2) return value + '% off';
             return 'Coupon applied';
         },
@@ -941,7 +941,7 @@ document.addEventListener('alpine:init', () => {
             if (!method) return '';
             const parts = [];
             if (method.handling_fee_fixed && method.handling_fee_fixed > 0) {
-                parts.push('Fixed ¥' + (method.handling_fee_fixed / 100).toFixed(2));
+                parts.push('Fixed ' + this.formatCurrency(method.handling_fee_fixed));
             }
             if (method.handling_fee_percent && method.handling_fee_percent > 0) {
                 parts.push(method.handling_fee_percent + '%');
@@ -1743,6 +1743,122 @@ document.addEventListener('alpine:init', () => {
             return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
         },
 
+        // Currency formatting
+        getCurrencySymbol() {
+            return this.siteConfig.currency_symbol || '¥';
+        },
+
+        formatCurrency(cents, decimals = 2) {
+            const symbol = this.getCurrencySymbol();
+            const amount = (cents / 100).toFixed(decimals);
+            return `${symbol}${amount}`;
+        },
+
+        // Heatmap helper functions
+        getTrafficLevel(bytes) {
+            const GB = 1024 * 1024 * 1024;
+            const MB = 1024 * 1024;
+            if (bytes === 0) return 0;
+            if (bytes < 100 * MB) return 1;      // < 100MB
+            if (bytes < 500 * MB) return 2;      // 100MB - 500MB
+            if (bytes < 1 * GB) return 3;        // 500MB - 1GB
+            if (bytes < 3 * GB) return 4;        // 1GB - 3GB
+            if (bytes < 10 * GB) return 5;       // 3GB - 10GB
+            return 6;                             // > 10GB
+        },
+
+        getHeatmapData() {
+            const weeks = [];
+            const today = new Date();
+            const trafficMap = {};
+
+            // Build traffic map from data
+            this.traffics.forEach(item => {
+                const date = new Date(item.record_at * 1000);
+                const dateKey = date.toISOString().split('T')[0];
+                trafficMap[dateKey] = (trafficMap[dateKey] || 0) + (item.u || 0) + (item.d || 0);
+            });
+
+            // Generate last 15 weeks (about 3.5 months)
+            const totalDays = 15 * 7;
+            const startDate = new Date(today);
+            startDate.setDate(startDate.getDate() - totalDays + 1);
+
+            // Adjust to start from Sunday
+            const dayOfWeek = startDate.getDay();
+            startDate.setDate(startDate.getDate() - dayOfWeek);
+
+            let currentDate = new Date(startDate);
+
+            for (let week = 0; week < 15; week++) {
+                const weekData = [];
+                for (let day = 0; day < 7; day++) {
+                    const dateKey = currentDate.toISOString().split('T')[0];
+                    const traffic = trafficMap[dateKey] || 0;
+                    const isInRange = currentDate <= today;
+
+                    weekData.push({
+                        date: currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                        traffic: traffic,
+                        level: isInRange ? this.getTrafficLevel(traffic) : 0,
+                        visible: isInRange
+                    });
+
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
+                weeks.push(weekData);
+            }
+
+            return weeks;
+        },
+
+        getHeatmapMonths() {
+            const months = [];
+            const today = new Date();
+            const startDate = new Date(today);
+            startDate.setDate(startDate.getDate() - 14 * 7);
+
+            let currentMonth = -1;
+            let currentDate = new Date(startDate);
+
+            for (let week = 0; week < 15; week++) {
+                const month = currentDate.getMonth();
+                if (month !== currentMonth) {
+                    months.push(currentDate.toLocaleDateString('en-US', { month: 'short' }));
+                    currentMonth = month;
+                } else {
+                    months.push('');
+                }
+                currentDate.setDate(currentDate.getDate() + 7);
+            }
+
+            return months;
+        },
+
+        getTotalTraffic() {
+            return this.traffics.reduce((sum, item) => sum + (item.u || 0) + (item.d || 0), 0);
+        },
+
+        getAverageDailyTraffic() {
+            if (this.traffics.length === 0) return 0;
+            const total = this.getTotalTraffic();
+            const uniqueDays = new Set(this.traffics.map(item => {
+                const date = new Date(item.record_at * 1000);
+                return date.toISOString().split('T')[0];
+            })).size;
+            return uniqueDays > 0 ? Math.round(total / uniqueDays) : 0;
+        },
+
+        getMaxDailyTraffic() {
+            const dailyTraffic = {};
+            this.traffics.forEach(item => {
+                const date = new Date(item.record_at * 1000);
+                const dateKey = date.toISOString().split('T')[0];
+                dailyTraffic[dateKey] = (dailyTraffic[dateKey] || 0) + (item.u || 0) + (item.d || 0);
+            });
+            return Math.max(0, ...Object.values(dailyTraffic));
+        },
+
         getPeriodName(key) {
             const map = {
                 'month_price': 'Monthly',
@@ -1797,6 +1913,34 @@ document.addEventListener('alpine:init', () => {
             if (!this.user.plan_id) return 'No plan';
             const plan = this.plans.find(p => p.id === this.user.plan_id);
             return plan ? plan.name : 'Plan #' + this.user.plan_id;
+        },
+
+        // Subscription status helpers
+        getSubscriptionStatus() {
+            // Check if banned
+            if (this.user.banned) {
+                return { text: 'Banned', type: 'danger' };
+            }
+            // Check if no plan
+            if (!this.user.plan_id) {
+                return { text: 'Inactive', type: 'inactive' };
+            }
+            // Check if expired
+            const now = Math.floor(Date.now() / 1000);
+            if (this.user.expired_at && this.user.expired_at < now) {
+                return { text: 'Expired', type: 'danger' };
+            }
+            // Active subscription
+            return { text: 'Active', type: 'success' };
+        },
+
+        getSubscriptionStatusText() {
+            return this.getSubscriptionStatus().text;
+        },
+
+        getSubscriptionStatusClass() {
+            const type = this.getSubscriptionStatus().type;
+            return 'status-badge status-' + type;
         },
 
         getPeriodNameShort(key) {
