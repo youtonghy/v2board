@@ -84,6 +84,19 @@ document.addEventListener('alpine:init', () => {
         passwordForm: { old_password: '', new_password: '' },
         redeemForm: { code: '' },
         redeemResult: { success: false, message: '' },
+        couponForm: { code: '' },
+        appliedCoupon: null,
+        couponApplying: false,
+
+        // Routing
+        routeParams: {
+            paymentTradeNo: null,
+            ticketId: null,
+            articleId: null
+        },
+        currentRoute: { view: 'dashboard', params: {} },
+        routerReady: false,
+        suppressHashUpdate: false,
 
         // Details Views
         selectedTicket: null,
@@ -97,40 +110,24 @@ document.addEventListener('alpine:init', () => {
         },
 
         init() {
+            this.initRouter();
             // Check for Telegram verify code first
             this.checkTelegramVerify();
             
             this.fetchSiteConfig().then(() => {
                 this.fetchUserInfo();
             });
-            
+
             // Check for SSO errors
             this.checkSsoError();
-            
-            // Watch for hash changes to check SSO errors
-            window.addEventListener('hashchange', () => {
-                this.checkSsoError();
-            });
 
             this.$watch('view', (value) => {
-                this.$nextTick(() => {
-                    if (value === 'login') {
-                        this.renderCaptcha('captcha-login', 'loginWidget');
-                        // Check for verify code when entering login page
-                        this.checkTelegramVerify();
-                    }
-                    if (value === 'register') this.renderCaptcha('captcha-register', 'registerWidget');
-                    if (value === 'payment') {
-                        console.log('Payment view opened');
-                        console.log('Current order:', this.currentOrder);
-                        console.log('Available payment methods:', this.paymentMethods);
-                        console.log('Selected payment method:', this.selectedPaymentMethod);
-                    }
-                    if (value === 'transfer' && !this.trafficsLoaded) {
-                        this.fetchTraffics();
-                    }
-                });
+                this.resetRouteParamsForView(value);
+                this.syncHashWithView();
+                this.handleViewEntered(value);
             });
+
+            this.handleViewEntered(this.view);
             
             // Watch for Telegram login modal open
             this.$watch('showTelegramLogin', (value) => {
@@ -150,6 +147,161 @@ document.addEventListener('alpine:init', () => {
                     this.telegramMessage = '';
                     this.telegramLoading = false;
                     this.telegramWaiting = false;
+                }
+            });
+        },
+
+        initRouter() {
+            const handleHash = () => {
+                if (this.suppressHashUpdate) return;
+                this.applyRouteFromHash();
+                this.checkSsoError();
+                this.checkTelegramVerify();
+            };
+
+            handleHash();
+            window.addEventListener('hashchange', handleHash);
+            this.routerReady = true;
+        },
+
+        applyRouteFromHash() {
+            const route = this.parseRouteFromHash(window.location.hash || '');
+            this.currentRoute = route;
+            const baseRouteParams = {
+                paymentTradeNo: null,
+                ticketId: null,
+                articleId: null
+            };
+            this.routeParams = { ...baseRouteParams, ...route.params };
+            this.suppressHashUpdate = true;
+            this.view = route.view;
+            this.$nextTick(() => { this.suppressHashUpdate = false; });
+            this.hydrateRouteContext(route);
+        },
+
+        parseRouteFromHash(rawHash) {
+            const cleaned = (rawHash || '').replace(/^#/, '');
+            const [pathPart = '', queryString = ''] = cleaned.split('?');
+            const path = pathPart.replace(/^\/+/, '');
+            const segments = path.split('/').filter(Boolean);
+            const params = {};
+            let view = segments[0] || 'dashboard';
+
+            try {
+                const search = new URLSearchParams(queryString);
+                if (search.has('trade_no')) params.paymentTradeNo = search.get('trade_no');
+                if (search.has('redirect')) params.redirect = search.get('redirect');
+                if (search.has('verify')) params.verify = search.get('verify');
+                if (search.has('sso_error')) params.sso_error = search.get('sso_error');
+                if (search.has('sso_message')) params.sso_message = search.get('sso_message');
+            } catch (err) {
+                console.warn('Failed to parse hash params', err);
+            }
+
+            if (segments[0] === 'tickets' && segments[1]) {
+                view = 'ticket_detail';
+                params.ticketId = segments[1];
+            } else if (segments[0] === 'knowledge' && segments[1]) {
+                view = 'knowledge_detail';
+                params.articleId = segments[1];
+            } else if (segments[0] === 'payment') {
+                view = 'payment';
+            } else if (!segments[0]) {
+                view = 'dashboard';
+            }
+
+            const allowedViews = [
+                'dashboard', 'servers', 'plan', 'orders', 'redeem', 'transfer',
+                'invites', 'tickets', 'knowledge', 'profile', 'login', 'register',
+                'payment', 'ticket_detail', 'knowledge_detail'
+            ];
+            if (!allowedViews.includes(view)) {
+                view = 'dashboard';
+            }
+
+            return { view, params };
+        },
+
+        buildHashFromState(view, extraParams = {}) {
+            const params = new URLSearchParams();
+            const mergedParams = { ...this.routeParams, ...extraParams };
+            let path = view || 'dashboard';
+
+            if (view === 'ticket_detail') {
+                const ticketId = mergedParams.ticketId || this.ticketReplyForm.id || this.selectedTicket?.id;
+                path = ticketId ? `tickets/${ticketId}` : 'tickets';
+            } else if (view === 'knowledge_detail') {
+                const articleId = mergedParams.articleId || this.knowledge.currentArticle?.id;
+                path = articleId ? `knowledge/${articleId}` : 'knowledge';
+            } else if (view === 'payment') {
+                path = 'payment';
+                if (mergedParams.paymentTradeNo) {
+                    params.set('trade_no', mergedParams.paymentTradeNo);
+                } else if (this.currentOrder?.trade_no) {
+                    params.set('trade_no', this.currentOrder.trade_no);
+                }
+            }
+
+            const query = params.toString();
+            return `#/${path}${query ? `?${query}` : ''}`;
+        },
+
+        syncHashWithView() {
+            if (!this.routerReady || this.suppressHashUpdate) return;
+            const targetHash = this.buildHashFromState(this.view);
+            if (targetHash !== window.location.hash) {
+                this.suppressHashUpdate = true;
+                window.location.hash = targetHash;
+                setTimeout(() => { this.suppressHashUpdate = false; }, 0);
+            }
+        },
+
+        hydrateRouteContext(route) {
+            if (route.view === 'payment' && route.params.paymentTradeNo) {
+                this.routeParams.paymentTradeNo = route.params.paymentTradeNo;
+                this.tryHydratePaymentFromOrders();
+            }
+            if (route.view === 'ticket_detail' && route.params.ticketId) {
+                this.routeParams.ticketId = route.params.ticketId;
+                this.viewTicket({ id: route.params.ticketId });
+            }
+            if (route.view === 'knowledge_detail' && route.params.articleId) {
+                this.routeParams.articleId = route.params.articleId;
+                this.viewArticle(route.params.articleId);
+            }
+        },
+
+        tryHydratePaymentFromOrders() {
+            if (!this.routeParams.paymentTradeNo || !Array.isArray(this.orders) || this.orders.length === 0) return;
+            if (this.currentOrder && String(this.currentOrder.trade_no) === String(this.routeParams.paymentTradeNo)) return;
+            const match = this.orders.find((order) => String(order.trade_no) === String(this.routeParams.paymentTradeNo));
+            if (match) {
+                this.goToPayment(match);
+            }
+        },
+
+        resetRouteParamsForView(view) {
+            if (view !== 'payment') this.routeParams.paymentTradeNo = null;
+            if (view !== 'ticket_detail') this.routeParams.ticketId = null;
+            if (view !== 'knowledge_detail') this.routeParams.articleId = null;
+        },
+
+        handleViewEntered(value) {
+            this.$nextTick(() => {
+                if (value === 'login') {
+                    this.renderCaptcha('captcha-login', 'loginWidget');
+                    // Check for verify code when entering login page
+                    this.checkTelegramVerify();
+                }
+                if (value === 'register') this.renderCaptcha('captcha-register', 'registerWidget');
+                if (value === 'payment') {
+                    console.log('Payment view opened');
+                    console.log('Current order:', this.currentOrder);
+                    console.log('Available payment methods:', this.paymentMethods);
+                    console.log('Selected payment method:', this.selectedPaymentMethod);
+                }
+                if (value === 'transfer' && !this.trafficsLoaded) {
+                    this.fetchTraffics();
                 }
             });
         },
@@ -454,6 +606,7 @@ document.addEventListener('alpine:init', () => {
                 const data = await this.safeJsonParse(response);
                 if (data && data.data) {
                     this.orders = data.data;
+                    this.tryHydratePaymentFromOrders();
                 }
             } catch (error) {
                 console.error('Error fetching orders:', error);
@@ -646,8 +799,12 @@ document.addEventListener('alpine:init', () => {
         },
 
         async goToPayment(order) {
+            this.routeParams.paymentTradeNo = order?.trade_no || null;
             this.currentOrder = order;
             this.view = 'payment';
+            this.couponForm.code = '';
+            this.appliedCoupon = null;
+            this.couponApplying = false;
             // Refresh payment methods so they are up to date
             await this.fetchPaymentMethods();
             // Auto-select the first payment method
@@ -666,6 +823,112 @@ document.addEventListener('alpine:init', () => {
                 return;
             }
             await this.checkout(this.currentOrder.trade_no, this.selectedPaymentMethod);
+        },
+
+        describeCoupon(coupon) {
+            if (!coupon) return '';
+            const value = Number(coupon.value || 0);
+            if (coupon.type === 1) return '-¥' + (value / 100).toFixed(2);
+            if (coupon.type === 2) return value + '% off';
+            return 'Coupon applied';
+        },
+
+        async applyCoupon() {
+            const code = (this.couponForm.code || '').trim();
+            if (!code) {
+                this.showMessage('Please enter a coupon code');
+                return;
+            }
+            if (!this.currentOrder) {
+                this.showMessage('No order selected');
+                return;
+            }
+
+            this.couponApplying = true;
+            try {
+                const response = await this.request('/api/v1/user/coupon/check', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        code,
+                        plan_id: this.currentOrder.plan_id,
+                        period: this.currentOrder.period
+                    })
+                });
+                if (!response) return;
+                const data = await response.json().catch(() => ({}));
+
+                if (!response.ok || !data?.data) {
+                    this.appliedCoupon = null;
+                    this.showMessage(data?.message || 'Invalid coupon');
+                    return;
+                }
+
+                const couponData = data.data;
+                const recreated = await this.recreateOrderWithCoupon(code);
+                if (recreated) {
+                    this.appliedCoupon = couponData;
+                    this.showMessage('Coupon applied and order updated');
+                } else {
+                    this.appliedCoupon = null;
+                }
+            } catch (error) {
+                console.error('Error applying coupon:', error);
+                this.appliedCoupon = null;
+                this.showMessage(error?.message || 'Failed to apply coupon');
+            } finally {
+                this.couponApplying = false;
+            }
+        },
+
+        async recreateOrderWithCoupon(code) {
+            if (!this.currentOrder) return false;
+            const originalTradeNo = this.currentOrder.trade_no;
+            try {
+                const response = await this.request('/api/v1/user/order/save', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        plan_id: this.currentOrder.plan_id,
+                        period: this.currentOrder.period,
+                        coupon_code: code
+                    })
+                });
+                if (!response) return false;
+                const data = await response.json().catch(() => ({}));
+                if (response.ok && data?.data) {
+                    const newTradeNo = data.data;
+                    await this.fetchOrders();
+                    const newOrder = this.orders.find(o => o.trade_no === newTradeNo);
+                    if (newOrder) {
+                        this.currentOrder = newOrder;
+                    } else {
+                        this.currentOrder = { ...this.currentOrder, trade_no: newTradeNo };
+                    }
+                    if (originalTradeNo && originalTradeNo !== newTradeNo) {
+                        this.cancelOrderSilently(originalTradeNo);
+                    }
+                    return true;
+                }
+
+                this.showMessage(data?.message || 'Failed to apply coupon');
+                return false;
+            } catch (error) {
+                console.error('Error recreating order with coupon:', error);
+                this.showMessage(error?.message || 'Failed to apply coupon');
+                return false;
+            }
+        },
+
+        async cancelOrderSilently(tradeNo) {
+            if (!tradeNo) return;
+            try {
+                await this.request('/api/v1/user/order/cancel', {
+                    method: 'POST',
+                    body: JSON.stringify({ trade_no: tradeNo })
+                });
+                await this.fetchOrders();
+            } catch (error) {
+                console.warn('Failed to cancel previous order', tradeNo, error);
+            }
         },
 
         selectPaymentMethod(method) {
@@ -793,6 +1056,7 @@ document.addEventListener('alpine:init', () => {
                 if (data.data) {
                     this.selectedTicket = data.data;
                     this.ticketReplyForm.id = ticket.id;
+                    this.routeParams.ticketId = ticket.id;
                     this.view = 'ticket_detail';
                 }
             } catch (error) {
@@ -852,6 +1116,7 @@ document.addEventListener('alpine:init', () => {
                 const data = await response.json();
                 if (data.data) {
                     this.knowledge.currentArticle = data.data;
+                    this.routeParams.articleId = id;
                     this.view = 'knowledge_detail';
                 }
             } catch (error) {
@@ -908,14 +1173,28 @@ document.addEventListener('alpine:init', () => {
 
         copySubscribeUrl() {
             if (this.user.subscribe_url) {
-                navigator.clipboard.writeText(this.user.subscribe_url).then(() => {
-                    this.showMessage('Subscription URL copied to clipboard!');
+                navigator.clipboard.writeText(this.user.subscribe_url).catch(() => {
+                    // Silent failure: the notification handler will still run; log for debugging
+                    console.warn('Failed to copy subscription URL to clipboard');
                 });
             }
         },
         
         showNotification(message) {
-            this.showMessage(message);
+            const notify = () => this.showMessage(message);
+
+            // Close subscription modal first so the dialog isn't blocked
+            if (this.showSubscriptionModal) {
+                this.showSubscriptionModal = false;
+                if (typeof this.$nextTick === 'function') {
+                    this.$nextTick(notify);
+                } else {
+                    setTimeout(notify, 0);
+                }
+                return;
+            }
+
+            notify();
         },
         
         // Telegram Login Functions
@@ -1089,6 +1368,7 @@ document.addEventListener('alpine:init', () => {
                     this.redeemResult = { success: true, message: 'Redeemed successfully' };
                     this.redeemForm.code = '';
                     this.fetchUserInfo();
+                    this.fireConfetti();
                 } else {
                     this.redeemResult = { success: false, message: data.message || 'Redeem failed' };
                 }
@@ -1097,6 +1377,37 @@ document.addEventListener('alpine:init', () => {
                 this.redeemResult = { success: false, message: 'Redeem failed' };
             } finally {
                 this.loading = false;
+            }
+        },
+
+        getConfettiContainer() {
+            if (this.$refs?.confettiContainer) return this.$refs.confettiContainer;
+            return document.getElementById('fantastic-confetti');
+        },
+
+        fireConfetti() {
+            const container = this.getConfettiContainer();
+            if (!container) return;
+
+            const colors = ['#4f9cff', '#ff8ec7', '#ffd166', '#6ee7b7', '#a78bfa'];
+            const totalPiecesPerSide = 16;
+
+            const spawn = (side) => {
+                const piece = document.createElement('div');
+                piece.className = `confetti-piece confetti-${side}`;
+                piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                piece.style.animationDuration = `${1.1 + Math.random() * 0.6}s`;
+                piece.style.animationDelay = `${Math.random() * 0.2}s`;
+                piece.style.setProperty('--confetti-offset', `${Math.random() * 25}vw`);
+                piece.style.setProperty('--confetti-rotate', `${side === 'left' ? 420 : -420}deg`);
+
+                piece.addEventListener('animationend', () => piece.remove());
+                container.appendChild(piece);
+            };
+
+            for (let i = 0; i < totalPiecesPerSide; i++) {
+                spawn('left');
+                spawn('right');
             }
         },
 
@@ -1113,7 +1424,23 @@ document.addEventListener('alpine:init', () => {
         },
 
         showMessage(message, title = 'Notice') {
-            this.openDialog({ title, message, confirmText: 'OK', cancelText: null });
+            const open = () => this.openDialog({ title, message, confirmText: 'OK', cancelText: null });
+
+            // Ensure previous dialog is closed before opening a new one to avoid stacking
+            if (this.dialog.open) {
+                this.dialog.open = false;
+                this.dialog.onConfirm = null;
+                this.dialog.onCancel = null;
+
+                if (typeof this.$nextTick === 'function') {
+                    this.$nextTick(open);
+                } else {
+                    setTimeout(open, 0);
+                }
+                return;
+            }
+
+            open();
         },
 
         showConfirm(message, title = 'Confirm') {

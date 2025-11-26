@@ -260,7 +260,7 @@
                 <div class="stats-grid">
                     <div class="card stat-card stat-card-chart">
                         <h3>Remaining</h3>
-                        <div class="circular-progress" 
+                        <div class="circular-progress progress-blue" 
                              :style="`--progress: ${getTimeRemainingPercentage()}`"
                              x-init="$watch('user', () => $el.style.setProperty('--progress', getTimeRemainingPercentage()))">
                             <div class="progress-circle">
@@ -273,7 +273,7 @@
                     </div>
                     <div class="card stat-card stat-card-chart">
                         <h3>Traffic Used</h3>
-                        <div class="circular-progress" 
+                        <div class="circular-progress progress-yellow" 
                              :style="`--progress: ${getTrafficUsedPercentage()}`"
                              x-init="$watch('user', () => $el.style.setProperty('--progress', getTrafficUsedPercentage()))">
                             <div class="progress-circle">
@@ -286,7 +286,7 @@
                     </div>
                     <div class="card stat-card stat-card-chart">
                         <h3>Traffic Remaining</h3>
-                        <div class="circular-progress" 
+                        <div class="circular-progress progress-green" 
                              :style="`--progress: ${getTrafficRemainingPercentage()}`"
                              x-init="$watch('user', () => $el.style.setProperty('--progress', getTrafficRemainingPercentage()))">
                             <div class="progress-circle">
@@ -471,6 +471,36 @@
                             <span class="amount" x-text="'¥' + (currentOrder.total_amount / 100)"></span>
                         </div>
                     </div>
+
+                    <!-- Coupon Redeem -->
+                    <div class="card payment-coupon-card">
+                        <div class="coupon-header">
+                            <div>
+                                <h3>Redeem Coupon</h3>
+                                <p class="coupon-subtitle">Apply a discount code before paying</p>
+                            </div>
+                            <div class="coupon-status" x-show="appliedCoupon">
+                                <span class="badge badge-success">Applied</span>
+                                <span class="coupon-saving" x-text="describeCoupon(appliedCoupon)"></span>
+                            </div>
+                        </div>
+                        <div class="coupon-form">
+                            <div class="coupon-input-group">
+                                <input type="text" class="form-input" placeholder="Enter coupon code" x-model="couponForm.code" :disabled="couponApplying">
+                                <button class="btn-3d btn-primary btn-coupon" @click="applyCoupon()" :disabled="couponApplying || !couponForm.code.trim()">
+                                    <span x-show="!couponApplying">Verify</span>
+                                    <span x-show="couponApplying">Checking...</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="coupon-applied" x-show="appliedCoupon">
+                            <div class="coupon-pill">
+                                <span class="coupon-code" x-text="appliedCoupon.code"></span>
+                                <span class="coupon-desc" x-text="describeCoupon(appliedCoupon)"></span>
+                            </div>
+                        </div>
+                        <p class="coupon-hint">Coupon will regenerate this order with the discount before payment.</p>
+                    </div>
                     
                     <!-- Payment Methods -->
                     <div class="card payment-methods-card">
@@ -512,7 +542,7 @@
                     <div class="payment-action">
                         <button class="btn-3d btn-primary btn-payment" 
                                 @click="confirmPayment()" 
-                                :disabled="!selectedPaymentMethod || loading"
+                                :disabled="!selectedPaymentMethod || loading || couponApplying"
                                 x-text="loading ? 'Processing...' : 'Confirm Payment ¥' + (currentOrder.total_amount / 100)">
                         </button>
                     </div>
@@ -814,9 +844,6 @@
                     <div class="subscription-option">
                         <h4>Universal Link</h4>
                         <p>Copy this subscription link into your client</p>
-                        <div class="subscription-url-display">
-                            <input type="text" :value="user.subscribe_url" readonly class="form-input">
-                        </div>
                         <button class="btn-3d btn-block" @click="copySubscribeUrl(); showNotification('Subscription link copied')">Copy Link</button>
                     </div>
                     <div class="subscription-divider">or</div>
@@ -853,6 +880,8 @@
                 </div>
             </div>
         </div>
+
+        <div class="confetti-container" x-ref="confettiContainer" id="fantastic-confetti" aria-hidden="true"></div>
     </div>
 
     {!! $theme_config['custom_html'] !!}
