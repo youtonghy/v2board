@@ -473,6 +473,7 @@ img {
     display: flex;
     align-items: center;
     justify-content: center;
+    --progress-color: var(--primary-color);
 }
 
 .progress-circle {
@@ -481,7 +482,7 @@ img {
     height: 100%;
     border-radius: 50%;
     background: conic-gradient(
-        var(--primary-color) calc(var(--progress) * 1%),
+        var(--progress-color, var(--primary-color)) calc(var(--progress) * 1%),
         var(--card-bg) 0
     );
     box-shadow: 
@@ -491,7 +492,6 @@ img {
     display: flex;
     align-items: center;
     justify-content: center;
-    animation: progressRotate 1.5s ease-out;
 }
 
 @keyframes progressRotate {
@@ -509,7 +509,7 @@ img {
     inset: 0;
     border-radius: 50%;
     background: conic-gradient(
-        var(--primary-color) calc(var(--progress) * 1%),
+        var(--progress-color, var(--primary-color)) calc(var(--progress) * 1%),
         transparent 0
     );
     mask: radial-gradient(
@@ -549,10 +549,22 @@ img {
 .progress-value .percentage {
     font-size: 2rem;
     font-weight: 800;
-    color: var(--primary-color);
+    color: var(--progress-color, var(--primary-color));
     line-height: 1;
     margin-bottom: 0.5rem;
     text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+.progress-blue {
+    --progress-color: #3b82f6;
+}
+
+.progress-yellow {
+    --progress-color: #facc15;
+}
+
+.progress-green {
+    --progress-color: #22c55e;
 }
 
 .progress-value .amount {
@@ -1438,6 +1450,88 @@ h3 {
     margin-bottom: 2rem;
 }
 
+.payment-coupon-card {
+    margin-bottom: 2rem;
+}
+
+.coupon-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.coupon-subtitle {
+    margin: 0.2rem 0 0 0;
+    opacity: 0.7;
+    font-size: 0.95rem;
+}
+
+.coupon-status {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-weight: 700;
+}
+
+.coupon-saving {
+    color: var(--primary-color);
+}
+
+.coupon-form {
+    margin-top: 1rem;
+}
+
+.coupon-input-group {
+    display: flex;
+    width: 100%;
+    gap: 0;
+    align-items: stretch;
+}
+
+.coupon-input-group .form-input {
+    flex: 1;
+    margin: 0;
+    border-radius: 12px 0 0 12px;
+}
+
+.btn-coupon {
+    border-radius: 0 12px 12px 0;
+    margin: 0;
+    min-width: 110px;
+    white-space: nowrap;
+}
+
+.coupon-applied {
+    margin-top: 0.8rem;
+}
+
+.coupon-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.6rem 0.9rem;
+    border-radius: 12px;
+    background: rgba(79, 156, 255, 0.08);
+}
+
+.coupon-code {
+    font-weight: 800;
+    color: var(--primary-color);
+}
+
+.coupon-desc {
+    font-size: 0.9rem;
+    opacity: 0.75;
+}
+
+.coupon-hint {
+    margin-top: 0.4rem;
+    font-size: 0.85rem;
+    opacity: 0.6;
+}
+
 .payment-methods-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -2215,6 +2309,57 @@ h3 {
 .btn-import:hover svg {
     opacity: 1;
     color: var(--primary-color);
+}
+
+/* Confetti celebration */
+.confetti-container {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 1200;
+}
+
+.confetti-piece {
+    position: absolute;
+    width: 10px;
+    height: 16px;
+    border-radius: 3px;
+    opacity: 0;
+}
+
+.confetti-left {
+    left: 0;
+    animation: confetti-left var(--confetti-duration, 1.3s) ease-out forwards;
+}
+
+.confetti-right {
+    right: 0;
+    animation: confetti-right var(--confetti-duration, 1.3s) ease-out forwards;
+}
+
+@keyframes confetti-left {
+    0% {
+        opacity: 1;
+        transform: translate3d(-10vw, 60vh, 0) rotate(0deg);
+    }
+    100% {
+        opacity: 0;
+        transform: translate3d(calc(40vw + var(--confetti-offset, 0vw)), -10vh, 0)
+            rotate(var(--confetti-rotate, 540deg));
+    }
+}
+
+@keyframes confetti-right {
+    0% {
+        opacity: 1;
+        transform: translate3d(110vw, 60vh, 0) rotate(0deg);
+    }
+    100% {
+        opacity: 0;
+        transform: translate3d(calc(60vw - var(--confetti-offset, 0vw)), -10vh, 0)
+            rotate(var(--confetti-rotate, -540deg));
+    }
 }
 
 /* Mobile modal adjustments */
