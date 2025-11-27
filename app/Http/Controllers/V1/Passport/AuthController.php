@@ -18,6 +18,7 @@ use App\Utils\Dict;
 use App\Utils\Helper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Hash;
 use ReCaptcha\ReCaptcha;
 
 class AuthController extends Controller
@@ -238,7 +239,7 @@ class AuthController extends Controller
         }
         $user = new User();
         $user->email = $email;
-        $user->password = password_hash($password, PASSWORD_DEFAULT);
+        $user->password = Hash::make($password);
         $user->uuid = Helper::guid(true);
         $user->token = Helper::guid();
         if ($request->input('invite_code')) {
@@ -410,7 +411,7 @@ class AuthController extends Controller
         if (!$user) {
             abort(500, __('This email is not registered in the system'));
         }
-        $user->password = password_hash($request->input('password'), PASSWORD_DEFAULT);
+        $user->password = Hash::make($request->input('password'));
         $user->password_algo = NULL;
         $user->password_salt = NULL;
         if (!$user->save()) {
@@ -429,7 +430,7 @@ class AuthController extends Controller
         if ((int)config('v2board.turnstile_enable', 0) === 1) {
             $token = $request->input('turnstile_token') ?? $request->input('recaptcha_data');
             if (!TurnstileService::verify($token, $request->ip())) {
-                abort(500, __('Invalid code is incorrect'));
+                abort(422, __('Captcha verification failed'));
             }
             return;
         }
@@ -437,7 +438,7 @@ class AuthController extends Controller
             $recaptcha = new ReCaptcha(config('v2board.recaptcha_key'));
             $recaptchaResp = $recaptcha->verify($request->input('recaptcha_data'));
             if (!$recaptchaResp->isSuccess()) {
-                abort(500, __('Invalid code is incorrect'));
+                abort(422, __('Captcha verification failed'));
             }
         }
     }

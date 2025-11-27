@@ -7,6 +7,7 @@ use Illuminate\Encryption\Encrypter;
 use App\Models\User;
 use App\Utils\Helper;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class V2boardInstall extends Command
 {
@@ -114,7 +115,7 @@ class V2boardInstall extends Command
         if (strlen($password) < 8) {
             abort(500, '管理员密码长度最小为8位字符');
         }
-        $user->password = password_hash($password, PASSWORD_DEFAULT);
+        $user->password = Hash::make($password);
         $user->uuid = Helper::guid(true);
         $user->token = Helper::guid();
         $user->is_admin = 1;

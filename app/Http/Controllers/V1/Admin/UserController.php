@@ -19,6 +19,7 @@ use App\Utils\Helper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -133,7 +134,7 @@ class UserController extends Controller
             abort(500, '邮箱已被使用');
         }
         if (isset($params['password'])) {
-            $params['password'] = password_hash($params['password'], PASSWORD_DEFAULT);
+            $params['password'] = Hash::make($params['password']);
             $params['password_algo'] = NULL;
         } else {
             unset($params['password']);
@@ -221,7 +222,7 @@ class UserController extends Controller
             if (User::where('email', $user['email'])->first()) {
                 abort(500, '邮箱已存在于系统中');
             }
-            $user['password'] = password_hash($request->input('password') ?? $user['email'], PASSWORD_DEFAULT);
+            $user['password'] = Hash::make($request->input('password') ?? $user['email']);
             if (!User::create($user)) {
                 abort(500, '生成失败');
             }
@@ -256,7 +257,7 @@ class UserController extends Controller
                 'created_at' => time(),
                 'updated_at' => time()
             ];
-            $user['password'] = password_hash($request->input('password') ?? $user['email'], PASSWORD_DEFAULT);
+            $user['password'] = Hash::make($request->input('password') ?? $user['email']);
             array_push($users, $user);
         }
         DB::beginTransaction();
