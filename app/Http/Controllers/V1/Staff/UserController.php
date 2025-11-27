@@ -9,6 +9,7 @@ use App\Jobs\SendEmailJob;
 use App\Models\Plan;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -38,7 +39,7 @@ class UserController extends Controller
             abort(500, '邮箱已被使用');
         }
         if (isset($params['password'])) {
-            $params['password'] = password_hash($params['password'], PASSWORD_DEFAULT);
+            $params['password'] = Hash::make($params['password']);
             $params['password_algo'] = NULL;
         } else {
             unset($params['password']);

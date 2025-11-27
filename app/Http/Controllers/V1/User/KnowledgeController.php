@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V1\User;
 use App\Http\Controllers\Controller;
 use App\Models\Knowledge;
 use App\Models\User;
+use App\Services\HtmlSanitizer;
 use App\Services\UserService;
 use App\Utils\Helper;
 use Illuminate\Http\Request;
@@ -38,6 +39,10 @@ class KnowledgeController extends Controller
                 $knowledge['body']
             );
             $knowledge['body'] = str_replace('{{subscribeToken}}', $user['token'], $knowledge['body']);
+
+            // Sanitize HTML content to prevent XSS
+            $knowledge['body'] = HtmlSanitizer::clean($knowledge['body']);
+
             return response([
                 'data' => $knowledge
             ]);

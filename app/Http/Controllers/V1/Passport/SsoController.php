@@ -9,6 +9,9 @@ use App\Utils\CacheKey;
 use App\Utils\Helper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 
 class SsoController extends Controller
@@ -16,12 +19,19 @@ class SsoController extends Controller
     private const MODE_LOGIN = 'login';
     private const MODE_BIND = 'bind';
 
+    // Rate limiting constants
+    private const SSO_INIT_RATE_LIMIT = 10;     // max requests
+    private const SSO_INIT_RATE_DECAY = 60;     // per minute
+    private const SSO_CALLBACK_RATE_LIMIT = 20;
+    private const SSO_CALLBACK_RATE_DECAY = 60;
+
     public function init(Request $request, CasdoorService $casdoorService)
     {
         $this->assertSsoEnabled();
+        $this->checkRateLimit('sso_init', $request->ip(), self::SSO_INIT_RATE_LIMIT, self::SSO_INIT_RATE_DECAY);
 
         $redirect = $this->sanitizeRedirect($request->input('redirect'));
-        return $this->respondAuthorizeUrl($casdoorService, [
+        return $this->respondAuthorizeUrl($casdoorService, $request, [
             'redirect' => $redirect,
             'mode' => self::MODE_LOGIN,
         ]);
@@ -30,8 +40,9 @@ class SsoController extends Controller
     public function bindInit(Request $request, CasdoorService $casdoorService)
     {
         $this->assertSsoEnabled();
+        $this->checkRateLimit('sso_bind_init', $request->ip(), self::SSO_INIT_RATE_LIMIT, self::SSO_INIT_RATE_DECAY);
 
-        return $this->respondAuthorizeUrl($casdoorService, [
+        return $this->respondAuthorizeUrl($casdoorService, $request, [
             'mode' => self::MODE_BIND,
             'user_id' => $request->user['id'],
         ]);
@@ -40,25 +51,47 @@ class SsoController extends Controller
     public function callback(Request $request, CasdoorService $casdoorService)
     {
         $this->assertSsoEnabled();
+        $this->checkRateLimit('sso_callback', $request->ip(), self::SSO_CALLBACK_RATE_LIMIT, self::SSO_CALLBACK_RATE_DECAY);
 
         if ($error = $request->input('error')) {
+            Log::warning('SSO callback error', ['error' => $error, 'ip' => $request->ip()]);
             return $this->redirectFlowError([], $request->input('error_description', $error));
         }
 
         $state = (string)$request->input('state');
         $code = (string)$request->input('code');
         if ($state === '' || $code === '') {
+            Log::warning('SSO callback missing params', ['ip' => $request->ip()]);
             return $this->redirectFlowError([], '缺少必要的授权参数');
         }
 
         $statePayload = Cache::pull($this->stateCacheKey($state));
         if (!$statePayload) {
+            Log::warning('SSO callback invalid state', ['state' => $state, 'ip' => $request->ip()]);
             return $this->redirectToLoginError('登录请求已失效，请重试');
+        }
+
+        // Verify IP address binding for security
+        $boundIp = $statePayload['ip'] ?? null;
+        if ($boundIp && $boundIp !== $request->ip()) {
+            Log::warning('SSO callback IP mismatch', [
+                'bound_ip' => $boundIp,
+                'request_ip' => $request->ip(),
+            ]);
+            return $this->redirectFlowError($statePayload, '请求来源IP不匹配，请重新登录');
+        }
+
+        // Verify state hasn't expired (extra check beyond cache TTL)
+        $createdAt = $statePayload['created_at'] ?? 0;
+        if (time() - $createdAt > 300) {
+            Log::warning('SSO callback state expired', ['created_at' => $createdAt]);
+            return $this->redirectFlowError($statePayload, '登录请求已过期，请重试');
         }
 
         try {
             $tokenData = $casdoorService->exchangeCode($code);
         } catch (\Throwable $e) {
+            Log::error('SSO token exchange failed', ['error' => $e->getMessage()]);
             return $this->redirectFlowError($statePayload, $e->getMessage());
         }
 
@@ -70,7 +103,18 @@ class SsoController extends Controller
         try {
             $profile = $casdoorService->fetchUserInfo($accessToken);
         } catch (\Throwable $e) {
+            Log::error('SSO user info fetch failed', ['error' => $e->getMessage()]);
             return $this->redirectFlowError($statePayload, $e->getMessage());
+        }
+
+        // Verify nonce if present in token (for OpenID Connect)
+        $expectedNonce = $statePayload['nonce'] ?? null;
+        if ($expectedNonce && isset($profile['nonce']) && $profile['nonce'] !== $expectedNonce) {
+            Log::warning('SSO nonce mismatch', [
+                'expected' => $expectedNonce,
+                'received' => $profile['nonce'] ?? 'null'
+            ]);
+            return $this->redirectFlowError($statePayload, '安全验证失败，请重试');
         }
 
         $mode = $statePayload['mode'] ?? self::MODE_LOGIN;
@@ -80,11 +124,14 @@ class SsoController extends Controller
 
         $user = $this->findOrCreateUser($profile);
         if ($user->banned) {
+            Log::info('SSO login attempt by banned user', ['user_id' => $user->id]);
             return $this->redirectToLoginError(__('Your account has been suspended'));
         }
 
         $user->last_login_at = time();
         $user->save();
+
+        Log::info('SSO login successful', ['user_id' => $user->id, 'email' => $user->email]);
 
         $verify = Helper::guid();
         Cache::put(CacheKey::get('TEMP_TOKEN', $verify), $user->id, 120);
@@ -93,12 +140,14 @@ class SsoController extends Controller
         return redirect()->to($this->buildSpaLoginUrl($verify, $redirect));
     }
 
-    protected function respondAuthorizeUrl(CasdoorService $casdoorService, array $payload)
+    protected function respondAuthorizeUrl(CasdoorService $casdoorService, Request $request, array $payload)
     {
         $state = Helper::guid();
         $nonce = Helper::guid();
         $payload['nonce'] = $nonce;
         $payload['created_at'] = time();
+        // Bind IP address to prevent CSRF
+        $payload['ip'] = $request->ip();
         Cache::put($this->stateCacheKey($state), $payload, 300);
 
         try {
@@ -134,6 +183,7 @@ class SsoController extends Controller
         } catch (\Throwable $e) {
             return $this->redirectToProfileError($e->getMessage());
         }
+        Log::info('SSO bind successful', ['user_id' => $userId, 'subject' => $subject]);
         return $this->redirectToProfileSuccess('SSO 绑定成功');
     }
 
@@ -159,7 +209,8 @@ class SsoController extends Controller
             return $user;
         }
 
-        if ((int)config('v2board.sso_auto_register', 1) !== 1) {
+        // SECURITY FIX: Default to disabled auto-registration (0)
+        if ((int)config('v2board.sso_auto_register', 0) !== 1) {
             abort(403, __('SSO账号尚未绑定，请先在个人中心绑定后再登录'));
         }
 
@@ -167,6 +218,7 @@ class SsoController extends Controller
             abort(500, 'SSO 未返回邮箱地址，无法完成登录');
         }
 
+        Log::info('SSO auto-register new user', ['email' => $email, 'subject' => $subject]);
         return $this->createUserFromProfile($profile, $subject);
     }
 
@@ -174,7 +226,8 @@ class SsoController extends Controller
     {
         $user = new User();
         $user->email = (string)$profile['email'];
-        $user->password = password_hash(Str::random(48), PASSWORD_DEFAULT);
+        // Use Laravel's Hash facade for consistency
+        $user->password = Hash::make(Str::random(48));
         $user->uuid = Helper::guid(true);
         $user->token = Helper::guid();
         $user->remarks = 'SSO:' . ($profile['name'] ?? $profile['preferred_username'] ?? 'casdoor');
@@ -290,5 +343,21 @@ class SsoController extends Controller
             $message = $fallback;
         }
         return mb_substr($message, 0, 120);
+    }
+
+    /**
+     * Check rate limit for SSO operations
+     */
+    protected function checkRateLimit(string $key, string $ip, int $maxAttempts, int $decaySeconds): void
+    {
+        $rateLimitKey = $key . ':' . $ip;
+
+        if (RateLimiter::tooManyAttempts($rateLimitKey, $maxAttempts)) {
+            $seconds = RateLimiter::availableIn($rateLimitKey);
+            Log::warning('SSO rate limit exceeded', ['key' => $key, 'ip' => $ip]);
+            abort(429, "请求过于频繁，请在 {$seconds} 秒后重试");
+        }
+
+        RateLimiter::hit($rateLimitKey, $decaySeconds);
     }
 }

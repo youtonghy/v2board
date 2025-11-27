@@ -20,6 +20,7 @@ use App\Utils\Helper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -74,7 +75,7 @@ class UserController extends Controller
         )) {
             abort(500, __('The old password is wrong'));
         }
-        $user->password = password_hash($request->input('new_password'), PASSWORD_DEFAULT);
+        $user->password = Hash::make($request->input('new_password'));
         $user->password_algo = NULL;
         $user->password_salt = NULL;
         if (!$user->save()) {

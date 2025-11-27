@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V1\User;
 use App\Http\Controllers\Controller;
 use App\Models\Plan;
 use App\Models\User;
+use App\Services\HtmlSanitizer;
 use App\Services\PlanService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -22,6 +23,8 @@ class PlanController extends Controller
             if ((!$plan->show && !$plan->renew) || (!$plan->show && $user->plan_id !== $plan->id)) {
                 abort(500, __('Subscription plan does not exist'));
             }
+            // Sanitize HTML content to prevent XSS
+            $plan->content = HtmlSanitizer::clean($plan->content);
             return response([
                 'data' => $plan
             ]);
@@ -32,6 +35,8 @@ class PlanController extends Controller
             ->orderBy('sort', 'ASC')
             ->get();
         foreach ($plans as $k => $v) {
+            // Sanitize HTML content to prevent XSS
+            $plans[$k]->content = HtmlSanitizer::clean($plans[$k]->content);
             if ($plans[$k]->capacity_limit === NULL) continue;
             if (!isset($counts[$plans[$k]->id])) continue;
             $plans[$k]->capacity_limit = $plans[$k]->capacity_limit - $counts[$plans[$k]->id]->count;

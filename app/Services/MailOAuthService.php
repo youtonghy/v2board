@@ -2,8 +2,9 @@
 
 namespace App\Services;
 
-use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Http;
 
 class MailOAuthService
 {
@@ -17,12 +18,19 @@ class MailOAuthService
 
         $provider = strtolower(config('v2board.email_oauth_provider', 'google'));
         $identity = config('v2board.email_username', 'email');
-        $cacheKey = self::CACHE_PREFIX . ':' . md5($provider . '|' . $identity);
+        // Use hash for cache key to avoid leaking identity info
+        $cacheKey = self::CACHE_PREFIX . ':' . hash('sha256', $provider . '|' . $identity . '|' . config('app.key'));
 
         if (Cache::has($cacheKey)) {
             $cached = Cache::get($cacheKey);
             if (!empty($cached)) {
-                return $cached;
+                try {
+                    // Decrypt the cached token
+                    return Crypt::decryptString($cached);
+                } catch (\Throwable $e) {
+                    // If decryption fails, fetch a new token
+                    Cache::forget($cacheKey);
+                }
             }
         }
 
@@ -45,7 +53,10 @@ class MailOAuthService
         }
         $expiresIn = (int)($token['expires_in'] ?? 3600);
         $ttl = max(60, $expiresIn - 120);
-        Cache::put($cacheKey, $accessToken, $ttl);
+
+        // Encrypt the token before caching
+        $encryptedToken = Crypt::encryptString($accessToken);
+        Cache::put($cacheKey, $encryptedToken, $ttl);
 
         return $accessToken;
     }
@@ -95,21 +106,20 @@ class MailOAuthService
 
     private function sendTokenRequest(string $url, array $formParams): array
     {
-        $client = new Client([
-            'timeout' => 10,
-        ]);
-
         try {
-            $response = $client->post($url, [
-                'form_params' => $formParams,
-            ]);
+            $response = Http::timeout(10)
+                ->asForm()
+                ->post($url, $formParams);
         } catch (\Throwable $e) {
             throw new \RuntimeException('OAuth 2.0 请求失败: ' . $e->getMessage(), $e->getCode(), $e);
         }
 
-        $body = (string)$response->getBody();
-        $data = json_decode($body, true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
+        if ($response->failed()) {
+            throw new \RuntimeException('OAuth 2.0 请求失败: HTTP ' . $response->status());
+        }
+
+        $data = $response->json();
+        if (!is_array($data)) {
             throw new \RuntimeException('OAuth 2.0 返回非JSON数据');
         }
         if (isset($data['error'])) {

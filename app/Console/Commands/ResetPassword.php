@@ -7,6 +7,7 @@ use App\Utils\Helper;
 use Illuminate\Console\Command;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class ResetPassword extends Command
 {
@@ -45,7 +46,7 @@ class ResetPassword extends Command
         $user = User::where('email', $this->argument('email'))->first();
         if (!$user) abort(500, '邮箱不存在');
         $password = Helper::guid(false);
-        $user->password = password_hash($password, PASSWORD_DEFAULT);
+        $user->password = Hash::make($password);
         $user->password_algo = null;
         if (!$user->save()) abort(500, '重置失败');
         $this->info("!!!重置成功!!!");
