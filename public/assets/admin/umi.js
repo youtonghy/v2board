@@ -6211,6 +6211,12 @@
                     checked: parseInt(n.invite_never_expire),
                     onChange: e=>this.set("invite", "invite_never_expire", e ? 1 : 0)
                 })), f.a.createElement(m, {
+                    title: "\u4ec5\u7ba1\u7406\u5458\u53ef\u751f\u6210\u9080\u8bf7\u7801",
+                    description: "\u5f00\u542f\u540e\u666e\u901a\u7528\u6237\u65e0\u6cd5\u751f\u6210\u9080\u8bf7\u7801\uff0c\u4ec5\u7ba1\u7406\u5458\u53ef\u4ee5\u5728\u540e\u53f0\u751f\u6210\u5e76\u5206\u914d\u7ed9\u7528\u6237\u3002"
+                }, f.a.createElement(l["a"], {
+                    checked: parseInt(n.invite_admin_only),
+                    onChange: e=>this.set("invite", "invite_admin_only", e ? 1 : 0)
+                })), f.a.createElement(m, {
                     title: "\u4f63\u91d1\u4ec5\u9996\u6b21\u53d1\u653e",
                     description: "\u5f00\u542f\u540e\u88ab\u9080\u8bf7\u4eba\u9996\u6b21\u652f\u4ed8\u65f6\u624d\u4f1a\u4ea7\u751f\u4f63\u91d1\uff0c\u53ef\u4ee5\u5728\u7528\u6237\u7ba1\u7406\u5bf9\u7528\u6237\u8fdb\u884c\u5355\u72ec\u914d\u7f6e\u3002"
                 }, f.a.createElement(l["a"], {
@@ -71471,6 +71477,21 @@ class p extends h.a.Component {
                     cancelText: "\u53d6\u6d88"
                 })
             }
+            generateInviteCode(e) {
+                var t = this;
+                p["a"].confirm({
+                    title: "\u751f\u6210\u9080\u8bf7\u7801",
+                    content: "\u786e\u5b9a\u8981\u4e3a".concat(e.email, "\u751f\u6210\u9080\u8bf7\u7801\u5417\uff1f"),
+                    onOk() {
+                        t.props.dispatch({
+                            type: "user/generateInviteCode",
+                            user_id: e.id
+                        })
+                    },
+                    okText: "\u786e\u5b9a",
+                    cancelText: "\u53d6\u6d88"
+                })
+            }
             delUser(e) {
                 var t = this;
                 p["a"].confirm({
@@ -71634,6 +71655,10 @@ class p extends h.a.Component {
                             }, g.a.createElement("a", null, g.a.createElement(u["a"], {
                                 type: "usergroup-add"
                             }), " TA\u7684\u9080\u8bf7")), g.a.createElement(c["a"].Item, {
+                                onClick: ()=>this.generateInviteCode(t)
+                            }, g.a.createElement("a", null, g.a.createElement(u["a"], {
+                                type: "gift"
+                            }), " \u751f\u6210\u9080\u8bf7\u7801")), g.a.createElement(c["a"].Item, {
                                 onContextMenu: e=>{
                                     e.stopPropagation()
                                 }
@@ -82679,6 +82704,39 @@ class p extends h.a.Component {
                                     return e.abrupt("return");
                                 case 5:
                                     return r["a"].success("\u5220\u9664\u6210\u529f"),
+                                    e.next = 8,
+                                    i({
+                                        type: "fetch"
+                                    });
+                                case 8:
+                                case "end":
+                                    return e.stop()
+                                }
+                        }, e)
+                    })()
+                },
+                generateInviteCode(e, t) {
+                    var n = e.user_id
+                      , i = t.put;
+                    return f().mark(function e() {
+                        var t;
+                        return f().wrap(function(e) {
+                            while (1)
+                                switch (e.prev = e.next) {
+                                case 0:
+                                    return e.next = 2,
+                                    Object(a["b"])("/" + window.settings.secure_path + "/user/generateInviteCode", {
+                                        user_id: n
+                                    });
+                                case 2:
+                                    if (t = e.sent,
+                                    200 === t.code) {
+                                        e.next = 5;
+                                        break
+                                    }
+                                    return e.abrupt("return");
+                                case 5:
+                                    return r["a"].success("\u9080\u8bf7\u7801\u751f\u6210\u6210\u529f: " + t.data),
                                     e.next = 8,
                                     i({
                                         type: "fetch"

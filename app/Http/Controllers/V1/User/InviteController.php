@@ -14,6 +14,10 @@ class InviteController extends Controller
 {
     public function save(Request $request)
     {
+        // 检查是否仅允许管理员生成邀请码
+        if (config('v2board.invite_admin_only', 0)) {
+            abort(500, __('Only administrators can generate invite codes'));
+        }
         if (InviteCode::where('user_id', $request->user['id'])->where('status', 0)->count() >= config('v2board.invite_gen_limit', 5)) {
             abort(500, __('The maximum number of creations has been reached'));
         }
@@ -81,7 +85,8 @@ class InviteController extends Controller
         return response([
             'data' => [
                 'codes' => $codes,
-                'stat' => $stat
+                'stat' => $stat,
+                'invite_admin_only' => (int)config('v2board.invite_admin_only', 0)
             ]
         ]);
     }

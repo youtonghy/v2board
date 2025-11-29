@@ -60,7 +60,7 @@ class HtmlSanitizer
         $html = preg_replace('/<(script|style|iframe|frame|frameset|object|embed|applet|meta|link|base|form|input|button|select|textarea)[^>]*\/?>/is', '', $html);
 
         // Remove event handlers (onclick, onerror, etc.)
-        $html = preg_replace('/\s+on\w+\s*=\s*["\'][^"\']*["\'/is', '', $html);
+        $html = preg_replace('/\s+on\w+\s*=\s*["\'][^"\']*["\']/is', '', $html);
         $html = preg_replace('/\s+on\w+\s*=\s*[^\s>]+/is', '', $html);
 
         // Remove javascript: and data: URLs

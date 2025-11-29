@@ -14,14 +14,17 @@ document.addEventListener('alpine:init', () => {
             sso_subject: null,
             sso_provider: null,
             uuid: '',
-            token: ''
+            token: '',
+            expired_at: null,
+            plan_started_at: null
         },
         plans: [],
         orders: [],
         tickets: [],
         invites: {
             codes: [],
-            stat: []
+            stat: [],
+            invite_admin_only: 0
         },
         traffics: [],
         trafficsLoaded: false,
@@ -294,12 +297,6 @@ document.addEventListener('alpine:init', () => {
                     this.checkTelegramVerify();
                 }
                 if (value === 'register') this.renderCaptcha('captcha-register', 'registerWidget');
-                if (value === 'payment') {
-                    console.log('Payment view opened');
-                    console.log('Current order:', this.currentOrder);
-                    console.log('Available payment methods:', this.paymentMethods);
-                    console.log('Selected payment method:', this.selectedPaymentMethod);
-                }
                 if (value === 'transfer' && !this.trafficsLoaded) {
                     this.fetchTraffics();
                 }
@@ -335,30 +332,27 @@ document.addEventListener('alpine:init', () => {
 
         async safeJsonParse(response) {
             if (!response) return null;
-            
-            // Check response status
-            if (!response.ok) {
-                console.error('Response not OK:', response.status, response.statusText);
+
+            // Handle 304 Not Modified - means data hasn't changed, keep existing data
+            if (response.status === 304) {
                 return null;
             }
-            
+
+            // Check response status - but still try to parse error responses
+            if (!response.ok) {
+                return null;
+            }
+
             try {
                 // Validate Content-Type
                 const contentType = response.headers.get('content-type');
                 if (!contentType || !contentType.includes('application/json')) {
-                    console.warn('Non-JSON response, content-type:', contentType);
-                    const text = await response.text();
-                    console.warn('Response preview:', text.substring(0, 200));
                     return null;
                 }
-                
+
                 const data = await response.json();
                 return data;
             } catch (error) {
-                console.error('JSON parse error:', error);
-                if (error instanceof SyntaxError) {
-                    console.error('Invalid JSON - the API might be returning HTML or malformed data');
-                }
                 return null;
             }
         },
@@ -431,16 +425,15 @@ document.addEventListener('alpine:init', () => {
                     const ssoSubject = data.data.sso_subject || data.data.sso_id || data.data.casdoor_user_id || null;
                     const ssoProvider = data.data.sso_provider || this.user.sso_provider || 'casdoor';
                     // Merge user data, ensuring sso_id is included
-                    this.user = { 
-                        ...this.user, 
+                    this.user = {
+                        ...this.user,
                         ...data.data,
                         // Normalize SSO fields for UI
                         sso_subject: ssoSubject,
                         sso_provider: ssoProvider,
                         sso_id: ssoSubject
                     };
-                    console.log('User info loaded:', this.user); // Debug log
-                    
+
                     // Only fetch other data if logged in
                     this.fetchPlans();
                     this.fetchOrders();
@@ -656,8 +649,8 @@ document.addEventListener('alpine:init', () => {
             try {
                 const response = await this.request('/api/v1/user/server/fetch');
                 if (!response) return;
-                const data = await response.json();
-                if (data.data) {
+                const data = await this.safeJsonParse(response);
+                if (data && data.data) {
                     this.servers = data.data.map((s) => {
                         const hasIsOnline = s.is_online !== undefined;
                         const fromFlag = hasIsOnline ? Number(s.is_online) === 1 : null;
@@ -707,30 +700,21 @@ document.addEventListener('alpine:init', () => {
 
         async fetchPaymentMethods() {
             try {
-                console.log('Fetching payment methods...');
                 const response = await this.request('/api/v1/user/order/getPaymentMethod');
                 if (!response) {
-                    console.warn('No response from payment methods API (possibly 401/403)');
                     this.paymentMethods = [];
                     return;
                 }
-                
+
                 const data = await this.safeJsonParse(response);
                 if (!data) {
-                    console.error('Failed to parse payment methods response');
                     this.paymentMethods = [];
                     return;
                 }
-                
-                console.log('Payment methods response:', data);
+
                 if (data.data) {
                     this.paymentMethods = Array.isArray(data.data) ? data.data : [];
-                    console.log('✓ Payment methods loaded:', this.paymentMethods.length, this.paymentMethods);
-                    if (this.paymentMethods.length === 0) {
-                        console.warn('⚠ No payment methods configured. Please check admin panel.');
-                    }
                 } else {
-                    console.warn('No payment methods data in response:', data);
                     this.paymentMethods = [];
                 }
             } catch (error) {
@@ -810,10 +794,8 @@ document.addEventListener('alpine:init', () => {
             // Auto-select the first payment method
             if (this.paymentMethods.length > 0) {
                 this.selectedPaymentMethod = this.paymentMethods[0].id;
-                console.log('Auto-selected payment method:', this.paymentMethods[0].name, 'ID:', this.selectedPaymentMethod);
             } else {
                 this.selectedPaymentMethod = null;
-                console.warn('No payment methods available');
             }
         },
 
@@ -934,7 +916,6 @@ document.addEventListener('alpine:init', () => {
         selectPaymentMethod(method) {
             if (!method || !method.id) return;
             this.selectedPaymentMethod = method.id;
-            console.log('Selected payment method:', method.name, 'ID:', method.id);
         },
 
         getPaymentFeeText(method) {
@@ -1179,7 +1160,15 @@ document.addEventListener('alpine:init', () => {
                 });
             }
         },
-        
+
+        copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                this.showMessage('Copied!');
+            }).catch(() => {
+                console.warn('Failed to copy to clipboard');
+            });
+        },
+
         showNotification(message) {
             const notify = () => this.showMessage(message);
 
@@ -1473,6 +1462,27 @@ document.addEventListener('alpine:init', () => {
         },
 
         getTimeRemainingPercentage() {
+            const exp = Number(this.user.expired_at || 0);
+            const started = Number(this.user.plan_started_at || 0);
+
+            // 如果没有过期时间，返回0
+            if (!exp) return 0;
+
+            const nowSec = Date.now() / 1000;
+
+            // 如果已过期，返回0
+            if (nowSec >= exp) return 0;
+
+            // 如果有套餐开始时间，使用实际套餐周期计算
+            if (started && started > 0) {
+                const totalDuration = exp - started;
+                const remainingDuration = exp - nowSec;
+                if (totalDuration <= 0) return 0;
+                const pct = Math.round((remainingDuration / totalDuration) * 100);
+                return Math.min(100, Math.max(0, pct));
+            }
+
+            // 回退到旧的计算方式（使用 reset_day）
             const remainingSeconds = this.getRemainingSeconds();
             const cycleSeconds = this.getCycleDurationSeconds();
             if (cycleSeconds <= 0) return 0;
