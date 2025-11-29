@@ -352,6 +352,21 @@ class UserController extends Controller
         $userService = new UserService();
         $user['reset_day'] = $userService->getResetDay($user);
         $user['allow_new_period'] = config('v2board.allow_new_period', 0);
+
+        // 获取套餐开始时间（从最近一次完成的订单计算）
+        $lastOrder = Order::where('user_id', $request->user['id'])
+            ->where('status', 3) // 已完成状态
+            ->where('plan_id', $user->plan_id)
+            ->orderBy('created_at', 'DESC')
+            ->first();
+        if ($lastOrder && $user->expired_at) {
+            // 根据订单周期计算套餐时长（秒）
+            $periodDays = $this->getPeriodDays($lastOrder->period);
+            $user['plan_started_at'] = $user->expired_at - ($periodDays * 86400);
+        } else {
+            $user['plan_started_at'] = null;
+        }
+
         return response([
             'data' => $user
         ]);
@@ -484,5 +499,30 @@ class UserController extends Controller
         return response([
             'data' => $url
         ]);
+    }
+
+    /**
+     * 根据订单周期获取天数
+     */
+    private function getPeriodDays($period)
+    {
+        switch ($period) {
+            case 'month_price':
+                return 30;
+            case 'quarter_price':
+                return 90;
+            case 'half_year_price':
+                return 180;
+            case 'year_price':
+                return 365;
+            case 'two_year_price':
+                return 730;
+            case 'three_year_price':
+                return 1095;
+            case 'onetime_price':
+                return 365 * 99; // 一次性购买视为长期
+            default:
+                return 30; // 默认一个月
+        }
     }
 }

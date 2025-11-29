@@ -388,4 +388,27 @@ class UserController extends Controller
             'data' => true
         ]);
     }
+
+    public function generateInviteCode(Request $request)
+    {
+        $userId = $request->input('user_id');
+        if (!$userId) {
+            abort(500, '请选择用户');
+        }
+        $user = User::find($userId);
+        if (!$user) {
+            abort(500, '用户不存在');
+        }
+
+        $inviteCode = new InviteCode();
+        $inviteCode->user_id = $userId;
+        $inviteCode->code = Helper::randomChar(8);
+        if (!$inviteCode->save()) {
+            abort(500, '生成邀请码失败');
+        }
+
+        return response([
+            'data' => $inviteCode->code
+        ]);
+    }
 }
