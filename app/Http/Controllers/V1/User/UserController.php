@@ -17,6 +17,7 @@ use App\Services\OrderService;
 use App\Services\UserService;
 use App\Utils\CacheKey;
 use App\Utils\Helper;
+use App\Utils\Google2FA;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -284,8 +285,11 @@ class UserController extends Controller
                 'commission_rate',
                 'telegram_id',
                 'uuid',
+                'uuid',
                 'sso_subject',
-                'sso_provider'
+                'sso_provider',
+                'two_factor_type',
+                'two_factor_verified'
             ])
             ->first();
         if (!$user) {
@@ -524,5 +528,65 @@ class UserController extends Controller
             default:
                 return 30; // 默认一个月
         }
+    }
+
+    public function enable2FA(Request $request)
+    {
+        if (!config('v2board.totp_enable', 0)) {
+            abort(500, __('Two-Factor Authentication is disabled by administrator'));
+        }
+        $user = User::find($request->user['id']);
+        if ($user->two_factor_type && $user->two_factor_verified) {
+             abort(500, __('Two-Factor Authentication is already enabled'));
+        }
+        
+        $secret = Google2FA::generateSecretKey();
+        Cache::put(CacheKey::get('TOTP_SECRET', $user->id), $secret, 600);
+        
+        $appName = config('v2board.app_name', 'V2Board');
+        $otpauth = "otpauth://totp/{$appName}:{$user->email}?secret={$secret}&issuer={$appName}";
+        
+        return response([
+            'data' => [
+                'secret' => $secret,
+                'otpauth' => $otpauth
+            ]
+        ]);
+    }
+
+    public function verify2FA(Request $request)
+    {
+        $code = preg_replace('/\s+/', '', (string)$request->input('code'));
+        $user = User::find($request->user['id']);
+        $secret = Cache::get(CacheKey::get('TOTP_SECRET', $user->id));
+        
+        if (!$secret) {
+            abort(500, __('Secret expired or invalid, please try again'));
+        }
+        
+        if (Google2FA::verifyKey($secret, $code)) {
+            $user->totp_secret = $secret;
+            $user->two_factor_type = 'totp';
+            $user->two_factor_verified = 1;
+            $user->save();
+            Cache::forget(CacheKey::get('TOTP_SECRET', $user->id));
+            return response([
+                'data' => true
+            ]);
+        }
+        
+        abort(500, __('Invalid verification code'));
+    }
+
+    public function disable2FA(Request $request)
+    {
+        $user = User::find($request->user['id']);
+        $user->two_factor_type = null;
+        $user->totp_secret = null;
+        $user->two_factor_verified = 0;
+        $user->save();
+        return response([
+            'data' => true
+        ]);
     }
 }

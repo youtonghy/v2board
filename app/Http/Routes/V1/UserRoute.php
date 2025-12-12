@@ -14,6 +14,9 @@ class UserRoute
             // User
             $router->get ('/unbindTelegram', 'V1\\User\\UserController@unbindTelegram');
             $router->get ('/resetSecurity', 'V1\\User\\UserController@resetSecurity');
+            $router->post('/enable2FA', 'V1\\User\\UserController@enable2FA');
+            $router->post('/verify2FA', 'V1\\User\\UserController@verify2FA');
+            $router->post('/disable2FA', 'V1\\User\\UserController@disable2FA');
             $router->get ('/info', 'V1\\User\\UserController@info');
             $router->post('/newPeriod', 'V1\\User\\UserController@newPeriod');
             $router->post('/redeemgiftcard', 'V1\\User\\UserController@redeemgiftcard');

@@ -51,17 +51,17 @@ document.addEventListener('alpine:init', () => {
         selectedPlan: null,
         selectedPeriod: 'month_price',
         loading: false,
-        
+
         // Payment
         currentOrder: null,
         selectedPaymentMethod: null,
-        
+
         // Mobile menu
         mobileMenuOpen: false,
-        
+
         // Subscription modal
         showSubscriptionModal: false,
-        
+
         // Telegram Login
         telegram_login_enable: window.settings?.telegram_login_enable || 0,
         showTelegramLogin: false,
@@ -74,11 +74,21 @@ document.addEventListener('alpine:init', () => {
         telegramPollingTimer: null,
         telegramPollingAttempts: 0,
         telegramPollingMaxAttempts: 40,
-        
+
         // SSO Login
         sso_login_enable: window.settings?.sso_login_enable || 0,
         sso_provider: window.settings?.sso_provider || 'casdoor',
         ssoLoading: false,
+
+        // TOTP
+        showTOTPModal: false,
+        totpData: { secret: '', otpauth: '' },
+        totpVerifyCode: '',
+
+        // 2FA Login
+        show2FAModal: false,
+        twoFactorCode: '',
+        twoFactorToken: null,
 
         // Forms
         authForm: { email: '', password: '', invite_code: '', email_code: '' },
@@ -116,7 +126,7 @@ document.addEventListener('alpine:init', () => {
             this.initRouter();
             // Check for Telegram verify code first
             this.checkTelegramVerify();
-            
+
             this.fetchSiteConfig().then(() => {
                 this.fetchUserInfo();
             });
@@ -131,7 +141,7 @@ document.addEventListener('alpine:init', () => {
             });
 
             this.handleViewEntered(this.view);
-            
+
             // Watch for Telegram login modal open
             this.$watch('showTelegramLogin', (value) => {
                 if (value) {
@@ -467,6 +477,12 @@ document.addEventListener('alpine:init', () => {
                 });
                 const data = await response.json();
                 if (data.data) {
+                    if (data.data.need_2fa) {
+                        this.twoFactorToken = data.data.token;
+                        this.show2FAModal = true;
+                        this.loading = false;
+                        return;
+                    }
                     localStorage.setItem('auth_data', data.data.auth_data); // Save token
                     // Also set authorization for admin panel compatibility
                     localStorage.setItem('authorization', data.data.auth_data);
@@ -728,7 +744,7 @@ document.addEventListener('alpine:init', () => {
             // Auto-pick the shortest available billing period
             const periods = [
                 'month_price',
-                'quarter_price', 
+                'quarter_price',
                 'half_year_price',
                 'year_price',
                 'two_year_price',
@@ -736,7 +752,7 @@ document.addEventListener('alpine:init', () => {
                 'onetime_price',
                 'reset_price'
             ];
-            
+
             // Iterate periods and select the first available option (shortest period)
             // Note: zero-priced plans are valid; only check for non-null/undefined
             for (const period of periods) {
@@ -796,6 +812,113 @@ document.addEventListener('alpine:init', () => {
                 this.selectedPaymentMethod = this.paymentMethods[0].id;
             } else {
                 this.selectedPaymentMethod = null;
+            }
+        },
+
+        async enableTOTP() {
+            this.loading = true;
+            try {
+                const response = await this.request('/api/v1/user/enable2FA', { method: 'POST' });
+                if (!response) return;
+                const data = await response.json();
+                if (data.data) {
+                    this.totpData = data.data;
+                    this.showTOTPModal = true;
+                    this.totpVerifyCode = '';
+                } else {
+                    this.showMessage(data.message || 'Failed to enable TOTP');
+                }
+            } catch (error) {
+                console.error('Enable TOTP error:', error);
+                this.showMessage('Failed to enable TOTP');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async verifyTOTPSetup() {
+            if (!this.totpVerifyCode || this.totpVerifyCode.length !== 6) {
+                this.showMessage('Please enter a valid 6-digit code');
+                return;
+            }
+            this.loading = true;
+            try {
+                const response = await this.request('/api/v1/user/verify2FA', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: this.totpVerifyCode })
+                });
+                if (!response) return;
+                const data = await response.json();
+                if (data.data) {
+                    this.showMessage('Two-Factor Authentication Enabled!');
+                    this.showTOTPModal = false;
+                    this.fetchUserInfo(); // Refresh user state
+                } else {
+                    this.showMessage(data.message || 'Verification failed');
+                }
+            } catch (error) {
+                console.error('Verify TOTP error:', error);
+                this.showMessage('Verification failed');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async disableTOTP() {
+            if (!confirm('Are you sure you want to disable Two-Factor Authentication?')) return;
+            this.loading = true;
+            try {
+                const response = await this.request('/api/v1/user/disable2FA', { method: 'POST' });
+                if (!response) return;
+                const data = await response.json();
+                if (data.data) {
+                    this.showMessage('Two-Factor Authentication Disabled');
+                    this.fetchUserInfo(); // Refresh user state
+                } else {
+                    this.showMessage(data.message || 'Failed to disable TOTP');
+                }
+            } catch (error) {
+                console.error('Disable TOTP error:', error);
+                this.showMessage('Failed to disable TOTP');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async submit2FA() {
+            if (!this.twoFactorCode || this.twoFactorCode.length !== 6) {
+                this.showMessage('Please enter a valid 6-digit code');
+                return;
+            }
+            this.loading = true;
+            try {
+                const response = await fetch('/api/v1/passport/auth/login2FA', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        token: this.twoFactorToken,
+                        code: this.twoFactorCode
+                    })
+                });
+                const data = await response.json();
+                if (data.data) {
+                    localStorage.setItem('auth_data', data.data.auth_data);
+                    localStorage.setItem('authorization', data.data.auth_data);
+                    this.show2FAModal = false;
+                    this.fetchUserInfo();
+                    this.view = 'dashboard';
+                    this.authForm.password = '';
+                    this.twoFactorCode = '';
+                    this.twoFactorToken = null;
+                } else {
+                    this.showMessage(data.message || 'Verification failed');
+                }
+            } catch (error) {
+                console.error('Login 2FA error:', error);
+                this.showMessage('Verification failed');
+            } finally {
+                this.loading = false;
             }
         },
 
@@ -987,13 +1110,13 @@ document.addEventListener('alpine:init', () => {
                 this.loading = false;
             }
         },
-        
+
         getOrderPlanName(order) {
             if (!order || !order.plan_id) return 'Unknown plan';
             const plan = this.plans.find(p => p.id === order.plan_id);
             return plan ? plan.name : 'Plan #' + order.plan_id;
         },
-        
+
         getOrderStatusColor(status) {
             const colors = {
                 0: '#ffa502', // Pending - Orange
@@ -1185,7 +1308,7 @@ document.addEventListener('alpine:init', () => {
 
             notify();
         },
-        
+
         // Telegram Login Functions
         submitTelegramLogin() {
             const email = this.telegramForm.email?.trim();
@@ -1194,39 +1317,39 @@ document.addEventListener('alpine:init', () => {
                 this.telegramMessageType = 'error';
                 return;
             }
-            
+
             this.telegramMessage = '';
             this.stopTelegramPolling();
             this.telegramLoading = true;
-            
+
             const redirect = this.getRedirectParam();
             const payload = { email };
             if (redirect) payload.redirect = redirect;
-            
+
             fetch('/api/v1/passport/auth/loginWithTelegram', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             })
-            .then(res => res.json())
-            .then(data => {
-                if (data.data && data.data.token) {
-                    this.telegramMessage = 'Request sent, please approve in Telegram';
-                    this.telegramMessageType = 'info';
+                .then(res => res.json())
+                .then(data => {
+                    if (data.data && data.data.token) {
+                        this.telegramMessage = 'Request sent, please approve in Telegram';
+                        this.telegramMessageType = 'info';
+                        this.telegramLoading = false;
+                        this.telegramWaiting = true;
+                        this.startTelegramPolling(data.data.token, redirect);
+                    } else {
+                        throw new Error(data.message || 'Request failed, please try again later');
+                    }
+                })
+                .catch(error => {
                     this.telegramLoading = false;
-                    this.telegramWaiting = true;
-                    this.startTelegramPolling(data.data.token, redirect);
-                } else {
-                    throw new Error(data.message || 'Request failed, please try again later');
-                }
-            })
-            .catch(error => {
-                this.telegramLoading = false;
-                this.telegramMessage = error.message || 'Request failed, please try again later';
-                this.telegramMessageType = 'error';
-            });
+                    this.telegramMessage = error.message || 'Request failed, please try again later';
+                    this.telegramMessageType = 'error';
+                });
         },
-        
+
         startTelegramPolling(token, redirect) {
             this.stopTelegramPolling();
             this.telegramPendingToken = token;
@@ -1235,7 +1358,7 @@ document.addEventListener('alpine:init', () => {
                 this.pollTelegramLogin(token, redirect);
             }, 3000);
         },
-        
+
         stopTelegramPolling() {
             if (this.telegramPollingTimer) {
                 clearInterval(this.telegramPollingTimer);
@@ -1244,10 +1367,10 @@ document.addEventListener('alpine:init', () => {
             this.telegramPendingToken = null;
             this.telegramPollingAttempts = 0;
         },
-        
+
         pollTelegramLogin(token, redirect) {
             if (!token) return;
-            
+
             this.telegramPollingAttempts++;
             if (this.telegramPollingAttempts > this.telegramPollingMaxAttempts) {
                 this.stopTelegramPolling();
@@ -1256,52 +1379,52 @@ document.addEventListener('alpine:init', () => {
                 this.telegramMessageType = 'error';
                 return;
             }
-            
+
             fetch(`/api/v1/passport/auth/checkTelegramLogin?token=${encodeURIComponent(token)}`)
-            .then(res => res.json())
-            .then(data => {
-                const status = data.data?.status || 'pending';
-                
-                if (status === 'pending') {
-                    return;
-                }
-                
-                if (status === 'approved' && data.data.verify_code) {
-                    const redirectTarget = data.data.redirect || redirect || this.getRedirectParam() || 'dashboard';
+                .then(res => res.json())
+                .then(data => {
+                    const status = data.data?.status || 'pending';
+
+                    if (status === 'pending') {
+                        return;
+                    }
+
+                    if (status === 'approved' && data.data.verify_code) {
+                        const redirectTarget = data.data.redirect || redirect || this.getRedirectParam() || 'dashboard';
+                        this.stopTelegramPolling();
+                        this.telegramMessage = 'Approved, signing you in...';
+                        this.telegramMessageType = 'success';
+
+                        // Use verify_code directly to sign in
+                        setTimeout(async () => {
+                            this.showTelegramLogin = false;
+                            await this.loginWithVerifyCode(data.data.verify_code, redirectTarget);
+                        }, 500);
+                        return;
+                    }
+
                     this.stopTelegramPolling();
-                    this.telegramMessage = 'Approved, signing you in...';
-                    this.telegramMessageType = 'success';
-                    
-                    // Use verify_code directly to sign in
-                    setTimeout(async () => {
-                        this.showTelegramLogin = false;
-                        await this.loginWithVerifyCode(data.data.verify_code, redirectTarget);
-                    }, 500);
-                    return;
-                }
-                
-                this.stopTelegramPolling();
-                this.telegramWaiting = false;
-                
-                if (status === 'rejected') {
-                    this.telegramMessage = 'Request was rejected';
+                    this.telegramWaiting = false;
+
+                    if (status === 'rejected') {
+                        this.telegramMessage = 'Request was rejected';
+                        this.telegramMessageType = 'error';
+                    } else if (status === 'expired') {
+                        this.telegramMessage = 'Login request expired, please try again';
+                        this.telegramMessageType = 'error';
+                    } else {
+                        this.telegramMessage = 'Request failed, please try again later';
+                        this.telegramMessageType = 'error';
+                    }
+                })
+                .catch(error => {
+                    this.stopTelegramPolling();
+                    this.telegramWaiting = false;
+                    this.telegramMessage = error.message || 'Request failed, please try again later';
                     this.telegramMessageType = 'error';
-                } else if (status === 'expired') {
-                    this.telegramMessage = 'Login request expired, please try again';
-                    this.telegramMessageType = 'error';
-                } else {
-                    this.telegramMessage = 'Request failed, please try again later';
-                    this.telegramMessageType = 'error';
-                }
-            })
-            .catch(error => {
-                this.stopTelegramPolling();
-                this.telegramWaiting = false;
-                this.telegramMessage = error.message || 'Request failed, please try again later';
-                this.telegramMessageType = 'error';
-            });
+                });
         },
-        
+
         getRedirectParam() {
             const hash = window.location.hash || '';
             const query = hash.split('?')[1] || '';
@@ -1519,13 +1642,13 @@ document.addEventListener('alpine:init', () => {
             const d = new Date(ts * 1000);
             return d.toLocaleString('en-US');
         },
-        
+
         // Check for Telegram verify code and auto-login
         checkTelegramVerify() {
             const hash = window.location.hash || '';
             const query = hash.split('?')[1] || '';
             if (!query) return;
-            
+
             try {
                 const params = new URLSearchParams(query);
                 const verifyCode = params.get('verify');
@@ -1537,20 +1660,20 @@ document.addEventListener('alpine:init', () => {
                 console.error('Error checking telegram verify:', err);
             }
         },
-        
+
         // Login with verify code from Telegram
         async loginWithVerifyCode(verifyCode, redirectTarget = null) {
             if (this.loading) return;
-            
+
             this.loading = true;
             try {
                 const response = await fetch(`/api/v1/passport/auth/token2Login?verify=${encodeURIComponent(verifyCode)}`);
                 const data = await response.json();
-                
+
                 if (data.data && data.data.auth_data) {
                     localStorage.setItem('auth_data', data.data.auth_data);
                     localStorage.setItem('authorization', data.data.auth_data);
-                    
+
                     // Clean URL and redirect
                     const redirect = this.normalizeRedirectTarget(redirectTarget || this.getRedirectParam() || 'dashboard');
                     this.view = redirect; // Ensure UI switches away from login
@@ -1573,48 +1696,48 @@ document.addEventListener('alpine:init', () => {
                 this.loading = false;
             }
         },
-        
+
         // SSO Login Functions
         startSsoLogin() {
             if (this.ssoLoading) return;
-            
+
             this.ssoLoading = true;
             const redirect = this.getRedirectParam();
             let url = '/api/v1/passport/auth/sso/init';
             if (redirect) {
                 url += `?redirect=${encodeURIComponent(redirect)}`;
             }
-            
+
             fetch(url, {
                 method: 'GET',
                 credentials: 'include'
             })
-            .then(res => res.json())
-            .then(data => {
-                const target = data?.data?.url;
-                if (!target) {
-                    throw new Error('Server did not return a login link, please try again later');
-                }
-                window.location.href = target;
-            })
-            .catch(error => {
-                this.ssoLoading = false;
-                this.showMessage(error.message || 'Request failed, please try again later');
-            });
+                .then(res => res.json())
+                .then(data => {
+                    const target = data?.data?.url;
+                    if (!target) {
+                        throw new Error('Server did not return a login link, please try again later');
+                    }
+                    window.location.href = target;
+                })
+                .catch(error => {
+                    this.ssoLoading = false;
+                    this.showMessage(error.message || 'Request failed, please try again later');
+                });
         },
-        
+
         checkSsoError() {
             const hash = window.location.hash || '';
             const [rawPath, query = ''] = (hash.replace(/^#/, '')).split('?');
             if (!query) return;
-            
+
             try {
                 const params = new URLSearchParams(query);
                 const error = params.get('sso_error');
                 const message = params.get('sso_message');
                 const basePath = (rawPath || 'login').replace(/^\/?/, '');
                 const cleanHash = '#/' + basePath;
-                
+
                 if (error) {
                     const decodedError = decodeURIComponent(error);
                     this.showMessage('SSO action failed: ' + decodedError);
@@ -1623,7 +1746,7 @@ document.addEventListener('alpine:init', () => {
                     window.location.hash = cleanHash;
                     return;
                 }
-                
+
                 if (message) {
                     const decodedMsg = decodeURIComponent(message);
                     this.showMessage(decodedMsg || 'SSO action completed');
@@ -1636,7 +1759,7 @@ document.addEventListener('alpine:init', () => {
                 console.error('Error checking SSO messages:', err);
             }
         },
-        
+
         // Telegram Binding
         async bindTelegram() {
             this.loading = true;
@@ -1662,7 +1785,7 @@ document.addEventListener('alpine:init', () => {
                 this.loading = false;
             }
         },
-        
+
         async unbindTelegram() {
             const ok = await this.showConfirm('Are you sure you want to unbind the Telegram account?');
             if (!ok) return;
@@ -1688,7 +1811,7 @@ document.addEventListener('alpine:init', () => {
                 this.loading = false;
             }
         },
-        
+
         // SSO Binding
         async bindSSO() {
             if (this.loading) return;
@@ -1714,7 +1837,7 @@ document.addEventListener('alpine:init', () => {
                 this.loading = false;
             }
         },
-        
+
         async unbindSSO() {
             const ok = await this.showConfirm('Are you sure you want to unbind the SSO account?');
             if (!ok) return;
@@ -1901,7 +2024,7 @@ document.addEventListener('alpine:init', () => {
             };
             return map[status] || 'Unknown';
         },
-        
+
         getCurrentBreadcrumb() {
             const breadcrumbs = {
                 'dashboard': 'Dashboard',

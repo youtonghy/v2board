@@ -327,7 +327,8 @@ class ConfigController extends Controller
                 'register_limit_expire' => config('v2board.register_limit_expire', 60),
                 'password_limit_enable' => (int)config('v2board.password_limit_enable', 1),
                 'password_limit_count' => config('v2board.password_limit_count', 5),
-                'password_limit_expire' => config('v2board.password_limit_expire', 60)
+                'password_limit_expire' => config('v2board.password_limit_expire', 60),
+                'totp_enable' => (int)config('v2board.totp_enable', 0)
             ]
         ];
         if ($key && isset($data[$key])) {

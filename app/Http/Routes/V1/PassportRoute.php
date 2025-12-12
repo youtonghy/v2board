@@ -18,6 +18,7 @@ class PassportRoute
             $router->post('/auth/getQuickLoginUrl', 'V1\\Passport\\AuthController@getQuickLoginUrl');
             $router->post('/auth/loginWithMailLink', 'V1\\Passport\\AuthController@loginWithMailLink');
             $router->post('/auth/loginWithTelegram', 'V1\\Passport\\AuthController@loginWithTelegram');
+            $router->post('/auth/login2FA', 'V1\\Passport\\AuthController@login2FA');
             $router->get ('/auth/checkTelegramLogin', 'V1\\Passport\\AuthController@checkTelegramLogin');
             $router->get ('/auth/sso/init', 'V1\\Passport\\SsoController@init');
             $router->get ('/auth/sso/callback', 'V1\\Passport\\SsoController@callback');
