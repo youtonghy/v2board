@@ -851,6 +851,35 @@
                         </div>
                     </div>
                     @endif
+                    <!-- TOTP Binding -->
+                    <div class="binding-item" x-show="siteConfig.is_totp_enable">
+                        <div class="binding-header">
+                            <div class="binding-icon" style="background: linear-gradient(135deg, #6366f1, #818cf8);">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                                    <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
+                                </svg>
+                            </div>
+                            <div class="binding-info">
+                                <h4>Two-Factor Authentication (TOTP)</h4>
+                                <p class="binding-status" x-show="user.two_factor_verified">
+                                    <span class="status-dot" style="background: #10b981;"></span>
+                                    Enabled
+                                </p>
+                                <p class="binding-status" x-show="!user.two_factor_verified">
+                                    <span class="status-dot" style="background: #6b7280;"></span>
+                                    Not enabled
+                                </p>
+                            </div>
+                        </div>
+                        <div class="binding-actions">
+                            <button x-show="!user.two_factor_verified" class="btn-3d btn-sm" @click="enableTOTP()" :disabled="loading">
+                                Enable
+                            </button>
+                            <button x-show="user.two_factor_verified" class="btn-3d btn-sm btn-danger" @click="disableTOTP()" :disabled="loading">
+                                Disable
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="card">
@@ -893,6 +922,64 @@
                         <span x-show="!telegramLoading && !telegramWaiting">Submit</span>
                         <span x-show="telegramLoading">Sending request...</span>
                         <span x-show="telegramWaiting">Waiting for Telegram approval...</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2FA Login Modal -->
+        <div x-show="show2FAModal" class="modal-overlay" style="display: none;">
+            <div class="modal-content telegram-modal">
+                <div class="modal-header">
+                    <h3>Two-Factor Authentication</h3>
+                </div>
+                <div class="modal-body">
+                    <p style="margin-bottom: 1rem; color: var(--text-color); opacity: 0.8;">
+                        Please enter the code from your authenticator app
+                    </p>
+                    <div class="form-group">
+                        <input type="text" 
+                               x-model="twoFactorCode" 
+                               placeholder="6-digit code" 
+                               class="form-input" 
+                               maxlength="6"
+                               @keyup.enter="submit2FA()">
+                    </div>
+                    <button class="btn-3d btn-block" @click="submit2FA()" :disabled="loading">
+                        <span x-show="!loading">Verify</span>
+                        <span x-show="loading">Verifying...</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TOTP Setup Modal -->
+        <div x-show="showTOTPModal" class="modal-overlay" @click.self="showTOTPModal = false" style="display: none;">
+            <div class="modal-content telegram-modal">
+                <div class="modal-header">
+                    <h3>Setup TOTP</h3>
+                    <button class="modal-close" @click="showTOTPModal = false">×</button>
+                </div>
+                <div class="modal-body">
+                    <div style="text-align: center; margin-bottom: 1.5rem;">
+                         <img :src="'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(totpData.otpauth)" 
+                              alt="Scan me" 
+                              style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                    </div>
+                    <p style="margin-bottom: 1rem; color: var(--text-color); opacity: 0.8; font-size: 0.9rem;">
+                        Scan the QR code with your authenticator app (Google Authenticator, Microsoft Authenticator, etc.)
+                        <br>
+                        Or enter secret key: <strong x-text="totpData.secret" style="user-select: all;"></strong>
+                    </p>
+                    <div class="form-group">
+                        <input type="text" 
+                               x-model="totpVerifyCode" 
+                               placeholder="Enter 6-digit code to verify" 
+                               class="form-input"
+                               maxlength="6">
+                    </div>
+                    <button class="btn-3d btn-block" @click="verifyTOTPSetup()" :disabled="loading">
+                        Verify & Enable
                     </button>
                 </div>
             </div>
