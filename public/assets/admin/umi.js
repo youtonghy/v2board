@@ -71590,6 +71590,26 @@ class p extends h.a.Component {
                         }, `${deviceCount} / ${deviceLimit}`) : `${deviceCount} / ${deviceLimit}`
                     }
                 }, {
+                    title: "30\u5929\u5185IP",
+                    dataIndex: "recent_ips",
+                    key: "recent_ips",
+                    render: (e,t)=>{
+                        var n = Array.isArray(t.recent_ips) ? t.recent_ips : [];
+                        if (!n.length)
+                            return "-";
+                        var r = n.slice(0, 5)
+                          , i = n.length - r.length;
+                        return g.a.createElement(f["a"], {
+                            placement: "top",
+                            title: n.join(", ")
+                        }, g.a.createElement(g.a.Fragment, null, r.map((e,n)=>g.a.createElement(h["a"], {
+                            color: "blue",
+                            key: "recent_ip_".concat(t.id, "_").concat(n)
+                        }, e)), i > 0 ? g.a.createElement(h["a"], {
+                            key: "recent_ip_more_".concat(t.id)
+                        }, "+".concat(i)) : null))
+                    }
+                }, {
                     title: "\u5230\u671f\u65f6\u95f4",
                     dataIndex: "expired_at",
                     key: "expired_at",

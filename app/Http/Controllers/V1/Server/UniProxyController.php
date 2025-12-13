@@ -137,6 +137,7 @@ class UniProxyController extends Controller
         }
         $updateAt = time();
         foreach ($data as $uid => $ips) {
+            $this->recordRecentIps($uid, $ips, $updateAt);
             $ips_array = Cache::get('ALIVE_IP_USER_' . $uid) ?? [];
             // 更新节点数据
             $ips_array[$this->nodeType . $this->nodeId] = ['aliveips' => $ips, 'lastupdateAt' => $updateAt];
@@ -172,6 +173,50 @@ class UniProxyController extends Controller
         return response([
             'data' => true
         ]);
+    }
+
+    private function recordRecentIps($uid, $ips, $updateAt)
+    {
+        if (!is_numeric($uid)) {
+            return;
+        }
+        if (!is_array($ips)) {
+            return;
+        }
+        if (!is_int($updateAt)) {
+            $updateAt = time();
+        }
+
+        $cacheKey = 'RECENT_IPS_30D_USER_' . (int)$uid;
+        $recent = Cache::get($cacheKey);
+        if (!is_array($recent)) {
+            $recent = [];
+        }
+
+        foreach ($ips as $ipNodeId) {
+            if (!is_string($ipNodeId) || $ipNodeId === '') {
+                continue;
+            }
+            $ip = explode("_", $ipNodeId)[0];
+            if (!is_string($ip) || $ip === '') {
+                continue;
+            }
+            $recent[$ip] = $updateAt;
+        }
+
+        $cutoff = $updateAt - (60 * 60 * 24 * 30);
+        foreach ($recent as $ip => $lastSeenAt) {
+            if (!is_int($lastSeenAt) || $lastSeenAt < $cutoff) {
+                unset($recent[$ip]);
+            }
+        }
+
+        if (count($recent) > 50) {
+            arsort($recent);
+            $recent = array_slice($recent, 0, 50, true);
+        }
+
+        Cache::put($cacheKey, $recent, 60 * 60 * 24 * 31);
     }
 
     // 后端获取配置
