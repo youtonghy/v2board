@@ -85,6 +85,7 @@ class UserController extends Controller
                 }
             }
             $recentIps = [];
+            $recentIpRecords = [];
             $recentIpsData = Cache::get('RECENT_IPS_30D_USER_' . $res[$i]['id']);
             if (is_array($recentIpsData)) {
                 $cutoff = time() - (60 * 60 * 24 * 30);
@@ -95,8 +96,16 @@ class UserController extends Controller
                 }
                 arsort($recentIpsData);
                 $recentIps = array_slice(array_keys($recentIpsData), 0, 20);
+                foreach ($recentIpsData as $ip => $lastSeenAt) {
+                    $recentIpRecords[] = [
+                        'ip' => $ip,
+                        'last_seen_at' => $lastSeenAt
+                    ];
+                }
+                $recentIpRecords = array_slice($recentIpRecords, 0, 50);
             }
             $res[$i]['recent_ips'] = $recentIps;
+            $res[$i]['recent_ip_records'] = $recentIpRecords;
             //统计在线设备
             $countalive = 0;
             $ips = [];
