@@ -84,6 +84,19 @@ class UserController extends Controller
                     $res[$i]['plan_name'] = $plan[$k]['name'];
                 }
             }
+            $recentIps = [];
+            $recentIpsData = Cache::get('RECENT_IPS_30D_USER_' . $res[$i]['id']);
+            if (is_array($recentIpsData)) {
+                $cutoff = time() - (60 * 60 * 24 * 30);
+                foreach ($recentIpsData as $ip => $lastSeenAt) {
+                    if (!is_int($lastSeenAt) || $lastSeenAt < $cutoff) {
+                        unset($recentIpsData[$ip]);
+                    }
+                }
+                arsort($recentIpsData);
+                $recentIps = array_slice(array_keys($recentIpsData), 0, 20);
+            }
+            $res[$i]['recent_ips'] = $recentIps;
             //统计在线设备
             $countalive = 0;
             $ips = [];
