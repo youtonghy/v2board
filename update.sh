@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 if [ ! -d ".git" ]; then
   echo "Please deploy using Git."
   exit 1
@@ -10,15 +12,55 @@ if ! command -v git &> /dev/null; then
     exit 1
 fi
 
-git config --global --add safe.directory $(pwd)
-git fetch --all && git reset --hard origin/master && git pull origin master
-rm -rf composer.lock composer.phar
-wget https://github.com/composer/composer/releases/latest/download/composer.phar -O composer.phar
-php composer.phar update -vvv
+git config --global --add safe.directory "$(pwd)"
+git fetch --all --prune
+git reset --hard origin/master
+
+log_step() {
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"
+}
+
+run_step() {
+  local label="$1"
+  shift
+  local start_ts=$SECONDS
+  log_step "${label}..."
+  "$@"
+  log_step "${label} done ($((SECONDS - start_ts))s)"
+}
+
+composer_cmd=()
+if command -v composer &>/dev/null; then
+  composer_cmd=(composer)
+else
+  if [ ! -f "composer.phar" ]; then
+    log_step "composer not found, downloading composer.phar..."
+    wget https://github.com/composer/composer/releases/latest/download/composer.phar -O composer.phar
+  fi
+  composer_cmd=(php composer.phar)
+fi
+
+# Default: use lockfile install to avoid high CPU from dependency resolution.
+# Set COMPOSER_UPDATE=1 to force `composer update`.
+composer_no_dev="${COMPOSER_NO_DEV:-1}"
+composer_update="${COMPOSER_UPDATE:-0}"
+composer_args=()
+if [ "$composer_update" = "1" ]; then
+  composer_args=(update)
+else
+  composer_args=(install)
+fi
+composer_args+=(--no-interaction --prefer-dist --no-progress --optimize-autoloader)
+if [ "$composer_no_dev" = "1" ]; then
+  composer_args+=(--no-dev)
+fi
+run_step "Composer ${composer_args[0]}" "${composer_cmd[@]}" "${composer_args[@]}"
 
 php_main_version=$(php -v | head -n 1 | cut -d ' ' -f 2 | cut -d '.' -f 1)
 if [ $php_main_version -ge 8 ]; then
-    php composer.phar require joanhey/adapterman
+    if [ ! -f "composer.lock" ] || ! grep -q "\"name\": \"joanhey/adapterman\"" composer.lock 2>/dev/null; then
+        run_step "Composer require joanhey/adapterman" "${composer_cmd[@]}" require joanhey/adapterman --no-interaction --no-progress
+    fi
     if ! php -m | grep -q "pcntl"; then
         echo "Adding pcntl extension to cli-php.ini"
         sed -i '/extension=redis.so/a extension=pcntl.so' cli-php.ini
@@ -27,7 +69,16 @@ if [ $php_main_version -ge 8 ]; then
     echo "Webman stopped.Please restart it by yourself."
 fi
 
-php artisan v2board:update
+run_step "php artisan v2board:update" php artisan v2board:update
+
+# If multiple Horizon masters are running, each will spawn workers and can amplify CPU spikes after restart.
+if command -v ps &>/dev/null; then
+  horizon_masters="$(ps -eo args | awk '$0 ~ /php .*artisan horizon$/ {c++} END {print c+0}')"
+  if [ "${horizon_masters:-0}" -gt 1 ]; then
+    log_step "Warning: detected ${horizon_masters} Horizon master processes. Ensure only one is managed by supervisor/pm2."
+    log_step "Tip: you can cap workers via HORIZON_MAX_PROCESSES/HORIZON_MIN_PROCESSES/HORIZON_NICE in .env."
+  fi
+fi
 
 dotenv_get() {
   local key="$1"

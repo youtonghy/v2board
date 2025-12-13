@@ -6,6 +6,39 @@ use Linfo\Linfo;
 $lInfo = new Linfo();
 $parser = $lInfo->getParser();
 
+$ramTotalBytes = 0;
+try {
+    $ram = $parser->getRam();
+    $ramTotalBytes = (int)($ram['total'] ?? 0);
+} catch (\Throwable $e) {
+    $ramTotalBytes = 0;
+}
+
+$ramGb = $ramTotalBytes > 0 ? ($ramTotalBytes / 1024 / 1024 / 1024) : 0;
+$ramBasedMaxProcesses = $ramGb > 0 ? (int)ceil($ramGb * 6) : 1;
+$minProcesses = (int)env('HORIZON_MIN_PROCESSES', 1);
+$maxProcesses = (int)env('HORIZON_MAX_PROCESSES', min($ramBasedMaxProcesses, 4));
+if ($minProcesses < 1) $minProcesses = 1;
+if ($maxProcesses < $minProcesses) $maxProcesses = $minProcesses;
+
+$v2boardSupervisor = [
+    'connection' => 'redis',
+    'queue' => [
+        'order_handle',
+        'traffic_fetch',
+        'stat',
+        'send_email',
+        'send_email_mass',
+        'send_telegram',
+    ],
+    'balance' => 'auto',
+    'minProcesses' => $minProcesses,
+    'maxProcesses' => $maxProcesses,
+    'nice' => (int)env('HORIZON_NICE', 10),
+    'tries' => 1,
+    'balanceCooldown' => 3,
+];
+
 return [
 
     /*
@@ -169,23 +202,11 @@ return [
     */
 
     'environments' => [
+        'production' => [
+            'V2board' => $v2boardSupervisor,
+        ],
         'local' => [
-            'V2board' => [
-                'connection' => 'redis',
-                'queue' => [
-                    'order_handle',
-                    'traffic_fetch',
-                    'stat',
-                    'send_email',
-                    'send_email_mass',
-                    'send_telegram',
-                ],
-                'balance' => 'auto',
-                'minProcesses' => 1,
-                'maxProcesses' => (int)ceil($parser->getRam()['total'] / 1024 / 1024 / 1024 * 6),
-                'tries' => 1,
-                'balanceCooldown' => 3,
-            ],
+            'V2board' => $v2boardSupervisor,
         ],
     ],
 ];
