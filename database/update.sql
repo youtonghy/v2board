@@ -29,6 +29,15 @@ ADD UNIQUE `v2_user_sso_unique` (`sso_provider`, `sso_subject`);
 ALTER TABLE `v2_user`
 ADD `balance` int(11) NOT NULL DEFAULT '0' AFTER `password`;
 
+ALTER TABLE `v2_user`
+ADD `two_factor_type` varchar(255) NULL DEFAULT NULL;
+
+ALTER TABLE `v2_user`
+ADD `two_factor_verified` tinyint(1) NOT NULL DEFAULT '0';
+
+ALTER TABLE `v2_user`
+ADD `totp_secret` varchar(255) NULL DEFAULT NULL;
+
 CREATE TABLE `v2_notice` (
   `id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `title` varchar(255) NOT NULL,
