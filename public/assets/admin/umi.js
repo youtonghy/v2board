@@ -71426,18 +71426,9 @@ class p extends h.a.Component {
                 )
             }
             render() {
-                var e = Array.isArray(this.props.records) ? this.props.records : [];
-                return g.a.createElement("div", {
-                    style: {
-                        maxHeight: "60vh",
-                        overflow: "auto"
-                    }
-                }, g.a.createElement("table", {
-                    style: {
-                        width: "100%",
-                        borderCollapse: "collapse"
-                    }
-                }, g.a.createElement("thead", null, g.a.createElement("tr", null, ["IP", "\u6700\u8fd1\u4f7f\u7528", "Country", "City", "ISP", "Organization"].map((e,t)=>g.a.createElement("th", {
+                var e = Array.isArray(this.props.records) ? this.props.records : []
+                  , t = ["IP", "\u6700\u8fd1\u4f7f\u7528", "Country", "City", "ISP", "Organization"]
+                  , n = t.map((e,t)=>g.a.createElement("th", {
                     key: t,
                     style: {
                         textAlign: "left",
@@ -71445,7 +71436,8 @@ class p extends h.a.Component {
                         borderBottom: "1px solid #f0f0f0",
                         whiteSpace: "nowrap"
                     }
-                }, e)))), g.a.createElement("tbody", null, e.map((e,t)=>{
+                }, e))
+                  , r = e.map((e,t)=>{
                     var n = null === e || void 0 === e ? void 0 : e.ip
                       , r = null === e || void 0 === e ? void 0 : e.last_seen_at
                       , i = n ? this.state.geo[n] : null
@@ -71493,7 +71485,18 @@ class p extends h.a.Component {
                         }
                     }, c))
                 }
-                ))))
+                );
+                return g.a.createElement("div", {
+                    style: {
+                        maxHeight: "60vh",
+                        overflow: "auto"
+                    }
+                }, g.a.createElement("table", {
+                    style: {
+                        width: "100%",
+                        borderCollapse: "collapse"
+                    }
+                }, g.a.createElement("thead", null, g.a.createElement("tr", null, n)), g.a.createElement("tbody", null, r)))
             }
         }
         class M extends g.a.Component {
