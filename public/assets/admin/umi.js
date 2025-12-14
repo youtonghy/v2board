@@ -71396,33 +71396,101 @@ class p extends h.a.Component {
                 var t = this;
                 if (!e)
                     return;
+                var n = "".concat(e).trim();
+                if (n.indexOf(",") > -1 && (n = n.split(",")[0].trim()),
+                0 === n.indexOf("::ffff:") && (n = n.slice(7)),
+                0 === n.indexOf("[") && n.indexOf("]") > -1) {
+                    var r = n.split("]");
+                    n = r[0].slice(1)
+                }
+                /^[0-9.]+:\d+$/.test(n) && 4 === n.split(".").length && (n = n.replace(/:\d+$/, ""));
+                if (!n || "unknown" === n.toLowerCase())
+                    return void this.setState(t=>{
+                        var r = a()({}, t.geo);
+                        r[e] = {},
+                        n !== e && (r[n] = {});
+                        var i = a()({}, t.loading);
+                        return i[e] = !1,
+                        n !== e && (i[n] = !1),
+                        {
+                            geo: r,
+                            loading: i
+                        }
+                    }
+                    );
                 if (this.state.geo[e] || this.state.loading[e])
                     return;
-                this.setState(n=>{
-                    var r = a()({}, n.loading);
+                if (n !== e && this.state.geo[n])
+                    return void this.setState(t=>{
+                        var r = a()({}, t.geo);
+                        return r[e] = t.geo[n],
+                        {
+                            geo: r
+                        }
+                    }
+                    );
+                var i = n.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+                if (i) {
+                    var o = +i[1]
+                      , s = +i[2];
+                    if (10 === o || 127 === o || 192 === o && 168 === s || 172 === o && s >= 16 && s <= 31 || 169 === o && 254 === s)
+                        return void this.setState(t=>{
+                            var r = a()({}, t.geo);
+                            r[e] = {
+                                ip: n,
+                                country: "LOCAL",
+                                city: "-",
+                                isp: "-",
+                                organization: "-"
+                            },
+                            n !== e && (r[n] = r[e]);
+                            var i = a()({}, t.loading);
+                            return i[e] = !1,
+                            n !== e && (i[n] = !1),
+                            {
+                                geo: r,
+                                loading: i
+                            }
+                        }
+                        )
+                }
+                this.setState(t=>{
+                    var r = a()({}, t.loading);
                     return r[e] = !0,
+                    n !== e && (r[n] = !0),
                     {
                         loading: r
                     }
                 }
                 ),
-                fetch("https://api.ip.sb/geoip/".concat(encodeURIComponent(e))).then(e=>e.ok ? e.json() : null).then(n=>{
-                    t.setState(r=>{
-                        var i = a()({}, r.geo);
-                        i[e] = n || {};
-                        var o = a()({}, r.loading);
-                        return o[e] = !1,
+                fetch("https://ipinfo.io/widget/demo/".concat(encodeURIComponent(n))).then(e=>e.ok ? e.json() : null).then(r=>{
+                    var i = r && r.data ? r.data : null
+                      , o = i ? {
+                        ip: i.ip || n,
+                        country: i.country || "",
+                        city: i.city ? i.city + (i.region ? ", ".concat(i.region) : "") : i.region || "",
+                        isp: i.asn && i.asn.name ? i.asn.name : i.company && i.company.name ? i.company.name : i.org || "",
+                        organization: i.org || (i.company && i.company.name ? i.company.name : "") || (i.asn && i.asn.name ? i.asn.name : "")
+                    } : {};
+                    t.setState(t=>{
+                        var r = a()({}, t.geo);
+                        r[e] = o,
+                        n !== e && (r[n] = o);
+                        var i = a()({}, t.loading);
+                        return i[e] = !1,
+                        n !== e && (i[n] = !1),
                         {
-                            geo: i,
-                            loading: o
+                            geo: r,
+                            loading: i
                         }
                     }
                     )
                 }
                 ).catch(()=>{
-                    t.setState(n=>{
-                        var r = a()({}, n.loading);
+                    t.setState(t=>{
+                        var r = a()({}, t.loading);
                         return r[e] = !1,
+                        n !== e && (r[n] = !1),
                         {
                             loading: r
                         }
