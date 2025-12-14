@@ -24,14 +24,18 @@ class ServerRoute
                         abort(404);
                     }
 
-                    $method = strtoupper($request->getMethod());
-                    $forwardParams = $request->except(['endpoint']);
-                    $uri = '/api/v3/' . $endpoint;
-
-                    $content = null;
-                    if ($method !== 'GET' && $method !== 'HEAD') {
-                        $content = json_encode($forwardParams, JSON_UNESCAPED_UNICODE);
+                    $method = strtoupper((string) $request->input('method', 'GET'));
+                    $allowedMethods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD'];
+                    if (!in_array($method, $allowedMethods, true)) {
+                        abort(422, 'method is invalid');
                     }
+
+                    $forwardParams = $request->input('params');
+                    if (!is_array($forwardParams)) {
+                        $forwardParams = $request->except(['endpoint', 'method', 'params']);
+                    }
+
+                    $uri = '/api/v3/' . $endpoint;
 
                     $subRequest = Request::create(
                         $uri,
@@ -40,12 +44,16 @@ class ServerRoute
                         $request->cookies->all(),
                         $request->files->all(),
                         $request->server->all(),
-                        $content
+                        ($method === 'GET' || $method === 'HEAD')
+                            ? null
+                            : json_encode($forwardParams, JSON_UNESCAPED_UNICODE)
                     );
                     $subRequest->headers->replace($request->headers->all());
 
                     if ($method !== 'GET' && $method !== 'HEAD') {
                         $subRequest->headers->set('content-type', 'application/json');
+                    } else {
+                        $subRequest->headers->remove('content-type');
                     }
 
                     return app('router')->dispatch($subRequest);
