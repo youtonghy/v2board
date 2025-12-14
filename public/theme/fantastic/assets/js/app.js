@@ -317,39 +317,61 @@ document.addEventListener('alpine:init', () => {
             if (typeof url !== 'string') return { url, options };
             if (!url.startsWith('/api/v3/') || url.startsWith('/api/v3/server')) return { url, options };
 
-            const method = String(options.method || 'GET').toUpperCase();
+            const originalMethod = String(options.method || 'GET').toUpperCase();
             const [rawPath, rawQuery = ''] = url.split('?');
             const endpoint = rawPath.slice('/api/v3/'.length).replace(/^\/+/, '');
             if (!endpoint) return { url, options };
 
-            const queryParams = new URLSearchParams(rawQuery);
+            const params = {};
 
-            if (method === 'GET' || method === 'HEAD') {
-                queryParams.set('endpoint', endpoint);
-                const qs = queryParams.toString();
-                return { url: `/api/v3/server${qs ? `?${qs}` : ''}`, options };
+            try {
+                const queryParams = new URLSearchParams(rawQuery);
+                queryParams.forEach((value, key) => {
+                    if (typeof params[key] === 'undefined') params[key] = value;
+                });
+            } catch (e) {
+                // ignore invalid query string
             }
 
-            let bodyObject = {};
             if (typeof options.body === 'string' && options.body.trim() !== '') {
                 try {
-                    bodyObject = JSON.parse(options.body);
+                    const parsed = JSON.parse(options.body);
+                    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                        Object.keys(parsed).forEach((key) => {
+                            params[key] = parsed[key];
+                        });
+                    }
                 } catch (e) {
-                    bodyObject = {};
+                    // ignore non-JSON body
+                }
+            } else if (typeof URLSearchParams !== 'undefined' && options.body instanceof URLSearchParams) {
+                options.body.forEach((value, key) => {
+                    params[key] = value;
+                });
+            } else if (typeof FormData !== 'undefined' && options.body instanceof FormData) {
+                for (const [key, value] of options.body.entries()) {
+                    params[key] = value;
                 }
             }
 
-            queryParams.forEach((value, key) => {
-                if (typeof bodyObject[key] === 'undefined') bodyObject[key] = value;
-            });
-            bodyObject.endpoint = endpoint;
+            const payload = {
+                endpoint,
+                method: originalMethod,
+                params
+            };
 
             const headers = options.headers || {};
             headers['Content-Type'] = headers['Content-Type'] || headers['content-type'] || 'application/json';
-            options.headers = headers;
-            options.body = JSON.stringify(bodyObject);
 
-            return { url: '/api/v3/server', options };
+            return {
+                url: '/api/v3/server',
+                options: {
+                    ...options,
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify(payload)
+                }
+            };
         },
 
         async request(url, options = {}) {
