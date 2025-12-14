@@ -77,6 +77,19 @@ class RouteServiceProvider extends ServiceProvider
             }
         });
 
+        Route::group([
+            'prefix' => '/api/v3',
+            'middleware' => 'api',
+            'namespace' => $this->namespace
+        ], function ($router) {
+            foreach (glob(app_path('Http//Routes//V1') . '/*.php') as $file) {
+                $routeClass = basename($file, '.php');
+                $override = 'App\\Http\\Routes\\V3\\' . $routeClass;
+                $fallback = 'App\\Http\\Routes\\V1\\' . $routeClass;
+                $this->app->make(class_exists($override) ? $override : $fallback)->map($router);
+            }
+        });
+
 
         Route::group([
             'prefix' => '/api/v2',
