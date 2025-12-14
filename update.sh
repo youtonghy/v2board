@@ -2,19 +2,64 @@
 
 set -euo pipefail
 
-if [ ! -d ".git" ]; then
-  echo "Please deploy using Git."
+usage() {
+  cat <<'EOF'
+Usage: ./update.sh [--no-git]
+
+Options:
+  --no-git        Skip git fetch/reset (useful for local dev testing)
+  -h, --help      Show this help
+
+Environment:
+  SKIP_GIT_SYNC=1 Same as --no-git
+  COMPOSER_UPDATE=1  Run `composer update` instead of `composer install`
+  COMPOSER_NO_DEV=0  Include dev dependencies
+EOF
+}
+
+skip_git_sync="${SKIP_GIT_SYNC:-0}"
+while [ "${1:-}" != "" ]; do
+  case "$1" in
+    --no-git)
+      skip_git_sync=1
+      shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "Unknown argument: $1"
+      usage
+      exit 2
+      ;;
+  esac
+done
+
+if [ ! -f "artisan" ]; then
+  echo "artisan not found. Please run this script from the project root."
+  exit 1
+fi
+
+if [ "$skip_git_sync" != "1" ] && [ ! -d ".git" ]; then
+  echo "Please deploy using Git, or run with --no-git / SKIP_GIT_SYNC=1."
   exit 1
 fi
 
 if ! command -v git &> /dev/null; then
+  if [ "$skip_git_sync" = "1" ]; then
+    true
+  else
     echo "Git is not installed! Please install git and try again."
     exit 1
+  fi
 fi
 
-git config --global --add safe.directory "$(pwd)"
-git fetch --all --prune
-git reset --hard origin/master
+if [ "$skip_git_sync" != "1" ]; then
+  git config --global --add safe.directory "$(pwd)"
+  git fetch --all --prune
+  git reset --hard origin/master
+fi
 
 log_step() {
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"
