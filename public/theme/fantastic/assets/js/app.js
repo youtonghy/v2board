@@ -369,7 +369,7 @@ document.addEventListener('alpine:init', () => {
 
         async fetchSiteConfig() {
             try {
-                const response = await fetch('/api/v1/guest/comm/config'); // Public endpoint, no auth needed
+                const response = await fetch('/api/v3/guest/comm/config'); // Public endpoint, no auth needed
                 const data = await response.json();
                 if (data.data) {
                     this.siteConfig = data.data;
@@ -427,7 +427,7 @@ document.addEventListener('alpine:init', () => {
 
         async fetchUserInfo() {
             try {
-                const response = await this.request('/api/v1/user/info');
+                const response = await this.request('/api/v3/user/info');
                 if (!response) return; // Handled by request (401)
 
                 const data = await this.safeJsonParse(response);
@@ -470,7 +470,7 @@ document.addEventListener('alpine:init', () => {
                 if (this.siteConfig.is_turnstile) params.turnstile_token = this.captcha.token;
                 else if (this.siteConfig.is_recaptcha) params.recaptcha_data = this.captcha.token;
 
-                const response = await fetch('/api/v1/passport/auth/login', { // Login is public
+                const response = await fetch('/api/v3/passport/auth/login', { // Login is public
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(params)
@@ -515,7 +515,7 @@ document.addEventListener('alpine:init', () => {
                 if (this.siteConfig.is_turnstile) params.turnstile_token = this.captcha.token;
                 else if (this.siteConfig.is_recaptcha) params.recaptcha_data = this.captcha.token;
 
-                const response = await fetch('/api/v1/passport/auth/register', { // Register is public
+                const response = await fetch('/api/v3/passport/auth/register', { // Register is public
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(params)
@@ -553,7 +553,7 @@ document.addEventListener('alpine:init', () => {
                 if (this.siteConfig.is_turnstile) params.turnstile_token = this.captcha.token;
                 else if (this.siteConfig.is_recaptcha) params.recaptcha_data = this.captcha.token;
 
-                const response = await fetch('/api/v1/passport/comm/sendEmailVerify', { // Public
+                const response = await fetch('/api/v3/passport/comm/sendEmailVerify', { // Public
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(params)
@@ -580,7 +580,7 @@ document.addEventListener('alpine:init', () => {
 
         async fetchSubscribe() {
             try {
-                const response = await this.request('/api/v1/user/getSubscribe');
+                const response = await this.request('/api/v3/user/getSubscribe');
                 if (!response) return;
                 const data = await response.json();
                 if (data.data) {
@@ -593,7 +593,7 @@ document.addEventListener('alpine:init', () => {
 
         async fetchPlans() {
             try {
-                const response = await this.request('/api/v1/user/plan/fetch');
+                const response = await this.request('/api/v3/user/plan/fetch');
                 if (!response) return;
                 const data = await this.safeJsonParse(response);
                 if (data && data.data) {
@@ -610,7 +610,7 @@ document.addEventListener('alpine:init', () => {
 
         async fetchOrders() {
             try {
-                const response = await this.request('/api/v1/user/order/fetch');
+                const response = await this.request('/api/v3/user/order/fetch');
                 if (!response) return;
                 const data = await this.safeJsonParse(response);
                 if (data && data.data) {
@@ -624,7 +624,7 @@ document.addEventListener('alpine:init', () => {
 
         async fetchTickets() {
             try {
-                const response = await this.request('/api/v1/user/ticket/fetch');
+                const response = await this.request('/api/v3/user/ticket/fetch');
                 if (!response) return;
                 const data = await response.json();
                 if (data.data) {
@@ -637,7 +637,7 @@ document.addEventListener('alpine:init', () => {
 
         async fetchInvites() {
             try {
-                const response = await this.request('/api/v1/user/invite/fetch');
+                const response = await this.request('/api/v3/user/invite/fetch');
                 if (!response) return;
                 const data = await response.json();
                 if (data.data) {
@@ -650,7 +650,7 @@ document.addEventListener('alpine:init', () => {
 
         async fetchKnowledge() {
             try {
-                const response = await this.request('/api/v1/user/knowledge/fetch?language=en-US');
+                const response = await this.request('/api/v3/user/knowledge/fetch?language=en-US');
                 if (!response) return;
                 const data = await response.json();
                 if (data.data) {
@@ -663,7 +663,7 @@ document.addEventListener('alpine:init', () => {
 
         async fetchServers() {
             try {
-                const response = await this.request('/api/v1/user/server/fetch');
+                const response = await this.request('/api/v3/user/server/fetch');
                 if (!response) return;
                 const data = await this.safeJsonParse(response);
                 if (data && data.data) {
@@ -686,7 +686,7 @@ document.addEventListener('alpine:init', () => {
 
         async fetchTraffics() {
             try {
-                const response = await this.request('/api/v1/user/stat/getTrafficLog');
+                const response = await this.request('/api/v3/user/stat/getTrafficLog');
                 if (!response) return;
                 const data = await response.json();
                 if (data.data) {
@@ -700,7 +700,7 @@ document.addEventListener('alpine:init', () => {
 
         async fetchNotices() {
             try {
-                const response = await this.request('/api/v1/user/notice/fetch');
+                const response = await this.request('/api/v3/user/notice/fetch');
                 if (!response) return;
                 const data = await response.json();
                 if (data.data) {
@@ -716,7 +716,7 @@ document.addEventListener('alpine:init', () => {
 
         async fetchPaymentMethods() {
             try {
-                const response = await this.request('/api/v1/user/order/getPaymentMethod');
+                const response = await this.request('/api/v3/user/order/getPaymentMethod');
                 if (!response) {
                     this.paymentMethods = [];
                     return;
@@ -767,7 +767,7 @@ document.addEventListener('alpine:init', () => {
             if (!this.selectedPlan) return;
             this.loading = true;
             try {
-                const response = await this.request('/api/v1/user/order/save', {
+                const response = await this.request('/api/v3/user/order/save', {
                     method: 'POST',
                     body: JSON.stringify({
                         plan_id: this.selectedPlan.id,
@@ -818,7 +818,7 @@ document.addEventListener('alpine:init', () => {
         async enableTOTP() {
             this.loading = true;
             try {
-                const response = await this.request('/api/v1/user/enable2FA', { method: 'POST' });
+                const response = await this.request('/api/v3/user/enable2FA', { method: 'POST' });
                 if (!response) return;
                 const data = await response.json();
                 if (data.data) {
@@ -843,7 +843,7 @@ document.addEventListener('alpine:init', () => {
             }
             this.loading = true;
             try {
-                const response = await this.request('/api/v1/user/verify2FA', {
+                const response = await this.request('/api/v3/user/verify2FA', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ code: this.totpVerifyCode })
@@ -869,7 +869,7 @@ document.addEventListener('alpine:init', () => {
             if (!confirm('Are you sure you want to disable Two-Factor Authentication?')) return;
             this.loading = true;
             try {
-                const response = await this.request('/api/v1/user/disable2FA', { method: 'POST' });
+                const response = await this.request('/api/v3/user/disable2FA', { method: 'POST' });
                 if (!response) return;
                 const data = await response.json();
                 if (data.data) {
@@ -893,7 +893,7 @@ document.addEventListener('alpine:init', () => {
             }
             this.loading = true;
             try {
-                const response = await fetch('/api/v1/passport/auth/login2FA', {
+                const response = await fetch('/api/v3/passport/auth/login2FA', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -951,7 +951,7 @@ document.addEventListener('alpine:init', () => {
 
             this.couponApplying = true;
             try {
-                const response = await this.request('/api/v1/user/coupon/check', {
+                const response = await this.request('/api/v3/user/coupon/check', {
                     method: 'POST',
                     body: JSON.stringify({
                         code,
@@ -989,7 +989,7 @@ document.addEventListener('alpine:init', () => {
             if (!this.currentOrder) return false;
             const originalTradeNo = this.currentOrder.trade_no;
             try {
-                const response = await this.request('/api/v1/user/order/save', {
+                const response = await this.request('/api/v3/user/order/save', {
                     method: 'POST',
                     body: JSON.stringify({
                         plan_id: this.currentOrder.plan_id,
@@ -1026,7 +1026,7 @@ document.addEventListener('alpine:init', () => {
         async cancelOrderSilently(tradeNo) {
             if (!tradeNo) return;
             try {
-                await this.request('/api/v1/user/order/cancel', {
+                await this.request('/api/v3/user/order/cancel', {
                     method: 'POST',
                     body: JSON.stringify({ trade_no: tradeNo })
                 });
@@ -1056,7 +1056,7 @@ document.addEventListener('alpine:init', () => {
         async checkout(tradeNo, methodId) {
             this.loading = true;
             try {
-                const response = await this.request('/api/v1/user/order/checkout', {
+                const response = await this.request('/api/v3/user/order/checkout', {
                     method: 'POST',
                     body: JSON.stringify({
                         trade_no: tradeNo,
@@ -1091,7 +1091,7 @@ document.addEventListener('alpine:init', () => {
             if (!ok) return;
             this.loading = true;
             try {
-                const response = await this.request('/api/v1/user/order/cancel', {
+                const response = await this.request('/api/v3/user/order/cancel', {
                     method: 'POST',
                     body: JSON.stringify({ trade_no: order.trade_no })
                 });
@@ -1130,7 +1130,7 @@ document.addEventListener('alpine:init', () => {
         async createTicket() {
             this.loading = true;
             try {
-                const response = await this.request('/api/v1/user/ticket/save', {
+                const response = await this.request('/api/v3/user/ticket/save', {
                     method: 'POST',
                     body: JSON.stringify(this.ticketForm)
                 });
@@ -1154,7 +1154,7 @@ document.addEventListener('alpine:init', () => {
         async viewTicket(ticket) {
             this.loading = true;
             try {
-                const response = await this.request(`/api/v1/user/ticket/fetch?id=${ticket.id}`);
+                const response = await this.request(`/api/v3/user/ticket/fetch?id=${ticket.id}`);
                 if (!response) return;
                 const data = await response.json();
                 if (data.data) {
@@ -1174,7 +1174,7 @@ document.addEventListener('alpine:init', () => {
             if (!this.ticketReplyForm.message) return;
             this.loading = true;
             try {
-                const response = await this.request('/api/v1/user/ticket/reply', {
+                const response = await this.request('/api/v3/user/ticket/reply', {
                     method: 'POST',
                     body: JSON.stringify(this.ticketReplyForm)
                 });
@@ -1197,7 +1197,7 @@ document.addEventListener('alpine:init', () => {
         async generateInvite() {
             this.loading = true;
             try {
-                const response = await this.request('/api/v1/user/invite/save');
+                const response = await this.request('/api/v3/user/invite/save');
                 if (!response) return;
                 const data = await response.json();
                 if (data.data) {
@@ -1215,7 +1215,7 @@ document.addEventListener('alpine:init', () => {
         async viewArticle(id) {
             this.loading = true;
             try {
-                const response = await this.request(`/api/v1/user/knowledge/fetch?id=${id}`);
+                const response = await this.request(`/api/v3/user/knowledge/fetch?id=${id}`);
                 if (!response) return;
                 const data = await response.json();
                 if (data.data) {
@@ -1233,7 +1233,7 @@ document.addEventListener('alpine:init', () => {
         async changePassword() {
             this.loading = true;
             try {
-                const response = await this.request('/api/v1/user/change_password', {
+                const response = await this.request('/api/v3/user/change_password', {
                     method: 'POST',
                     body: JSON.stringify(this.passwordForm)
                 });
@@ -1258,7 +1258,7 @@ document.addEventListener('alpine:init', () => {
             if (!ok) return;
             this.loading = true;
             try {
-                const response = await this.request('/api/v1/user/reset_security');
+                const response = await this.request('/api/v3/user/reset_security');
                 if (!response) return;
                 const data = await response.json();
                 if (data.data) {
@@ -1326,7 +1326,7 @@ document.addEventListener('alpine:init', () => {
             const payload = { email };
             if (redirect) payload.redirect = redirect;
 
-            fetch('/api/v1/passport/auth/loginWithTelegram', {
+            fetch('/api/v3/passport/auth/loginWithTelegram', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -1380,7 +1380,7 @@ document.addEventListener('alpine:init', () => {
                 return;
             }
 
-            fetch(`/api/v1/passport/auth/checkTelegramLogin?token=${encodeURIComponent(token)}`)
+            fetch(`/api/v3/passport/auth/checkTelegramLogin?token=${encodeURIComponent(token)}`)
                 .then(res => res.json())
                 .then(data => {
                     const status = data.data?.status || 'pending';
@@ -1470,7 +1470,7 @@ document.addEventListener('alpine:init', () => {
             }
             this.loading = true;
             try {
-                const response = await this.request('/api/v1/user/redeemgiftcard', {
+                const response = await this.request('/api/v3/user/redeemgiftcard', {
                     method: 'POST',
                     body: JSON.stringify({ giftcard: this.redeemForm.code.trim() })
                 });
@@ -1667,7 +1667,7 @@ document.addEventListener('alpine:init', () => {
 
             this.loading = true;
             try {
-                const response = await fetch(`/api/v1/passport/auth/token2Login?verify=${encodeURIComponent(verifyCode)}`);
+                const response = await fetch(`/api/v3/passport/auth/token2Login?verify=${encodeURIComponent(verifyCode)}`);
                 const data = await response.json();
 
                 if (data.data && data.data.auth_data) {
@@ -1703,7 +1703,7 @@ document.addEventListener('alpine:init', () => {
 
             this.ssoLoading = true;
             const redirect = this.getRedirectParam();
-            let url = '/api/v1/passport/auth/sso/init';
+            let url = '/api/v3/passport/auth/sso/init';
             if (redirect) {
                 url += `?redirect=${encodeURIComponent(redirect)}`;
             }
@@ -1764,7 +1764,7 @@ document.addEventListener('alpine:init', () => {
         async bindTelegram() {
             this.loading = true;
             try {
-                const response = await this.request('/api/v1/user/telegram/bind');
+                const response = await this.request('/api/v3/user/telegram/bind');
                 if (!response) return;
                 const data = await response.json();
                 if (data.data) {
@@ -1791,7 +1791,7 @@ document.addEventListener('alpine:init', () => {
             if (!ok) return;
             this.loading = true;
             try {
-                const response = await this.request('/api/v1/user/telegram/unbind', {
+                const response = await this.request('/api/v3/user/telegram/unbind', {
                     method: 'POST'
                 });
                 if (!response) return;
@@ -1817,7 +1817,7 @@ document.addEventListener('alpine:init', () => {
             if (this.loading) return;
             this.loading = true;
             try {
-                const response = await this.request('/api/v1/user/sso/init', { method: 'GET' });
+                const response = await this.request('/api/v3/user/sso/init', { method: 'GET' });
                 if (!response) {
                     this.loading = false;
                     return;
@@ -1843,7 +1843,7 @@ document.addEventListener('alpine:init', () => {
             if (!ok) return;
             this.loading = true;
             try {
-                const response = await this.request('/api/v1/user/sso/unbind', {
+                const response = await this.request('/api/v3/user/sso/unbind', {
                     method: 'POST'
                 });
                 if (!response) return;
