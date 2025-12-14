@@ -13,6 +13,7 @@
   - [Server 服务端模块](#server-服务端模块)
 - [API V2](#api-v2)
   - [Server 服务器配置](#server-服务器配置)
+- [API V3](#api-v3)
 
 ---
 
@@ -22,6 +23,7 @@
 ```
 /api/v1/...
 /api/v2/...
+/api/v3/...
 ```
 
 ### 认证方式
@@ -61,6 +63,16 @@ HTTP 状态码说明：
 - `500` - 服务器错误
 
 ---
+
+# API V3
+
+`/api/v3` 与 `/api/v1` 保持完全一致的业务行为（内部直接复用 V1 控制器），但会尽量避免把参数放在 URL 路径中；需要传参时统一放到请求参数里（query/form/json 均可）。
+
+使用方式：
+- 绝大多数接口：把 `/api/v1/...` 直接替换为 `/api/v3/...`，其余请求保持不变
+- 仅以下 2 个接口在 V3 下改变了“路径传参”的形式：
+  - V1：`ANY /api/v1/server/{class}/{action}` → V3：`ANY /api/v3/server`，通过请求参数传递 `class`、`action`
+  - V1：`GET|POST /api/v1/guest/payment/notify/{method}/{uuid}` → V3：`GET|POST /api/v3/guest/payment/notify`，通过请求参数传递 `method`、`uuid`
 
 # API V1
 
