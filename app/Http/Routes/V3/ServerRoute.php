@@ -12,7 +12,8 @@ class ServerRoute
             'prefix' => 'server'
         ], function ($router) {
             $router->any('', function (Request $request) {
-                $endpoint = $request->input('endpoint');
+                $payload = $request->json()->all();
+                $endpoint = $payload['endpoint'] ?? $request->input('endpoint');
                 if (is_string($endpoint) && $endpoint !== '') {
                     $endpoint = ltrim($endpoint, '/');
                     if (
@@ -24,13 +25,19 @@ class ServerRoute
                         abort(404);
                     }
 
-                    $method = strtoupper((string) $request->input('method', 'GET'));
+                    $method = strtoupper((string) ($payload['method'] ?? $request->input('method', 'GET')));
                     $allowedMethods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD'];
                     if (!in_array($method, $allowedMethods, true)) {
                         abort(422, 'method is invalid');
                     }
 
-                    $forwardParams = $request->input('params');
+                    $forwardParams = $payload['params'] ?? $request->input('params');
+                    if (is_string($forwardParams) && $forwardParams !== '') {
+                        $decoded = json_decode($forwardParams, true);
+                        if (is_array($decoded)) {
+                            $forwardParams = $decoded;
+                        }
+                    }
                     if (!is_array($forwardParams)) {
                         $forwardParams = $request->except(['endpoint', 'method', 'params']);
                     }
@@ -56,7 +63,13 @@ class ServerRoute
                         $subRequest->headers->remove('content-type');
                     }
 
-                    return app('router')->dispatch($subRequest);
+                    $originalRequest = app('request');
+                    app()->instance('request', $subRequest);
+                    try {
+                        return app('router')->dispatch($subRequest);
+                    } finally {
+                        app()->instance('request', $originalRequest);
+                    }
                 }
 
                 $class = $request->input('class');
