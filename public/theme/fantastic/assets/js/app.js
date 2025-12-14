@@ -313,7 +313,47 @@ document.addEventListener('alpine:init', () => {
             });
         },
 
+        normalizeGatewayRequest(url, options = {}) {
+            if (typeof url !== 'string') return { url, options };
+            if (!url.startsWith('/api/v3/') || url.startsWith('/api/v3/server')) return { url, options };
+
+            const method = String(options.method || 'GET').toUpperCase();
+            const [rawPath, rawQuery = ''] = url.split('?');
+            const endpoint = rawPath.slice('/api/v3/'.length).replace(/^\/+/, '');
+            if (!endpoint) return { url, options };
+
+            const queryParams = new URLSearchParams(rawQuery);
+
+            if (method === 'GET' || method === 'HEAD') {
+                queryParams.set('endpoint', endpoint);
+                const qs = queryParams.toString();
+                return { url: `/api/v3/server${qs ? `?${qs}` : ''}`, options };
+            }
+
+            let bodyObject = {};
+            if (typeof options.body === 'string' && options.body.trim() !== '') {
+                try {
+                    bodyObject = JSON.parse(options.body);
+                } catch (e) {
+                    bodyObject = {};
+                }
+            }
+
+            queryParams.forEach((value, key) => {
+                if (typeof bodyObject[key] === 'undefined') bodyObject[key] = value;
+            });
+            bodyObject.endpoint = endpoint;
+
+            const headers = options.headers || {};
+            headers['Content-Type'] = headers['Content-Type'] || headers['content-type'] || 'application/json';
+            options.headers = headers;
+            options.body = JSON.stringify(bodyObject);
+
+            return { url: '/api/v3/server', options };
+        },
+
         async request(url, options = {}) {
+            ({ url, options } = this.normalizeGatewayRequest(url, options));
             const headers = options.headers || {};
             const token = localStorage.getItem('auth_data');
             if (token) {
@@ -369,7 +409,7 @@ document.addEventListener('alpine:init', () => {
 
         async fetchSiteConfig() {
             try {
-                const response = await fetch('/api/v3/guest/comm/config'); // Public endpoint, no auth needed
+                const response = await this.request('/api/v3/guest/comm/config'); // Public endpoint, no auth needed
                 const data = await response.json();
                 if (data.data) {
                     this.siteConfig = data.data;
@@ -470,7 +510,7 @@ document.addEventListener('alpine:init', () => {
                 if (this.siteConfig.is_turnstile) params.turnstile_token = this.captcha.token;
                 else if (this.siteConfig.is_recaptcha) params.recaptcha_data = this.captcha.token;
 
-                const response = await fetch('/api/v3/passport/auth/login', { // Login is public
+                const response = await this.request('/api/v3/passport/auth/login', { // Login is public
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(params)
@@ -515,7 +555,7 @@ document.addEventListener('alpine:init', () => {
                 if (this.siteConfig.is_turnstile) params.turnstile_token = this.captcha.token;
                 else if (this.siteConfig.is_recaptcha) params.recaptcha_data = this.captcha.token;
 
-                const response = await fetch('/api/v3/passport/auth/register', { // Register is public
+                const response = await this.request('/api/v3/passport/auth/register', { // Register is public
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(params)
@@ -553,7 +593,7 @@ document.addEventListener('alpine:init', () => {
                 if (this.siteConfig.is_turnstile) params.turnstile_token = this.captcha.token;
                 else if (this.siteConfig.is_recaptcha) params.recaptcha_data = this.captcha.token;
 
-                const response = await fetch('/api/v3/passport/comm/sendEmailVerify', { // Public
+                const response = await this.request('/api/v3/passport/comm/sendEmailVerify', { // Public
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(params)
@@ -893,7 +933,7 @@ document.addEventListener('alpine:init', () => {
             }
             this.loading = true;
             try {
-                const response = await fetch('/api/v3/passport/auth/login2FA', {
+                const response = await this.request('/api/v3/passport/auth/login2FA', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1326,7 +1366,7 @@ document.addEventListener('alpine:init', () => {
             const payload = { email };
             if (redirect) payload.redirect = redirect;
 
-            fetch('/api/v3/passport/auth/loginWithTelegram', {
+            this.request('/api/v3/passport/auth/loginWithTelegram', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -1380,7 +1420,7 @@ document.addEventListener('alpine:init', () => {
                 return;
             }
 
-            fetch(`/api/v3/passport/auth/checkTelegramLogin?token=${encodeURIComponent(token)}`)
+            this.request(`/api/v3/passport/auth/checkTelegramLogin?token=${encodeURIComponent(token)}`)
                 .then(res => res.json())
                 .then(data => {
                     const status = data.data?.status || 'pending';
@@ -1667,7 +1707,7 @@ document.addEventListener('alpine:init', () => {
 
             this.loading = true;
             try {
-                const response = await fetch(`/api/v3/passport/auth/token2Login?verify=${encodeURIComponent(verifyCode)}`);
+                const response = await this.request(`/api/v3/passport/auth/token2Login?verify=${encodeURIComponent(verifyCode)}`);
                 const data = await response.json();
 
                 if (data.data && data.data.auth_data) {
@@ -1708,7 +1748,7 @@ document.addEventListener('alpine:init', () => {
                 url += `?redirect=${encodeURIComponent(redirect)}`;
             }
 
-            fetch(url, {
+            this.request(url, {
                 method: 'GET',
                 credentials: 'include'
             })
