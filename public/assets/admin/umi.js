@@ -5904,6 +5904,12 @@
                     checked: parseInt(_.safe_mode_enable),
                     onChange: e=>this.set("safe", "safe_mode_enable", e ? 1 : 0)
                 })), f.a.createElement(m, {
+                    title: "\u7981\u7528API V1",
+                    description: "\u5f00\u542f\u540e\u6240\u6709 /api/v1 \u63a5\u53e3\u5c06\u88ab403\u62d2\u7edd\uff08\u5ba2\u6237\u7aef\u8bf7\u6539\u7528 /api/v3 \u6216\u4f7f\u7528\u56fa\u5b9a\u5165\u53e3 /api/v3/server\uff09\u3002"
+                }, f.a.createElement(l["a"], {
+                    checked: parseInt(_.api_v1_disable || 0),
+                    onChange: e=>this.set("safe", "api_v1_disable", e ? 1 : 0)
+                })), f.a.createElement(m, {
                     title: "\u540e\u53f0\u8def\u5f84",
                     description: "\u540e\u53f0\u7ba1\u7406\u8def\u5f84\uff0c\u4fee\u6539\u540e\u5c06\u4f1a\u6539\u53d8\u539f\u6709\u7684admin\u8def\u5f84"
                 }, f.a.createElement("input", {

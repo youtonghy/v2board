@@ -60,7 +60,7 @@ class ConfigController extends Controller
 
     public function setTelegramWebhook(Request $request)
     {
-        $hookUrl = secure_url('/api/v1/guest/telegram/webhook?access_token=' . md5(config('v2board.telegram_bot_token', $request->input('telegram_bot_token'))));
+        $hookUrl = secure_url('/api/v3/guest/telegram/webhook?access_token=' . md5(config('v2board.telegram_bot_token', $request->input('telegram_bot_token'))));
         $telegramService = new TelegramService($request->input('telegram_bot_token'));
         $telegramService->getMe();
         $telegramService->setWebhook($hookUrl);
@@ -328,7 +328,8 @@ class ConfigController extends Controller
                 'password_limit_enable' => (int)config('v2board.password_limit_enable', 1),
                 'password_limit_count' => config('v2board.password_limit_count', 5),
                 'password_limit_expire' => config('v2board.password_limit_expire', 60),
-                'totp_enable' => (int)config('v2board.totp_enable', 0)
+                'totp_enable' => (int)config('v2board.totp_enable', 0),
+                'api_v1_disable' => (int)config('v2board.api_v1_disable', 0)
             ]
         ];
         if ($key && isset($data[$key])) {
