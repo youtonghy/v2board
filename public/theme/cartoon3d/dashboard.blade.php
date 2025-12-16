@@ -32,92 +32,132 @@
         }
     </script>
 </head>
-<body>
+<body :data-theme="window.settings.theme.color">
     <div id="app" x-data="app()">
-        <!-- Navigation Bar -->
-        <nav class="navbar" x-show="!['login', 'register'].includes(view)" style="display: none;">
-            <div class="container nav-container">
-                <div class="logo">{{$title}}</div>
-                
-                <!-- Desktop Navigation -->
-                <div class="nav-links desktop-nav">
-                    <div class="nav-item" :class="{ 'active': ['dashboard', 'servers'].includes(view) }">
-                        <a href="#" class="nav-link">Dashboard</a>
-                        <div class="nav-dropdown">
-                            <a href="#" @click.prevent="view = 'dashboard'" :class="{ 'active': view === 'dashboard' }">Dashboard</a>
-                            <a href="#" @click.prevent="view = 'servers'" :class="{ 'active': view === 'servers' }">Servers</a>
-                            <a href="#" @click.prevent="view = 'transfer'" :class="{ 'active': view === 'transfer' }">Transfer Data</a>
-                        </div>
-                    </div>
-                    
-                    <div class="nav-item" :class="{ 'active': ['plan', 'orders'].includes(view) }">
-                        <a href="#" class="nav-link">Shop</a>
-                        <div class="nav-dropdown">
-                            <a href="#" @click.prevent="view = 'plan'" :class="{ 'active': view === 'plan' }">Plans</a>
-                            <a href="#" @click.prevent="view = 'orders'" :class="{ 'active': view === 'orders' }">My Orders</a>
-                            <a href="#" @click.prevent="view = 'redeem'" :class="{ 'active': view === 'redeem' }">Redeem</a>
-                        </div>
-                    </div>
-                    
-                    <div class="nav-item" :class="{ 'active': ['tickets', 'ticket_detail', 'knowledge', 'knowledge_detail'].includes(view) }">
-                        <a href="#" class="nav-link">Support</a>
-                        <div class="nav-dropdown">
-                            <a href="#" @click.prevent="view = 'tickets'" :class="{ 'active': view === 'tickets' || view === 'ticket_detail' }">Support Tickets</a>
-                            <a href="#" @click.prevent="view = 'knowledge'" :class="{ 'active': view === 'knowledge' || view === 'knowledge_detail' }">Knowledge Base</a>
-                        </div>
-                    </div>
-                    
-                    <div class="nav-item" :class="{ 'active': ['profile', 'invites'].includes(view) }">
-                        <a href="#" class="nav-link">Profile</a>
-                        <div class="nav-dropdown">
-                            <a href="#" @click.prevent="view = 'profile'" :class="{ 'active': view === 'profile' }">Profile</a>
-                            <a href="#" @click.prevent="view = 'invites'" :class="{ 'active': view === 'invites' }">Invites</a>
-                        </div>
-                    </div>
+        
+        <!-- Mobile Menu Toggle Button -->
+        <button class="mobile-menu-toggle" 
+                x-show="!['login', 'register'].includes(view)" 
+                @click="mobileMenuOpen = !mobileMenuOpen">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+            </svg>
+        </button>
+        
+        <!-- Mobile Sidebar Backdrop -->
+        <div class="sidebar-backdrop" 
+             x-show="mobileMenuOpen && !['login', 'register'].includes(view)" 
+             @click="mobileMenuOpen = false"
+             style="display: none;"></div>
+
+        <!-- Right Sidebar -->
+        <aside class="sidebar" 
+               :class="{ 'open': mobileMenuOpen }"
+               x-show="!['login', 'register'].includes(view)"
+               style="display: none;">
+            
+            <!-- Sidebar Header -->
+            <div class="sidebar-header">
+                <span class="sidebar-logo">{{$title}}</span>
+            </div>
+            
+            <!-- Sidebar Navigation -->
+            <nav class="sidebar-nav">
+                <!-- Dashboard Section -->
+                <div class="nav-section">
+                    <div class="nav-section-title">Dashboard</div>
+                    <a href="#" class="nav-item" :class="{ 'active': view === 'dashboard' }" @click.prevent="view = 'dashboard'; mobileMenuOpen = false">
+                        <span class="nav-item-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+                        </span>
+                        <span class="nav-item-text">Dashboard</span>
+                    </a>
+                    <a href="#" class="nav-item" :class="{ 'active': view === 'servers' }" @click.prevent="view = 'servers'; mobileMenuOpen = false">
+                        <span class="nav-item-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 13H4c-.55 0-1 .45-1 1v6c0 .55.45 1 1 1h16c.55 0 1-.45 1-1v-6c0-.55-.45-1-1-1zM7 19c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM20 3H4c-.55 0-1 .45-1 1v6c0 .55.45 1 1 1h16c.55 0 1-.45 1-1V4c0-.55-.45-1-1-1zM7 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>
+                        </span>
+                        <span class="nav-item-text">Servers</span>
+                    </a>
+                    <a href="#" class="nav-item" :class="{ 'active': view === 'transfer' }" @click.prevent="view = 'transfer'; mobileMenuOpen = false">
+                        <span class="nav-item-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 17.01V10h-2v7.01h-3L15 21l4-3.99h-3zM9 3L5 6.99h3V14h2V6.99h3L9 3z"/></svg>
+                        </span>
+                        <span class="nav-item-text">Transfer</span>
+                    </a>
                 </div>
                 
-                <!-- Mobile Breadcrumb Navigation -->
-                <div class="breadcrumb-nav mobile-nav">
-                    <button class="breadcrumb-toggle" @click="mobileMenuOpen = !mobileMenuOpen">
-                        <span class="breadcrumb-current" x-text="getCurrentBreadcrumb()"></span>
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                            <path d="M4 6l4 4 4-4"/>
-                        </svg>
-                    </button>
-                    <div class="breadcrumb-dropdown" x-show="mobileMenuOpen" @click.away="mobileMenuOpen = false" style="display: none;">
-                        <div class="breadcrumb-section">
-                            <div class="breadcrumb-title">Dashboard</div>
-                            <a href="#" @click.prevent="view = 'dashboard'; mobileMenuOpen = false" :class="{ 'active': view === 'dashboard' }">Dashboard</a>
-                            <a href="#" @click.prevent="view = 'servers'; mobileMenuOpen = false" :class="{ 'active': view === 'servers' }">Servers</a>
-                            <a href="#" @click.prevent="view = 'transfer'; mobileMenuOpen = false" :class="{ 'active': view === 'transfer' }">Transfer Data</a>
-                        </div>
-                        <div class="breadcrumb-section">
-                            <div class="breadcrumb-title">Shop</div>
-                            <a href="#" @click.prevent="view = 'plan'; mobileMenuOpen = false" :class="{ 'active': view === 'plan' }">Plans</a>
-                            <a href="#" @click.prevent="view = 'orders'; mobileMenuOpen = false" :class="{ 'active': view === 'orders' }">My Orders</a>
-                            <a href="#" @click.prevent="view = 'redeem'; mobileMenuOpen = false" :class="{ 'active': view === 'redeem' }">Redeem</a>
-                        </div>
-                        <div class="breadcrumb-section">
-                            <div class="breadcrumb-title">Support</div>
-                            <a href="#" @click.prevent="view = 'tickets'; mobileMenuOpen = false" :class="{ 'active': view === 'tickets' || view === 'ticket_detail' }">Support Tickets</a>
-                            <a href="#" @click.prevent="view = 'knowledge'; mobileMenuOpen = false" :class="{ 'active': view === 'knowledge' || view === 'knowledge_detail' }">Knowledge Base</a>
-                        </div>
-                        <div class="breadcrumb-section">
-                            <div class="breadcrumb-title">Profile</div>
-                            <a href="#" @click.prevent="view = 'profile'; mobileMenuOpen = false" :class="{ 'active': view === 'profile' }">Profile</a>
-                            <a href="#" @click.prevent="view = 'invites'; mobileMenuOpen = false" :class="{ 'active': view === 'invites' }">Invites</a>
-                        </div>
-                        <div class="breadcrumb-section logout-section">
-                            <a href="#" class="btn-logout-mobile" @click.prevent="mobileMenuOpen = false; logout()">Logout</a>
-                        </div>
-                    </div>
+                <!-- Shop Section -->
+                <div class="nav-section">
+                    <div class="nav-section-title">Shop</div>
+                    <a href="#" class="nav-item" :class="{ 'active': view === 'plan' }" @click.prevent="view = 'plan'; mobileMenuOpen = false">
+                        <span class="nav-item-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>
+                        </span>
+                        <span class="nav-item-text">Plans</span>
+                    </a>
+                    <a href="#" class="nav-item" :class="{ 'active': view === 'orders' }" @click.prevent="view = 'orders'; mobileMenuOpen = false">
+                        <span class="nav-item-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+                        </span>
+                        <span class="nav-item-text">Orders</span>
+                    </a>
+                    <a href="#" class="nav-item" :class="{ 'active': view === 'redeem' }" @click.prevent="view = 'redeem'; mobileMenuOpen = false">
+                        <span class="nav-item-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-2.18c.11-.31.18-.65.18-1 0-1.66-1.34-3-3-3-1.05 0-1.96.54-2.5 1.35l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm11 15H4v-2h16v2zm0-5H4V8h5.08L7 10.83 8.62 12 11 8.76l1-1.36 1 1.36L15.38 12 17 10.83 14.92 8H20v6z"/></svg>
+                        </span>
+                        <span class="nav-item-text">Redeem</span>
+                    </a>
                 </div>
                 
-                <div class="user-menu">
+                <!-- Support Section -->
+                <div class="nav-section">
+                    <div class="nav-section-title">Support</div>
+                    <a href="#" class="nav-item" :class="{ 'active': ['tickets', 'ticket_detail'].includes(view) }" @click.prevent="view = 'tickets'; mobileMenuOpen = false">
+                        <span class="nav-item-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 12h-2v-2h2v2zm0-4h-2V6h2v4z"/></svg>
+                        </span>
+                        <span class="nav-item-text">Tickets</span>
+                    </a>
+                    <a href="#" class="nav-item" :class="{ 'active': ['knowledge', 'knowledge_detail'].includes(view) }" @click.prevent="view = 'knowledge'; mobileMenuOpen = false">
+                        <span class="nav-item-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                        </span>
+                        <span class="nav-item-text">Knowledge</span>
+                    </a>
+                </div>
+                
+                <!-- Account Section -->
+                <div class="nav-section">
+                    <div class="nav-section-title">Account</div>
+                    <a href="#" class="nav-item" :class="{ 'active': view === 'profile' }" @click.prevent="view = 'profile'; mobileMenuOpen = false">
+                        <span class="nav-item-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                        </span>
+                        <span class="nav-item-text">Profile</span>
+                    </a>
+                    <a href="#" class="nav-item" :class="{ 'active': view === 'invites' }" @click.prevent="view = 'invites'; mobileMenuOpen = false">
+                        <span class="nav-item-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                        </span>
+                        <span class="nav-item-text">Invites</span>
+                    </a>
+                </div>
+            </nav>
+            
+            <!-- Sidebar Footer -->
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" x-text="user.email ? user.email.charAt(0).toUpperCase() : 'U'"></div>
                     <span class="user-email" x-text="user.email"></span>
-                    <a href="#" @click.prevent="logout()" class="btn-logout">Logout</a>
                 </div>
-        </div>
+                <button class="btn-logout" @click="logout()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+                    </svg>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </aside>
 
         <!-- Server Detail Modal -->
         <div x-show="serverModalOpen" class="modal-overlay" @click.self="serverModalOpen = false" style="display: none;">
@@ -134,10 +174,10 @@
                     </div>
                 </div>
             </div>
-        </nav>
 
         <!-- Main Content -->
-        <main class="container">
+        <main class="main-content">
+            <div class="container">
             <!-- Login View -->
             <div x-show="view === 'login'" class="view-auth" style="display: none;">
                 <div class="auth-container">
@@ -893,6 +933,7 @@
                     <button class="btn-3d" @click="changePassword()" :disabled="loading">Update Password</button>
                 </div>
             </div>
+            </div><!-- /.container -->
         </main>
 
         <!-- Telegram Login Modal -->
@@ -1049,55 +1090,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Mobile Bottom Navigation -->
-        <nav class="bottom-nav" x-show="!['login', 'register'].includes(view)" style="display: none;">
-            <a href="#" 
-               class="bottom-nav-item" 
-               :class="{ 'active': view === 'dashboard' }"
-               @click.prevent="view = 'dashboard'">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
-                </svg>
-                <span>Dashboard</span>
-            </a>
-            <a href="#" 
-               class="bottom-nav-item" 
-               :class="{ 'active': ['plan', 'orders', 'redeem', 'payment'].includes(view) }"
-               @click.prevent="view = 'plan'">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/>
-                </svg>
-                <span>Shop</span>
-            </a>
-            <a href="#" 
-               class="bottom-nav-item" 
-               :class="{ 'active': ['servers', 'transfer'].includes(view) }"
-               @click.prevent="view = 'servers'">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM19 18H6c-2.21 0-4-1.79-4-4s1.79-4 4-4h.71C7.37 7.69 9.48 6 12 6c3.04 0 5.5 2.46 5.5 5.5v.5H19c1.66 0 3 1.34 3 3s-1.34 3-3 3z"/>
-                </svg>
-                <span>Servers</span>
-            </a>
-            <a href="#" 
-               class="bottom-nav-item" 
-               :class="{ 'active': ['tickets', 'ticket_detail', 'knowledge', 'knowledge_detail'].includes(view) }"
-               @click.prevent="view = 'tickets'">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 12h-2v-2h2v2zm0-4h-2V6h2v4z"/>
-                </svg>
-                <span>Support</span>
-            </a>
-            <a href="#" 
-               class="bottom-nav-item" 
-               :class="{ 'active': ['profile', 'invites'].includes(view) }"
-               @click.prevent="view = 'profile'">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                </svg>
-                <span>Profile</span>
-            </a>
-        </nav>
 
         <div class="confetti-container" x-ref="confettiContainer" id="fantastic-confetti" aria-hidden="true"></div>
     </div>
