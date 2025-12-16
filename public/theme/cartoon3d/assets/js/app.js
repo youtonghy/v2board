@@ -552,7 +552,13 @@ document.addEventListener('alpine:init', () => {
                     // Also set authorization for admin panel compatibility
                     localStorage.setItem('authorization', data.data.auth_data);
                     this.fetchUserInfo();
-                    this.view = 'dashboard';
+                    const redirectTarget = this.normalizeRedirectTarget(
+                        data.data.redirect || this.getRedirectParam() || 'dashboard'
+                    );
+                    this.suppressHashUpdate = true;
+                    window.location.hash = `#/${redirectTarget}`;
+                    this.applyRouteFromHash();
+                    this.$nextTick(() => { this.suppressHashUpdate = false; });
                     this.authForm.password = ''; // Clear password
                 } else {
                     this.showMessage(data.message || 'Login failed');
@@ -592,7 +598,13 @@ document.addEventListener('alpine:init', () => {
                     localStorage.setItem('authorization', data.data.auth_data);
                     this.showMessage('Registration successful!');
                     this.fetchUserInfo();
-                    this.view = 'dashboard';
+                    const redirectTarget = this.normalizeRedirectTarget(
+                        data.data.redirect || this.getRedirectParam() || 'dashboard'
+                    );
+                    this.suppressHashUpdate = true;
+                    window.location.hash = `#/${redirectTarget}`;
+                    this.applyRouteFromHash();
+                    this.$nextTick(() => { this.suppressHashUpdate = false; });
                 } else {
                     this.showMessage(data.message || 'Registration failed');
                     // Reset captcha on failure
@@ -972,7 +984,13 @@ document.addEventListener('alpine:init', () => {
                     localStorage.setItem('authorization', data.data.auth_data);
                     this.show2FAModal = false;
                     this.fetchUserInfo();
-                    this.view = 'dashboard';
+                    const redirectTarget = this.normalizeRedirectTarget(
+                        data.data.redirect || this.getRedirectParam() || 'dashboard'
+                    );
+                    this.suppressHashUpdate = true;
+                    window.location.hash = `#/${redirectTarget}`;
+                    this.applyRouteFromHash();
+                    this.$nextTick(() => { this.suppressHashUpdate = false; });
                     this.authForm.password = '';
                     this.twoFactorCode = '';
                     this.twoFactorToken = null;
