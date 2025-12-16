@@ -100,7 +100,7 @@ img {
     transition-delay: 0s;
 }
 
-.nav-item>.nav-link {
+.nav-item > .nav-link {
     text-decoration: none;
     color: var(--text-color);
     font-weight: 600;
@@ -111,8 +111,8 @@ img {
     cursor: pointer;
 }
 
-.nav-item:hover>.nav-link,
-.nav-item.active>.nav-link {
+.nav-item:hover > .nav-link,
+.nav-item.active > .nav-link {
     color: var(--primary-color);
     background: var(--card-bg);
     box-shadow: inset 6px 6px 10px rgba(163, 177, 198, 0.6),
@@ -231,7 +231,6 @@ img {
         opacity: 0;
         transform: translateY(-10px);
     }
-
     to {
         opacity: 1;
         transform: translateY(0);
@@ -640,38 +639,31 @@ img {
 }
 
 /* Heatmap color levels - GitHub green style */
-.level-0,
-.legend-item.level-0 {
+.level-0, .legend-item.level-0 {
     background-color: #ebedf0;
 }
 
-.level-1,
-.legend-item.level-1 {
+.level-1, .legend-item.level-1 {
     background-color: #9be9a8;
 }
 
-.level-2,
-.legend-item.level-2 {
+.level-2, .legend-item.level-2 {
     background-color: #69db7c;
 }
 
-.level-3,
-.legend-item.level-3 {
+.level-3, .legend-item.level-3 {
     background-color: #40c057;
 }
 
-.level-4,
-.legend-item.level-4 {
+.level-4, .legend-item.level-4 {
     background-color: #2f9e44;
 }
 
-.level-5,
-.legend-item.level-5 {
+.level-5, .legend-item.level-5 {
     background-color: #1f7a33;
 }
 
-.level-6,
-.legend-item.level-6 {
+.level-6, .legend-item.level-6 {
     background-color: #0d5a1f;
 }
 
@@ -766,9 +758,11 @@ img {
     width: 100%;
     height: 100%;
     border-radius: 50%;
-    background: conic-gradient(var(--progress-color, var(--primary-color)) calc(var(--progress) * 1%),
-            var(--card-bg) 0);
-    box-shadow:
+    background: conic-gradient(
+        var(--progress-color, var(--primary-color)) calc(var(--progress) * 1%),
+        var(--card-bg) 0
+    );
+    box-shadow: 
         inset 0 0 0 15px var(--card-bg),
         var(--shadow-dark),
         var(--shadow-light);
@@ -781,7 +775,6 @@ img {
     from {
         transform: rotate(0deg);
     }
-
     to {
         transform: rotate(360deg);
     }
@@ -792,20 +785,26 @@ img {
     position: absolute;
     inset: 0;
     border-radius: 50%;
-    background: conic-gradient(var(--progress-color, var(--primary-color)) calc(var(--progress) * 1%),
-            transparent 0);
-    mask: radial-gradient(circle,
-            transparent 0,
-            transparent 70px,
-            black 70px,
-            black 90px,
-            transparent 90px);
-    -webkit-mask: radial-gradient(circle,
-            transparent 0,
-            transparent 70px,
-            black 70px,
-            black 90px,
-            transparent 90px);
+    background: conic-gradient(
+        var(--progress-color, var(--primary-color)) calc(var(--progress) * 1%),
+        transparent 0
+    );
+    mask: radial-gradient(
+        circle,
+        transparent 0,
+        transparent 70px,
+        black 70px,
+        black 90px,
+        transparent 90px
+    );
+    -webkit-mask: radial-gradient(
+        circle,
+        transparent 0,
+        transparent 70px,
+        black 70px,
+        black 90px,
+        transparent 90px
+    );
 }
 
 .progress-value {
@@ -818,7 +817,7 @@ img {
     height: 140px;
     background: var(--card-bg);
     border-radius: 50%;
-    box-shadow:
+    box-shadow: 
         8px 8px 16px rgba(163, 177, 198, 0.6),
         -8px -8px 16px rgba(255, 255, 255, 0.8);
     z-index: 10;
@@ -1590,13 +1589,10 @@ h3 {
 }
 
 @keyframes pulse {
-
-    0%,
-    100% {
+    0%, 100% {
         opacity: 1;
         transform: scale(1);
     }
-
     50% {
         opacity: 0.7;
         transform: scale(1.1);
@@ -1998,167 +1994,166 @@ h3 {
 
 /* Responsive Design */
 @media (max-width: 768px) {
-
     /* Remove overflow hidden on small screens for main container */
     main.container {
         overflow: visible;
     }
-
+    
     .navbar {
         padding: 0.75rem 0;
     }
-
+    
     .nav-container {
         gap: 0.5rem;
     }
-
+    
     .logo {
         font-size: 1.3rem;
     }
-
+    
     /* Hide desktop nav, show mobile breadcrumb */
     .desktop-nav {
         display: none !important;
     }
-
+    
     .mobile-nav {
         display: block;
     }
-
+    
     /* Adjust user menu for mobile */
     .user-menu {
         flex-direction: column;
         gap: 5px;
         align-items: flex-end;
     }
-
+    
     .user-email {
         display: none;
     }
-
+    
     .btn-logout {
         padding: 8px 16px;
         font-size: 0.85rem;
         margin-left: 0;
     }
-
+    
     /* Mobile specific adjustments */
     .container {
         padding: 0 15px;
     }
-
+    
     /* Stats cards - stack vertically */
     .stats-grid {
         grid-template-columns: 1fr;
         gap: 1.5rem;
     }
-
+    
     /* Plan cards - stack vertically */
     .plans-grid {
         grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
         gap: 1.5rem;
     }
-
+    
     .plan-card {
         min-height: 350px;
         padding: 1.5rem;
     }
-
+    
     .plan-card h3 {
         font-size: 1.2rem;
         margin-bottom: 0.8rem;
     }
-
+    
     .plan-card .plan-content {
         font-size: 0.85rem;
     }
-
+    
     .plan-card .plan-actions .btn-3d {
         padding: 10px 16px;
         font-size: 0.8rem;
     }
-
+    
     /* Period selector mobile tweaks */
     .period-selector select {
         font-size: 0.85rem;
         padding: 10px;
     }
-
+    
     .period-selector .btn-3d {
         font-size: 0.85rem;
         padding: 10px 16px;
     }
-
+    
     .card {
         padding: 1.5rem;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
     }
-
+    
     .table-3d {
         font-size: 0.85rem;
         min-width: 500px;
     }
-
+    
     .table-3d th,
     .table-3d td {
         padding: 10px 8px;
         font-size: 0.85rem;
     }
-
+    
     /* Table optimizations for mobile */
     .table-wrapper {
         border-radius: 12px;
         background: linear-gradient(90deg, transparent, transparent calc(100% - 30px), rgba(108, 92, 231, 0.05));
     }
-
+    
     .table-wrapper::-webkit-scrollbar {
         height: 6px;
     }
-
+    
     .table-wrapper::-webkit-scrollbar-track {
         background: rgba(0, 0, 0, 0.05);
         border-radius: 3px;
     }
-
+    
     .table-wrapper::-webkit-scrollbar-thumb {
         background: var(--primary-color);
         border-radius: 3px;
     }
-
+    
     /* Make forms more mobile friendly */
     .btn-3d {
         padding: 12px 24px;
         font-size: 0.9rem;
     }
-
+    
     .value {
         font-size: 2rem;
     }
-
+    
     /* Welcome card mobile tweaks */
     .welcome-card h1 {
         font-size: 1.4rem;
     }
-
+    
     .welcome-card p {
         font-size: 0.95rem;
     }
-
+    
     /* Notice card mobile tweaks */
     .notice-item strong {
         font-size: 1rem;
     }
-
+    
     .notice-item p {
         font-size: 0.9rem;
     }
-
+    
     .order-detail-grid {
         grid-template-columns: 1fr;
         gap: 1rem;
     }
-
+    
     /* Payment methods grid - horizontal scroll */
     .payment-methods-grid {
         display: flex;
@@ -2169,39 +2164,39 @@ h3 {
         padding-bottom: 1rem;
         scroll-snap-type: x mandatory;
     }
-
+    
     .payment-method-card {
         flex: 0 0 150px;
         min-width: 150px;
         padding: 1rem;
         scroll-snap-align: start;
     }
-
+    
     .payment-methods-grid::-webkit-scrollbar {
         height: 6px;
     }
-
+    
     .payment-methods-grid::-webkit-scrollbar-track {
         background: rgba(0, 0, 0, 0.05);
         border-radius: 3px;
         margin: 0 10px;
     }
-
+    
     .payment-methods-grid::-webkit-scrollbar-thumb {
         background: var(--primary-color);
         border-radius: 3px;
     }
-
+    
     .order-amount {
         flex-direction: column;
         gap: 0.5rem;
         text-align: center;
     }
-
+    
     .order-amount .amount {
         font-size: 1.8rem;
     }
-
+    
     .btn-payment {
         padding: 1rem 1.5rem;
         font-size: 1rem;
@@ -2212,52 +2207,52 @@ h3 {
     .logo {
         font-size: 1.1rem;
     }
-
+    
     .mobile-nav {
         max-width: 200px;
     }
-
+    
     .btn-logout {
         padding: 6px 12px;
         font-size: 0.8rem;
     }
-
+    
     .breadcrumb-current {
         font-size: 0.8rem;
     }
-
+    
     h1 {
         font-size: 1.5rem;
     }
-
+    
     h2 {
         font-size: 1.3rem;
     }
-
+    
     h3 {
         font-size: 1.1rem;
     }
-
+    
     /* Plan cards - keep stacked */
     .plans-grid {
         grid-template-columns: 1fr;
         gap: 1.2rem;
     }
-
+    
     .plan-card {
         min-height: 320px;
         padding: 1.2rem;
     }
-
+    
     .plan-card h3 {
         font-size: 1.1rem;
     }
-
+    
     .plan-card .plan-content {
         font-size: 0.8rem;
         line-height: 1.4;
     }
-
+    
     /* Payment methods - horizontal scroll even on tiny screens */
     .payment-methods-grid {
         display: flex;
@@ -2265,93 +2260,93 @@ h3 {
         overflow-x: auto;
         gap: 0.8rem;
     }
-
+    
     .payment-method-card {
         flex: 0 0 140px;
         min-width: 140px;
         min-height: 120px;
         padding: 1rem;
     }
-
+    
     .payment-method-icon {
         transform: scale(0.9);
     }
-
+    
     .payment-method-name {
         font-size: 0.85rem;
     }
-
+    
     .payment-method-fee {
         font-size: 0.7rem;
     }
-
+    
     .order-amount .label {
         font-size: 0.95rem;
     }
-
+    
     .order-amount .amount {
         font-size: 1.5rem;
     }
-
+    
     /* Table tweaks for extra-small screens */
     .table-3d {
         min-width: 450px;
         font-size: 0.8rem;
     }
-
+    
     .table-3d th,
     .table-3d td {
         padding: 8px 6px;
         font-size: 0.8rem;
     }
-
+    
     /* Stats card grid */
     .stats-grid {
         gap: 1rem;
     }
-
+    
     .stat-card {
         padding: 1.2rem;
     }
-
+    
     /* Order detail grid */
     .order-detail-item .value {
         font-size: 0.9rem;
         word-break: break-all;
     }
-
+    
     /* Welcome card tweaks for extra-small screens */
     .welcome-card {
         padding: 1.2rem;
     }
-
+    
     .welcome-card h1 {
         font-size: 1.2rem;
         line-height: 1.3;
     }
-
+    
     .welcome-card p {
         font-size: 0.85rem;
     }
-
+    
     .quick-actions .btn-3d {
         flex: 1 1 100%;
         width: 100%;
     }
-
+    
     /* Notice card tweaks for extra-small screens */
     .notice-card {
         padding: 1rem;
     }
-
+    
     .notice-item {
         padding: 0.8rem 0;
     }
-
+    
     .notice-item strong {
         font-size: 0.95rem;
     }
-
+    
     .notice-item p {
         font-size: 0.85rem;
     }
@@ -2395,53 +2390,53 @@ h3 {
         padding: 0.8rem;
         font-size: 0.85rem;
     }
-
+    
     .message-meta {
         font-size: 0.7rem;
     }
-
+    
     .ticket-messages {
         max-height: 300px;
     }
-
+    
     /* Input group tweaks for extra-small screens */
     .input-group {
         flex-direction: column;
     }
-
+    
     .input-group .btn-3d {
         width: 100%;
         margin-top: 0.5rem;
     }
-
+    
     /* Binding items tweaks for extra-small screens */
     .binding-item {
         flex-direction: column;
         gap: 1rem;
         padding: 1.2rem;
     }
-
+    
     .binding-header {
         width: 100%;
     }
-
+    
     .binding-icon {
         width: 45px;
         height: 45px;
     }
-
+    
     .binding-info h4 {
         font-size: 1rem;
     }
-
+    
     .binding-status {
         font-size: 0.85rem;
     }
-
+    
     .binding-actions {
         width: 100%;
     }
-
+    
     .binding-actions .btn-3d {
         flex: 1;
     }
@@ -2467,7 +2462,6 @@ h3 {
     from {
         opacity: 0;
     }
-
     to {
         opacity: 1;
     }
@@ -2490,7 +2484,6 @@ h3 {
         opacity: 0;
         transform: translateY(30px);
     }
-
     to {
         opacity: 1;
         transform: translateY(0);
@@ -2678,10 +2671,10 @@ h3 {
         opacity: 1;
         transform: translate3d(-10vw, 60vh, 0) rotate(0deg);
     }
-
     100% {
         opacity: 0;
-        transform: translate3d(calc(40vw + var(--confetti-offset, 0vw)), -10vh, 0) rotate(var(--confetti-rotate, 540deg));
+        transform: translate3d(calc(40vw + var(--confetti-offset, 0vw)), -10vh, 0)
+            rotate(var(--confetti-rotate, 540deg));
     }
 }
 
@@ -2690,10 +2683,10 @@ h3 {
         opacity: 1;
         transform: translate3d(110vw, 60vh, 0) rotate(0deg);
     }
-
     100% {
         opacity: 0;
-        transform: translate3d(calc(60vw - var(--confetti-offset, 0vw)), -10vh, 0) rotate(var(--confetti-rotate, -540deg));
+        transform: translate3d(calc(60vw - var(--confetti-offset, 0vw)), -10vh, 0)
+            rotate(var(--confetti-rotate, -540deg));
     }
 }
 
@@ -2705,29 +2698,29 @@ h3 {
         margin-top: auto;
         max-height: 85vh;
     }
-
+    
     .modal-header {
         padding: 1.2rem 1.5rem;
     }
-
+    
     .modal-header h3 {
         font-size: 1.3rem;
     }
-
+    
     .modal-body {
         padding: 1.5rem;
     }
-
+    
     .import-buttons {
         grid-template-columns: repeat(2, 1fr);
         gap: 0.8rem;
     }
-
+    
     .btn-import {
         padding: 0.8rem;
         font-size: 0.85rem;
     }
-
+    
     .btn-import svg {
         width: 18px;
         height: 18px;
@@ -2736,13 +2729,13 @@ h3 {
     .server-grid {
         grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     }
-
+    
     /* Auth buttons mobile */
     .btn-telegram,
     .btn-sso {
         font-size: 0.9rem;
     }
-
+    
     .btn-telegram svg,
     .btn-sso svg {
         width: 18px;
@@ -2755,19 +2748,19 @@ h3 {
     .modal-body {
         padding: 1rem;
     }
-
+    
     .subscription-option h4 {
         font-size: 1.1rem;
     }
-
+    
     .subscription-option p {
         font-size: 0.85rem;
     }
-
+    
     .import-buttons {
         grid-template-columns: 1fr;
     }
-
+    
     .btn-import {
         flex-direction: row;
         justify-content: flex-start;
@@ -2780,117 +2773,8 @@ h3 {
     .mobile-nav {
         display: none !important;
     }
-
+    
     .desktop-nav {
         display: flex !important;
-    }
-
-    .bottom-nav {
-        display: none !important;
-    }
-}
-
-/* ============================
-   Mobile Bottom Navigation
-   ============================ */
-
-.bottom-nav {
-    display: none;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: var(--card-bg);
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1),
-        0 -2px 8px rgba(0, 0, 0, 0.05);
-    z-index: 1000;
-    padding: 0.5rem 0.25rem;
-    padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
-    border-top-left-radius: 20px;
-    border-top-right-radius: 20px;
-}
-
-.bottom-nav-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.25rem;
-    flex: 1;
-    padding: 0.5rem 0.25rem;
-    text-decoration: none;
-    color: var(--text-color);
-    opacity: 0.6;
-    transition: all 0.3s ease;
-    border-radius: 12px;
-    position: relative;
-}
-
-.bottom-nav-item svg {
-    width: 24px;
-    height: 24px;
-    transition: all 0.3s ease;
-}
-
-.bottom-nav-item span {
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-    transition: all 0.3s ease;
-}
-
-.bottom-nav-item.active {
-    opacity: 1;
-    color: var(--primary-color);
-}
-
-.bottom-nav-item.active::before {
-    content: '';
-    position: absolute;
-    top: -0.5rem;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 4px;
-    height: 4px;
-    background: var(--primary-color);
-    border-radius: 50%;
-}
-
-.bottom-nav-item.active svg {
-    transform: scale(1.15);
-}
-
-.bottom-nav-item:active {
-    transform: scale(0.95);
-    background: rgba(0, 0, 0, 0.05);
-}
-
-/* Show bottom nav only on mobile */
-@media (max-width: 768px) {
-    .bottom-nav {
-        display: flex;
-        justify-content: space-around;
-    }
-
-    /* Add padding to main content to prevent overlap with bottom nav */
-    main.container {
-        padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
-    }
-
-    /* Hide the dropdown logout button on mobile since we have bottom nav */
-    .user-menu .btn-logout {
-        display: none;
-    }
-}
-
-@media (max-width: 480px) {
-    .bottom-nav-item span {
-        font-size: 0.65rem;
-    }
-
-    .bottom-nav-item svg {
-        width: 22px;
-        height: 22px;
     }
 }

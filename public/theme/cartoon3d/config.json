@@ -1,0 +1,32 @@
+{
+    "name": "cartoon3d",
+    "description": "彩色卡通 3D 主题 / Colorful Cartoon 3D Theme with Right Sidebar",
+    "version": "1.0.0",
+    "configs": [
+        {
+            "label": "配色方案 / Color Scheme",
+            "placeholder": "选择配色方案",
+            "field_name": "theme_color",
+            "field_type": "select",
+            "select_options": {
+                "rainbow": "彩虹渐变 (Rainbow)",
+                "candy": "糖果粉色 (Candy)",
+                "ocean": "海洋蓝绿 (Ocean)",
+                "sunset": "夕阳橙红 (Sunset)"
+            },
+            "default_value": "rainbow"
+        },
+        {
+            "label": "Background Image",
+            "placeholder": "Enter background image URL",
+            "field_name": "background_url",
+            "field_type": "input"
+        },
+        {
+            "label": "Custom HTML",
+            "placeholder": "Custom HTML code (e.g. analytics)",
+            "field_name": "custom_html",
+            "field_type": "textarea"
+        }
+    ]
+}

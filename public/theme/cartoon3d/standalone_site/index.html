@@ -3,41 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{$title}}</title>
-    <link rel="stylesheet" href="/theme/{{$theme}}/assets/css/style.css?v={{$version}}">
+    <title>Fantastic</title>
+    <link rel="stylesheet" href="./assets/css/style.css">
+    <script src="./config.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script>
-        window.settings = {
-            title: '{{$title}}',
-            assets_path: '/theme/{{$theme}}/assets',
-            theme: {
-                color: '{{$theme_config['theme_color']}}',
-            },
-            version: '{{$version}}',
-            background_url: '{{$theme_config['background_url']}}',
-            description: '{{$description}}',
-            i18n: [
-                'zh-CN',
-                'en-US',
-                'ja-JP',
-                'vi-VN',
-                'ko-KR',
-                'zh-TW',
-                'fa-IR'
-            ],
-            logo: '{{$logo}}',
-            telegram_login_enable: {{$telegram_login_enable}},
-            sso_login_enable: {{$sso_login_enable ?? 0}},
-            sso_provider: '{{$sso_provider ?? 'casdoor'}}'
-        }
-    </script>
 </head>
 <body>
     <div id="app" x-data="app()">
         <!-- Navigation Bar -->
         <nav class="navbar" x-show="!['login', 'register'].includes(view)" style="display: none;">
             <div class="container nav-container">
-                <div class="logo">{{$title}}</div>
+                <div class="logo" id="fantastic-brand">Fantastic</div>
                 
                 <!-- Desktop Navigation -->
                 <div class="nav-links desktop-nav">
@@ -153,15 +129,14 @@
                         <button class="btn-3d btn-block" @click="login()" :disabled="loading" x-text="loading ? 'Logging in...' : 'Login'"></button>
                         
                         <!-- Alternative Login Methods -->
-                        @if ($telegram_login_enable || $sso_login_enable)
-                        <div class="auth-divider">
+                        <div class="auth-divider" x-show="telegram_login_enable || sso_login_enable" style="display: none;">
                             <span>Or continue with</span>
                         </div>
-                        @endif
                         
                         <!-- Telegram Login Button -->
-                        @if ($telegram_login_enable)
                         <button class="btn-3d btn-block btn-telegram" 
+                                x-show="telegram_login_enable"
+                                style="display: none;"
                                 @click="showTelegramLogin = true"
                                 type="button">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 8px;">
@@ -169,11 +144,11 @@
                             </svg>
                             Telegram Login
                         </button>
-                        @endif
                         
                         <!-- SSO Login Button -->
-                        @if ($sso_login_enable)
                         <button class="btn-3d btn-block btn-sso" 
+                                x-show="sso_login_enable"
+                                style="display: none;"
                                 @click="startSsoLogin()"
                                 :disabled="ssoLoading"
                                 type="button">
@@ -182,7 +157,6 @@
                             </svg>
                             <span x-text="ssoLoading ? 'Redirecting...' : 'SSO Single Sign-On'"></span>
                         </button>
-                        @endif
                         
                         <div class="auth-links">
                             <a href="#" @click.prevent="view = 'register'">Create Account</a>
@@ -820,8 +794,7 @@
                     </div>
                     
                     <!-- SSO Linking -->
-                    @if ($sso_login_enable)
-                    <div class="binding-item">
+                    <div class="binding-item" x-show="sso_login_enable" style="display: none;">
                         <div class="binding-header">
                             <div class="binding-icon" style="background: linear-gradient(135deg, #4f9cff, #82c4ff);">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
@@ -850,7 +823,6 @@
                             </button>
                         </div>
                     </div>
-                    @endif
                     <!-- TOTP Binding -->
                     <div class="binding-item" x-show="siteConfig.is_totp_enable">
                         <div class="binding-header">
@@ -1050,59 +1022,10 @@
             </div>
         </div>
 
-        <!-- Mobile Bottom Navigation -->
-        <nav class="bottom-nav" x-show="!['login', 'register'].includes(view)" style="display: none;">
-            <a href="#" 
-               class="bottom-nav-item" 
-               :class="{ 'active': view === 'dashboard' }"
-               @click.prevent="view = 'dashboard'">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
-                </svg>
-                <span>Dashboard</span>
-            </a>
-            <a href="#" 
-               class="bottom-nav-item" 
-               :class="{ 'active': ['plan', 'orders', 'redeem', 'payment'].includes(view) }"
-               @click.prevent="view = 'plan'">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/>
-                </svg>
-                <span>Shop</span>
-            </a>
-            <a href="#" 
-               class="bottom-nav-item" 
-               :class="{ 'active': ['servers', 'transfer'].includes(view) }"
-               @click.prevent="view = 'servers'">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM19 18H6c-2.21 0-4-1.79-4-4s1.79-4 4-4h.71C7.37 7.69 9.48 6 12 6c3.04 0 5.5 2.46 5.5 5.5v.5H19c1.66 0 3 1.34 3 3s-1.34 3-3 3z"/>
-                </svg>
-                <span>Servers</span>
-            </a>
-            <a href="#" 
-               class="bottom-nav-item" 
-               :class="{ 'active': ['tickets', 'ticket_detail', 'knowledge', 'knowledge_detail'].includes(view) }"
-               @click.prevent="view = 'tickets'">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 12h-2v-2h2v2zm0-4h-2V6h2v4z"/>
-                </svg>
-                <span>Support</span>
-            </a>
-            <a href="#" 
-               class="bottom-nav-item" 
-               :class="{ 'active': ['profile', 'invites'].includes(view) }"
-               @click.prevent="view = 'profile'">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                </svg>
-                <span>Profile</span>
-            </a>
-        </nav>
-
         <div class="confetti-container" x-ref="confettiContainer" id="fantastic-confetti" aria-hidden="true"></div>
     </div>
 
-    {!! $theme_config['custom_html'] !!}
-    <script src="/theme/{{$theme}}/assets/js/app.js?v={{$version}}"></script>
+    <div id="fantastic-custom-html"></div>
+    <script src="./assets/js/app.js"></script>
 </body>
 </html>
