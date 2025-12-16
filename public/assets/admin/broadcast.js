@@ -6,9 +6,7 @@
 
   const securePath = window.settings.secure_path.replace(/^\/+|\/+$/g, '');
   const apiHost = (window.settings.apiHost || window.settings.host || '').replace(/\/+$/, '');
-  const apiPrefix = '/api/v1/';
-  const basePath = apiPrefix + securePath + '/';
-  const apiBase = apiHost ? apiHost + basePath : basePath;
+  const apiGateway = apiHost ? apiHost + '/api/v3/server' : '/api/v3/server';
   const BLOCK_ID = 'telegram-broadcast-block';
   const MODAL_ID = 'telegram-broadcast-modal';
 
@@ -196,15 +194,20 @@
   function loadPlans() {
     state.loadingPlans = true;
     updateStatus('info', '订阅列表加载中，请稍候...', true);
-    let plansUrl = apiBase + 'plan/fetch';
     const auth = getAuthData();
-    if (auth) {
-      plansUrl += (plansUrl.includes('?') ? '&' : '?') + 'auth_data=' + encodeURIComponent(auth);
-    }
-    fetch(plansUrl, {
-      method: 'GET',
+
+    const params = {};
+    if (auth) params.auth_data = auth;
+
+    fetch(apiGateway, {
+      method: 'POST',
       credentials: 'same-origin',
-      headers: buildHeaders()
+      headers: buildHeaders(true),
+      body: JSON.stringify({
+        endpoint: securePath + '/plan/fetch',
+        method: 'GET',
+        params
+      })
     }).then(response => response.json())
       .then(payload => {
         state.loadingPlans = false;
@@ -312,12 +315,15 @@
       payload.auth_data = auth;
     }
 
-    const requestUrl = apiBase + 'config/telegram/broadcast';
-    fetch(requestUrl, {
+    fetch(apiGateway, {
       method: 'POST',
       headers: buildHeaders(true),
       credentials: 'same-origin',
-      body: JSON.stringify(payload)
+      body: JSON.stringify({
+        endpoint: securePath + '/config/telegram/broadcast',
+        method: 'POST',
+        params: payload
+      })
     }).then(async response => {
       const status = response.status;
       const statusText = response.statusText || '';
@@ -348,7 +354,7 @@
       if (error && error.httpUrl) {
         lines.push('请求地址：' + error.httpUrl);
       } else {
-        lines.push('请求地址：' + requestUrl);
+        lines.push('请求地址：' + apiGateway);
       }
       if (error && typeof error.httpStatus !== 'undefined') {
         lines.push('状态码：' + error.httpStatus + (error.httpStatusText ? ' ' + error.httpStatusText : ''));
