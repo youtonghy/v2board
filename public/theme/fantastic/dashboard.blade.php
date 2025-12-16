@@ -4,6 +4,116 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{$title}}</title>
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
+    <style id="fantastic-preauth-style">
+        body { display: none !important; }
+    </style>
+    <script>
+        (function () {
+            function parseQuery(query) {
+                var out = {};
+                var raw = String(query || '').replace(/^\?/, '');
+                if (!raw) return out;
+                raw.split('&').forEach(function (pair) {
+                    if (!pair) return;
+                    var idx = pair.indexOf('=');
+                    var key = idx >= 0 ? pair.slice(0, idx) : pair;
+                    var val = idx >= 0 ? pair.slice(idx + 1) : '';
+                    try { key = decodeURIComponent(key.replace(/\+/g, '%20')); } catch (e) {}
+                    try { val = decodeURIComponent(val.replace(/\+/g, '%20')); } catch (e) {}
+                    if (key && typeof out[key] === 'undefined') out[key] = val;
+                });
+                return out;
+            }
+
+            function stringifyQuery(pairs) {
+                var items = [];
+                Object.keys(pairs || {}).forEach(function (key) {
+                    if (pairs[key] === null || typeof pairs[key] === 'undefined') return;
+                    var k = encodeURIComponent(String(key));
+                    var v = encodeURIComponent(String(pairs[key]));
+                    items.push(k + '=' + v);
+                });
+                return items.join('&');
+            }
+
+            function parseHash(hash) {
+                var cleaned = String(hash || '').replace(/^#\/?/, '');
+                var parts = cleaned.split('?');
+                var path = (parts[0] || '').replace(/^\/+/, '');
+                var query = parts[1] || '';
+                return { path: path, query: query };
+            }
+
+            function parseViewFromPath(path) {
+                var normalized = String(path || '').replace(/^\/+/, '');
+                var segments = normalized.split('/').filter(Boolean);
+                return segments[0] || 'dashboard';
+            }
+
+            function getLocalToken() {
+                try { return localStorage.getItem('auth_data'); } catch (e) { return null; }
+            }
+
+            function buildRedirectTarget(path, query) {
+                var cleanPath = String(path || '').replace(/^\/+/, '');
+                var cleanQuery = String(query || '');
+                if (!cleanPath) return 'dashboard';
+                if (!cleanQuery) return cleanPath;
+
+                var paramsObj = parseQuery(cleanQuery);
+                delete paramsObj.redirect;
+                delete paramsObj.verify;
+                delete paramsObj.sso_error;
+                delete paramsObj.sso_message;
+                var rest = stringifyQuery(paramsObj);
+                return rest ? (cleanPath + '?' + rest) : cleanPath;
+            }
+
+            function gate() {
+                var preauthStyle = document.getElementById('fantastic-preauth-style');
+                var token = getLocalToken();
+                var parsed = parseHash(window.location.hash || '');
+                var view = parseViewFromPath(parsed.path);
+                var isPublic = (view === 'login' || view === 'register');
+
+                if (!token && !isPublic) {
+                    var redirectTarget = null;
+                    var verify = null;
+                    var ssoError = null;
+                    var ssoMessage = null;
+
+                    var q = parseQuery(parsed.query || '');
+                    redirectTarget = q.redirect || null;
+                    verify = q.verify || null;
+                    ssoError = q.sso_error || null;
+                    ssoMessage = q.sso_message || null;
+
+                    redirectTarget = redirectTarget || buildRedirectTarget(parsed.path, parsed.query);
+
+                    var loginParams = {};
+                    if (verify) loginParams.verify = verify;
+                    if (ssoError) loginParams.sso_error = ssoError;
+                    if (ssoMessage) loginParams.sso_message = ssoMessage;
+                    if (redirectTarget) loginParams.redirect = redirectTarget;
+
+                    var queryString = stringifyQuery(loginParams);
+                    var nextHash = '#/login' + (queryString ? ('?' + queryString) : '');
+                    if (window.location.hash !== nextHash) {
+                        window.location.hash = nextHash;
+                    }
+                    return;
+                }
+
+                if (preauthStyle) preauthStyle.remove();
+            }
+
+            window.addEventListener('hashchange', gate);
+            gate();
+        })();
+    </script>
     <link rel="stylesheet" href="/theme/{{$theme}}/assets/css/style.css?v={{$version}}">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script>
@@ -33,7 +143,7 @@
     </script>
 </head>
 <body>
-    <div id="app" x-data="app()">
+    <div id="app" x-data="app()" x-cloak>
         <!-- Navigation Bar -->
         <nav class="navbar" x-show="!['login', 'register'].includes(view)" style="display: none;">
             <div class="container nav-container">
@@ -1102,7 +1212,9 @@
         <div class="confetti-container" x-ref="confettiContainer" id="fantastic-confetti" aria-hidden="true"></div>
     </div>
 
-    {!! $theme_config['custom_html'] !!}
+    <div id="fantastic-custom-html" x-cloak>
+        {!! $theme_config['custom_html'] !!}
+    </div>
     <script src="/theme/{{$theme}}/assets/js/app.js?v={{$version}}"></script>
 </body>
 </html>
