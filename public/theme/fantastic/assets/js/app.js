@@ -59,6 +59,12 @@ document.addEventListener('alpine:init', () => {
         // Mobile menu
         mobileMenuOpen: false,
 
+        // Theme
+        themePreference: 'system', // system | light | dark
+        themeResolved: 'light', // light | dark
+        _themeMediaQuery: null,
+        _themeMediaListener: null,
+
         // Subscription modal
         showSubscriptionModal: false,
 
@@ -92,7 +98,7 @@ document.addEventListener('alpine:init', () => {
 
         // Forms
         authForm: { email: '', password: '', invite_code: '', email_code: '' },
-        ticketForm: { subject: '', level: 1, message: '' },
+        ticketForm: { subject: '', message: '' },
         ticketReplyForm: { id: null, message: '' },
         passwordForm: { old_password: '', new_password: '' },
         redeemForm: { code: '' },
@@ -123,6 +129,7 @@ document.addEventListener('alpine:init', () => {
         },
 
         init() {
+            this.initTheme();
             this.initRouter();
             // Check for Telegram verify code first
             this.checkTelegramVerify();
@@ -162,6 +169,55 @@ document.addEventListener('alpine:init', () => {
                     this.telegramWaiting = false;
                 }
             });
+        },
+
+        initTheme() {
+            const storageKey = 'fantastic_theme';
+            let preference = 'system';
+            try {
+                const saved = localStorage.getItem(storageKey);
+                if (saved === 'light' || saved === 'dark' || saved === 'system') preference = saved;
+            } catch (e) {}
+
+            this.themePreference = preference;
+            this.applyThemePreference();
+
+            const mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+            this._themeMediaQuery = mq;
+            this._themeMediaListener = () => {
+                if (this.themePreference === 'system') this.applyThemePreference();
+            };
+            if (mq) {
+                try {
+                    mq.addEventListener('change', this._themeMediaListener);
+                } catch (e) {
+                    try { mq.addListener(this._themeMediaListener); } catch (e2) {}
+                }
+            }
+        },
+
+        applyThemePreference() {
+            const root = document.documentElement;
+            const mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+            const systemIsDark = !!(mq && mq.matches);
+
+            const preference = this.themePreference;
+            if (preference === 'light' || preference === 'dark') {
+                root.setAttribute('data-theme', preference);
+            } else {
+                root.removeAttribute('data-theme');
+            }
+
+            const resolved = (preference === 'dark') || (preference === 'system' && systemIsDark) ? 'dark' : 'light';
+            this.themeResolved = resolved;
+        },
+
+        toggleTheme() {
+            const storageKey = 'fantastic_theme';
+            const next = this.themeResolved === 'dark' ? 'light' : 'dark';
+            this.themePreference = next;
+            try { localStorage.setItem(storageKey, next); } catch (e) {}
+            this.applyThemePreference();
         },
 
         initRouter() {
@@ -1210,15 +1266,16 @@ document.addEventListener('alpine:init', () => {
         async createTicket() {
             this.loading = true;
             try {
+                const payload = { ...this.ticketForm, level: 0 };
                 const response = await this.request('/api/v3/user/ticket/save', {
                     method: 'POST',
-                    body: JSON.stringify(this.ticketForm)
+                    body: JSON.stringify(payload)
                 });
                 if (!response) return;
                 const data = await response.json();
                 if (data.data) {
                     this.showMessage('Ticket created!');
-                    this.ticketForm = { subject: '', level: 1, message: '' };
+                    this.ticketForm = { subject: '', message: '' };
                     this.fetchTickets();
                 } else {
                     this.showMessage('Error: ' + (data.message || 'Unknown error'));
