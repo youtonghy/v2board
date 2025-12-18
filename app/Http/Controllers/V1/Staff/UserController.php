@@ -3,16 +3,21 @@
 namespace App\Http\Controllers\V1\Staff;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Concerns\UserUpdateParamUtils;
 use App\Http\Requests\Admin\UserSendMail;
 use App\Http\Requests\Staff\UserUpdate;
 use App\Jobs\SendEmailJob;
 use App\Models\Plan;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
+    use UserUpdateParamUtils;
+
     public function getUserInfoById(Request $request)
     {
         if (empty($request->input('id'))) {
@@ -53,8 +58,49 @@ class UserController extends Controller
         }
 
         try {
+            if (array_key_exists('transfer_enable', $params)) {
+                $params['transfer_enable'] = $this->normalizeOptionalInt($params['transfer_enable']) ?? 0;
+            }
+            foreach ([
+                'u',
+                'd',
+                'balance',
+                'commission_balance',
+                'expired_at',
+                'device_limit',
+                'plan_id',
+                'commission_rate',
+                'discount',
+                'commission_type',
+                'banned',
+            ] as $key) {
+                if (array_key_exists($key, $params)) {
+                    $params[$key] = $this->normalizeOptionalInt($params[$key]);
+                }
+            }
+            $params = $this->filterParamsByExistingColumns($user->getTable(), $params);
             $user->update($params);
-        } catch (\Exception $e) {
+        } catch (QueryException $e) {
+            Log::channel('daily')->error('Staff user update failed', [
+                'user_id' => $user->id ?? null,
+                'params_keys' => array_keys($params),
+                'error' => $e->getMessage(),
+                'exception' => $e,
+            ]);
+            if (preg_match("/Unknown column '([^']+)'/", $e->getMessage(), $matches)) {
+                abort(500, sprintf('保存失败：数据库缺少字段 %s，请执行 `php artisan migrate` 或导入 `database/update.sql`', $matches[1]));
+            }
+            if (preg_match("/for column '([^']+)'/i", $e->getMessage(), $matches)) {
+                abort(500, sprintf('保存失败：字段 %s 写入失败（请检查输入格式/数据库字段类型）', $matches[1]));
+            }
+            abort(500, '保存失败');
+        } catch (\Throwable $e) {
+            Log::channel('daily')->error('Staff user update failed', [
+                'user_id' => $user->id ?? null,
+                'params_keys' => array_keys($params),
+                'error' => $e->getMessage(),
+                'exception' => $e,
+            ]);
             abort(500, '保存失败');
         }
         return response([
