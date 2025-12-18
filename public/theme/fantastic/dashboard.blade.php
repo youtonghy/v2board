@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="#e6f0f8" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)">
     <title>{{$title}}</title>
     <style>
         [x-cloak] { display: none !important; }
@@ -10,6 +13,14 @@
     <style id="fantastic-preauth-style">
         body { display: none !important; }
     </style>
+    <script>
+        (function () {
+            try {
+                var v = localStorage.getItem('fantastic_theme');
+                if (v === 'light' || v === 'dark') document.documentElement.setAttribute('data-theme', v);
+            } catch (e) {}
+        })();
+    </script>
     <script>
         (function () {
             function parseQuery(query) {
@@ -224,7 +235,26 @@
                 </div>
                 
                 <div class="user-menu">
-                    <span class="user-email" x-text="user.email"></span>
+                    <button type="button"
+                            class="theme-toggle"
+                            @click="toggleTheme()"
+                            :aria-label="themeResolved === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
+                            :title="themeResolved === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'">
+                        <svg x-show="themeResolved !== 'dark'" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" style="display:none;">
+                            <path d="M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M12 2v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M12 20v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <path d="m4.93 4.93 1.41 1.41" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <path d="m17.66 17.66 1.41 1.41" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M2 12h2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M20 12h2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <path d="m6.34 17.66-1.41 1.41" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <path d="m19.07 4.93-1.41 1.41" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        <svg x-show="themeResolved === 'dark'" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" style="display:none;">
+                            <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
                     <a href="#" @click.prevent="logout()" class="btn-logout">Logout</a>
                 </div>
         </div>
@@ -792,13 +822,6 @@
                     <h3>Create Ticket</h3>
                     <div class="form-group">
                         <input type="text" x-model="ticketForm.subject" placeholder="Subject" class="form-input">
-                    </div>
-                    <div class="form-group">
-                        <select x-model="ticketForm.level" class="form-select">
-                            <option value="0">Low</option>
-                            <option value="1">Medium</option>
-                            <option value="2">High</option>
-                        </select>
                     </div>
                     <div class="form-group">
                         <textarea x-model="ticketForm.message" placeholder="Message" class="form-input" rows="4"></textarea>
