@@ -43,7 +43,8 @@ class CacheKey
         'FORGET_REQUEST_LIMIT' => '找回密码次数限制',
         'SSO_STATE' => '单点登录状态',
         'TOTP_SECRET' => 'TOTP密钥',
-        'TWO_FACTOR_LOGIN' => '双重验证登录'
+        'TWO_FACTOR_LOGIN' => '双重验证登录',
+        'THIRD_PARTY_LOGIN_REQUEST' => '第三方登录请求'
     ];
 
     public static function get(string $key, $uniqueValue)

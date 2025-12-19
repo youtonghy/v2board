@@ -99,6 +99,7 @@ class ConfigSave extends FormRequest
         'macos_download_url' => '',
         'android_version' => '',
         'android_download_url' => '',
+        'third_party_login_app_name' => 'nullable|string',
         // safe
         'email_whitelist_enable' => 'in:0,1',
         'email_whitelist_suffix' => 'nullable|array',

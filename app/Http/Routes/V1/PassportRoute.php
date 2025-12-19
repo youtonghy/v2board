@@ -22,6 +22,10 @@ class PassportRoute
             $router->get ('/auth/checkTelegramLogin', 'V1\\Passport\\AuthController@checkTelegramLogin');
             $router->get ('/auth/sso/init', 'V1\\Passport\\SsoController@init');
             $router->get ('/auth/sso/callback', 'V1\\Passport\\SsoController@callback');
+            $router->post('/auth/thirdPartyLogin/init', 'V1\\Admin\\UserController@thirdPartyLoginInit');
+            $router->get ('/auth/thirdPartyLogin', 'V1\\Admin\\UserController@thirdPartyLoginAuthorize');
+            $router->post('/auth/thirdPartyLogin/approve', 'V1\\Admin\\UserController@thirdPartyLoginApprove');
+            $router->post('/auth/thirdPartyLogin/reject', 'V1\\Admin\\UserController@thirdPartyLoginReject');
             // Comm
             $router->post('/comm/sendEmailVerify', 'V1\\Passport\\CommController@sendEmailVerify');
             $router->post('/comm/pv', 'V1\\Passport\\CommController@pv');

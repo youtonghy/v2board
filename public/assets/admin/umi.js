@@ -6713,6 +6713,15 @@
                 }, "\u7528\u4e8e\u81ea\u6709\u5ba2\u6237\u7aef(APP)\u7684\u7248\u672c\u7ba1\u7406\u53ca\u66f4\u65b0"))))), f.a.createElement("div", {
                     className: ""
                 }, f.a.createElement(m, {
+                    title: "Third-party App Name",
+                    description: "Shown on third-party login authorization page."
+                }, f.a.createElement("input", {
+                    type: "text",
+                    className: "form-control",
+                    placeholder: "Third-Party App",
+                    defaultValue: w.third_party_login_app_name,
+                    onChange: e=>this.set("app", "third_party_login_app_name", e.target.value)
+                })), f.a.createElement(m, {
                     title: "Windows",
                     description: "Windows\u7aef\u7248\u672c\u53f7\u53ca\u4e0b\u8f7d\u5730\u5740"
                 }, f.a.createElement("input", {

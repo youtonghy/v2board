@@ -16,6 +16,7 @@ use App\Models\Plan;
 use App\Models\TicketMessage;
 use App\Models\User;
 use App\Services\AuthService;
+use App\Utils\CacheKey;
 use App\Utils\Helper;
 use Illuminate\Http\Request;
 use Illuminate\Database\QueryException;
@@ -27,6 +28,10 @@ use Illuminate\Support\Facades\Log;
 class UserController extends Controller
 {
     use UserUpdateParamUtils;
+
+    private const THIRD_PARTY_APP_NAME = 'Third-Party App';
+    private const THIRD_PARTY_LOGIN_TTL = 300;
+    private const THIRD_PARTY_LOGIN_REDIRECT_MAX_LENGTH = 512;
 
     public function resetSecret(Request $request)
     {
@@ -481,5 +486,462 @@ class UserController extends Controller
         return response([
             'data' => $inviteCode->code
         ]);
+    }
+
+    public function thirdPartyLoginInit(Request $request)
+    {
+        $params = $request->validate([
+            'redirect_uri' => 'required|string',
+            'state' => 'nullable|string'
+        ]);
+
+        $redirectUri = $this->sanitizeThirdPartyRedirectUri($params['redirect_uri']);
+        $state = isset($params['state']) ? trim((string)$params['state']) : null;
+        if ($state !== null && $state !== '' && strlen($state) > 128) {
+            abort(422, 'state is too long');
+        }
+        if ($state === '') {
+            $state = null;
+        }
+
+        $token = Helper::guid();
+        Cache::put(CacheKey::get('THIRD_PARTY_LOGIN_REQUEST', $token), [
+            'redirect_uri' => $redirectUri,
+            'state' => $state,
+            'created_at' => time()
+        ], self::THIRD_PARTY_LOGIN_TTL);
+
+        $apiVersion = $this->resolveApiVersion($request);
+        return response([
+            'data' => [
+                'token' => $token,
+                'url' => $this->buildThirdPartyLoginUrl($token, $apiVersion),
+                'expires_in' => self::THIRD_PARTY_LOGIN_TTL,
+                'app_name' => $this->getThirdPartyAppName()
+            ]
+        ]);
+    }
+
+    public function thirdPartyLoginAuthorize(Request $request)
+    {
+        $token = trim((string)$request->input('token'));
+        if ($token === '') {
+            return response($this->renderThirdPartyLoginError('Missing login token.'), 400)
+                ->header('Content-Type', 'text/html; charset=UTF-8');
+        }
+
+        $payload = Cache::get(CacheKey::get('THIRD_PARTY_LOGIN_REQUEST', $token));
+        if (!$payload) {
+            return response($this->renderThirdPartyLoginError('Login request expired.'), 410)
+                ->header('Content-Type', 'text/html; charset=UTF-8');
+        }
+
+        return response($this->renderThirdPartyLoginPage($token), 200)
+            ->header('Content-Type', 'text/html; charset=UTF-8');
+    }
+
+    public function thirdPartyLoginApprove(Request $request)
+    {
+        return $this->handleThirdPartyLoginDecision($request, true);
+    }
+
+    public function thirdPartyLoginReject(Request $request)
+    {
+        return $this->handleThirdPartyLoginDecision($request, false);
+    }
+
+    private function handleThirdPartyLoginDecision(Request $request, bool $approved)
+    {
+        $params = $request->validate([
+            'token' => 'required|string'
+        ]);
+        $token = trim((string)$params['token']);
+        $cacheKey = CacheKey::get('THIRD_PARTY_LOGIN_REQUEST', $token);
+        $payload = Cache::get($cacheKey);
+        if (!$payload) {
+            abort(410, '登录请求已过期');
+        }
+
+        $authUser = $this->resolveAuthUser($request);
+        if (!$authUser) {
+            abort(403, '未登录或登陆已过期');
+        }
+
+        $user = User::find($authUser['id']);
+        if (!$user) {
+            abort(404, '用户不存在');
+        }
+        if ($user->banned) {
+            abort(403, '账号已被封禁');
+        }
+
+        Cache::forget($cacheKey);
+
+        $accessToken = null;
+        $tokenType = null;
+        $params = [
+            'state' => $payload['state'] ?? null
+        ];
+
+        if ($approved) {
+            $authService = new AuthService($user);
+            $authData = $authService->generateAuthData($request);
+            $accessToken = $authData['auth_data'] ?? null;
+            $tokenType = 'bearer';
+            $params['access_token'] = $accessToken;
+            $params['token_type'] = $tokenType;
+        } else {
+            $params['error'] = 'access_denied';
+        }
+
+        $redirectUrl = $this->buildThirdPartyRedirectUrl($payload['redirect_uri'], $params);
+
+        return response([
+            'data' => [
+                'redirect_url' => $redirectUrl,
+                'access_token' => $accessToken,
+                'token_type' => $tokenType
+            ]
+        ]);
+    }
+
+    private function resolveAuthUser(Request $request): ?array
+    {
+        $authorization = $request->input('auth_data') ?? $request->header('authorization');
+        if (!$authorization) {
+            return null;
+        }
+        $user = AuthService::decryptAuthData($authorization);
+        if (!$user || !isset($user['id'])) {
+            return null;
+        }
+        return $user;
+    }
+
+    private function sanitizeThirdPartyRedirectUri(string $redirectUri): string
+    {
+        $redirectUri = trim($redirectUri);
+        if ($redirectUri === '') {
+            abort(422, 'redirect_uri is required');
+        }
+        if (strlen($redirectUri) > self::THIRD_PARTY_LOGIN_REDIRECT_MAX_LENGTH) {
+            abort(422, 'redirect_uri is too long');
+        }
+        if (preg_match('/\\s/', $redirectUri)) {
+            abort(422, 'redirect_uri is invalid');
+        }
+
+        $parts = parse_url($redirectUri);
+        if ($parts === false || empty($parts['scheme'])) {
+            abort(422, 'redirect_uri is invalid');
+        }
+
+        $scheme = strtolower($parts['scheme']);
+        if ($scheme === 'javascript') {
+            abort(422, 'redirect_uri is invalid');
+        }
+        if (in_array($scheme, ['http', 'https'], true) && empty($parts['host'])) {
+            abort(422, 'redirect_uri is invalid');
+        }
+
+        return $redirectUri;
+    }
+
+    private function buildThirdPartyLoginUrl(string $token, string $apiVersion): string
+    {
+        $version = $apiVersion === 'v3' ? 'v3' : 'v1';
+        $path = '/api/' . $version . '/passport/auth/thirdPartyLogin?token=' . urlencode($token);
+        if ($appUrl = config('v2board.app_url')) {
+            return rtrim($appUrl, '/') . $path;
+        }
+        return url($path);
+    }
+
+    private function buildThirdPartyRedirectUrl(string $redirectUri, array $params): string
+    {
+        $filtered = array_filter($params, function ($value) {
+            return $value !== null && $value !== '';
+        });
+
+        $fragment = '';
+        $base = $redirectUri;
+        $hashPos = strpos($base, '#');
+        if ($hashPos !== false) {
+            $fragment = substr($base, $hashPos + 1);
+            $base = substr($base, 0, $hashPos);
+        }
+
+        $query = '';
+        $queryPos = strpos($base, '?');
+        if ($queryPos !== false) {
+            $query = substr($base, $queryPos + 1);
+            $base = substr($base, 0, $queryPos);
+        }
+
+        parse_str($query, $queryParams);
+        $queryParams = array_merge($queryParams, $filtered);
+        $queryString = http_build_query($queryParams);
+
+        $result = $base;
+        if ($queryString !== '') {
+            $result .= '?' . $queryString;
+        }
+        if ($fragment !== '') {
+            $result .= '#' . $fragment;
+        }
+        return $result;
+    }
+
+    private function renderThirdPartyLoginPage(string $token): string
+    {
+        $appName = htmlspecialchars($this->getThirdPartyAppName(), ENT_QUOTES, 'UTF-8');
+        $safeToken = htmlspecialchars($token, ENT_QUOTES, 'UTF-8');
+
+        return <<<HTML
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authorize {$appName}</title>
+    <style>
+        body { margin: 0; padding: 0; background: #f4f6f8; color: #111827; font-family: "Segoe UI", Arial, sans-serif; }
+        .card { max-width: 520px; margin: 8vh auto; background: #ffffff; border-radius: 12px; padding: 28px; box-shadow: 0 18px 38px rgba(15, 23, 42, 0.12); }
+        h1 { font-size: 22px; margin: 0 0 12px; }
+        p { margin: 6px 0; line-height: 1.5; }
+        .status { font-weight: 600; margin-top: 12px; }
+        .user { margin-top: 6px; color: #4b5563; }
+        .actions { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+        button { padding: 12px 16px; border: none; border-radius: 8px; font-size: 15px; cursor: pointer; }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        .primary { background: #2563eb; color: #fff; }
+        .secondary { background: #e2e8f0; color: #1f2937; }
+        .ghost { background: #f1f5f9; color: #0f172a; }
+        .hint { font-size: 13px; color: #6b7280; margin-top: 12px; }
+        .error { display: none; margin-top: 12px; color: #b91c1c; }
+    </style>
+</head>
+<body data-request-token="{$safeToken}" data-app-name="{$appName}">
+    <div class="card">
+        <h1>{$appName} Login Request</h1>
+        <p>This application wants to access your account.</p>
+        <p class="status" id="status">Checking login status...</p>
+        <p class="user" id="user"></p>
+        <div class="actions">
+            <button class="ghost" id="login-btn">Log in to continue</button>
+            <button class="primary" id="approve-btn" disabled>Authorize</button>
+            <button class="secondary" id="reject-btn" disabled>Reject</button>
+        </div>
+        <p class="hint" id="login-hint">If the login page opens in a new tab, complete login and return here.</p>
+        <p class="error" id="error"></p>
+    </div>
+    <script>
+        (function () {
+            var requestToken = document.body.getAttribute('data-request-token') || '';
+            var statusEl = document.getElementById('status');
+            var userEl = document.getElementById('user');
+            var loginBtn = document.getElementById('login-btn');
+            var approveBtn = document.getElementById('approve-btn');
+            var rejectBtn = document.getElementById('reject-btn');
+            var errorEl = document.getElementById('error');
+
+            function setError(message) {
+                if (!message) {
+                    errorEl.textContent = '';
+                    errorEl.style.display = 'none';
+                    return;
+                }
+                errorEl.textContent = message;
+                errorEl.style.display = 'block';
+            }
+
+            function setLoggedIn(email) {
+                statusEl.textContent = 'Logged in';
+                userEl.textContent = email ? ('Account: ' + email) : '';
+                approveBtn.disabled = false;
+                rejectBtn.disabled = false;
+                loginBtn.disabled = true;
+            }
+
+            function setLoggedOut() {
+                statusEl.textContent = 'Not logged in';
+                userEl.textContent = '';
+                approveBtn.disabled = true;
+                rejectBtn.disabled = true;
+                loginBtn.disabled = false;
+            }
+
+            function getAuthToken() {
+                try {
+                    var authData = localStorage.getItem('auth_data');
+                    if (authData) {
+                        return authData;
+                    }
+                    return localStorage.getItem('authorization');
+                } catch (e) {
+                    return null;
+                }
+            }
+
+            function fetchJson(url, options) {
+                var opts = options || {};
+                opts.headers = opts.headers || {};
+                if (opts.body && !opts.headers['Content-Type']) {
+                    opts.headers['Content-Type'] = 'application/json';
+                }
+                return fetch(url, opts).then(function (res) {
+                    return res.json().catch(function () {
+                        return {};
+                    }).then(function (body) {
+                        if (!res.ok) {
+                            var message = body && body.message ? body.message : 'Request failed';
+                            throw new Error(message);
+                        }
+                        return body;
+                    });
+                });
+            }
+
+            function getApiBase() {
+                var path = window.location.pathname || '';
+                if (path.indexOf('/api/v3/') === 0) {
+                    return '/api/v3';
+                }
+                return '/api/v1';
+            }
+
+            function checkLogin() {
+                var authToken = getAuthToken();
+                if (!authToken) {
+                    setLoggedOut();
+                    return;
+                }
+                fetchJson(getApiBase() + '/user/info', {
+                    method: 'GET',
+                    headers: {
+                        authorization: authToken
+                    }
+                }).then(function (body) {
+                    var data = body && body.data ? body.data : {};
+                    setLoggedIn(data.email || '');
+                }).catch(function () {
+                    setLoggedOut();
+                });
+            }
+
+            function sendDecision(action) {
+                setError('');
+                var authToken = getAuthToken();
+                if (!authToken) {
+                    setLoggedOut();
+                    return;
+                }
+                approveBtn.disabled = true;
+                rejectBtn.disabled = true;
+                fetchJson(getApiBase() + '/passport/auth/thirdPartyLogin/' + action, {
+                    method: 'POST',
+                    headers: {
+                        authorization: authToken
+                    },
+                    body: JSON.stringify({
+                        token: requestToken
+                    })
+                }).then(function (body) {
+                    var redirectUrl = body && body.data ? body.data.redirect_url : null;
+                    if (!redirectUrl) {
+                        throw new Error('Missing redirect URL');
+                    }
+                    window.location.href = redirectUrl;
+                }).catch(function (err) {
+                    approveBtn.disabled = false;
+                    rejectBtn.disabled = false;
+                    setError(err && err.message ? err.message : 'Request failed');
+                });
+            }
+
+            loginBtn.addEventListener('click', function () {
+                setError('');
+                try {
+                    window.open('/#/login', '_blank');
+                } catch (e) {
+                    window.location.href = '/#/login';
+                }
+                statusEl.textContent = 'Login page opened. Complete login and return here.';
+            });
+
+            approveBtn.addEventListener('click', function () {
+                sendDecision('approve');
+            });
+
+            rejectBtn.addEventListener('click', function () {
+                sendDecision('reject');
+            });
+
+            window.addEventListener('storage', function (event) {
+                if (!event) {
+                    return;
+                }
+                if (event.key === 'auth_data' || event.key === 'authorization') {
+                    checkLogin();
+                }
+            });
+
+            if (!requestToken) {
+                setError('Missing login token.');
+                setLoggedOut();
+                return;
+            }
+
+            checkLogin();
+        })();
+    </script>
+</body>
+</html>
+HTML;
+    }
+
+    private function renderThirdPartyLoginError(string $message): string
+    {
+        $safeMessage = htmlspecialchars($message, ENT_QUOTES, 'UTF-8');
+        return <<<HTML
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Request</title>
+    <style>
+        body { margin: 0; padding: 0; background: #f8fafc; color: #111827; font-family: "Segoe UI", Arial, sans-serif; }
+        .card { max-width: 520px; margin: 12vh auto; background: #ffffff; border-radius: 12px; padding: 24px; box-shadow: 0 18px 38px rgba(15, 23, 42, 0.12); }
+        h1 { margin: 0 0 12px; font-size: 20px; }
+        p { margin: 0; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Login request error</h1>
+        <p>{$safeMessage}</p>
+    </div>
+</body>
+</html>
+HTML;
+    }
+
+    private function getThirdPartyAppName(): string
+    {
+        $name = trim((string)config('v2board.third_party_login_app_name', self::THIRD_PARTY_APP_NAME));
+        if ($name === '') {
+            return self::THIRD_PARTY_APP_NAME;
+        }
+        return mb_substr($name, 0, 80);
+    }
+
+    private function resolveApiVersion(Request $request): string
+    {
+        $path = ltrim((string)$request->path(), '/');
+        if (strpos($path, 'api/v3/') === 0) {
+            return 'v3';
+        }
+        return 'v1';
     }
 }

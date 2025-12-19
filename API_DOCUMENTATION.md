@@ -250,6 +250,112 @@ HTTP 状态码说明：
 
 ---
 
+### 第三方应用跳转登录
+
+用途：第三方应用发起授权登录，用户在浏览器中登录并授权后跳转回应用并携带 access token。应用名称可在 `app/Http/Controllers/V1/Admin/UserController.php` 中调整。
+
+V3 路径与 V1 保持一致，仅将 `/api/v1/` 替换为 `/api/v3/`，例如：`/api/v3/passport/auth/thirdPartyLogin/init`。  
+V3 已完整支持以下接口：  
+`/api/v3/passport/auth/thirdPartyLogin/init`  
+`/api/v3/passport/auth/thirdPartyLogin`  
+`/api/v3/passport/auth/thirdPartyLogin/approve`  
+`/api/v3/passport/auth/thirdPartyLogin/reject`  
+建议在 V3 中发起 `init`，返回的授权 URL 会对应 V3 版本的授权/回调流程。
+
+**流程说明：**
+1. 应用调用初始化接口获取授权页面 URL
+2. 浏览器打开授权页面 URL
+3. 用户登录后点击授权或拒绝
+4. 系统重定向到 `redirect_uri` 并附带 `access_token` 或 `error`
+
+**POST** `/api/v1/passport/auth/thirdPartyLogin/init`
+
+用途：创建第三方登录请求并返回授权页面 URL
+
+**请求参数：**
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| redirect_uri | string | 是 | 应用回调地址（支持自定义 Scheme 或 https） |
+| state | string | 否 | 应用自定义状态参数 |
+
+**响应：**
+```json
+{
+  "data": {
+    "token": "请求 Token",
+    "url": "授权页面 URL",
+    "expires_in": 300,
+    "app_name": "Third-Party App"
+  }
+}
+```
+
+---
+
+**GET** `/api/v1/passport/auth/thirdPartyLogin`
+
+用途：浏览器打开授权页面
+
+**请求参数：**
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| token | string | 是 | 请求 Token |
+
+**响应：**
+- 返回授权 HTML 页面
+
+---
+
+**POST** `/api/v1/passport/auth/thirdPartyLogin/approve`
+
+用途：授权登录并生成 access token
+
+**认证：** 需要 `authorization` Header（用户已登录）
+
+**请求参数：**
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| token | string | 是 | 请求 Token |
+
+**响应：**
+```json
+{
+  "data": {
+    "redirect_url": "应用回调 URL（包含 access_token）",
+    "access_token": "认证数据",
+    "token_type": "bearer"
+  }
+}
+```
+
+---
+
+**POST** `/api/v1/passport/auth/thirdPartyLogin/reject`
+
+用途：拒绝登录请求
+
+**认证：** 需要 `authorization` Header（用户已登录）
+
+**请求参数：**
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| token | string | 是 | 请求 Token |
+
+**响应：**
+```json
+{
+  "data": {
+    "redirect_url": "应用回调 URL（包含 error=access_denied）"
+  }
+}
+```
+
+**回调参数说明：**
+- 授权成功：`access_token`、`token_type`、`state`
+- 授权拒绝：`error=access_denied`、`state`
+
+---
+
 ### 2FA 登录验证
 
 **POST** `/api/v1/passport/auth/login2FA`

@@ -307,7 +307,8 @@ class ConfigController extends Controller
                 'macos_version' => config('v2board.macos_version'),
                 'macos_download_url' => config('v2board.macos_download_url'),
                 'android_version' => config('v2board.android_version'),
-                'android_download_url' => config('v2board.android_download_url')
+                'android_download_url' => config('v2board.android_download_url'),
+                'third_party_login_app_name' => config('v2board.third_party_login_app_name', 'Third-Party App')
             ],
             'safe' => [
                 'email_verify' => (int)config('v2board.email_verify', 0),

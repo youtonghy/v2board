@@ -17,7 +17,11 @@ class RequestLog
     {
         if ($request->method() === 'POST') {
             $path = $request->path();
-            info("POST {$path}");
+            try {
+                info("POST {$path}");
+            } catch (\Throwable $e) {
+                // Avoid breaking requests when logging fails (e.g., file permission issues).
+            }
         };
         return $next($request);
     }
