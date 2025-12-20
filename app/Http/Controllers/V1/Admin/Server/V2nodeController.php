@@ -15,6 +15,30 @@ class V2nodeController extends Controller
 {
     public function save(Request $request)
     {
+        if ($request->input('listen_ip') === '') {
+            $request->merge(['listen_ip' => '0.0.0.0']);
+        }
+        $this->normalizeEmptyStringsToNull($request, [
+            'parent_id',
+            'route_id',
+            'tags',
+            'tls_settings',
+            'network_settings',
+            'encryption_settings',
+            'flow',
+            'encryption',
+            'udp_relay_mode',
+            'congestion_control',
+            'cipher',
+            'up_mbps',
+            'down_mbps',
+            'obfs',
+            'obfs_password',
+            'padding_scheme',
+            'sort',
+            'dynamic_rate',
+        ]);
+
         $params = $request->validate([
             'group_id' => 'required',
             'route_id' => 'nullable|array',
@@ -142,8 +166,10 @@ class V2nodeController extends Controller
             }
         }
 
-        if (isset($params['padding_scheme'])) {
-            $params['padding_scheme'] = json_decode($params['padding_scheme']);
+        if (array_key_exists('padding_scheme', $params)) {
+            if (is_string($params['padding_scheme'])) {
+                $params['padding_scheme'] = json_decode($params['padding_scheme'], true);
+            }
         }
 
         if (!isset($params['up_mbps'])) {

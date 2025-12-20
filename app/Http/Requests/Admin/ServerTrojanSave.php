@@ -8,6 +8,27 @@ use App\Utils\DynamicRate;
 
 class ServerTrojanSave extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $emptyToNullKeys = [
+            'parent_id',
+            'route_id',
+            'tags',
+            'network_settings',
+            'server_name',
+        ];
+        foreach ($emptyToNullKeys as $key) {
+            if ($this->input($key) === '') {
+                $this->merge([$key => null]);
+            }
+        }
+
+        $dynamicRate = $this->input('dynamic_rate');
+        if ($dynamicRate === '' || $dynamicRate === null || $dynamicRate === []) {
+            $this->request->remove('dynamic_rate');
+        }
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *
@@ -65,7 +86,6 @@ class ServerTrojanSave extends FormRequest
         $dynamicRate = $this->input('dynamic_rate');
 
         if (!$dynamicRate) {
-            $this->merge(['dynamic_rate' => null]);
             return;
         }
 

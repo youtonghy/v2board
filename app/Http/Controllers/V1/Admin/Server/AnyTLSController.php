@@ -12,6 +12,15 @@ class AnyTLSController extends Controller
 {
     public function save(Request $request)
     {
+        $this->normalizeEmptyStringsToNull($request, [
+            'parent_id',
+            'route_id',
+            'tags',
+            'server_name',
+            'padding_scheme',
+            'dynamic_rate',
+        ]);
+
         $params = $request->validate([
             'show' => '',
             'name' => 'required',
@@ -40,8 +49,10 @@ class AnyTLSController extends Controller
             ]);
         }
 
-        if (isset($params['padding_scheme'])) {
-            $params['padding_scheme'] = json_decode($params['padding_scheme']);
+        if (array_key_exists('padding_scheme', $params)) {
+            if (is_string($params['padding_scheme'])) {
+                $params['padding_scheme'] = json_decode($params['padding_scheme'], true);
+            }
         }
 
         if ($request->input('id')) {

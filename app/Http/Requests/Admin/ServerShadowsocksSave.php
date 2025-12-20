@@ -8,6 +8,32 @@ use App\Utils\DynamicRate;
 
 class ServerShadowsocksSave extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $emptyToNullKeys = [
+            'parent_id',
+            'sort',
+            'route_id',
+            'tags',
+            'obfs',
+        ];
+        foreach ($emptyToNullKeys as $key) {
+            if ($this->input($key) === '') {
+                $this->merge([$key => null]);
+            }
+        }
+
+        $obfs = $this->input('obfs');
+        if ($obfs !== 'http') {
+            $this->request->remove('obfs_settings');
+        }
+
+        $dynamicRate = $this->input('dynamic_rate');
+        if ($dynamicRate === '' || $dynamicRate === null || $dynamicRate === []) {
+            $this->request->remove('dynamic_rate');
+        }
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *
@@ -23,7 +49,7 @@ class ServerShadowsocksSave extends FormRequest
             'route_id' => 'nullable|array',
             'host' => 'required',
             'port' => 'required',
-            'server_port' => 'required',
+            'server_port' => 'required|integer',
             'cipher' => 'required|in:aes-128-gcm,aes-192-gcm,aes-256-gcm,chacha20-ietf-poly1305,2022-blake3-aes-128-gcm,2022-blake3-aes-256-gcm',
             'obfs' => 'nullable|in:http',
             'obfs_settings' => 'nullable|array',
@@ -47,6 +73,7 @@ class ServerShadowsocksSave extends FormRequest
             'host.required' => '节点地址不能为空',
             'port.required' => '连接端口不能为空',
             'server_port.required' => '后端服务端口不能为空',
+            'server_port.integer' => '后端服务端口格式不正确',
             'cipher.required' => '加密方式不能为空',
             'tags.array' => '标签格式不正确',
             'rate.required' => '倍率不能为空',
@@ -66,7 +93,6 @@ class ServerShadowsocksSave extends FormRequest
         $dynamicRate = $this->input('dynamic_rate');
 
         if (!$dynamicRate) {
-            $this->merge(['dynamic_rate' => null]);
             return;
         }
 
