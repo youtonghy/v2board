@@ -12,6 +12,16 @@ class TuicController extends Controller
 {
     public function save(Request $request)
     {
+        $this->normalizeEmptyStringsToNull($request, [
+            'parent_id',
+            'route_id',
+            'tags',
+            'server_name',
+            'udp_relay_mode',
+            'congestion_control',
+            'dynamic_rate',
+        ]);
+
         $params = $request->validate([
             'show' => '',
             'name' => 'required',

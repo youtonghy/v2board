@@ -8,6 +8,29 @@ use App\Utils\DynamicRate;
 
 class ServerVmessSave extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $emptyToNullKeys = [
+            'parent_id',
+            'route_id',
+            'tags',
+            'networkSettings',
+            'ruleSettings',
+            'tlsSettings',
+            'dnsSettings',
+        ];
+        foreach ($emptyToNullKeys as $key) {
+            if ($this->input($key) === '') {
+                $this->merge([$key => null]);
+            }
+        }
+
+        $dynamicRate = $this->input('dynamic_rate');
+        if ($dynamicRate === '' || $dynamicRate === null || $dynamicRate === []) {
+            $this->request->remove('dynamic_rate');
+        }
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *
@@ -75,7 +98,6 @@ class ServerVmessSave extends FormRequest
         $dynamicRate = $this->input('dynamic_rate');
 
         if (!$dynamicRate) {
-            $this->merge(['dynamic_rate' => null]);
             return;
         }
 

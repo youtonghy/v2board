@@ -14,6 +14,20 @@ class VlessController extends Controller
 {
     public function save(Request $request)
     {
+        $this->normalizeEmptyStringsToNull($request, [
+            'parent_id',
+            'route_id',
+            'tags',
+            'tls_settings',
+            'network_settings',
+            'encryption_settings',
+            'flow',
+            'encryption',
+            'show',
+            'sort',
+            'dynamic_rate',
+        ]);
+
         $params = $request->validate([
             'group_id' => 'required',
             'route_id' => 'nullable|array',

@@ -13,6 +13,18 @@ class HysteriaController extends Controller
 {
     public function save(Request $request)
     {
+        $this->normalizeEmptyStringsToNull($request, [
+            'parent_id',
+            'route_id',
+            'tags',
+            'up_mbps',
+            'down_mbps',
+            'obfs',
+            'obfs_password',
+            'server_name',
+            'dynamic_rate',
+        ]);
+
         $params = $request->validate([
             'show' => '',
             'name' => 'required',
