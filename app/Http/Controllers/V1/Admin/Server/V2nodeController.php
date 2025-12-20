@@ -15,7 +15,7 @@ class V2nodeController extends Controller
 {
     public function save(Request $request)
     {
-        if ($request->input('listen_ip') === '') {
+        if ($request->input('listen_ip') === '' || $request->input('listen_ip') === null) {
             $request->merge(['listen_ip' => '0.0.0.0']);
         }
         $this->normalizeEmptyStringsToNull($request, [
