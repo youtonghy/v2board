@@ -41,6 +41,7 @@ class ServerRoute
                     if (!is_array($forwardParams)) {
                         $forwardParams = $request->except(['endpoint', 'method', 'params']);
                     }
+                    $forwardParams = $this->normalizeParams($forwardParams);
 
                     $uri = '/api/v3/' . $endpoint;
 
@@ -56,6 +57,7 @@ class ServerRoute
                             : json_encode($forwardParams, JSON_UNESCAPED_UNICODE)
                     );
                     $subRequest->headers->replace($request->headers->all());
+                    $subRequest->attributes->set('v2b_gateway', true);
 
                     if ($method !== 'GET' && $method !== 'HEAD') {
                         $subRequest->headers->set('content-type', 'application/json');
@@ -72,17 +74,55 @@ class ServerRoute
                     }
                 }
 
-                $class = $request->input('class');
-                $action = $request->input('action');
-                if (!is_string($class) || $class === '' || !is_string($action) || $action === '') {
-                    abort(422, 'class/action is required');
-                }
-                if (!preg_match('/^[a-zA-Z0-9_]+$/', $class) || !preg_match('/^[a-zA-Z0-9_]+$/', $action)) {
-                    abort(404);
-                }
-                $ctrl = \App::make("\\App\\Http\\Controllers\\V1\\Server\\" . ucfirst($class) . "Controller");
-                return \App::call([$ctrl, $action]);
+                abort(422, 'endpoint is required');
             });
         });
+    }
+
+    private function normalizeParams(array $params): array
+    {
+        $normalized = [];
+        foreach ($params as $key => $value) {
+            if (is_string($key) && strpos($key, '[') !== false) {
+                $this->assignBracketParam($normalized, $key, $value);
+                continue;
+            }
+            if (isset($normalized[$key]) && is_array($normalized[$key]) && is_array($value)) {
+                $normalized[$key] = array_replace_recursive($normalized[$key], $value);
+                continue;
+            }
+            $normalized[$key] = $value;
+        }
+        return $normalized;
+    }
+
+    private function assignBracketParam(array &$target, string $key, $value): void
+    {
+        $segments = explode('[', str_replace(']', '', $key));
+        if (!$segments) {
+            $target[$key] = $value;
+            return;
+        }
+
+        $cursor = &$target;
+        $lastIndex = count($segments) - 1;
+        foreach ($segments as $index => $segment) {
+            $isLast = $index === $lastIndex;
+            if ($segment === '') {
+                $segment = count($cursor);
+            } elseif (ctype_digit($segment)) {
+                $segment = (int) $segment;
+            }
+
+            if ($isLast) {
+                $cursor[$segment] = $value;
+                return;
+            }
+
+            if (!isset($cursor[$segment]) || !is_array($cursor[$segment])) {
+                $cursor[$segment] = [];
+            }
+            $cursor = &$cursor[$segment];
+        }
     }
 }
