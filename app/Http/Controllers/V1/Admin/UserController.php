@@ -810,18 +810,43 @@ class UserController extends Controller
                 return '/api/v1';
             }
 
+            function buildUserInfoRequest(authToken) {
+                var apiBase = getApiBase();
+                if (apiBase === '/api/v3') {
+                    return {
+                        url: apiBase + '/server',
+                        options: {
+                            method: 'POST',
+                            headers: {
+                                authorization: authToken
+                            },
+                            body: JSON.stringify({
+                                endpoint: 'user/info',
+                                method: 'GET',
+                                params: {}
+                            })
+                        }
+                    };
+                }
+                return {
+                    url: apiBase + '/user/info',
+                    options: {
+                        method: 'GET',
+                        headers: {
+                            authorization: authToken
+                        }
+                    }
+                };
+            }
+
             function checkLogin() {
                 var authToken = getAuthToken();
                 if (!authToken) {
                     setLoggedOut();
                     return;
                 }
-                fetchJson(getApiBase() + '/user/info', {
-                    method: 'GET',
-                    headers: {
-                        authorization: authToken
-                    }
-                }).then(function (body) {
+                var request = buildUserInfoRequest(authToken);
+                fetchJson(request.url, request.options).then(function (body) {
                     var data = body && body.data ? body.data : {};
                     setLoggedIn(data.email || '');
                 }).catch(function () {
