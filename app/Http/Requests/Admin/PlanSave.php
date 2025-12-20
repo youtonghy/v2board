@@ -6,6 +6,31 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class PlanSave extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $emptyToNullKeys = [
+            'group_id',
+            'transfer_enable',
+            'device_limit',
+            'month_price',
+            'quarter_price',
+            'half_year_price',
+            'year_price',
+            'two_year_price',
+            'three_year_price',
+            'onetime_price',
+            'reset_price',
+            'reset_traffic_method',
+            'capacity_limit',
+            'speed_limit',
+        ];
+        foreach ($emptyToNullKeys as $key) {
+            if ($this->input($key) === '') {
+                $this->merge([$key => null]);
+            }
+        }
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *
@@ -15,9 +40,9 @@ class PlanSave extends FormRequest
     {
         return [
             'name' => 'required',
-            'content' => '',
-            'group_id' => 'required',
-            'transfer_enable' => 'required',
+            'content' => 'nullable|string',
+            'group_id' => 'required|integer',
+            'transfer_enable' => 'required|integer',
             'device_limit' => 'nullable|integer',
             'month_price' => 'nullable|integer',
             'quarter_price' => 'nullable|integer',
@@ -40,7 +65,9 @@ class PlanSave extends FormRequest
             'type.required' => '套餐类型不能为空',
             'type.in' => '套餐类型格式有误',
             'group_id.required' => '权限组不能为空',
+            'group_id.integer' => '权限组格式有误',
             'transfer_enable.required' => '流量不能为空',
+            'transfer_enable.integer' => '流量格式有误',
             'device_limit.integer' => '设备数限制格式有误',
             'month_price.integer' => '月付金额格式有误',
             'quarter_price.integer' => '季付金额格式有误',
