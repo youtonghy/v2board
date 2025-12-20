@@ -493,6 +493,10 @@ document.addEventListener('alpine:init', () => {
                     this.siteConfig = data.data;
                     if (this.siteConfig.is_recaptcha || this.siteConfig.is_turnstile) {
                         this.loadCaptchaScript();
+                        this.$nextTick(() => {
+                            if (this.view === 'login') this.renderCaptcha('captcha-login', 'loginWidget');
+                            if (this.view === 'register') this.renderCaptcha('captcha-register', 'registerWidget');
+                        });
                     }
                 }
             } catch (error) {
