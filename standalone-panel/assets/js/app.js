@@ -677,7 +677,10 @@ document.addEventListener('alpine:init', () => {
                 if (!response) return;
                 const data = await this.safeJsonParse(response);
                 if (data && data.data) {
-                    this.plans = data.data;
+                    this.plans = data.data.map((plan) => ({
+                        ...plan,
+                        content: this.normalizePlanContent(plan.content)
+                    }));
                     // Auto-select first plan if available
                     if (this.plans.length > 0) {
                         this.selectPlan(this.plans[0]);
@@ -1945,6 +1948,26 @@ document.addEventListener('alpine:init', () => {
             } finally {
                 this.loading = false;
             }
+        },
+
+        normalizePlanContent(content) {
+            if (content === null || content === undefined) return '';
+            if (typeof content !== 'string') return String(content);
+            return this.normalizeHtmlBreaks(this.decodeHtml(content));
+        },
+
+        decodeHtml(html) {
+            if (!html) return '';
+            const textarea = document.createElement('textarea');
+            textarea.innerHTML = html;
+            return textarea.value;
+        },
+
+        normalizeHtmlBreaks(html) {
+            if (!html) return '';
+            return html
+                .replace(/<\/\s*br\s*>/gi, '<br>')
+                .replace(/<\s*br\s*\/\s*>/gi, '<br>');
         },
 
         formatBytes(bytes, decimals = 2) {

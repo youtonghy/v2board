@@ -55,6 +55,10 @@ class HtmlSanitizer
         // Remove null bytes and other dangerous characters
         $html = str_replace("\0", '', $html);
 
+        // Normalize invalid <br> usage produced by some editors (e.g. </br>, <br/>)
+        $html = preg_replace('~</\s*br\s*>~i', '<br>', $html);
+        $html = preg_replace('~<\s*br\s*/\s*>~i', '<br>', $html);
+
         // Remove script, style, and other dangerous tags completely
         $html = preg_replace('/<(script|style|iframe|frame|frameset|object|embed|applet|meta|link|base|form|input|button|select|textarea)[^>]*>.*?<\/\1>/is', '', $html);
         $html = preg_replace('/<(script|style|iframe|frame|frameset|object|embed|applet|meta|link|base|form|input|button|select|textarea)[^>]*\/?>/is', '', $html);
