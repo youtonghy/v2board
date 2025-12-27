@@ -142,6 +142,10 @@ document.addEventListener('alpine:init', () => {
             this.checkSsoError();
 
             this.$watch('view', (value) => {
+                if (value === 'register' && this.isRegisterDisabled()) {
+                    this.view = 'login';
+                    return;
+                }
                 this.resetRouteParamsForView(value);
                 this.syncHashWithView();
                 this.handleViewEntered(value);
@@ -362,11 +366,28 @@ document.addEventListener('alpine:init', () => {
                     // Check for verify code when entering login page
                     this.checkTelegramVerify();
                 }
-                if (value === 'register') this.renderCaptcha('captcha-register', 'registerWidget');
+                if (value === 'register' && !this.isRegisterDisabled()) {
+                    this.renderCaptcha('captcha-register', 'registerWidget');
+                }
                 if (value === 'transfer' && !this.trafficsLoaded) {
                     this.fetchTraffics();
                 }
             });
+        },
+
+        isRegisterDisabled() {
+            return Number(this.siteConfig?.stop_register) === 1;
+        },
+
+        isInviteRequired() {
+            return Number(this.siteConfig?.is_invite_force) === 1;
+        },
+
+        ensureRegisterAllowed() {
+            if (!this.isRegisterDisabled()) return;
+            if (this.view === 'register') {
+                this.view = 'login';
+            }
         },
 
         normalizeGatewayRequest(url, options = {}) {
@@ -491,11 +512,14 @@ document.addEventListener('alpine:init', () => {
                 const data = await response.json();
                 if (data.data) {
                     this.siteConfig = data.data;
+                    this.ensureRegisterAllowed();
                     if (this.siteConfig.is_recaptcha || this.siteConfig.is_turnstile) {
                         this.loadCaptchaScript();
                         this.$nextTick(() => {
                             if (this.view === 'login') this.renderCaptcha('captcha-login', 'loginWidget');
-                            if (this.view === 'register') this.renderCaptcha('captcha-register', 'registerWidget');
+                            if (this.view === 'register' && !this.isRegisterDisabled()) {
+                                this.renderCaptcha('captcha-register', 'registerWidget');
+                            }
                         });
                     }
                 }
@@ -634,6 +658,14 @@ document.addEventListener('alpine:init', () => {
         async register() {
             this.loading = true;
             try {
+                if (this.isRegisterDisabled()) {
+                    this.showMessage('Registration is currently disabled.');
+                    return;
+                }
+                if (this.isInviteRequired() && !this.authForm.invite_code) {
+                    this.showMessage('Please enter an invite code.');
+                    return;
+                }
                 const params = {
                     email: this.authForm.email,
                     password: this.authForm.password,
@@ -731,7 +763,10 @@ document.addEventListener('alpine:init', () => {
                 if (!response) return;
                 const data = await this.safeJsonParse(response);
                 if (data && data.data) {
-                    this.plans = data.data;
+                    this.plans = data.data.map((plan) => ({
+                        ...plan,
+                        content: this.normalizePlanContent(plan.content)
+                    }));
                     // Auto-select first plan if available
                     if (this.plans.length > 0) {
                         this.selectPlan(this.plans[0]);
@@ -2006,6 +2041,26 @@ document.addEventListener('alpine:init', () => {
             } finally {
                 this.loading = false;
             }
+        },
+
+        normalizePlanContent(content) {
+            if (content === null || content === undefined) return '';
+            if (typeof content !== 'string') return String(content);
+            return this.normalizeHtmlBreaks(this.decodeHtml(content));
+        },
+
+        decodeHtml(html) {
+            if (!html) return '';
+            const textarea = document.createElement('textarea');
+            textarea.innerHTML = html;
+            return textarea.value;
+        },
+
+        normalizeHtmlBreaks(html) {
+            if (!html) return '';
+            return html
+                .replace(/<\/\s*br\s*>/gi, '<br>')
+                .replace(/<\s*br\s*\/\s*>/gi, '<br>');
         },
 
         formatBytes(bytes, decimals = 2) {

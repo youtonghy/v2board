@@ -325,14 +325,14 @@
                         @endif
                         
                         <div class="auth-links">
-                            <a href="#" @click.prevent="view = 'register'">Create Account</a>
+                            <a href="#" @click.prevent="view = 'register'" x-show="!isRegisterDisabled()">Create Account</a>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Register View -->
-            <div x-show="view === 'register'" class="view-auth" style="display: none;">
+            <div x-show="view === 'register' && !isRegisterDisabled()" class="view-auth" style="display: none;">
                 <div class="auth-container">
                     <div class="card auth-card">
                         <h2 class="text-center">Register</h2>
@@ -349,10 +349,17 @@
                             <input type="password" x-model="authForm.password" placeholder="Password" class="form-input">
                         </div>
                         <div class="form-group">
-                            <input type="text" x-model="authForm.invite_code" placeholder="Invite Code (Optional)" class="form-input">
+                            <input type="text"
+                                   x-model="authForm.invite_code"
+                                   :placeholder="isInviteRequired() ? 'Invite Code' : 'Invite Code (Optional)'"
+                                   :required="isInviteRequired()"
+                                   class="form-input">
                         </div>
                         <div id="captcha-register" class="form-group"></div>
-                        <button class="btn-3d btn-block" @click="register()" :disabled="loading" x-text="loading ? 'Registering...' : 'Register'"></button>
+                        <button class="btn-3d btn-block"
+                                @click="register()"
+                                :disabled="loading || (isInviteRequired() && !authForm.invite_code)"
+                                x-text="loading ? 'Registering...' : 'Register'"></button>
                         <div class="auth-links">
                             <a href="#" @click.prevent="view = 'login'">Already have an account? Login</a>
                         </div>

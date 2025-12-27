@@ -14,6 +14,7 @@ class CommController extends Controller
             'data' => [
                 'tos_url' => config('v2board.tos_url'),
                 'is_email_verify' => (int)config('v2board.email_verify', 0) ? 1 : 0,
+                'stop_register' => (int)config('v2board.stop_register', 0) ? 1 : 0,
                 'is_invite_force' => (int)config('v2board.invite_force', 0) ? 1 : 0,
                 'email_whitelist_suffix' => (int)config('v2board.email_whitelist_enable', 0)
                     ? $this->getEmailSuffix()
