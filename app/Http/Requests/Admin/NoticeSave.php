@@ -6,6 +6,16 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class NoticeSave extends FormRequest
 {
+    protected function prepareForValidation()
+    {
+        if ($this->input('img_url') === '') {
+            $this->merge(['img_url' => null]);
+        }
+        if ($this->input('tags') === '') {
+            $this->merge(['tags' => null]);
+        }
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *

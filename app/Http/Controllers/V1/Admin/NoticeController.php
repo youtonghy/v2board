@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\NoticeSave;
 use App\Models\Notice;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 
 class NoticeController extends Controller
 {
@@ -25,20 +24,34 @@ class NoticeController extends Controller
             'img_url',
             'tags'
         ]);
-        if (!$request->input('id')) {
-            if (!Notice::create($data)) {
+        if (!$request->filled('id')) {
+            try {
+                Notice::create($data);
+            } catch (\Throwable $e) {
                 abort(500, '保存失败');
             }
         } else {
+            $notice = Notice::find($request->input('id'));
+            if (!$notice) {
+                abort(500, '公告不存在');
+            }
             try {
-                Notice::find($request->input('id'))->update($data);
-            } catch (\Exception $e) {
+                $notice->update($data);
+            } catch (\Throwable $e) {
                 abort(500, '保存失败');
             }
         }
         return response([
             'data' => true
         ]);
+    }
+
+    public function update(NoticeSave $request)
+    {
+        if (!$request->filled('id')) {
+            abort(500, '参数有误');
+        }
+        return $this->save($request);
     }
 
 
