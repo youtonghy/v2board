@@ -118,6 +118,8 @@ class AdminRoute
             $router->post('/user/allDel', 'V1\\Admin\\UserController@allDel');
             $router->post('/user/setInviteUser', 'V1\\Admin\\UserController@setInviteUser');
             $router->post('/user/generateInviteCode', 'V1\\Admin\\UserController@generateInviteCode');
+            $router->post('/user/ipGeo', 'V1\\Admin\\UserController@ipGeo');
+            $router->get ('/user/ipGeoProviders', 'V1\\Admin\\UserController@ipGeoProviders');
             // Stat
             $router->get ('/stat/getStat', 'V1\\Admin\\StatController@getStat');
             $router->get ('/stat/getOverride', 'V1\\Admin\\StatController@getOverride');
