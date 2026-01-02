@@ -71385,128 +71385,138 @@ class p extends h.a.Component {
                 super(e),
                 this.state = {
                     geo: {},
-                    loading: {}
+                    loading: {},
+                    provider: "ipinfo",
+                    providers: [{
+                        key: "ipinfo",
+                        name: "ipinfo.io"
+                    }]
                 }
             }
             componentDidMount() {
+                this.fetchProviders(),
                 this.prefetch(this.props.records)
             }
             componentDidUpdate(e) {
                 e.records !== this.props.records && this.prefetch(this.props.records)
             }
             prefetch(e) {
-                Array.isArray(e) && e.forEach(e=>{
-                    var t = null === e || void 0 === e ? void 0 : e.ip;
-                    t && this.fetchGeo(t)
-                }
-                )
+                return;
             }
             fetchGeo(e) {
                 var t = this;
-                if (!e)
+                if (!e || this.state.loading[e])
                     return;
-                var n = "".concat(e).trim();
-                if (n.indexOf(",") > -1 && (n = n.split(",")[0].trim()),
-                0 === n.indexOf("::ffff:") && (n = n.slice(7)),
-                0 === n.indexOf("[") && n.indexOf("]") > -1) {
-                    var r = n.split("]");
-                    n = r[0].slice(1)
-                }
-                /^[0-9.]+:\d+$/.test(n) && 4 === n.split(".").length && (n = n.replace(/:\d+$/, ""));
-                if (!n || "unknown" === n.toLowerCase())
-                    return void this.setState(t=>{
-                        var r = a()({}, t.geo);
-                        r[e] = {},
-                        n !== e && (r[n] = {});
-                        var i = a()({}, t.loading);
-                        return i[e] = !1,
-                        n !== e && (i[n] = !1),
-                        {
-                            geo: r,
-                            loading: i
-                        }
-                    }
-                    );
-                if (this.state.geo[e] || this.state.loading[e])
-                    return;
-                if (n !== e && this.state.geo[n])
-                    return void this.setState(t=>{
-                        var r = a()({}, t.geo);
-                        return r[e] = t.geo[n],
-                        {
-                            geo: r
-                        }
-                    }
-                    );
-                var i = n.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
-                if (i) {
-                    var o = +i[1]
-                      , s = +i[2];
-                    if (10 === o || 127 === o || 192 === o && 168 === s || 172 === o && s >= 16 && s <= 31 || 169 === o && 254 === s)
-                        return void this.setState(t=>{
-                            var r = a()({}, t.geo);
-                            r[e] = {
-                                ip: n,
-                                country: "LOCAL",
-                                city: "-",
-                                isp: "-",
-                                organization: "-"
-                            },
-                            n !== e && (r[n] = r[e]);
-                            var i = a()({}, t.loading);
-                            return i[e] = !1,
-                            n !== e && (i[n] = !1),
-                            {
-                                geo: r,
-                                loading: i
-                            }
-                        }
-                        )
-                }
+                var n = this.state.provider || "ipinfo"
+                  , r = this.getApiPath("user/ipGeo");
                 this.setState(t=>{
-                    var r = a()({}, t.loading);
-                    return r[e] = !0,
-                    n !== e && (r[n] = !0),
+                    var n = a()({}, t.loading);
+                    return n[e] = !0,
                     {
-                        loading: r
+                        loading: n
                     }
                 }
                 ),
-                fetch("https://ipinfo.io/widget/demo/".concat(encodeURIComponent(n))).then(e=>e.ok ? e.json() : null).then(r=>{
-                    var i = r && r.data ? r.data : null
-                      , o = i ? {
-                        ip: i.ip || n,
-                        country: i.country || "",
-                        city: i.city ? i.city + (i.region ? ", ".concat(i.region) : "") : i.region || "",
-                        isp: i.asn && i.asn.name ? i.asn.name : i.company && i.company.name ? i.company.name : i.org || "",
-                        organization: i.org || (i.company && i.company.name ? i.company.name : "") || (i.asn && i.asn.name ? i.asn.name : "")
-                    } : {};
+                window.fetch ? window.fetch(r, {
+                    method: "POST",
+                    headers: Object.assign({
+                        "Content-Type": "application/json"
+                    }, this.getAuthHeaders()),
+                    credentials: "include",
+                    body: JSON.stringify({
+                        ip: e,
+                        provider: n
+                    })
+                }).then(e=>e.ok ? e.json() : null).then(r=>{
+                    var i = r && r.data ? r.data : null;
+                    i && "success" !== i.status && (i = null),
+                    i || (i = {
+                        status: "failed",
+                        message: "\u83b7\u53d6\u5931\u8d25",
+                        provider: n
+                    }),
                     t.setState(t=>{
                         var r = a()({}, t.geo);
-                        r[e] = o,
-                        n !== e && (r[n] = o);
-                        var i = a()({}, t.loading);
-                        return i[e] = !1,
-                        n !== e && (i[n] = !1),
+                        r[e] = i;
+                        var n = a()({}, t.loading);
+                        return n[e] = !1,
                         {
                             geo: r,
-                            loading: i
+                            loading: n
                         }
                     }
                     )
                 }
                 ).catch(()=>{
                     t.setState(t=>{
-                        var r = a()({}, t.loading);
-                        return r[e] = !1,
-                        n !== e && (r[n] = !1),
+                        var r = a()({}, t.geo);
+                        r[e] = {
+                            status: "failed",
+                            message: "\u83b7\u53d6\u5931\u8d25",
+                            provider: n
+                        };
+                        var i = a()({}, t.loading);
+                        return i[e] = !1,
                         {
-                            loading: r
+                            geo: r,
+                            loading: i
                         }
                     }
                     )
                 }
+                ) : this.setState(t=>{
+                    var r = a()({}, t.geo);
+                    r[e] = {
+                        status: "failed",
+                        message: "\u83b7\u53d6\u5931\u8d25",
+                        provider: n
+                    };
+                    var i = a()({}, t.loading);
+                    return i[e] = !1,
+                    {
+                        geo: r,
+                        loading: i
+                    }
+                }
                 )
+            }
+            getApiPath(e) {
+                var t = window.settings && window.settings.secure_path ? window.settings.secure_path : "";
+                return "/api/v1/" + t + "/" + e
+            }
+            getAuthHeaders() {
+                var e = {};
+                try {
+                    var t = window.localStorage ? window.localStorage.getItem("authorization") : null;
+                    t && (e.authorization = t)
+                } catch (e) {}
+                return e
+            }
+            fetchProviders() {
+                var e = this
+                  , t = this.getApiPath("user/ipGeoProviders");
+                window.fetch && window.fetch(t, {
+                    headers: this.getAuthHeaders(),
+                    credentials: "include"
+                }).then(t=>t.ok ? t.json() : null).then(t=>{
+                    var n = t && t.data ? t.data : null
+                      , r = n && Array.isArray(n.providers) ? n.providers : null
+                      , i = n && n["default"] ? n["default"] : null;
+                    r && r.length && e.setState({
+                        providers: r,
+                        provider: i || r[0].key
+                    })
+                }
+                ).catch(()=>{}
+                )
+            }
+            refreshAll() {
+                var e = Array.isArray(this.props.records) ? this.props.records : []
+                  , t = this;
+                e.forEach(function(e) {
+                    var n = null === e || void 0 === e ? void 0 : e.ip;
+                    n && t.fetchGeo(n)
+                })
             }
             render() {
                 var e = Array.isArray(this.props.records) ? this.props.records : []
@@ -71520,15 +71530,16 @@ class p extends h.a.Component {
                         whiteSpace: "nowrap"
                     }
                 }, e))
-                  , r = e.map((e,t)=>{
+                  , r = Array.isArray(this.state.providers) ? this.state.providers : []
+                  , i = e.map((e,t)=>{
                     var n = null === e || void 0 === e ? void 0 : e.ip
                       , r = null === e || void 0 === e ? void 0 : e.last_seen_at
-                      , i = n ? this.state.geo[n] : null
+                      , i = n ? this.state.geo[n] || (null === e || void 0 === e ? void 0 : e.geo) : null
                       , o = n ? this.state.loading[n] : !1
-                      , a = i && i.country ? i.country : o ? "\u52a0\u8f7d\u4e2d..." : "-"
-                      , s = i && i.city ? i.city : o ? "\u52a0\u8f7d\u4e2d..." : "-"
-                      , l = i && i.isp ? i.isp : o ? "\u52a0\u8f7d\u4e2d..." : "-"
-                      , c = i && i.organization ? i.organization : o ? "\u52a0\u8f7d\u4e2d..." : "-";
+                      , a = o ? "\u83b7\u53d6\u4e2d..." : i && "failed" === i.status ? "\u83b7\u53d6\u5931\u8d25" : i && i.country ? i.country : "-"
+                      , s = o ? "\u83b7\u53d6\u4e2d..." : i && "failed" === i.status ? "\u83b7\u53d6\u5931\u8d25" : i && i.city ? i.city : "-"
+                      , l = o ? "\u83b7\u53d6\u4e2d..." : i && "failed" === i.status ? "\u83b7\u53d6\u5931\u8d25" : i && i.isp ? i.isp : "-"
+                      , c = o ? "\u83b7\u53d6\u4e2d..." : i && "failed" === i.status ? "\u83b7\u53d6\u5931\u8d25" : i && i.organization ? i.organization : "-";
                     return g.a.createElement("tr", {
                         key: t
                     }, g.a.createElement("td", {
@@ -71569,7 +71580,25 @@ class p extends h.a.Component {
                     }, c))
                 }
                 );
-                return g.a.createElement("div", {
+                return g.a.createElement("div", null, g.a.createElement("div", {
+                    style: {
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        margin: "0 0 10px"
+                    }
+                }, g.a.createElement("span", null, "IP\u6765\u6e90"), g.a.createElement("select", {
+                    value: this.state.provider,
+                    onChange: e=>this.setState({
+                        provider: e.target.value
+                    })
+                }, r.map(e=>g.a.createElement("option", {
+                    key: e.key,
+                    value: e.key
+                }, e.name || e.key))), g.a.createElement("button", {
+                    className: "ant-btn ant-btn-primary",
+                    onClick: ()=>this.refreshAll()
+                }, "\u91cd\u65b0\u83b7\u53d6")), g.a.createElement("div", {
                     style: {
                         maxHeight: "60vh",
                         overflow: "auto"
@@ -71579,7 +71608,7 @@ class p extends h.a.Component {
                         width: "100%",
                         borderCollapse: "collapse"
                     }
-                }, g.a.createElement("thead", null, g.a.createElement("tr", null, n)), g.a.createElement("tbody", null, r)))
+                }, g.a.createElement("thead", null, g.a.createElement("tr", null, n)), g.a.createElement("tbody", null, i))))
             }
         }
         class M extends g.a.Component {

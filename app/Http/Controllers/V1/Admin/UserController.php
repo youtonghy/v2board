@@ -109,7 +109,8 @@ class UserController extends Controller
                 foreach ($recentIpsData as $ip => $lastSeenAt) {
                     $recentIpRecords[] = [
                         'ip' => $ip,
-                        'last_seen_at' => $lastSeenAt
+                        'last_seen_at' => $lastSeenAt,
+                        'geo' => $this->getIpGeo($ip)
                     ];
                 }
                 $recentIpRecords = array_slice($recentIpRecords, 0, 50);
@@ -243,6 +244,31 @@ class UserController extends Controller
         }
         return response([
             'data' => true
+        ]);
+    }
+
+    public function ipGeo(Request $request)
+    {
+        return response([
+            'data' => $this->getIpGeo($request->input('ip'), $request->input('provider'))
+        ]);
+    }
+
+    public function ipGeoProviders(Request $request)
+    {
+        $providers = $this->getIpGeoProviders();
+        $list = [];
+        foreach ($providers as $key => $provider) {
+            $list[] = [
+                'key' => $key,
+                'name' => $provider['name']
+            ];
+        }
+        return response([
+            'data' => [
+                'providers' => $list,
+                'default' => $this->getDefaultIpGeoProvider()
+            ]
         ]);
     }
 
@@ -923,6 +949,230 @@ class UserController extends Controller
 </body>
 </html>
 HTML;
+    }
+
+    private function getIpGeo($ip, ?string $provider = null): array
+    {
+        $normalized = $this->normalizeIp($ip);
+        if (!$normalized) {
+            return [
+                'status' => 'failed',
+                'message' => '获取失败'
+            ];
+        }
+
+        $provider = $this->resolveIpGeoProvider($provider);
+        $cacheKey = 'IP_GEO_' . $provider . '_' . md5($normalized);
+        $cached = Cache::get($cacheKey);
+        if (is_array($cached)) {
+            return $cached;
+        }
+
+        if ($this->isPrivateIp($normalized)) {
+            $geo = [
+                'status' => 'success',
+                'provider' => $provider,
+                'country' => 'LOCAL',
+                'city' => '-',
+                'isp' => '-',
+                'organization' => '-'
+            ];
+            Cache::put($cacheKey, $geo, 60 * 60 * 24 * 30);
+            return $geo;
+        }
+
+        $geo = $this->fetchIpGeoFromProvider($provider, $normalized);
+        if (!$geo) {
+            $failed = [
+                'status' => 'failed',
+                'provider' => $provider,
+                'message' => '获取失败'
+            ];
+            Cache::put($cacheKey, $failed, 60 * 60 * 6);
+            return $failed;
+        }
+
+        $geo['status'] = 'success';
+        $geo['provider'] = $provider;
+        Cache::put($cacheKey, $geo, 60 * 60 * 24 * 30);
+        return $geo;
+    }
+
+    private function getIpGeoProviders(): array
+    {
+        return [
+            'ipinfo' => [
+                'name' => 'ipinfo.io'
+            ],
+            'ip-api' => [
+                'name' => 'ip-api.com'
+            ],
+            'ipsb' => [
+                'name' => 'ip.sb'
+            ],
+        ];
+    }
+
+    private function getDefaultIpGeoProvider(): string
+    {
+        $providers = $this->getIpGeoProviders();
+        foreach ($providers as $key => $provider) {
+            return $key;
+        }
+        return 'ipinfo';
+    }
+
+    private function resolveIpGeoProvider(?string $provider): string
+    {
+        $providers = $this->getIpGeoProviders();
+        if (is_string($provider) && isset($providers[$provider])) {
+            return $provider;
+        }
+        return $this->getDefaultIpGeoProvider();
+    }
+
+    private function fetchIpGeoFromProvider(string $provider, string $ip): ?array
+    {
+        switch ($provider) {
+            case 'ip-api':
+                return $this->fetchIpGeoFromIpApi($ip);
+            case 'ipsb':
+                return $this->fetchIpGeoFromIpSb($ip);
+            case 'ipinfo':
+            default:
+                return $this->fetchIpGeoFromIpInfo($ip);
+        }
+    }
+
+    private function fetchIpGeoFromIpInfo(string $ip): ?array
+    {
+        $apiUrl = 'https://ipinfo.io/widget/demo/' . rawurlencode($ip);
+        $context = stream_context_create([
+            'http' => [
+                'timeout' => 3
+            ]
+        ]);
+        $response = @file_get_contents($apiUrl, false, $context);
+        if (!$response) {
+            return null;
+        }
+
+        $payload = json_decode($response, true);
+        $data = is_array($payload) ? ($payload['data'] ?? null) : null;
+        if (!is_array($data)) {
+            return null;
+        }
+
+        return [
+            'country' => $data['country'] ?? '',
+            'city' => isset($data['city']) && $data['city']
+                ? $data['city'] . (isset($data['region']) && $data['region'] ? ', ' . $data['region'] : '')
+                : ($data['region'] ?? ''),
+            'isp' => isset($data['asn']['name']) && $data['asn']['name']
+                ? $data['asn']['name']
+                : (isset($data['company']['name']) && $data['company']['name']
+                    ? $data['company']['name']
+                    : ($data['org'] ?? '')),
+            'organization' => $data['org']
+                ?? (isset($data['company']['name']) ? $data['company']['name'] : '')
+                ?? (isset($data['asn']['name']) ? $data['asn']['name'] : '')
+        ];
+    }
+
+    private function fetchIpGeoFromIpApi(string $ip): ?array
+    {
+        $apiUrl = 'http://ip-api.com/json/' . rawurlencode($ip)
+            . '?lang=zh-CN&fields=status,country,regionName,city,isp,org';
+        $context = stream_context_create([
+            'http' => [
+                'timeout' => 3
+            ]
+        ]);
+        $response = @file_get_contents($apiUrl, false, $context);
+        if (!$response) {
+            return null;
+        }
+
+        $payload = json_decode($response, true);
+        if (!is_array($payload) || ($payload['status'] ?? '') !== 'success') {
+            return null;
+        }
+
+        return [
+            'country' => $payload['country'] ?? '',
+            'city' => $payload['city'] ?? ($payload['regionName'] ?? ''),
+            'isp' => $payload['isp'] ?? '',
+            'organization' => $payload['org'] ?? ''
+        ];
+    }
+
+    private function fetchIpGeoFromIpSb(string $ip): ?array
+    {
+        $apiUrl = 'https://api.ip.sb/geoip/' . rawurlencode($ip);
+        $context = stream_context_create([
+            'http' => [
+                'timeout' => 3
+            ]
+        ]);
+        $response = @file_get_contents($apiUrl, false, $context);
+        if (!$response) {
+            return null;
+        }
+
+        $payload = json_decode($response, true);
+        if (!is_array($payload)) {
+            return null;
+        }
+
+        $region = $payload['region'] ?? '';
+        $city = $payload['city'] ?? '';
+        $city = $city ? $city . ($region ? ', ' . $region : '') : $region;
+
+        return [
+            'country' => $payload['country'] ?? '',
+            'city' => $city,
+            'isp' => $payload['isp'] ?? '',
+            'organization' => $payload['organization'] ?? ($payload['asn_organization'] ?? '')
+        ];
+    }
+
+    private function normalizeIp($ip): ?string
+    {
+        if (!is_string($ip)) {
+            return null;
+        }
+        $ip = trim($ip);
+        if ($ip === '') {
+            return null;
+        }
+        if (strpos($ip, ',') !== false) {
+            $ip = trim(explode(',', $ip)[0]);
+        }
+        if (strpos($ip, '|') !== false) {
+            $ip = trim(explode('|', $ip)[0]);
+        }
+        if (strpos($ip, '_') !== false) {
+            $ip = trim(explode('_', $ip)[0]);
+        }
+        if (strpos($ip, '::ffff:') === 0) {
+            $ip = substr($ip, 7);
+        }
+        if (strpos($ip, '[') === 0 && strpos($ip, ']') !== false) {
+            $parts = explode(']', $ip, 2);
+            $ip = ltrim($parts[0], '[');
+        }
+        if (preg_match('/^[0-9.]+:\d+$/', $ip) && count(explode('.', $ip)) === 4) {
+            $ip = preg_replace('/:\d+$/', '', $ip);
+        }
+        return $ip !== '' ? $ip : null;
+    }
+
+    private function isPrivateIp(string $ip): bool
+    {
+        if (!filter_var($ip, FILTER_VALIDATE_IP)) {
+            return false;
+        }
+        return !filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE);
     }
 
     private function renderThirdPartyLoginError(string $message): string
