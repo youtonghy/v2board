@@ -140,7 +140,9 @@ class UniProxyController extends Controller
             $this->recordRecentIps($uid, $ips, $updateAt);
             $ips_array = Cache::get('ALIVE_IP_USER_' . $uid) ?? [];
             // 更新节点数据
-            $ips_array[$this->nodeType . $this->nodeId] = ['aliveips' => $ips, 'lastupdateAt' => $updateAt];
+            if ((int)config('v2board.ip_no_log', 0) !== 1) {
+                $ips_array[$this->nodeType . $this->nodeId] = ['aliveips' => $ips, 'lastupdateAt' => $updateAt];
+            }
             // 清理过期数据
             foreach ($ips_array as $nodetypeid => $oldips) {
                 if (!is_int($oldips) && ($updateAt - $oldips['lastupdateAt'] > 100)) {
@@ -148,22 +150,19 @@ class UniProxyController extends Controller
                 }
             }
             $count = 0;
-            if (config('v2board.device_limit_mode', 0) == 1) {
-                $ipmap = [];
-                foreach ($ips_array as $nodetypeid => $newdata) {
-                    if (!is_int($newdata) && isset($newdata['aliveips'])) {
-                        foreach ($newdata['aliveips'] as $ip_NodeId) {
-                            $ip = explode("_", $ip_NodeId)[0];
-                            $ipmap[$ip] = 1;
+            if (is_array($ips)) {
+                if (config('v2board.device_limit_mode', 0) == 1) {
+                    $ipmap = [];
+                    foreach ($ips as $ipNodeId) {
+                        if (!is_string($ipNodeId)) {
+                            continue;
                         }
+                        $ip = explode("_", $ipNodeId)[0];
+                        $ipmap[$ip] = 1;
                     }
-                }
-                $count = count($ipmap);
-            } else {
-                foreach ($ips_array as $nodetypeid => $newdata) {
-                    if (!is_int($newdata) && isset($newdata['aliveips'])) {
-                        $count += count($newdata['aliveips']);
-                    }
+                    $count = count($ipmap);
+                } else {
+                    $count = count($ips);
                 }
             }
             $ips_array['alive_ip'] = $count;
@@ -177,6 +176,9 @@ class UniProxyController extends Controller
 
     private function recordRecentIps($uid, $ips, $updateAt)
     {
+        if ((int)config('v2board.ip_no_log', 0) === 1) {
+            return;
+        }
         if (!is_numeric($uid)) {
             return;
         }

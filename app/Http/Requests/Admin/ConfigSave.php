@@ -121,6 +121,7 @@ class ConfigSave extends FormRequest
         'password_limit_expire' => 'integer',
         'totp_enable' => 'in:0,1',
         'api_v1_disable' => 'in:0,1',
+        'ip_no_log' => 'in:0,1',
         // sso
         'sso_login_enable' => 'in:0,1',
         'sso_provider' => 'nullable|in:casdoor',
