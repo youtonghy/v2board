@@ -32,6 +32,7 @@ class AuthService
             'ua' => $request->userAgent(),
             'auth_data' => $authData
         ]);
+        $this->recordRecentLoginIp($request->ip(), time());
         return [
             'token' => $this->user->token,
             'is_admin' => $this->user->is_admin,
@@ -107,5 +108,40 @@ class AuthService
             }
         }
         return Cache::forget($cacheKey);
+    }
+
+    private function recordRecentLoginIp($ip, $loginAt)
+    {
+        if ((int)config('v2board.ip_no_log', 0) === 1) {
+            return;
+        }
+        if (!is_string($ip) || $ip === '') {
+            return;
+        }
+        if (!is_int($loginAt)) {
+            $loginAt = time();
+        }
+
+        $cacheKey = 'RECENT_LOGIN_IPS_30D_USER_' . (int)$this->user->id;
+        $recent = Cache::get($cacheKey);
+        if (!is_array($recent)) {
+            $recent = [];
+        }
+
+        $recent[$ip] = $loginAt;
+
+        $cutoff = $loginAt - (60 * 60 * 24 * 30);
+        foreach ($recent as $recentIp => $lastSeenAt) {
+            if (!is_int($lastSeenAt) || $lastSeenAt < $cutoff) {
+                unset($recent[$recentIp]);
+            }
+        }
+
+        if (count($recent) > 50) {
+            arsort($recent);
+            $recent = array_slice($recent, 0, 50, true);
+        }
+
+        Cache::put($cacheKey, $recent, 60 * 60 * 24 * 31);
     }
 }
