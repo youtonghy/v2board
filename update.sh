@@ -210,3 +210,9 @@ apply_totp_schema_patch
 if [ -f "/etc/init.d/bt" ]; then
   chown -R www $(pwd);
 fi
+
+# Ensure cache/log directories are writable after updates to avoid config cache failures.
+if id -u www >/dev/null 2>&1; then
+  chgrp -R www bootstrap/cache storage || true
+  chmod -R 775 bootstrap/cache storage || true
+fi

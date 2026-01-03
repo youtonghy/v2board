@@ -5910,6 +5910,12 @@
                     checked: parseInt(_.api_v1_disable || 0),
                     onChange: e=>this.set("safe", "api_v1_disable", e ? 1 : 0)
                 })), f.a.createElement(m, {
+                    title: "IP\u65e0\u65e5\u5fd7\u6a21\u5f0f",
+                    description: "\u5f00\u542f\u540e\u4e0d\u518d\u8bb0\u5f55\u7528\u6237\u7684IP\u6570\u636e\u3002"
+                }, f.a.createElement(l["a"], {
+                    checked: parseInt(_.ip_no_log || 0),
+                    onChange: e=>this.set("safe", "ip_no_log", e ? 1 : 0)
+                })), f.a.createElement(m, {
                     title: "\u540e\u53f0\u8def\u5f84",
                     description: "\u540e\u53f0\u7ba1\u7406\u8def\u5f84\uff0c\u4fee\u6539\u540e\u5c06\u4f1a\u6539\u53d8\u539f\u6709\u7684admin\u8def\u5f84"
                 }, f.a.createElement("input", {

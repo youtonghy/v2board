@@ -330,7 +330,8 @@ class ConfigController extends Controller
                 'password_limit_count' => config('v2board.password_limit_count', 5),
                 'password_limit_expire' => config('v2board.password_limit_expire', 60),
                 'totp_enable' => (int)config('v2board.totp_enable', 0),
-                'api_v1_disable' => (int)config('v2board.api_v1_disable', 0)
+                'api_v1_disable' => (int)config('v2board.api_v1_disable', 0),
+                'ip_no_log' => (int)config('v2board.ip_no_log', 0)
             ]
         ];
         if ($key && isset($data[$key])) {
@@ -364,11 +365,31 @@ class ConfigController extends Controller
             abort(500, '修改失败');
         }
         if (function_exists('opcache_reset')) {
-            if (opcache_reset() === false) {
-                abort(500, '缓存清除失败，请卸载或检查opcache配置状态');
+            try {
+                opcache_reset();
+            } catch (\Throwable $e) {
+                try {
+                    Log::warning('Opcache reset failed', ['error' => $e->getMessage()]);
+                } catch (\Throwable $e) {
+                }
             }
         }
-        Artisan::call('config:cache');
+        $cacheDir = base_path('bootstrap/cache');
+        if (is_dir($cacheDir) && is_writable($cacheDir)) {
+            try {
+                Artisan::call('config:cache');
+            } catch (\Throwable $e) {
+                try {
+                    Log::warning('Config cache failed', ['error' => $e->getMessage()]);
+                } catch (\Throwable $e) {
+                }
+            }
+        } else {
+            try {
+                Log::warning('Config cache skipped: bootstrap/cache not writable', ['path' => $cacheDir]);
+            } catch (\Throwable $e) {
+            }
+        }
         if(Cache::has('WEBMANPID')) {
             $pid = Cache::get('WEBMANPID');
             Cache::forget('WEBMANPID');
