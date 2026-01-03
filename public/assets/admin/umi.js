@@ -71745,6 +71745,16 @@ class p extends h.a.Component {
                     })
                 })
             }
+            showRecentLoginIps(e) {
+                var t = Array.isArray(null === e || void 0 === e ? void 0 : e.recent_login_ip_records) ? e.recent_login_ip_records : [];
+                p["a"].info({
+                    title: "\u767b\u5f55IP - ".concat((null === e || void 0 === e ? void 0 : e.email) || ""),
+                    width: 900,
+                    content: g.a.createElement(I, {
+                        records: t
+                    })
+                })
+            }
             generateInviteCode(e) {
                 var t = this;
                 p["a"].confirm({
@@ -71872,6 +71882,26 @@ class p extends h.a.Component {
                         }, "+".concat(i)) : null))
                     }
                 }, {
+                    title: "30\u5929\u5185\u767b\u5f55IP",
+                    dataIndex: "recent_login_ips",
+                    key: "recent_login_ips",
+                    render: (e,t)=>{
+                        var n = Array.isArray(t.recent_login_ips) ? t.recent_login_ips : [];
+                        if (!n.length)
+                            return "-";
+                        var r = n.slice(0, 2)
+                          , i = n.length - r.length;
+                        return g.a.createElement(f["a"], {
+                            placement: "top",
+                            title: n.join(", ")
+                        }, g.a.createElement(g.a.Fragment, null, r.map((e,n)=>g.a.createElement(h["a"], {
+                            color: "blue",
+                            key: "recent_login_ip_".concat(t.id, "_").concat(n)
+                        }, e)), i > 0 ? g.a.createElement(h["a"], {
+                            key: "recent_login_ip_more_".concat(t.id)
+                        }, "+".concat(i)) : null))
+                    }
+                }, {
                     title: "\u5230\u671f\u65f6\u95f4",
                     dataIndex: "expired_at",
                     key: "expired_at",
@@ -71960,6 +71990,10 @@ class p extends h.a.Component {
                             }, g.a.createElement(u["a"], {
                                 type: "global"
                             }), " IP\u5730\u5740")), g.a.createElement(c["a"].Item, null, g.a.createElement("a", {
+                                onClick: ()=>this.showRecentLoginIps(t)
+                            }, g.a.createElement(u["a"], {
+                                type: "global"
+                            }), " \u767b\u5f55IP")), g.a.createElement(c["a"].Item, null, g.a.createElement("a", {
                                 onClick: ()=>this.delUser(t)
                             }, g.a.createElement(u["a"], {
                                 type: "delete"
@@ -72186,6 +72220,12 @@ class p extends h.a.Component {
                 }, g.a.createElement(u["a"], {
                     type: "global"
                 }), " IP\u5730\u5740")), g.a.createElement("li", {
+                    className: "ant-dropdown-menu-item"
+                }, g.a.createElement("a", {
+                    onClick: ()=>this.showRecentLoginIps(this.record)
+                }, g.a.createElement(u["a"], {
+                    type: "global"
+                }), " \u767b\u5f55IP")), g.a.createElement("li", {
                     className: "ant-dropdown-menu-item"
                 }, g.a.createElement("a", {
                     onClick: ()=>this.delUser(this.record)
