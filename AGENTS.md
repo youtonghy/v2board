@@ -1,18 +1,21 @@
 # Agent Guidelines
 
-## Config Request Validation
+本项目的关键约束按“模块块”组织，便于后期分块维护和扩展。
 
-- When extending `App\Http\Requests\Admin\ConfigSave`, always convert existing rule entries to arrays before appending closures (e.g. wrap in `array_merge`).
-- Guard custom validators (like `deposit_bounus`) against non-array inputs to avoid `[] operator not supported for strings` runtime errors.
+## 模块 A：ConfigSave 验证规则
 
-Keep these precautions in mind whenever adjusting validation logic to prevent save failures in the admin panel.
+- 在 `App\Http\Requests\Admin\ConfigSave` 中扩展规则时，先把原有规则转换为数组再追加闭包（例如使用 `array_merge` 包裹）。
+- 自定义验证器（如 `deposit_bounus`）必须先判断输入是否为数组，避免 `[] operator not supported for strings` 运行时错误。
 
-## SSO Config Validation
+提示：所有与后台保存相关的校验逻辑都遵循上述两条，避免保存失败。
 
-- When adding validation closures in `App\Http\Requests\Admin\ConfigSave`, always normalize string rules (e.g., `'nullable|string'`) into arrays before `array_merge`, otherwise the validator will try to call a nonexistent `validateNullable|string` method and saving will fail. Use a helper like `explode('|', $rule)` or reuse the existing `normalizeRule()` pattern.
+## 模块 B：SSO 配置验证
 
-## Frontend Login Buttons (Telegram/SSO)
+- 在 `App\Http\Requests\Admin\ConfigSave` 里追加闭包校验时，先规范化字符串规则（如 `'nullable|string'`）为数组再 `array_merge`，否则会触发不存在的 `validateNullable|string` 方法。
+- 可使用 `explode('|', $rule)` 或复用已有的 `normalizeRule()` 流程进行规则规范化。
 
-- If adding login buttons via JS on `#/login`, ensure the helper that finds the button container (`findAuthActionContainer`) is declared in global scope before both Telegram and SSO modules run. Keeping it inside one IIFE will break the other module and both buttons disappear.
-- Use the `.v2board-auth-box .form-group.mb-0` container first, then fall back to `.form-group.mb-0`, and finally to the parent of the last `.block-content button.btn` to tolerate theme changes.
-- Match the primary login button style: `btn btn-block btn-primary font-w400 mt-3`; switch to `btn-secondary` only for loading/disabled states.
+## 模块 C：前端登录按钮（Telegram/SSO）
+
+- 通过 JS 在 `#/login` 注入按钮时，`findAuthActionContainer` 必须在全局作用域声明，并在 Telegram/SSO 模块运行前可用；放在某个 IIFE 内会导致另一模块无法访问，按钮消失。
+- 容器查找优先级：`.v2board-auth-box .form-group.mb-0` → `.form-group.mb-0` → 最后一个 `.block-content button.btn` 的父级，确保主题切换兼容。
+- 按钮样式与主登录按钮一致：`btn btn-block btn-primary font-w400 mt-3`；仅在加载/禁用态切换为 `btn-secondary`。
