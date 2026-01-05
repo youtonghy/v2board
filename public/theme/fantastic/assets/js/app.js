@@ -125,7 +125,9 @@ document.addEventListener('alpine:init', () => {
         captcha: {
             token: '',
             loginWidget: null,
-            registerWidget: null
+            registerWidget: null,
+            loginRequested: false,
+            loginPending: false
         },
 
         init() {
@@ -362,7 +364,6 @@ document.addEventListener('alpine:init', () => {
         handleViewEntered(value) {
             this.$nextTick(() => {
                 if (value === 'login') {
-                    this.renderCaptcha('captcha-login', 'loginWidget');
                     // Check for verify code when entering login page
                     this.checkTelegramVerify();
                 }
@@ -371,6 +372,11 @@ document.addEventListener('alpine:init', () => {
                 }
                 if (value === 'transfer' && !this.trafficsLoaded) {
                     this.fetchTraffics();
+                }
+                if (value !== 'login') {
+                    this.captcha.loginRequested = false;
+                    this.captcha.loginPending = false;
+                    this.captcha.token = '';
                 }
             });
         },
@@ -516,7 +522,6 @@ document.addEventListener('alpine:init', () => {
                     if (this.siteConfig.is_recaptcha || this.siteConfig.is_turnstile) {
                         this.loadCaptchaScript();
                         this.$nextTick(() => {
-                            if (this.view === 'login') this.renderCaptcha('captcha-login', 'loginWidget');
                             if (this.view === 'register' && !this.isRegisterDisabled()) {
                                 this.renderCaptcha('captcha-register', 'registerWidget');
                             }
@@ -554,7 +559,13 @@ document.addEventListener('alpine:init', () => {
                 if (window.turnstile) {
                     this.captcha[widgetKey] = turnstile.render('#' + containerId, {
                         sitekey: this.siteConfig.turnstile_site_key,
-                        callback: (token) => { this.captcha.token = token; }
+                        callback: (token) => {
+                            this.captcha.token = token;
+                            if (widgetKey === 'loginWidget' && this.captcha.loginPending) {
+                                this.captcha.loginPending = false;
+                                this.$nextTick(() => this.login());
+                            }
+                        }
                     });
                 } else {
                     setTimeout(() => this.renderCaptcha(containerId, widgetKey), 500);
@@ -563,12 +574,28 @@ document.addEventListener('alpine:init', () => {
                 if (window.grecaptcha) {
                     this.captcha[widgetKey] = grecaptcha.render(containerId, {
                         sitekey: this.siteConfig.recaptcha_site_key,
-                        callback: (token) => { this.captcha.token = token; }
+                        callback: (token) => {
+                            this.captcha.token = token;
+                            if (widgetKey === 'loginWidget' && this.captcha.loginPending) {
+                                this.captcha.loginPending = false;
+                                this.$nextTick(() => this.login());
+                            }
+                        }
                     });
                 } else {
                     setTimeout(() => this.renderCaptcha(containerId, widgetKey), 500);
                 }
             }
+        },
+
+        ensureLoginCaptchaVisible() {
+            const captchaRequired = this.siteConfig.is_turnstile || this.siteConfig.is_recaptcha;
+            if (!captchaRequired) return false;
+            if (!this.captcha.loginRequested) {
+                this.captcha.loginRequested = true;
+                this.$nextTick(() => this.renderCaptcha('captcha-login', 'loginWidget'));
+            }
+            return true;
         },
 
         async fetchUserInfo() {
@@ -607,6 +634,13 @@ document.addEventListener('alpine:init', () => {
         },
 
         async login() {
+            if (this.loading) return;
+            const captchaRequired = this.siteConfig.is_turnstile || this.siteConfig.is_recaptcha;
+            if (captchaRequired && !this.captcha.token) {
+                this.ensureLoginCaptchaVisible();
+                this.captcha.loginPending = true;
+                return;
+            }
             this.loading = true;
             try {
                 const params = {
@@ -641,11 +675,14 @@ document.addEventListener('alpine:init', () => {
                     this.applyRouteFromHash();
                     this.$nextTick(() => { this.suppressHashUpdate = false; });
                     this.authForm.password = ''; // Clear password
+                    this.captcha.loginRequested = false;
+                    this.captcha.token = '';
                 } else {
                     this.showMessage(data.message || 'Login failed');
                     // Reset captcha on failure
                     if (this.siteConfig.is_turnstile && window.turnstile) turnstile.reset(this.captcha.loginWidget);
                     if (this.siteConfig.is_recaptcha && window.grecaptcha) grecaptcha.reset(this.captcha.loginWidget);
+                    this.captcha.token = '';
                 }
             } catch (error) {
                 console.error('Login error:', error);
