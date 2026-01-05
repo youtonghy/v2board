@@ -23,7 +23,15 @@
         <!-- Navigation Bar -->
         <nav class="navbar" x-show="!['login', 'register'].includes(view)" style="display: none;">
             <div class="container nav-container">
-                <div class="logo" x-text="window.V2BoardConfig?.title || 'V2Board'"></div>
+                <div class="logo">
+                    <template x-if="window.V2BoardConfig?.logo">
+                        <img :src="window.V2BoardConfig.logo"
+                            :alt="window.V2BoardConfig?.title || 'V2Board'">
+                    </template>
+                    <template x-if="!window.V2BoardConfig?.logo">
+                        <span x-text="window.V2BoardConfig?.title || 'V2Board'"></span>
+                    </template>
+                </div>
 
                 <!-- Desktop Navigation -->
                 <div class="nav-links desktop-nav">
