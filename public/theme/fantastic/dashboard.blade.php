@@ -1167,28 +1167,20 @@
                         <p>Import directly into supported clients</p>
                         <div class="import-buttons">
                             <a :href="'clash://install-config?url=' + encodeURIComponent(user.subscribe_url)" class="btn-3d btn-import">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M12 2L2 7v10c0 5.5 3.8 10.7 10 12 6.2-1.3 10-6.5 10-12V7l-10-5z"/>
-                                </svg>
-                                Clash
+                                <img src="/theme/{{$theme}}/assets/images/clash.png" alt="Clash">
+                                <span>Clash</span>
                             </a>
                             <a :href="'quantumult://add-resource?remote-resource=' + encodeURIComponent(user.subscribe_url)" class="btn-3d btn-import">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
-                                </svg>
-                                Quantumult
+                                <img src="/theme/{{$theme}}/assets/images/quantumultx.png" alt="Quantumult X">
+                                <span>Quantumult X</span>
                             </a>
                             <a :href="'shadowrocket://add/' + encodeURIComponent(user.subscribe_url)" class="btn-3d btn-import">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M7 10l5 5 5-5z"/>
-                                </svg>
-                                Shadowrocket
+                                <img src="/theme/{{$theme}}/assets/images/shadowrocket.png" alt="Shadowrocket">
+                                <span>Shadowrocket</span>
                             </a>
                             <a :href="'surge://install-config?url=' + encodeURIComponent(user.subscribe_url)" class="btn-3d btn-import">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M13 7h-2v4H7v2h4v4h2v-4h4v-2h-4V7zm-1-5C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
-                                </svg>
-                                Surge
+                                <img src="/theme/{{$theme}}/assets/images/surge.png" alt="Surge">
+                                <span>Surge</span>
                             </a>
                         </div>
                     </div>
