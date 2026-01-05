@@ -1170,6 +1170,14 @@
                                 <img src="/theme/{{$theme}}/assets/images/clash.png" alt="Clash">
                                 <span>Clash</span>
                             </a>
+                            <a :href="'sing-box://import-remote-profile?url=' + encodeURIComponent(user.subscribe_url) + '#' + encodeURIComponent((window.settings && window.settings.title) ? window.settings.title : '')" class="btn-3d btn-import">
+                                <img src="/theme/{{$theme}}/assets/images/singbox.png" alt="Sing-box">
+                                <span>Sing-box</span>
+                            </a>
+                            <a :href="'loon://import?sub=' + encodeURIComponent(user.subscribe_url)" class="btn-3d btn-import">
+                                <img src="/theme/{{$theme}}/assets/images/loon.png" alt="Loon">
+                                <span>Loon</span>
+                            </a>
                             <a :href="'quantumult://add-resource?remote-resource=' + encodeURIComponent(user.subscribe_url)" class="btn-3d btn-import">
                                 <img src="/theme/{{$theme}}/assets/images/quantumultx.png" alt="Quantumult X">
                                 <span>Quantumult X</span>
