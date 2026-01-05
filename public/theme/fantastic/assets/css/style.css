@@ -2744,8 +2744,9 @@ h3 {
 
 .import-buttons {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
     gap: 1rem;
+    justify-items: center;
 }
 
 .btn-import {
@@ -2753,28 +2754,26 @@ h3 {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
-    padding: 1rem;
+    gap: 0;
+    padding: 0;
     text-decoration: none;
     color: var(--text-color);
-    background: var(--card-bg);
-    border-radius: 15px;
-    box-shadow: var(--shadow-dark), var(--shadow-light);
+    background: transparent;
+    border-radius: 50%;
+    box-shadow: none;
     transition: all 0.3s ease;
-    font-weight: 600;
-    font-size: 0.9rem;
+    width: 64px;
+    height: 64px;
 }
 
 .btn-import:hover {
     color: var(--primary-color);
-    transform: translateY(-3px);
-    box-shadow: 8px 8px 16px rgba(var(--neu-shadow-dark-rgb), 0.7),
-        -8px -8px 16px rgba(var(--neu-shadow-light-rgb), 0.9);
+    transform: translateY(-2px);
 }
 
 .btn-import img {
-    width: 34px;
-    height: 34px;
+    width: 40px;
+    height: 40px;
     object-fit: contain;
     opacity: 0.85;
     transition: transform 0.3s ease, opacity 0.3s ease;
@@ -2858,18 +2857,18 @@ h3 {
     }
 
     .import-buttons {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 0.8rem;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.6rem;
     }
 
     .btn-import {
-        padding: 0.8rem;
-        font-size: 0.85rem;
+        width: 56px;
+        height: 56px;
     }
 
     .btn-import img {
-        width: 24px;
-        height: 24px;
+        width: 34px;
+        height: 34px;
     }
 
     .server-grid {
@@ -2904,13 +2903,12 @@ h3 {
     }
 
     .import-buttons {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(3, 1fr);
     }
 
     .btn-import {
-        flex-direction: row;
-        justify-content: flex-start;
-        padding: 1rem;
+        width: 52px;
+        height: 52px;
     }
 }
 

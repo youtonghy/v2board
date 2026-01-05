@@ -1166,29 +1166,23 @@
                         <h4>One-click Import</h4>
                         <p>Import directly into supported clients</p>
                         <div class="import-buttons">
-                            <a :href="'clash://install-config?url=' + encodeURIComponent(user.subscribe_url)" class="btn-3d btn-import">
+                            <a :href="'clash://install-config?url=' + encodeURIComponent(user.subscribe_url)" class="btn-3d btn-import" aria-label="Clash" title="Clash">
                                 <img src="/theme/{{$theme}}/assets/images/clash.png" alt="Clash">
-                                <span>Clash</span>
                             </a>
-                            <a :href="'sing-box://import-remote-profile?url=' + encodeURIComponent(user.subscribe_url) + '#' + encodeURIComponent((window.settings && window.settings.title) ? window.settings.title : '')" class="btn-3d btn-import">
+                            <a :href="'sing-box://import-remote-profile?url=' + encodeURIComponent(user.subscribe_url) + '#' + encodeURIComponent((window.settings && window.settings.title) ? window.settings.title : '')" class="btn-3d btn-import" aria-label="Sing-box" title="Sing-box">
                                 <img src="/theme/{{$theme}}/assets/images/singbox.png" alt="Sing-box">
-                                <span>Sing-box</span>
                             </a>
-                            <a :href="'loon://import?sub=' + encodeURIComponent(user.subscribe_url)" class="btn-3d btn-import">
+                            <a :href="'loon://import?sub=' + encodeURIComponent(user.subscribe_url)" class="btn-3d btn-import" aria-label="Loon" title="Loon">
                                 <img src="/theme/{{$theme}}/assets/images/loon.png" alt="Loon">
-                                <span>Loon</span>
                             </a>
-                            <a :href="'quantumult://add-resource?remote-resource=' + encodeURIComponent(user.subscribe_url)" class="btn-3d btn-import">
+                            <a :href="'quantumult://add-resource?remote-resource=' + encodeURIComponent(user.subscribe_url)" class="btn-3d btn-import" aria-label="Quantumult X" title="Quantumult X">
                                 <img src="/theme/{{$theme}}/assets/images/quantumultx.png" alt="Quantumult X">
-                                <span>Quantumult X</span>
                             </a>
-                            <a :href="'shadowrocket://add/' + encodeURIComponent(user.subscribe_url)" class="btn-3d btn-import">
+                            <a :href="'shadowrocket://add/' + encodeURIComponent(user.subscribe_url)" class="btn-3d btn-import" aria-label="Shadowrocket" title="Shadowrocket">
                                 <img src="/theme/{{$theme}}/assets/images/shadowrocket.png" alt="Shadowrocket">
-                                <span>Shadowrocket</span>
                             </a>
-                            <a :href="'surge://install-config?url=' + encodeURIComponent(user.subscribe_url)" class="btn-3d btn-import">
+                            <a :href="'surge://install-config?url=' + encodeURIComponent(user.subscribe_url)" class="btn-3d btn-import" aria-label="Surge" title="Surge">
                                 <img src="/theme/{{$theme}}/assets/images/surge.png" alt="Surge">
-                                <span>Surge</span>
                             </a>
                         </div>
                     </div>
