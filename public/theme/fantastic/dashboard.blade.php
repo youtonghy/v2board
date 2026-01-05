@@ -289,7 +289,7 @@
                         <div class="form-group">
                             <input type="password" x-model="authForm.password" placeholder="Password" class="form-input" @keyup.enter="login()">
                         </div>
-                        <div id="captcha-login" class="form-group"></div>
+                        <div id="captcha-login" class="form-group" x-show="captcha.loginRequested" x-cloak style="display: none;"></div>
                         <button class="btn-3d btn-block" @click="login()" :disabled="loading" x-text="loading ? 'Logging in...' : 'Login'"></button>
                         
                         <!-- Alternative Login Methods -->
