@@ -112,6 +112,7 @@ class ConfigSave extends FormRequest
         'turnstile_site_key' => 'nullable|string',
         'email_verify' => 'in:0,1',
         'safe_mode_enable' => 'in:0,1',
+        'subscribe_burn_after_read' => 'in:0,1',
         'register_limit_by_ip_enable' => 'in:0,1',
         'register_limit_count' => 'integer',
         'register_limit_expire' => 'integer',
