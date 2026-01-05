@@ -2772,13 +2772,17 @@ h3 {
         -8px -8px 16px rgba(var(--neu-shadow-light-rgb), 0.9);
 }
 
-.btn-import svg {
-    opacity: 0.8;
+.btn-import img {
+    width: 34px;
+    height: 34px;
+    object-fit: contain;
+    opacity: 0.85;
+    transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
-.btn-import:hover svg {
+.btn-import:hover img {
     opacity: 1;
-    color: var(--primary-color);
+    transform: scale(1.05);
 }
 
 /* Confetti celebration */
@@ -2863,9 +2867,9 @@ h3 {
         font-size: 0.85rem;
     }
 
-    .btn-import svg {
-        width: 18px;
-        height: 18px;
+    .btn-import img {
+        width: 24px;
+        height: 24px;
     }
 
     .server-grid {
