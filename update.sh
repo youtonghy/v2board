@@ -65,6 +65,21 @@ log_step() {
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"
 }
 
+totp_is_enabled() {
+  if [ ! -f "config/v2board.php" ]; then
+    return 1
+  fi
+  if ! command -v php &>/dev/null; then
+    return 1
+  fi
+  local enabled
+  enabled="$(php -r '$config=require "config/v2board.php"; echo $config["totp_enable"] ?? "";' 2>/dev/null || true)"
+  case "$enabled" in
+    1|"1"|"true"|"TRUE") return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
 run_step() {
   local label="$1"
   shift
@@ -138,6 +153,11 @@ dotenv_get() {
 }
 
 apply_totp_schema_patch() {
+  if totp_is_enabled; then
+    echo "Skip TOTP schema patch: totp already enabled"
+    return 0
+  fi
+
   if [ ! -f ".env" ]; then
     echo "Skip TOTP schema patch: .env not found"
     return 0
