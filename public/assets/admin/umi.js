@@ -5904,6 +5904,12 @@
                     checked: parseInt(_.safe_mode_enable),
                     onChange: e=>this.set("safe", "safe_mode_enable", e ? 1 : 0)
                 })), f.a.createElement(m, {
+                    title: "\u8ba2\u9605\u94fe\u63a5\u9605\u540e\u5373\u711a",
+                    description: "\u5f00\u542f\u540e\u8ba2\u9605\u94fe\u63a5\u8bbf\u95ee\u4e00\u6b21\u540e\u5c06\u81ea\u52a8\u5931\u6548\uff0c\u5e76\u5237\u65b0\u7528\u6237UUID\u53ca\u8ba2\u9605URL\u3002"
+                }, f.a.createElement(l["a"], {
+                    checked: parseInt(_.subscribe_burn_after_read || 0),
+                    onChange: e=>this.set("safe", "subscribe_burn_after_read", e ? 1 : 0)
+                })), f.a.createElement(m, {
                     title: "\u7981\u7528API V1",
                     description: "\u5f00\u542f\u540e\u6240\u6709 /api/v1 \u63a5\u53e3\u5c06\u88ab403\u62d2\u7edd\uff08\u5ba2\u6237\u7aef\u8bf7\u6539\u7528 /api/v3 \u6216\u4f7f\u7528\u56fa\u5b9a\u5165\u53e3 /api/v3/server\uff09\u3002"
                 }, f.a.createElement(l["a"], {

@@ -30,6 +30,11 @@ class ClientController extends Controller
         // account not expired and is not banned.
         $userService = new UserService();
         if ($userService->isAvailable($user)) {
+            if ((int)config('v2board.subscribe_burn_after_read', 0) === 1) {
+                $user->token = Helper::guid();
+                $user->uuid = Helper::guid(true);
+                $user->save();
+            }
             $serverService = new ServerService();
             $servers = $serverService->getAvailableServers($user);
             if ($flag) {
