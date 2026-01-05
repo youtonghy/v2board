@@ -386,21 +386,36 @@
                 </div>
                 <div class="notice-carousel" aria-label="Announcements">
                     <template x-for="notice in notices" :key="notice.id">
-                        <div class="notice-card-item">
+                        <button type="button" class="notice-card-item notice-card-button" @click="openNotice(notice)">
                             <div class="notice-header">
                                 <strong x-text="notice.title"></strong>
-                                <div class="notice-tags" x-show="notice.tags && notice.tags.length > 0">
-                                    <template x-for="tag in (notice.tags || [])" :key="tag">
-                                        <span class="notice-tag" x-text="tag"></span>
-                                    </template>
-                                </div>
                             </div>
                             <div class="notice-image" x-show="notice.img_url">
                                 <img :src="notice.img_url" :alt="notice.title" loading="lazy">
                             </div>
-                            <div class="notice-content" x-html="notice.content"></div>
-                        </div>
+                        </button>
                     </template>
+                </div>
+            </div>
+
+            <!-- Notice Detail Modal -->
+            <div x-show="noticeModalOpen" class="modal-overlay" @click.self="closeNoticeModal()" style="display: none;">
+                <div class="modal-content notice-modal">
+                    <div class="modal-header">
+                        <h3 x-text="activeNotice?.title || 'Announcement'"></h3>
+                        <button class="modal-close" @click="closeNoticeModal()">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="notice-tags" x-show="activeNotice?.tags && activeNotice.tags.length > 0">
+                            <template x-for="tag in (activeNotice?.tags || [])" :key="tag">
+                                <span class="notice-tag" x-text="tag"></span>
+                            </template>
+                        </div>
+                        <div class="notice-image" x-show="activeNotice?.img_url">
+                            <img :src="activeNotice?.img_url" :alt="activeNotice?.title || 'Announcement'" loading="lazy">
+                        </div>
+                        <div class="notice-content" x-html="activeNotice?.content || ''"></div>
+                    </div>
                 </div>
             </div>
 

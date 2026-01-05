@@ -35,6 +35,8 @@ document.addEventListener('alpine:init', () => {
         servers: [],
         notices: [],
         showNotices: true,
+        noticeModalOpen: false,
+        activeNotice: null,
         paymentMethods: [],
         serverModalOpen: false,
         selectedServer: null,
@@ -918,6 +920,17 @@ document.addEventListener('alpine:init', () => {
             } catch (error) {
                 console.error('Error fetching notices:', error);
             }
+        },
+
+        openNotice(notice) {
+            if (!notice) return;
+            this.activeNotice = notice;
+            this.noticeModalOpen = true;
+        },
+
+        closeNoticeModal() {
+            this.noticeModalOpen = false;
+            this.activeNotice = null;
         },
 
         async fetchPaymentMethods() {

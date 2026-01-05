@@ -513,6 +513,18 @@ img {
     scroll-snap-align: start;
 }
 
+.notice-card-button {
+    appearance: none;
+    text-align: left;
+    cursor: pointer;
+    width: 100%;
+}
+
+.notice-card-button:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
 .notice-card-item strong {
     display: block;
     color: var(--primary-color);
@@ -583,6 +595,14 @@ img {
     line-height: 1.6;
     color: var(--text-color);
     word-break: break-word;
+}
+
+.notice-modal .notice-tags {
+    margin-bottom: 0.75rem;
+}
+
+.notice-modal .notice-image {
+    margin-top: 0;
 }
 
 .notice-content p {
