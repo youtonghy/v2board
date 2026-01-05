@@ -158,7 +158,13 @@
         <!-- Navigation Bar -->
         <nav class="navbar" x-show="!['login', 'register'].includes(view)" style="display: none;">
             <div class="container nav-container">
-                <div class="logo">{{$title}}</div>
+                <div class="logo">
+                    @if($logo)
+                        <img src="{{$logo}}" alt="{{$title}}">
+                    @else
+                        {{$title}}
+                    @endif
+                </div>
                 
                 <!-- Desktop Navigation -->
                 <div class="nav-links desktop-nav">
