@@ -17,6 +17,13 @@
                 window.location.replace('/');
             }
 
+            function redirectLogin(clearToken) {
+                if (clearToken) {
+                    try { localStorage.removeItem('auth_data'); } catch (e) {}
+                }
+                window.location.replace('/#/login');
+            }
+
             function installAdminAssets() {
                 var scripts = [
                     "/assets/admin/vendors.async.js?v={{$version}}",
@@ -261,7 +268,7 @@
 
             var token = null;
             try { token = localStorage.getItem('auth_data'); } catch (e) {}
-            if (!token) return redirectHome(false);
+            if (!token) return redirectLogin(false);
 
             var xhr = new XMLHttpRequest();
             xhr.open('POST', '/api/v3/server', true);
@@ -269,17 +276,17 @@
             xhr.setRequestHeader('Content-Type', 'application/json');
             xhr.onreadystatechange = function () {
                 if (xhr.readyState !== 4) return;
-                if (xhr.status !== 200) return redirectHome(xhr.status === 401 || xhr.status === 403);
+                if (xhr.status !== 200) return redirectLogin(xhr.status === 401 || xhr.status === 403);
                 try {
                     var res = JSON.parse(xhr.responseText || '{}');
                     var data = res && res.data ? res.data : null;
-                    if (!data || !data.is_login) return redirectHome(true);
+                    if (!data || !data.is_login) return redirectLogin(true);
                     if (!data.is_admin) return redirectHome(false);
                     installApiGateway();
                     try { document.documentElement.classList.remove('__admin_auth_blocked'); } catch (e) {}
                     installAdminAssets();
                 } catch (e) {
-                    return redirectHome(false);
+                    return redirectLogin(false);
                 }
             };
             xhr.send(JSON.stringify({ endpoint: 'user/checkLogin', method: 'GET', params: {} }));
