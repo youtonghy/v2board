@@ -48,6 +48,7 @@ class ConfigSave extends FormRequest
         // subscribe
         'plan_change_enable' => 'in:0,1',
         'reset_traffic_method' => 'in:0,1,2,3,4',
+        'reset_traffic_never_expire_enable' => 'in:0,1',
         'surplus_enable' => 'in:0,1',
         'allow_new_period' => 'in:0,1',
         'new_order_event_id' => 'in:0,1',
