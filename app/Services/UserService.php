@@ -57,7 +57,10 @@ class UserService
             if ($user->plan_id === NULL) return null;
             $user->plan = Plan::find($user->plan_id);
         }
-        if ($user->expired_at <= time() || $user->expired_at === NULL) return null;
+        if ($user->expired_at !== NULL && $user->expired_at <= time()) return null;
+        if ($user->expired_at === NULL) {
+            return $this->getResetDayForNeverExpire($user);
+        }
         // if reset method is not reset
         if ($user->plan->reset_traffic_method === 2) return null;
         switch (true) {
@@ -105,7 +108,10 @@ class UserService
     {
         if ($user->plan_id === NULL) return null;
         $plan = Plan::find($user->plan_id);
-        if ($user->expired_at <= time() || $user->expired_at === NULL) return null;
+        if ($user->expired_at !== NULL && $user->expired_at <= time()) return null;
+        if ($user->expired_at === NULL) {
+            return $this->getResetPeriodForNeverExpire($plan);
+        }
         // if reset method is not reset
         if ($plan->reset_traffic_method === 2) return null;
         switch (true) {
@@ -142,6 +148,36 @@ class UserService
             }
         }    
         return null;
+    }
+
+    private function getResetDayForNeverExpire(User $user)
+    {
+        if ((int)config('v2board.reset_traffic_never_expire_enable', 0) !== 1) {
+            return null;
+        }
+        $method = $user->plan->reset_traffic_method;
+        if ($method === NULL) {
+            $method = config('v2board.reset_traffic_method', 0);
+        }
+        if ((int)$method !== 0) {
+            return null;
+        }
+        return $this->calcResetDayByMonthFirstDay();
+    }
+
+    private function getResetPeriodForNeverExpire(Plan $plan)
+    {
+        if ((int)config('v2board.reset_traffic_never_expire_enable', 0) !== 1) {
+            return null;
+        }
+        $method = $plan->reset_traffic_method;
+        if ($method === NULL) {
+            $method = config('v2board.reset_traffic_method', 0);
+        }
+        if ((int)$method !== 0) {
+            return null;
+        }
+        return 1;
     }
 
     public function isAvailable(User $user)

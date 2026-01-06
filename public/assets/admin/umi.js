@@ -6087,6 +6087,12 @@
                 }, "\u6bcf\u5e741\u67081\u65e5"), f.a.createElement("option", {
                     value: 4
                 }, "\u6309\u5e74\u91cd\u7f6e"))), f.a.createElement(m, {
+                    title: "\u65e0\u5230\u671f\u5957\u9910\u6bcf\u6708\u91cd\u7f6e",
+                    description: "\u5f00\u542f\u540e\uff0c\u6ca1\u6709\u5230\u671f\u65f6\u95f4\u7684\u8ba2\u9605\u4e5f\u4f1a\u5728\u6bcf\u67081\u53f7\u91cd\u7f6e\u6d41\u91cf\u3002"
+                }, f.a.createElement(l["a"], {
+                    checked: parseInt(r.reset_traffic_never_expire_enable),
+                    onChange: e=>this.set("subscribe", "reset_traffic_never_expire_enable", e ? 1 : 0)
+                })), f.a.createElement(m, {
                     title: "\u5f00\u542f\u6298\u62b5\u65b9\u6848",
                     description: "\u5f00\u542f\u540e\u7528\u6237\u66f4\u6362\u8ba2\u9605\u5c06\u4f1a\u7531\u7cfb\u7edf\u5bf9\u539f\u6709\u8ba2\u9605\u8fdb\u884c\u6298\u62b5\uff0c\u65b9\u6848\u53c2\u8003\u6587\u6863\u3002"
                 }, f.a.createElement(l["a"], {

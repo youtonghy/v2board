@@ -47,6 +47,7 @@ class ResetTraffic extends Command
     {
         ini_set('memory_limit', -1);
         Redis::setex('traffic_reset_lock', 300, 1);
+        $includeNeverExpire = (int)config('v2board.reset_traffic_never_expire_enable', 0) === 1;
         $resetMethods = Plan::select(
             DB::raw("GROUP_CONCAT(`id`) as plan_ids"),
             DB::raw("reset_traffic_method as method")
@@ -59,14 +60,15 @@ class ResetTraffic extends Command
             switch (true) {
                 case ($resetMethod['method'] === NULL): {
                     $resetTrafficMethod = config('v2board.reset_traffic_method', 0);
-                    $builder = with(clone($this->builder))->whereIn('plan_id', $planIds);
                     switch ((int)$resetTrafficMethod) {
                         // month first day
                         case 0:
+                            $builder = $this->buildResetBuilder($planIds, $includeNeverExpire);
                             $this->resetByMonthFirstDay($builder);
                             break;
                         // expire day
                         case 1:
+                            $builder = $this->buildResetBuilder($planIds, false);
                             $this->resetByExpireDay($builder);
                             break;
                         // no action
@@ -74,20 +76,22 @@ class ResetTraffic extends Command
                             break;
                         // year first day
                         case 3:
+                            $builder = $this->buildResetBuilder($planIds, false);
                             $this->resetByYearFirstDay($builder);
                         // year expire day
                         case 4:
+                            $builder = $this->buildResetBuilder($planIds, false);
                             $this->resetByExpireYear($builder);
                     }
                     break;
                 }
                 case ($resetMethod['method'] === 0): {
-                    $builder = with(clone($this->builder))->whereIn('plan_id', $planIds);
+                    $builder = $this->buildResetBuilder($planIds, $includeNeverExpire);
                     $this->resetByMonthFirstDay($builder);
                     break;
                 }
                 case ($resetMethod['method'] === 1): {
-                    $builder = with(clone($this->builder))->whereIn('plan_id', $planIds);
+                    $builder = $this->buildResetBuilder($planIds, false);
                     $this->resetByExpireDay($builder);
                     break;
                 }
@@ -95,18 +99,33 @@ class ResetTraffic extends Command
                     break;
                 }
                 case ($resetMethod['method'] === 3): {
-                    $builder = with(clone($this->builder))->whereIn('plan_id', $planIds);
+                    $builder = $this->buildResetBuilder($planIds, false);
                     $this->resetByYearFirstDay($builder);
                     break;
                 }
                 case ($resetMethod['method'] === 4): {
-                    $builder = with(clone($this->builder))->whereIn('plan_id', $planIds);
+                    $builder = $this->buildResetBuilder($planIds, false);
                     $this->resetByExpireYear($builder);
                     break;
                 }
             }
         }
         Redis::del('traffic_reset_lock');
+    }
+
+    private function buildResetBuilder(array $planIds, bool $includeNeverExpire)
+    {
+        if (!$includeNeverExpire) {
+            return with(clone($this->builder))->whereIn('plan_id', $planIds);
+        }
+
+        return User::whereIn('plan_id', $planIds)
+            ->where(function ($query) {
+                $query->where(function ($subQuery) {
+                    $subQuery->where('expired_at', '!=', NULL)
+                        ->where('expired_at', '>', time());
+                })->orWhereNull('expired_at');
+            });
     }
 
     private function resetByExpireYear($builder): void
