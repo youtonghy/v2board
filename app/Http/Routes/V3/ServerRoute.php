@@ -43,6 +43,7 @@ class ServerRoute
                     }
                     $forwardParams = $this->normalizeParams($forwardParams);
 
+                    $isPublicEndpoint = $this->isPublicEndpoint($endpoint);
                     $uri = '/api/v3/' . $endpoint;
 
                     $subRequest = Request::create(
@@ -57,6 +58,9 @@ class ServerRoute
                             : json_encode($forwardParams, JSON_UNESCAPED_UNICODE)
                     );
                     $subRequest->headers->replace($request->headers->all());
+                    if ($isPublicEndpoint) {
+                        $subRequest->headers->remove('authorization');
+                    }
                     $subRequest->attributes->set('v2b_gateway', true);
 
                     if ($method !== 'GET' && $method !== 'HEAD') {
@@ -124,5 +128,33 @@ class ServerRoute
             }
             $cursor = &$cursor[$segment];
         }
+    }
+
+    private function isPublicEndpoint(string $endpoint): bool
+    {
+        if (str_starts_with($endpoint, 'guest/')) {
+            return true;
+        }
+        if (str_starts_with($endpoint, 'passport/comm/')) {
+            return true;
+        }
+        if (!str_starts_with($endpoint, 'passport/auth/')) {
+            return false;
+        }
+
+        $publicAuthEndpoints = [
+            'passport/auth/login',
+            'passport/auth/register',
+            'passport/auth/forget',
+            'passport/auth/login2FA',
+            'passport/auth/loginWithTelegram',
+            'passport/auth/loginWithMailLink',
+            'passport/auth/checkTelegramLogin',
+            'passport/auth/token2Login',
+            'passport/auth/sso/init',
+            'passport/auth/sso/callback',
+        ];
+
+        return in_array($endpoint, $publicAuthEndpoints, true);
     }
 }

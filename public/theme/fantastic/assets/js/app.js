@@ -462,9 +462,16 @@ document.addEventListener('alpine:init', () => {
         async request(url, options = {}) {
             ({ url, options } = this.normalizeGatewayRequest(url, options));
             const headers = options.headers || {};
-            const token = localStorage.getItem('auth_data');
-            if (token) {
-                headers['Authorization'] = token;
+            const skipAuth = options.skipAuth === true;
+            if ('skipAuth' in options) delete options.skipAuth;
+            if (skipAuth) {
+                delete headers.Authorization;
+                delete headers.authorization;
+            } else {
+                const token = localStorage.getItem('auth_data');
+                if (token) {
+                    headers['Authorization'] = token;
+                }
             }
             // Ensure Content-Type is set for POST requests if not already
             if (options.method === 'POST' && !headers['Content-Type']) {
@@ -655,7 +662,8 @@ document.addEventListener('alpine:init', () => {
                 const response = await this.request('/api/v3/passport/auth/login', { // Login is public
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(params)
+                    body: JSON.stringify(params),
+                    skipAuth: true
                 });
                 const data = await response.json();
                 if (data.data) {
@@ -717,7 +725,8 @@ document.addEventListener('alpine:init', () => {
                 const response = await this.request('/api/v3/passport/auth/register', { // Register is public
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(params)
+                    body: JSON.stringify(params),
+                    skipAuth: true
                 });
                 const data = await response.json();
                 if (data.data) {
@@ -761,7 +770,8 @@ document.addEventListener('alpine:init', () => {
                 const response = await this.request('/api/v3/passport/comm/sendEmailVerify', { // Public
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(params)
+                    body: JSON.stringify(params),
+                    skipAuth: true
                 });
                 const data = await response.json();
                 if (data.data) {
@@ -1118,7 +1128,8 @@ document.addEventListener('alpine:init', () => {
                     body: JSON.stringify({
                         token: this.twoFactorToken,
                         code: this.twoFactorCode
-                    })
+                    }),
+                    skipAuth: true
                 });
                 const data = await response.json();
                 if (data.data) {
@@ -1555,7 +1566,8 @@ document.addEventListener('alpine:init', () => {
             this.request('/api/v3/passport/auth/loginWithTelegram', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(payload),
+                skipAuth: true
             })
                 .then(res => res.json())
                 .then(data => {
@@ -1606,7 +1618,9 @@ document.addEventListener('alpine:init', () => {
                 return;
             }
 
-            this.request(`/api/v3/passport/auth/checkTelegramLogin?token=${encodeURIComponent(token)}`)
+            this.request(`/api/v3/passport/auth/checkTelegramLogin?token=${encodeURIComponent(token)}`, {
+                skipAuth: true
+            })
                 .then(res => res.json())
                 .then(data => {
                     const status = data.data?.status || 'pending';
@@ -1893,7 +1907,9 @@ document.addEventListener('alpine:init', () => {
 
             this.loading = true;
             try {
-                const response = await this.request(`/api/v3/passport/auth/token2Login?verify=${encodeURIComponent(verifyCode)}`);
+                const response = await this.request(`/api/v3/passport/auth/token2Login?verify=${encodeURIComponent(verifyCode)}`, {
+                    skipAuth: true
+                });
                 const data = await response.json();
 
                 if (data.data && data.data.auth_data) {
@@ -1936,7 +1952,8 @@ document.addEventListener('alpine:init', () => {
 
             this.request(url, {
                 method: 'GET',
-                credentials: 'include'
+                credentials: 'include',
+                skipAuth: true
             })
                 .then(res => res.json())
                 .then(data => {

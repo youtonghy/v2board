@@ -316,6 +316,11 @@ class AuthController extends Controller
 
         $user = User::where('email', $email)->first();
         if (!$user) {
+            if (config('app.debug')) {
+                logger()->warning('Login failed: user not found', [
+                    'email' => $email
+                ]);
+            }
             abort(500, __('Incorrect email or password'));
         }
         if (!Helper::multiPasswordVerify(
@@ -324,6 +329,14 @@ class AuthController extends Controller
             $password,
             $user->password)
         ) {
+            if (config('app.debug')) {
+                logger()->warning('Login failed: password mismatch', [
+                    'email' => $email,
+                    'user_id' => $user->id,
+                    'password_algo' => $user->password_algo,
+                    'has_salt' => !empty($user->password_salt)
+                ]);
+            }
             if ((int)config('v2board.password_limit_enable')) {
                 Cache::put(
                     CacheKey::get('PASSWORD_ERROR_LIMIT', $email),
