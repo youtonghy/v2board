@@ -110,8 +110,7 @@ class UserController extends Controller
                 foreach ($recentIpsData as $ip => $lastSeenAt) {
                     $recentIpRecords[] = [
                         'ip' => $ip,
-                        'last_seen_at' => $lastSeenAt,
-                        'geo' => $this->getIpGeo($ip)
+                        'last_seen_at' => $lastSeenAt
                     ];
                 }
                 $recentIpRecords = array_slice($recentIpRecords, 0, 50);
@@ -133,8 +132,7 @@ class UserController extends Controller
                 foreach ($recentLoginIpsData as $ip => $lastSeenAt) {
                     $recentLoginIpRecords[] = [
                         'ip' => $ip,
-                        'last_seen_at' => $lastSeenAt,
-                        'geo' => $this->getIpGeo($ip)
+                        'last_seen_at' => $lastSeenAt
                     ];
                 }
                 $recentLoginIpRecords = array_slice($recentLoginIpRecords, 0, 50);
@@ -1105,6 +1103,12 @@ HTML;
                 'message' => '获取失败'
             ];
         }
+        if (!filter_var($normalized, FILTER_VALIDATE_IP)) {
+            return [
+                'status' => 'failed',
+                'message' => '获取失败'
+            ];
+        }
 
         $provider = $this->resolveIpGeoProvider($provider);
         $cacheKey = 'IP_GEO_' . $provider . '_' . md5($normalized);
@@ -1189,14 +1193,20 @@ HTML;
         }
     }
 
+    private function buildGeoStreamContext()
+    {
+        return stream_context_create([
+            'http' => [
+                'timeout' => 4,
+                'user_agent' => 'v2board-ip-geo'
+            ]
+        ]);
+    }
+
     private function fetchIpGeoFromIpInfo(string $ip): ?array
     {
         $apiUrl = 'https://ipinfo.io/widget/demo/' . rawurlencode($ip);
-        $context = stream_context_create([
-            'http' => [
-                'timeout' => 3
-            ]
-        ]);
+        $context = $this->buildGeoStreamContext();
         $response = @file_get_contents($apiUrl, false, $context);
         if (!$response) {
             return null;
@@ -1226,14 +1236,18 @@ HTML;
 
     private function fetchIpGeoFromIpApi(string $ip): ?array
     {
-        $apiUrl = 'http://ip-api.com/json/' . rawurlencode($ip)
-            . '?lang=zh-CN&fields=status,country,regionName,city,isp,org';
-        $context = stream_context_create([
-            'http' => [
-                'timeout' => 3
-            ]
-        ]);
-        $response = @file_get_contents($apiUrl, false, $context);
+        $apiUrls = [
+            'https://ip-api.com/json/' . rawurlencode($ip) . '?lang=zh-CN&fields=status,country,regionName,city,isp,org',
+            'http://ip-api.com/json/' . rawurlencode($ip) . '?lang=zh-CN&fields=status,country,regionName,city,isp,org'
+        ];
+        $context = $this->buildGeoStreamContext();
+        $response = null;
+        foreach ($apiUrls as $apiUrl) {
+            $response = @file_get_contents($apiUrl, false, $context);
+            if ($response) {
+                break;
+            }
+        }
         if (!$response) {
             return null;
         }
@@ -1254,11 +1268,7 @@ HTML;
     private function fetchIpGeoFromIpSb(string $ip): ?array
     {
         $apiUrl = 'https://api.ip.sb/geoip/' . rawurlencode($ip);
-        $context = stream_context_create([
-            'http' => [
-                'timeout' => 3
-            ]
-        ]);
+        $context = $this->buildGeoStreamContext();
         $response = @file_get_contents($apiUrl, false, $context);
         if (!$response) {
             return null;
