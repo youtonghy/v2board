@@ -101,6 +101,7 @@ class ConfigSave extends FormRequest
         'android_version' => '',
         'android_download_url' => '',
         'third_party_login_app_name' => 'nullable|string',
+        'third_party_login_redirect_uri_whitelist' => 'nullable|array',
         // safe
         'email_whitelist_enable' => 'in:0,1',
         'email_whitelist_suffix' => 'nullable|array',
@@ -124,6 +125,8 @@ class ConfigSave extends FormRequest
         'totp_enable' => 'in:0,1',
         'api_v1_disable' => 'in:0,1',
         'ip_no_log' => 'in:0,1',
+        'rate_limit_ip' => 'nullable|integer|min:0',
+        'rate_limit_gateway' => 'nullable|integer|min:0',
         // sso
         'sso_login_enable' => 'in:0,1',
         'sso_provider' => 'nullable|in:casdoor',

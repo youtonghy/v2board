@@ -5922,6 +5922,24 @@
                     checked: parseInt(_.ip_no_log || 0),
                     onChange: e=>this.set("safe", "ip_no_log", e ? 1 : 0)
                 })), f.a.createElement(m, {
+                    title: "IP\u901f\u7387\u9650\u5236(120s)",
+                    description: "\u6bcf\u4e2aIP\u5728120\u79d2\u5185\u5141\u8bb8\u7684\u8bf7\u6c42\u6b21\u6570\uff0c0\u8868\u793a\u4e0d\u9650\u5236\u3002"
+                }, f.a.createElement("input", {
+                    type: "number",
+                    className: "form-control",
+                    placeholder: "0",
+                    defaultValue: _.rate_limit_ip,
+                    onChange: e=>this.set("safe", "rate_limit_ip", e.target.value)
+                })), f.a.createElement(m, {
+                    title: "\u7f51\u5173\u901f\u7387\u9650\u5236(120s)",
+                    description: "\u9650\u5236 /api/v3/server \u7f51\u5173\u8bf7\u6c42\u9891\u7387\uff0c0\u8868\u793a\u4e0d\u9650\u5236\u3002"
+                }, f.a.createElement("input", {
+                    type: "number",
+                    className: "form-control",
+                    placeholder: "0",
+                    defaultValue: _.rate_limit_gateway,
+                    onChange: e=>this.set("safe", "rate_limit_gateway", e.target.value)
+                })), f.a.createElement(m, {
                     title: "\u540e\u53f0\u8def\u5f84",
                     description: "\u540e\u53f0\u7ba1\u7406\u8def\u5f84\uff0c\u4fee\u6539\u540e\u5c06\u4f1a\u6539\u53d8\u539f\u6709\u7684admin\u8def\u5f84"
                 }, f.a.createElement("input", {
@@ -6739,6 +6757,18 @@
                     placeholder: "Third-Party App",
                     defaultValue: w.third_party_login_app_name,
                     onChange: e=>this.set("app", "third_party_login_app_name", e.target.value)
+                })), f.a.createElement(m, {
+                    title: "Third-party Redirect Whitelist",
+                    description: "Allowed redirect_uri list, one per line or comma-separated."
+                }, f.a.createElement("textarea", {
+                    rows: "3",
+                    type: "text",
+                    className: "form-control",
+                    placeholder: "https://app.example.com/callback\nmyapp://callback",
+                    defaultValue: w.third_party_login_redirect_uri_whitelist,
+                    onChange: e=>this.set("app", "third_party_login_redirect_uri_whitelist", e.target.value.split(/\n|,/).map(function(e) {
+                        return e.trim()
+                    }).filter(Boolean))
                 })), f.a.createElement(m, {
                     title: "Windows",
                     description: "Windows\u7aef\u7248\u672c\u53f7\u53ca\u4e0b\u8f7d\u5730\u5740"
@@ -17384,6 +17414,9 @@ class E extends d.a.Component {
                                     return "string" === typeof (null === (t = o.data.invite) || void 0 === t ? void 0 : t.commission_withdraw_method) && (o.data.invite.commission_withdraw_method = o.data.invite.commission_withdraw_method.split(",")),
                                     "string" === typeof (null === (i = o.data.site) || void 0 === i ? void 0 : i.email_whitelist_suffix) && (o.data.site.email_whitelist_suffix = o.data.site.email_whitelist_suffix.split(",")),
                                     "string" === typeof (null === (i = o.data.site) || void 0 === i ? void 0 : i.subscribe_ua_whitelist) && (o.data.site.subscribe_ua_whitelist = o.data.site.subscribe_ua_whitelist.split(/\n|,/).map(function(e) {
+                                        return e.trim()
+                                    }).filter(Boolean)),
+                                    "string" === typeof (null === (i = o.data.app) || void 0 === i ? void 0 : i.third_party_login_redirect_uri_whitelist) && (o.data.app.third_party_login_redirect_uri_whitelist = o.data.app.third_party_login_redirect_uri_whitelist.split(/\n|,/).map(function(e) {
                                         return e.trim()
                                     }).filter(Boolean)),
                                     "string" === typeof (null === (j = o.data.deposit) || void 0 === j ? void 0 : j.deposit_bounus) && (o.data.deposit.deposit_bounus = o.data.deposit.deposit_bounus.split(",")),

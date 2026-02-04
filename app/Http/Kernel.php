@@ -73,7 +73,8 @@ class Kernel extends HttpKernel
         'staff' => \App\Http\Middleware\Staff::class,
         'log' => \App\Http\Middleware\RequestLog::class,
         'deny_api_v1' => \App\Http\Middleware\DenyApiV1::class,
-        'deny_api_v3_direct' => \App\Http\Middleware\DenyApiV3Direct::class
+        'deny_api_v3_direct' => \App\Http\Middleware\DenyApiV3Direct::class,
+        'dynamic_throttle' => \App\Http\Middleware\DynamicThrottle::class
     ];
 
     /**
