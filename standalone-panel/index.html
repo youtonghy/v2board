@@ -1019,14 +1019,17 @@
                 </div>
                 <div class="modal-body">
                     <div style="text-align: center; margin-bottom: 1.5rem;">
-                        <img :src="'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(totpData.otpauth)"
-                            alt="Scan me" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                        <input type="text"
+                            class="form-input"
+                            readonly
+                            :value="totpData.otpauth"
+                            style="font-size: 12px;"
+                            @click="$event.target.select()">
                     </div>
                     <p style="margin-bottom: 1rem; color: var(--text-color); opacity: 0.8; font-size: 0.9rem;">
-                        Scan the QR code with your authenticator app (Google Authenticator, Microsoft Authenticator,
-                        etc.)
+                        Add this account in your authenticator app.
                         <br>
-                        Or enter secret key: <strong x-text="totpData.secret" style="user-select: all;"></strong>
+                        Secret key: <strong x-text="totpData.secret" style="user-select: all;"></strong>
                     </p>
                     <div class="form-group">
                         <input type="text" x-model="totpVerifyCode" placeholder="Enter 6-digit code to verify"
