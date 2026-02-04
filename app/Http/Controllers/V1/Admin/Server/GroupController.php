@@ -57,31 +57,33 @@ class GroupController extends Controller
 
     public function drop(Request $request)
     {
-        if ($request->input('id')) {
-            $serverGroup = ServerGroup::find($request->input('id'));
-            if (!$serverGroup) {
-                abort(500, '组不存在');
-            }
+        $id = (int)$request->input('id');
+        if ($id <= 0) {
+            abort(500, '组不存在');
+        }
+        $serverGroup = ServerGroup::find($id);
+        if (!$serverGroup) {
+            abort(500, '组不存在');
         }
 
         $servers = ServerVmess::all();
         foreach ($servers as $server) {
-            if (in_array($request->input('id'), $server->group_id)) {
+            if (in_array($id, $server->group_id)) {
                 abort(500, '该组已被节点所使用，无法删除');
             }
         }
 
         $servers = ServerVless::all();
         foreach ($servers as $server) {
-            if (in_array($request->input('id'), $server->group_id)) {
+            if (in_array($id, $server->group_id)) {
                 abort(500, '该组已被节点所使用，无法删除');
             }
         }
 
-        if (Plan::where('group_id', $request->input('id'))->first()) {
+        if (Plan::where('group_id', $id)->first()) {
             abort(500, '该组已被订阅所使用，无法删除');
         }
-        if (User::where('group_id', $request->input('id'))->first()) {
+        if (User::where('group_id', $id)->first()) {
             abort(500, '该组已被用户所使用，无法删除');
         }
         return response([
