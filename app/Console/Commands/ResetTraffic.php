@@ -78,6 +78,7 @@ class ResetTraffic extends Command
                         case 3:
                             $builder = $this->buildResetBuilder($planIds, false);
                             $this->resetByYearFirstDay($builder);
+                            break;
                         // year expire day
                         case 4:
                             $builder = $this->buildResetBuilder($planIds, false);
