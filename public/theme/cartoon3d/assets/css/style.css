@@ -94,7 +94,7 @@
 }
 
 body {
-    font-family: 'Nunito', 'Comic Sans MS', 'Segoe UI', sans-serif;
+    font-family: 'Comic Sans MS', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
     background-color: var(--bg-color);
     color: var(--text-color);
     min-height: 100vh;
@@ -103,7 +103,6 @@ body {
 }
 
 /* Load fun font */
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
 
 img {
     max-width: 100%;
