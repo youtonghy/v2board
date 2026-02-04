@@ -36,7 +36,10 @@ class UserController extends Controller
     public function update(UserUpdate $request)
     {
         $params = $request->validated();
-        $user = User::find($request->input('id'));
+        $user = User::where('id', $request->input('id'))
+            ->where('is_admin', 0)
+            ->where('is_staff', 0)
+            ->first();
         if (!$user) {
             abort(500, '用户不存在');
         }
@@ -112,7 +115,9 @@ class UserController extends Controller
     {
         $sortType = in_array($request->input('sort_type'), ['ASC', 'DESC']) ? $request->input('sort_type') : 'DESC';
         $sort = $request->input('sort') ? $request->input('sort') : 'created_at';
-        $builder = User::orderBy($sort, $sortType);
+        $builder = User::where('is_admin', 0)
+            ->where('is_staff', 0)
+            ->orderBy($sort, $sortType);
         $this->filter($request, $builder);
         $users = $builder->get();
         foreach ($users as $user) {
@@ -137,7 +142,9 @@ class UserController extends Controller
     {
         $sortType = in_array($request->input('sort_type'), ['ASC', 'DESC']) ? $request->input('sort_type') : 'DESC';
         $sort = $request->input('sort') ? $request->input('sort') : 'created_at';
-        $builder = User::orderBy($sort, $sortType);
+        $builder = User::where('is_admin', 0)
+            ->where('is_staff', 0)
+            ->orderBy($sort, $sortType);
         $this->filter($request, $builder);
         try {
             $builder->update([
@@ -150,5 +157,33 @@ class UserController extends Controller
         return response([
             'data' => true
         ]);
+    }
+
+    private function filter(Request $request, $builder)
+    {
+        $filters = $request->input('filter');
+        if ($filters) {
+            foreach ($filters as $k => $filter) {
+                if ($filter['condition'] === '模糊') {
+                    $filter['condition'] = 'like';
+                    $filter['value'] = "%{$filter['value']}%";
+                }
+                if ($filter['key'] === 'd' || $filter['key'] === 'transfer_enable') {
+                    $filter['value'] = $filter['value'] * 1073741824;
+                }
+                if ($filter['key'] === 'invite_by_email') {
+                    $user = User::where('email', $filter['condition'], $filter['value'])->first();
+                    $inviteUserId = isset($user->id) ? $user->id : 0;
+                    $builder->where('invite_user_id', $inviteUserId);
+                    unset($filters[$k]);
+                    continue;
+                }
+                if ($filter['key'] === 'plan_id' && $filter['value'] == 'null') {
+                    $builder->whereNull('plan_id');
+                    continue;
+                }
+                $builder->where($filter['key'], $filter['condition'], $filter['value']);
+            }
+        }
     }
 }
