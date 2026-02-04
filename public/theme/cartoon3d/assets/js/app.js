@@ -947,9 +947,21 @@ document.addEventListener('alpine:init', () => {
 
         async disableTOTP() {
             if (!confirm('Are you sure you want to disable Two-Factor Authentication?')) return;
+            const codeInput = prompt('Please enter your 6-digit authenticator code');
+            if (!codeInput) {
+                return;
+            }
+            const code = codeInput.replace(/\s+/g, '');
+            if (code.length !== 6) {
+                this.showMessage('Please enter a valid 6-digit code');
+                return;
+            }
             this.loading = true;
             try {
-                const response = await this.request('/api/v3/user/disable2FA', { method: 'POST' });
+                const response = await this.request('/api/v3/user/disable2FA', {
+                    method: 'POST',
+                    body: JSON.stringify({ code })
+                });
                 if (!response) return;
                 const data = await response.json();
                 if (data.data) {

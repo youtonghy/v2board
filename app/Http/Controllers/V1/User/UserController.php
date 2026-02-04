@@ -581,6 +581,21 @@ class UserController extends Controller
     public function disable2FA(Request $request)
     {
         $user = User::find($request->user['id']);
+        if (!$user) {
+            abort(404, __('User not found'));
+        }
+        if ($user->two_factor_type === 'totp' && (int)$user->two_factor_verified === 1) {
+            $code = preg_replace('/\s+/', '', (string)$request->input('code'));
+            if ($code === '') {
+                abort(422, __('Invalid verification code'));
+            }
+            if (!$user->totp_secret) {
+                abort(500, __('Secret expired or invalid, please try again'));
+            }
+            if (!Google2FA::verifyKey($user->totp_secret, $code)) {
+                abort(500, __('Invalid verification code'));
+            }
+        }
         $user->two_factor_type = null;
         $user->totp_secret = null;
         $user->two_factor_verified = 0;
