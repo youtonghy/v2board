@@ -309,7 +309,8 @@ class ConfigController extends Controller
                 'macos_download_url' => config('v2board.macos_download_url'),
                 'android_version' => config('v2board.android_version'),
                 'android_download_url' => config('v2board.android_download_url'),
-                'third_party_login_app_name' => config('v2board.third_party_login_app_name', 'Third-Party App')
+                'third_party_login_app_name' => config('v2board.third_party_login_app_name', 'Third-Party App'),
+                'third_party_login_redirect_uri_whitelist' => config('v2board.third_party_login_redirect_uri_whitelist', [])
             ],
             'safe' => [
                 'email_verify' => (int)config('v2board.email_verify', 0),
@@ -333,7 +334,9 @@ class ConfigController extends Controller
                 'password_limit_expire' => config('v2board.password_limit_expire', 60),
                 'totp_enable' => (int)config('v2board.totp_enable', 0),
                 'api_v1_disable' => (int)config('v2board.api_v1_disable', 0),
-                'ip_no_log' => (int)config('v2board.ip_no_log', 0)
+                'ip_no_log' => (int)config('v2board.ip_no_log', 0),
+                'rate_limit_ip' => (int)config('v2board.rate_limit_ip', 0),
+                'rate_limit_gateway' => (int)config('v2board.rate_limit_gateway', 0)
             ]
         ];
         if ($key && isset($data[$key])) {

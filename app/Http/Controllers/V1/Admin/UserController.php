@@ -31,6 +31,7 @@ class UserController extends Controller
 
     private const THIRD_PARTY_APP_NAME = 'Third-Party App';
     private const THIRD_PARTY_LOGIN_TTL = 300;
+    private const THIRD_PARTY_LOGIN_CODE_TTL = 120;
     private const THIRD_PARTY_LOGIN_REDIRECT_MAX_LENGTH = 512;
 
     public function resetSecret(Request $request)
@@ -599,6 +600,48 @@ class UserController extends Controller
         return $this->handleThirdPartyLoginDecision($request, false);
     }
 
+    public function thirdPartyLoginExchange(Request $request)
+    {
+        $params = $request->validate([
+            'code' => 'required|string',
+            'redirect_uri' => 'required|string'
+        ]);
+
+        $code = trim((string)$params['code']);
+        if ($code === '') {
+            abort(422, 'code is required');
+        }
+
+        $redirectUri = $this->sanitizeThirdPartyRedirectUri($params['redirect_uri']);
+
+        $cacheKey = CacheKey::get('THIRD_PARTY_LOGIN_CODE', $code);
+        $payload = Cache::pull($cacheKey);
+        if (!$payload) {
+            abort(410, '授权码已过期');
+        }
+        if (!isset($payload['redirect_uri']) || $payload['redirect_uri'] !== $redirectUri) {
+            abort(422, 'redirect_uri is invalid');
+        }
+
+        $user = User::find($payload['user_id'] ?? null);
+        if (!$user) {
+            abort(404, '用户不存在');
+        }
+        if ($user->banned) {
+            abort(403, '账号已被封禁');
+        }
+
+        $authService = new AuthService($user);
+        $authData = $authService->generateAuthData($request);
+
+        return response([
+            'data' => [
+                'access_token' => $authData['auth_data'] ?? null,
+                'token_type' => 'bearer'
+            ]
+        ]);
+    }
+
     private function handleThirdPartyLoginDecision(Request $request, bool $approved)
     {
         $params = $request->validate([
@@ -626,19 +669,19 @@ class UserController extends Controller
 
         Cache::forget($cacheKey);
 
-        $accessToken = null;
-        $tokenType = null;
+        $authCode = null;
         $params = [
             'state' => $payload['state'] ?? null
         ];
 
         if ($approved) {
-            $authService = new AuthService($user);
-            $authData = $authService->generateAuthData($request);
-            $accessToken = $authData['auth_data'] ?? null;
-            $tokenType = 'bearer';
-            $params['access_token'] = $accessToken;
-            $params['token_type'] = $tokenType;
+            $authCode = Helper::guid();
+            Cache::put(CacheKey::get('THIRD_PARTY_LOGIN_CODE', $authCode), [
+                'user_id' => $user->id,
+                'redirect_uri' => $payload['redirect_uri'],
+                'created_at' => time()
+            ], self::THIRD_PARTY_LOGIN_CODE_TTL);
+            $params['code'] = $authCode;
         } else {
             $params['error'] = 'access_denied';
         }
@@ -648,8 +691,8 @@ class UserController extends Controller
         return response([
             'data' => [
                 'redirect_url' => $redirectUrl,
-                'access_token' => $accessToken,
-                'token_type' => $tokenType
+                'code' => $authCode,
+                'expires_in' => $approved ? self::THIRD_PARTY_LOGIN_CODE_TTL : null
             ]
         ]);
     }
@@ -693,7 +736,86 @@ class UserController extends Controller
             abort(422, 'redirect_uri is invalid');
         }
 
+        if (!$this->isThirdPartyRedirectAllowed($redirectUri)) {
+            abort(422, 'redirect_uri is not allowed');
+        }
+
         return $redirectUri;
+    }
+
+    private function isThirdPartyRedirectAllowed(string $redirectUri): bool
+    {
+        $whitelist = $this->getThirdPartyRedirectWhitelist();
+        if (empty($whitelist)) {
+            return $this->isRedirectSameOrigin($redirectUri);
+        }
+
+        foreach ($whitelist as $allowed) {
+            if ($allowed === '') {
+                continue;
+            }
+            if (stripos($allowed, '://') !== false) {
+                if (str_starts_with($redirectUri, $allowed)) {
+                    return true;
+                }
+                continue;
+            }
+            $host = parse_url($redirectUri, PHP_URL_HOST);
+            if (!$host) {
+                continue;
+            }
+            if (strcasecmp($host, $allowed) === 0) {
+                return true;
+            }
+            if (str_starts_with($allowed, '*.')) {
+                $domain = substr($allowed, 2);
+                if ($domain !== '' && $this->hostMatchesDomain($host, $domain)) {
+                    return true;
+                }
+                continue;
+            }
+            if ($this->hostMatchesDomain($host, $allowed)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function hostMatchesDomain(string $host, string $domain): bool
+    {
+        if (strcasecmp($host, $domain) === 0) {
+            return true;
+        }
+        return str_ends_with($host, '.' . $domain);
+    }
+
+    private function isRedirectSameOrigin(string $redirectUri): bool
+    {
+        $appUrl = config('v2board.app_url');
+        if (!$appUrl) {
+            return false;
+        }
+        $appHost = parse_url($appUrl, PHP_URL_HOST);
+        $redirectHost = parse_url($redirectUri, PHP_URL_HOST);
+        if (!$appHost || !$redirectHost) {
+            return false;
+        }
+        return strcasecmp($appHost, $redirectHost) === 0;
+    }
+
+    private function getThirdPartyRedirectWhitelist(): array
+    {
+        $whitelist = config('v2board.third_party_login_redirect_uri_whitelist', []);
+        if (is_string($whitelist)) {
+            $whitelist = preg_split('/[\r\n,]+/', $whitelist);
+        }
+        if (!is_array($whitelist)) {
+            return [];
+        }
+        return array_values(array_filter(array_map('trim', $whitelist), static function ($value) {
+            return $value !== '';
+        }));
     }
 
     private function buildThirdPartyLoginUrl(string $token, string $apiVersion): string

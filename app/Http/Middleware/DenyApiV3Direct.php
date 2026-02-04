@@ -27,6 +27,7 @@ class DenyApiV3Direct
             '/api/v3/passport/auth/thirdPartyLogin/init',
             '/api/v3/passport/auth/thirdPartyLogin/approve',
             '/api/v3/passport/auth/thirdPartyLogin/reject',
+            '/api/v3/passport/auth/thirdPartyLogin/exchange',
         ];
 
         if (in_array($path, $allowed, true)) {

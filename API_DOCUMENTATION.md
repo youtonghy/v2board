@@ -108,6 +108,7 @@ Content-Type: application/json
 - `/api/v3/passport/auth/thirdPartyLogin/init`
 - `/api/v3/passport/auth/thirdPartyLogin/approve`
 - `/api/v3/passport/auth/thirdPartyLogin/reject`
+- `/api/v3/passport/auth/thirdPartyLogin/exchange`
 
 # API V1
 
@@ -287,7 +288,7 @@ Content-Type: application/json
 
 ### 第三方应用跳转登录
 
-用途：第三方应用发起授权登录，用户在浏览器中登录并授权后跳转回应用并携带 access token。应用名称可在 `app/Http/Controllers/V1/Admin/UserController.php` 中调整。
+用途：第三方应用发起授权登录，用户在浏览器中登录并授权后跳转回应用并携带一次性授权码（code），应用再使用 code 换取 access token。`redirect_uri` 需在后台配置白名单中。
 
 V3 路径与 V1 保持一致，仅将 `/api/v1/` 替换为 `/api/v3/`，例如：`/api/v3/passport/auth/thirdPartyLogin/init`。  
 V3 已完整支持以下接口：  
@@ -295,13 +296,15 @@ V3 已完整支持以下接口：
 `/api/v3/passport/auth/thirdPartyLogin`  
 `/api/v3/passport/auth/thirdPartyLogin/approve`  
 `/api/v3/passport/auth/thirdPartyLogin/reject`  
+`/api/v3/passport/auth/thirdPartyLogin/exchange`  
 建议在 V3 中发起 `init`，返回的授权 URL 会对应 V3 版本的授权/回调流程。
 
 **流程说明：**
 1. 应用调用初始化接口获取授权页面 URL
 2. 浏览器打开授权页面 URL
 3. 用户登录后点击授权或拒绝
-4. 系统重定向到 `redirect_uri` 并附带 `access_token` 或 `error`
+4. 系统重定向到 `redirect_uri` 并附带 `code` 或 `error`
+5. 应用调用 `exchange` 接口用 `code` 换取 `access_token`
 
 **POST** `/api/v1/passport/auth/thirdPartyLogin/init`
 
@@ -343,7 +346,7 @@ V3 已完整支持以下接口：
 
 **POST** `/api/v1/passport/auth/thirdPartyLogin/approve`
 
-用途：授权登录并生成 access token
+用途：授权登录并生成一次性授权码
 
 **认证：** 需要 `authorization` Header（用户已登录）
 
@@ -356,9 +359,9 @@ V3 已完整支持以下接口：
 ```json
 {
   "data": {
-    "redirect_url": "应用回调 URL（包含 access_token）",
-    "access_token": "认证数据",
-    "token_type": "bearer"
+    "redirect_url": "应用回调 URL（包含 code）",
+    "code": "一次性授权码",
+    "expires_in": 120
   }
 }
 ```
@@ -386,8 +389,30 @@ V3 已完整支持以下接口：
 ```
 
 **回调参数说明：**
-- 授权成功：`access_token`、`token_type`、`state`
+- 授权成功：`code`、`state`
 - 授权拒绝：`error=access_denied`、`state`
+
+---
+
+**POST** `/api/v1/passport/auth/thirdPartyLogin/exchange`
+
+用途：使用授权码换取 access token
+
+**请求参数：**
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| code | string | 是 | 授权码 |
+| redirect_uri | string | 是 | 与 init/回调一致的地址 |
+
+**响应：**
+```json
+{
+  "data": {
+    "access_token": "认证数据",
+    "token_type": "bearer"
+  }
+}
+```
 
 ---
 

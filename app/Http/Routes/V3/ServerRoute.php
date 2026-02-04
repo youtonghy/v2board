@@ -9,7 +9,8 @@ class ServerRoute
     public function map(Registrar $router)
     {
         $router->group([
-            'prefix' => 'server'
+            'prefix' => 'server',
+            'middleware' => ['dynamic_throttle:gateway']
         ], function ($router) {
             $router->any('', function (Request $request) {
                 $payload = $request->json()->all();
