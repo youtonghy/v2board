@@ -12,8 +12,8 @@ class ServerRoute
             'prefix' => 'server',
             'middleware' => ['dynamic_throttle:gateway']
         ], function ($router) {
-            $router->any('', function (Request $request) {
-                $payload = $request->json()->all();
+            $router->post('', function (Request $request) {
+                $payload = $this->parseGatewayPayload($request);
                 $endpoint = $payload['endpoint'] ?? $request->input('endpoint');
                 if (is_string($endpoint) && $endpoint !== '') {
                     $endpoint = ltrim($endpoint, '/');
@@ -82,6 +82,24 @@ class ServerRoute
                 abort(422, 'endpoint is required');
             });
         });
+    }
+
+    private function parseGatewayPayload(Request $request): array
+    {
+        if ($request->isJson()) {
+            $content = $request->getContent();
+            if ($content !== '') {
+                $decoded = json_decode($content, true);
+                if (!is_array($decoded)) {
+                    abort(400, 'Invalid JSON');
+                }
+                return $decoded;
+            }
+            return [];
+        }
+
+        $payload = $request->all();
+        return is_array($payload) ? $payload : [];
     }
 
     private function normalizeParams(array $params): array
