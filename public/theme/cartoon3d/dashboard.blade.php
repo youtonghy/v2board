@@ -115,7 +115,7 @@
         })();
     </script>
     <link rel="stylesheet" href="/theme/{{$theme}}/assets/css/style.css?v={{$version}}">
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="/assets/vendor/alpinejs/alpine.min.js"></script>
     <script>
         window.settings = {
             title: '{{$title}}',
