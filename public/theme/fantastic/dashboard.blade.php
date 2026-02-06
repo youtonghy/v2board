@@ -476,6 +476,28 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="card today-traffic-card">
+                    <div class="today-traffic-header">
+                        <h3>今日统计</h3>
+                        <span class="today-traffic-loading" x-show="todayTrafficLoading">更新中...</span>
+                    </div>
+                    <div class="today-traffic-total">
+                        <span class="today-traffic-total-label">今日总流量</span>
+                        <span class="today-traffic-total-value" x-text="formatTrafficGb(todayTrafficOverview.total_usage_gb, todayTrafficOverview.unit)"></span>
+                    </div>
+                    <div class="today-traffic-podium">
+                        <template x-for="item in getTodayTrafficPodium()" :key="item.rank">
+                            <div :class="'podium-item podium-rank-' + item.rank + ' podium-' + item.medal">
+                                <div class="podium-rank" x-text="'#' + item.rank"></div>
+                                <div class="podium-name" x-text="item.name"></div>
+                                <div class="podium-bar">
+                                    <span class="podium-usage" x-text="formatTrafficGb(item.usage, todayTrafficOverview.unit)"></span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
             </div>
 
             <!-- Plan View -->
