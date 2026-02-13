@@ -126,6 +126,7 @@
         })();
     </script>
     <link rel="stylesheet" href="/theme/{{$theme}}/assets/css/style.css?v={{$version}}">
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl/dist/maplibre-gl.css">
     <script defer src="/assets/vendor/alpinejs/alpine.min.js"></script>
     <script>
         window.settings = {
@@ -527,6 +528,25 @@
             <!-- Servers View -->
             <div x-show="view === 'servers'" class="view-servers" style="display: none;">
                 <h2>Node List</h2>
+                <div class="card servers-map-card">
+                    <div class="servers-map-header">
+                        <div>
+                            <h3>World Node Map</h3>
+                            <p>Locations are resolved from two-letter country tags such as US.</p>
+                        </div>
+                        <div class="servers-map-stats">
+                            <span x-text="'Mapped: ' + (serverMap.matchedServers || 0)"></span>
+                            <span x-text="'Skipped: ' + (serverMap.skippedServers || 0)"></span>
+                        </div>
+                    </div>
+                    <div id="servers-world-map" class="servers-world-map"></div>
+                    <div class="servers-map-empty" x-show="!serverMap.ready">
+                        Loading world map...
+                    </div>
+                    <div class="servers-map-empty" x-show="serverMap.ready && !serverMap.hasMarkers">
+                        No valid country tags were found. Add two-letter tags like US to show markers.
+                    </div>
+                </div>
                 <div class="server-grid">
                     <template x-for="server in servers" :key="server.id">
                         <div class="server-card" 
@@ -1285,6 +1305,7 @@
     <div id="fantastic-custom-html" x-cloak>
         {!! $theme_config['custom_html'] !!}
     </div>
+    <script src="https://unpkg.com/maplibre-gl/dist/maplibre-gl.js"></script>
     <script src="/theme/{{$theme}}/assets/js/app.js?v={{$version}}"></script>
 </body>
 </html>
