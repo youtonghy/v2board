@@ -1,3 +1,108 @@
+const SERVERS_MAP_STYLE_URL = 'https://demotiles.maplibre.org/style.json';
+const SERVER_COUNTRY_COORDINATES = {
+    AE: [54.37, 24.45],
+    AR: [-64.19, -34.61],
+    AT: [14.13, 47.52],
+    AU: [133.78, -25.27],
+    BD: [90.36, 23.68],
+    BE: [4.47, 50.5],
+    BG: [25.49, 42.73],
+    BH: [50.56, 26.07],
+    BO: [-63.59, -16.29],
+    BR: [-51.92, -14.24],
+    BY: [27.95, 53.71],
+    CA: [-106.35, 56.13],
+    CH: [8.23, 46.82],
+    CL: [-71.54, -35.68],
+    CN: [104.2, 35.86],
+    CO: [-74.3, 4.57],
+    CR: [-83.75, 9.75],
+    CY: [33.43, 35.13],
+    CZ: [15.47, 49.82],
+    DE: [10.45, 51.17],
+    DK: [9.5, 56.26],
+    DO: [-70.16, 18.74],
+    DZ: [1.66, 28.03],
+    EC: [-78.18, -1.83],
+    EE: [25.01, 58.6],
+    EG: [30.8, 26.82],
+    ES: [-3.75, 40.46],
+    FI: [25.75, 61.92],
+    FR: [2.21, 46.23],
+    GB: [-3.44, 55.38],
+    GE: [43.36, 42.32],
+    GH: [-1.02, 7.95],
+    GR: [21.82, 39.07],
+    HK: [114.17, 22.32],
+    HR: [15.2, 45.1],
+    HU: [19.5, 47.16],
+    ID: [113.92, -0.79],
+    IE: [-8.24, 53.41],
+    IL: [34.85, 31.05],
+    IN: [78.96, 20.59],
+    IQ: [43.68, 33.22],
+    IR: [53.69, 32.43],
+    IS: [-19.02, 64.96],
+    IT: [12.57, 41.87],
+    JO: [36.24, 30.59],
+    JP: [138.25, 36.2],
+    KE: [37.91, -0.02],
+    KG: [74.77, 41.2],
+    KH: [104.99, 12.57],
+    KR: [127.77, 35.91],
+    KW: [47.48, 29.31],
+    KZ: [66.92, 48.02],
+    LA: [102.5, 19.86],
+    LB: [35.86, 33.85],
+    LK: [80.77, 7.87],
+    LT: [23.88, 55.17],
+    LU: [6.13, 49.82],
+    LV: [24.6, 56.88],
+    MA: [-7.09, 31.79],
+    MD: [28.37, 47.41],
+    MK: [21.75, 41.61],
+    MM: [95.96, 21.91],
+    MN: [103.85, 46.86],
+    MO: [113.54, 22.2],
+    MT: [14.38, 35.94],
+    MU: [57.55, -20.35],
+    MX: [-102.55, 23.63],
+    MY: [101.98, 4.21],
+    NG: [8.68, 9.08],
+    NL: [5.29, 52.13],
+    NO: [8.47, 60.47],
+    NP: [84.12, 28.39],
+    NZ: [174.89, -40.9],
+    OM: [55.92, 21.47],
+    PA: [-80.78, 8.54],
+    PE: [-75.02, -9.19],
+    PH: [121.77, 12.88],
+    PK: [69.35, 30.38],
+    PL: [19.15, 51.92],
+    PT: [-8.22, 39.4],
+    PY: [-58.44, -23.44],
+    QA: [51.18, 25.35],
+    RO: [24.97, 45.94],
+    RS: [21.01, 44.02],
+    RU: [105.32, 61.52],
+    SA: [45.08, 23.89],
+    SE: [18.64, 60.13],
+    SG: [103.82, 1.35],
+    SI: [14.99, 46.15],
+    SK: [19.7, 48.67],
+    TH: [100.99, 15.87],
+    TN: [9.54, 33.89],
+    TR: [35.24, 38.96],
+    TW: [120.96, 23.7],
+    UA: [31.17, 48.38],
+    US: [-98.58, 39.83],
+    UY: [-55.77, -32.52],
+    UZ: [64.59, 41.38],
+    VE: [-66.59, 6.42],
+    VN: [108.28, 14.06],
+    ZA: [22.94, -30.56]
+};
+
 document.addEventListener('alpine:init', () => {
     Alpine.data('app', () => ({
         view: 'dashboard',
@@ -40,6 +145,19 @@ document.addEventListener('alpine:init', () => {
             currentArticle: null
         },
         servers: [],
+        serverMap: {
+            map: null,
+            ready: false,
+            markers: [],
+            popup: null,
+            initialized: false,
+            hasMarkers: false,
+            matchedServers: 0,
+            skippedServers: 0,
+            retryTimer: null,
+            resizeTimer: null,
+            resizeHandler: null
+        },
         notices: [],
         showNotices: true,
         noticeModalOpen: false,
@@ -384,6 +502,13 @@ document.addEventListener('alpine:init', () => {
                 }
                 if (value === 'dashboard' && !this.todayTrafficLoaded && !this.todayTrafficLoading) {
                     this.fetchTodayTrafficOverview();
+                }
+                if (value === 'servers') {
+                    this.refreshServersMap(true);
+                } else {
+                    this.closeServersMapPopup();
+                    clearTimeout(this.serverMap.retryTimer);
+                    clearTimeout(this.serverMap.resizeTimer);
                 }
                 if (value !== 'login') {
                     this.captcha.loginRequested = false;
@@ -907,10 +1032,226 @@ document.addEventListener('alpine:init', () => {
                             online: online !== null ? online : true
                         };
                     });
+                    if (this.view === 'servers') {
+                        this.$nextTick(() => this.refreshServersMap());
+                    }
                 }
             } catch (error) {
                 console.error('Error fetching servers:', error);
             }
+        },
+
+        isServersMapLibReady() {
+            return !!(window.maplibregl && typeof window.maplibregl.Map === 'function');
+        },
+
+        refreshServersMap(forceResize = false) {
+            if (this.view !== 'servers') return;
+
+            if (!this.isServersMapLibReady()) {
+                clearTimeout(this.serverMap.retryTimer);
+                this.serverMap.retryTimer = setTimeout(() => this.refreshServersMap(forceResize), 300);
+                return;
+            }
+
+            if (!this.initServersMap()) return;
+
+            if (forceResize) {
+                clearTimeout(this.serverMap.resizeTimer);
+                this.serverMap.resizeTimer = setTimeout(() => {
+                    if (!this.serverMap.map) return;
+                    this.serverMap.map.resize();
+                    this.renderServersMapMarkers();
+                }, 80);
+                return;
+            }
+
+            this.renderServersMapMarkers();
+        },
+
+        initServersMap() {
+            if (this.serverMap.initialized && this.serverMap.map) return true;
+
+            const container = document.getElementById('servers-world-map');
+            if (!container) return false;
+
+            this.serverMap.map = new window.maplibregl.Map({
+                container,
+                style: SERVERS_MAP_STYLE_URL,
+                center: [12, 18],
+                zoom: 1.15,
+                minZoom: 1,
+                maxZoom: 7,
+                attributionControl: true,
+                dragRotate: false,
+                pitchWithRotate: false,
+                renderWorldCopies: true
+            });
+            this.serverMap.initialized = true;
+            this.serverMap.ready = false;
+
+            this.serverMap.map.addControl(new window.maplibregl.NavigationControl({
+                showCompass: false
+            }), 'top-right');
+            this.serverMap.map.touchZoomRotate.disableRotation();
+            this.serverMap.map.on('load', () => {
+                this.serverMap.ready = true;
+                this.serverMap.map.resize();
+                this.renderServersMapMarkers();
+            });
+            this.serverMap.map.on('click', () => this.closeServersMapPopup());
+            this.serverMap.map.on('error', (event) => {
+                console.error('World map render error:', event?.error || event);
+            });
+
+            if (!this.serverMap.resizeHandler) {
+                this.serverMap.resizeHandler = () => {
+                    if (this.view !== 'servers' || !this.serverMap.map) return;
+                    this.serverMap.map.resize();
+                };
+                window.addEventListener('resize', this.serverMap.resizeHandler);
+            }
+
+            return true;
+        },
+
+        clearServersMapMarkers() {
+            if (!Array.isArray(this.serverMap.markers)) {
+                this.serverMap.markers = [];
+            }
+            this.serverMap.markers.forEach((marker) => marker.remove());
+            this.serverMap.markers = [];
+            this.serverMap.hasMarkers = false;
+            this.closeServersMapPopup();
+        },
+
+        closeServersMapPopup() {
+            if (!this.serverMap.popup) return;
+            this.serverMap.popup.remove();
+            this.serverMap.popup = null;
+        },
+
+        extractCountryCodeFromTags(server) {
+            const tags = Array.isArray(server?.tags) ? server.tags : [];
+            for (let i = 0; i < tags.length; i += 1) {
+                if (typeof tags[i] !== 'string') continue;
+                const candidate = tags[i].trim().toUpperCase();
+                if (/^[A-Z]{2}$/.test(candidate)) {
+                    return candidate;
+                }
+            }
+            return null;
+        },
+
+        buildServerCountryBuckets() {
+            const buckets = {};
+            const servers = Array.isArray(this.servers) ? this.servers : [];
+            let matchedServers = 0;
+            let skippedServers = 0;
+
+            servers.forEach((server) => {
+                const countryCode = this.extractCountryCodeFromTags(server);
+                if (!countryCode || !SERVER_COUNTRY_COORDINATES[countryCode]) {
+                    skippedServers += 1;
+                    return;
+                }
+                if (!buckets[countryCode]) {
+                    buckets[countryCode] = [];
+                }
+                buckets[countryCode].push(server);
+                matchedServers += 1;
+            });
+
+            return {
+                buckets,
+                matchedServers,
+                skippedServers
+            };
+        },
+
+        escapeServerMapHtml(value) {
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        },
+
+        buildServerMapTooltipHtml(countryCode, nodes) {
+            const list = nodes.map((node) => {
+                const nodeName = this.escapeServerMapHtml(node?.name || 'Unnamed Node');
+                return `<li class="servers-map-tooltip-item">${nodeName}</li>`;
+            }).join('');
+            const countLabel = `${nodes.length} node${nodes.length > 1 ? 's' : ''}`;
+            return `
+                <div class="servers-map-tooltip">
+                    <div class="servers-map-tooltip-title">${countryCode}</div>
+                    <div class="servers-map-tooltip-subtitle">${countLabel}</div>
+                    <ul class="servers-map-tooltip-list">${list}</ul>
+                </div>
+            `;
+        },
+
+        renderServersMapMarkers() {
+            if (!this.serverMap.map || !this.serverMap.ready) return;
+
+            this.clearServersMapMarkers();
+            const { buckets, matchedServers, skippedServers } = this.buildServerCountryBuckets();
+            this.serverMap.matchedServers = matchedServers;
+            this.serverMap.skippedServers = skippedServers;
+
+            Object.keys(buckets).forEach((countryCode) => {
+                const coords = SERVER_COUNTRY_COORDINATES[countryCode];
+                if (!coords) return;
+
+                const nodes = buckets[countryCode];
+                const markerEl = document.createElement('button');
+                markerEl.type = 'button';
+                markerEl.className = 'server-country-marker';
+                markerEl.setAttribute('data-country', countryCode);
+                markerEl.setAttribute('aria-label', `${countryCode} (${nodes.length} nodes)`);
+
+                if (nodes.length > 1) {
+                    const countEl = document.createElement('span');
+                    countEl.className = 'server-country-marker-count';
+                    countEl.textContent = String(nodes.length);
+                    markerEl.appendChild(countEl);
+                }
+
+                const marker = new window.maplibregl.Marker({
+                    element: markerEl,
+                    anchor: 'center'
+                })
+                    .setLngLat(coords)
+                    .addTo(this.serverMap.map);
+
+                const showPopup = () => {
+                    this.closeServersMapPopup();
+                    this.serverMap.popup = new window.maplibregl.Popup({
+                        closeButton: false,
+                        closeOnClick: false,
+                        offset: 14,
+                        className: 'servers-map-popup'
+                    })
+                        .setLngLat(coords)
+                        .setHTML(this.buildServerMapTooltipHtml(countryCode, nodes))
+                        .addTo(this.serverMap.map);
+                };
+
+                markerEl.addEventListener('mouseenter', showPopup);
+                markerEl.addEventListener('focus', showPopup);
+                markerEl.addEventListener('mouseleave', () => this.closeServersMapPopup());
+                markerEl.addEventListener('blur', () => this.closeServersMapPopup());
+                markerEl.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    showPopup();
+                });
+
+                this.serverMap.markers.push(marker);
+            });
+
+            this.serverMap.hasMarkers = this.serverMap.markers.length > 0;
         },
 
         async fetchTraffics() {
