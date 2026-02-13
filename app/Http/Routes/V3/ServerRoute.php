@@ -86,19 +86,31 @@ class ServerRoute
 
     private function parseGatewayPayload(Request $request): array
     {
-        if ($request->isJson()) {
-            $content = $request->getContent();
-            if ($content !== '') {
-                $decoded = json_decode($content, true);
-                if (!is_array($decoded)) {
-                    abort(400, 'Invalid JSON');
-                }
+        $content = (string) $request->getContent();
+        if ($content !== '') {
+            $decoded = json_decode($content, true);
+            if (is_array($decoded)) {
                 return $decoded;
             }
-            return [];
+            if ($request->isJson()) {
+                abort(400, 'Invalid JSON');
+            }
         }
 
         $payload = $request->all();
+        if (
+            is_array($payload) &&
+            count($payload) === 1 &&
+            array_values($payload)[0] === ''
+        ) {
+            $rawKey = (string) array_key_first($payload);
+            if ($rawKey !== '') {
+                $decodedKey = json_decode($rawKey, true);
+                if (is_array($decodedKey)) {
+                    return $decodedKey;
+                }
+            }
+        }
         return is_array($payload) ? $payload : [];
     }
 
