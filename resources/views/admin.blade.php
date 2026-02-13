@@ -194,7 +194,10 @@
                             this.__v2b_gw = {
                                 route: route,
                                 originalMethod: (method || 'GET').toUpperCase(),
-                                originalUrl: url
+                                originalUrl: url,
+                                originalAsync: (typeof async === 'undefined') ? true : async,
+                                originalUser: user,
+                                originalPassword: password
                             };
                             return originalOpen.call(this, 'POST', gatewayPath, async, user, password);
                         }
@@ -245,8 +248,23 @@
                         } else if (typeof URLSearchParams !== 'undefined' && body instanceof URLSearchParams) {
                             body.forEach(function (value, key) { params[key] = value; });
                         } else if (body != null) {
-                            // Unknown body type (Blob/ArrayBuffer/etc), avoid rewriting to prevent data loss.
+                            // Unknown body type (Blob/ArrayBuffer/etc), fall back to original URL request.
                             this.__v2b_gw = null;
+                            try {
+                                originalOpen.call(
+                                    this,
+                                    meta.originalMethod,
+                                    meta.originalUrl,
+                                    meta.originalAsync,
+                                    meta.originalUser,
+                                    meta.originalPassword
+                                );
+                                var preservedHeaders = this.__v2b_headers || {};
+                                Object.keys(preservedHeaders).forEach(function (key) {
+                                    if (!key) return;
+                                    originalSetHeader.call(this, key, preservedHeaders[key]);
+                                }, this);
+                            } catch (e) {}
                             return originalSend.call(this, body);
                         }
 
