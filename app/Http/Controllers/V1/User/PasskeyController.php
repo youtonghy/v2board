@@ -26,7 +26,8 @@ class PasskeyController extends Controller
         $user = $this->resolveCurrentUser($request);
         $params = $request->validate([
             'credential' => 'required|array',
-            'credential.id' => 'required|string',
+            'credential.id' => 'nullable|string',
+            'credential.rawId' => 'nullable|string',
             'credential.response' => 'required|array',
             'credential.response.clientDataJSON' => 'required|string',
             'credential.response.attestationObject' => 'required|string',

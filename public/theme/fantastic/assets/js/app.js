@@ -2111,7 +2111,9 @@ document.addEventListener('alpine:init', () => {
         },
 
         encodeBufferToBase64Url(value) {
-            const bytes = value instanceof ArrayBuffer ? new Uint8Array(value) : new Uint8Array(value.buffer);
+            const bytes = value instanceof ArrayBuffer
+                ? new Uint8Array(value)
+                : new Uint8Array(value.buffer, value.byteOffset || 0, value.byteLength || value.length || 0);
             let binary = '';
             bytes.forEach((byte) => {
                 binary += String.fromCharCode(byte);
@@ -2119,7 +2121,53 @@ document.addEventListener('alpine:init', () => {
             return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
         },
 
+        encodeMaybeBuffer(value) {
+            if (!value) return null;
+            if (value instanceof ArrayBuffer || ArrayBuffer.isView(value)) {
+                return this.encodeBufferToBase64Url(value);
+            }
+            if (typeof value === 'string') {
+                return value;
+            }
+            return null;
+        },
+
         publicKeyCredentialToJSON(value) {
+            if (value && typeof value === 'object' && value.response) {
+                const response = value.response || {};
+                const out = {
+                    id: value.id || this.encodeMaybeBuffer(value.rawId),
+                    rawId: this.encodeMaybeBuffer(value.rawId),
+                    type: value.type || 'public-key',
+                    response: {
+                        clientDataJSON: this.encodeMaybeBuffer(response.clientDataJSON),
+                        attestationObject: this.encodeMaybeBuffer(response.attestationObject),
+                        authenticatorData: this.encodeMaybeBuffer(response.authenticatorData),
+                        signature: this.encodeMaybeBuffer(response.signature),
+                        userHandle: this.encodeMaybeBuffer(response.userHandle)
+                    }
+                };
+
+                if (typeof response.getTransports === 'function') {
+                    try {
+                        out.response.transports = response.getTransports();
+                    } catch (e) {}
+                } else if (Array.isArray(response.transports)) {
+                    out.response.transports = response.transports;
+                }
+
+                if (typeof value.getClientExtensionResults === 'function') {
+                    try {
+                        out.clientExtensionResults = value.getClientExtensionResults();
+                    } catch (e) {}
+                }
+
+                if (value.authenticatorAttachment) {
+                    out.authenticatorAttachment = value.authenticatorAttachment;
+                }
+                return out;
+            }
+
             if (value instanceof ArrayBuffer) {
                 return this.encodeBufferToBase64Url(value);
             }
