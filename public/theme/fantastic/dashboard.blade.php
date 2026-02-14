@@ -547,18 +547,24 @@
                         No valid country tags were found. Add two-letter tags like US to show markers.
                     </div>
                 </div>
-                <div class="server-grid">
-                    <template x-for="server in servers" :key="server.id">
-                        <div class="server-card" 
-                             :class="{ 'server-offline': !server.online }"
-                             @click="openServerModal(server)">
-                            <div class="server-card-header">
-                                <span class="server-name" x-text="server.name"></span>
+                <div class="servers-node-section">
+                    <div class="servers-node-header">
+                        <h3>Node Cards</h3>
+                        <span x-text="'Total: ' + (servers.length || 0)"></span>
+                    </div>
+                    <div class="server-grid">
+                        <template x-for="server in servers" :key="server.id">
+                            <div class="server-card" 
+                                 :class="{ 'server-offline': !server.online }"
+                                 @click="openServerModal(server)">
+                                <div class="server-card-header">
+                                    <span class="server-name" x-text="server.name"></span>
+                                </div>
                             </div>
+                        </template>
+                        <div class="server-empty" x-show="servers.length === 0">
+                            No servers available.
                         </div>
-                    </template>
-                    <div class="server-empty" x-show="servers.length === 0">
-                        No servers available.
                     </div>
                 </div>
             </div>
