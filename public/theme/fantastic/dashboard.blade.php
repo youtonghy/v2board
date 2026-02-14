@@ -384,16 +384,10 @@
 
             <!-- Notices Modal/Banner -->
             <div x-show="notices.length > 0 && view === 'dashboard' && showNotices" class="card notice-card">
-                <div class="notice-card-header">
-                    <h3>Announcements</h3>
-                    <div class="notice-actions">
-                        <span class="notice-count" x-text="notices.length + ' updates'"></span>
-                        <button class="notice-dismiss" @click="dismissNotices()" aria-label="Dismiss announcements">
-                            &times;
-                        </button>
-                    </div>
-                </div>
                 <div class="notice-slider" aria-label="Announcements" @mouseenter="noticeSliderHovered = true; stopNoticeAutoplay()" @mouseleave="noticeSliderHovered = false; startNoticeAutoplay()">
+                    <button class="notice-dismiss notice-dismiss-floating" @click="dismissNotices()" aria-label="Dismiss announcements">
+                        &times;
+                    </button>
                     <button
                         type="button"
                         class="notice-slide-card"
