@@ -1,4 +1,21 @@
-const SERVERS_MAP_STYLE_URL = 'https://demotiles.maplibre.org/style.json';
+const SERVERS_MAP_STYLE = {
+    version: 8,
+    sources: {
+        osm: {
+            type: 'raster',
+            tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+            tileSize: 256,
+            attribution: '&copy; OpenStreetMap contributors'
+        }
+    },
+    layers: [
+        {
+            id: 'osm',
+            type: 'raster',
+            source: 'osm'
+        }
+    ]
+};
 const SERVER_COUNTRY_COORDINATES = {
     AE: [54.37, 24.45],
     AR: [-64.19, -34.61],
@@ -151,6 +168,7 @@ document.addEventListener('alpine:init', () => {
             markers: [],
             popup: null,
             initialized: false,
+            loadFailed: false,
             hasMarkers: false,
             matchedServers: 0,
             skippedServers: 0,
@@ -1077,7 +1095,7 @@ document.addEventListener('alpine:init', () => {
 
             this.serverMap.map = new window.maplibregl.Map({
                 container,
-                style: SERVERS_MAP_STYLE_URL,
+                style: SERVERS_MAP_STYLE,
                 center: [12, 18],
                 zoom: 1.15,
                 minZoom: 1,
@@ -1089,6 +1107,7 @@ document.addEventListener('alpine:init', () => {
             });
             this.serverMap.initialized = true;
             this.serverMap.ready = false;
+            this.serverMap.loadFailed = false;
 
             this.serverMap.map.addControl(new window.maplibregl.NavigationControl({
                 showCompass: false
@@ -1102,6 +1121,9 @@ document.addEventListener('alpine:init', () => {
             this.serverMap.map.on('click', () => this.closeServersMapPopup());
             this.serverMap.map.on('error', (event) => {
                 console.error('World map render error:', event?.error || event);
+                // Avoid blocking the whole section in loading state when map style/tiles fail.
+                this.serverMap.loadFailed = true;
+                this.serverMap.ready = true;
             });
 
             if (!this.serverMap.resizeHandler) {
@@ -2098,6 +2120,20 @@ document.addEventListener('alpine:init', () => {
         openServerModal(server) {
             this.selectedServer = server;
             this.serverModalOpen = true;
+        },
+
+        getServerTags(server) {
+            if (!server) return [];
+            const tags = server.tags;
+            if (Array.isArray(tags)) {
+                return tags
+                    .filter((tag) => typeof tag === 'string' && tag.trim())
+                    .map((tag) => tag.trim());
+            }
+            if (typeof tags === 'string' && tags.trim()) {
+                return [tags.trim()];
+            }
+            return [];
         },
 
         async redeemCode() {
