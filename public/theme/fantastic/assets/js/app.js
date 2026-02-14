@@ -2714,19 +2714,19 @@ document.addEventListener('alpine:init', () => {
             const ranking = [
                 {
                     rank: 1,
-                    name: '小童',
+                    name: 'Kid',
                     usage: this.normalizeTrafficGb(topUsage[0]),
                     medal: 'gold'
                 },
                 {
                     rank: 2,
-                    name: '小梯',
+                    name: 'Ladder',
                     usage: this.normalizeTrafficGb(topUsage[1]),
                     medal: 'silver'
                 },
                 {
                     rank: 3,
-                    name: '小墙',
+                    name: 'Wall',
                     usage: this.normalizeTrafficGb(topUsage[2]),
                     medal: 'bronze'
                 }
