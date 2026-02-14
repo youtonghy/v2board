@@ -96,6 +96,36 @@ run_step() {
   log_step "${label} done ($((SECONDS - start_ts))s)"
 }
 
+ensure_php_class_package() {
+  local fqcn="$1"
+  local package="$2"
+  local constraint="${3:-}"
+  local package_file="${4:-}"
+
+  local should_require=0
+  if [ -n "$package_file" ] && [ ! -f "$package_file" ]; then
+    should_require=1
+  fi
+
+  if [ "$should_require" = "0" ]; then
+    if php -r "require 'vendor/autoload.php'; exit(class_exists('${fqcn}') ? 0 : 1);" >/dev/null 2>&1; then
+      return 0
+    fi
+    should_require=1
+  fi
+
+  local require_target="$package"
+  if [ -n "$constraint" ]; then
+    require_target="${package}:${constraint}"
+  fi
+
+  local require_args=(require "$require_target" --no-interaction --no-progress --with-all-dependencies)
+  if [ "${composer_no_dev:-1}" = "1" ]; then
+    require_args+=(--update-no-dev)
+  fi
+  run_step "Composer require ${package}" "${composer_cmd[@]}" "${require_args[@]}"
+}
+
 composer_cmd=()
 if command -v composer &>/dev/null; then
   composer_cmd=(composer)
@@ -122,6 +152,7 @@ if [ "$composer_no_dev" = "1" ]; then
   composer_args+=(--no-dev)
 fi
 run_step "Composer ${composer_args[0]}" "${composer_cmd[@]}" "${composer_args[@]}"
+ensure_php_class_package "lbuchs\\WebAuthn\\WebAuthn" "lbuchs/webauthn" "^2.2" "vendor/lbuchs/webauthn/src/WebAuthn.php"
 
 if [ "$skip_migrate" != "1" ]; then
   run_step "php artisan migrate --force" php artisan migrate --force
