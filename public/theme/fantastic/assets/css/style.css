@@ -1298,6 +1298,34 @@ h3 {
     padding: 0.8rem 1.25rem 1rem;
 }
 
+.servers-node-section {
+    margin-top: 1rem;
+}
+
+.servers-node-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 0.75rem;
+}
+
+.servers-node-header h3 {
+    margin: 0;
+    font-size: 1.02rem;
+}
+
+.servers-node-header span {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.24rem 0.68rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    background: rgba(79, 156, 255, 0.12);
+    color: var(--text-color);
+}
+
 .server-country-marker {
     width: 14px;
     height: 14px;
@@ -3040,6 +3068,11 @@ h3 {
 
     .servers-world-map {
         height: 300px;
+    }
+
+    .servers-node-header {
+        flex-direction: column;
+        align-items: flex-start;
     }
 
     /* Auth buttons mobile */
