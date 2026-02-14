@@ -556,7 +556,7 @@ img {
     border-radius: 10px;
     overflow: hidden;
     border: 1px solid var(--border-color);
-    aspect-ratio: 16 / 9;
+    aspect-ratio: 1 / 1;
     width: 100%;
     align-self: center;
     background: var(--muted-bg);
@@ -2587,7 +2587,7 @@ h3 {
     }
 
     .notice-slide-image {
-        aspect-ratio: 16 / 9;
+        aspect-ratio: 1 / 1;
     }
 
     .notice-dismiss-floating {
@@ -2803,7 +2803,7 @@ h3 {
     }
 
     .notice-slide-image {
-        aspect-ratio: 16 / 9;
+        aspect-ratio: 1 / 1;
     }
 
     .notice-nav-btn {
