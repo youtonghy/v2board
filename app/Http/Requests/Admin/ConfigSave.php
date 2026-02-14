@@ -123,6 +123,7 @@ class ConfigSave extends FormRequest
         'password_limit_count' => 'integer',
         'password_limit_expire' => 'integer',
         'totp_enable' => 'in:0,1',
+        'passkey_login_enable' => 'in:0,1',
         'api_v1_disable' => 'in:0,1',
         'ip_no_log' => 'in:0,1',
         'rate_limit_ip' => 'nullable|integer|min:0',

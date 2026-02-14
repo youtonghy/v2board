@@ -31,6 +31,10 @@ class UserRoute
             $router->post('/removeActiveSession', 'V1\\User\\UserController@removeActiveSession');
             $router->get ('/sso/init', 'V1\\Passport\\SsoController@bindInit');
             $router->get ('/sso/unbind', 'V1\\User\\UserController@unbindSso');
+            $router->post('/passkey/register/options', 'V1\\User\\PasskeyController@registerOptions');
+            $router->post('/passkey/register/verify', 'V1\\User\\PasskeyController@registerVerify');
+            $router->get ('/passkey/list', 'V1\\User\\PasskeyController@fetch');
+            $router->post('/passkey/delete', 'V1\\User\\PasskeyController@remove');
             // Order
             $router->post('/order/save', 'V1\\User\\OrderController@save');
             $router->post('/order/checkout', 'V1\\User\\OrderController@checkout');

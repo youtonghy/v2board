@@ -180,6 +180,8 @@ class ServerRoute
             'passport/auth/login2FA',
             'passport/auth/loginWithTelegram',
             'passport/auth/loginWithMailLink',
+            'passport/auth/passkey/login/options',
+            'passport/auth/passkey/login/verify',
             'passport/auth/checkTelegramLogin',
             'passport/auth/token2Login',
             'passport/auth/sso/init',

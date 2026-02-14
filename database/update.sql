@@ -38,6 +38,25 @@ ADD `two_factor_verified` tinyint(1) NOT NULL DEFAULT '0';
 ALTER TABLE `v2_user`
 ADD `totp_secret` varchar(255) NULL DEFAULT NULL;
 
+CREATE TABLE `v2_user_passkey` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `credential_id` varchar(255) NOT NULL,
+  `public_key` longtext NOT NULL,
+  `sign_count` bigint(20) unsigned NOT NULL DEFAULT '0',
+  `transports` varchar(255) DEFAULT NULL,
+  `name` varchar(64) DEFAULT NULL,
+  `aaguid` varchar(64) DEFAULT NULL,
+  `is_multi_device` tinyint(1) NOT NULL DEFAULT '0',
+  `is_backup_eligible` tinyint(1) NOT NULL DEFAULT '0',
+  `last_used_at` int(11) DEFAULT NULL,
+  `created_at` int(11) NOT NULL,
+  `updated_at` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `v2_user_passkey_credential_unique` (`credential_id`),
+  KEY `v2_user_passkey_user_id_index` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE `v2_notice` (
   `id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `title` varchar(255) NOT NULL,
