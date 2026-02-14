@@ -46,6 +46,7 @@ class CacheKey
         'TWO_FACTOR_LOGIN' => '双重验证登录',
         'THIRD_PARTY_LOGIN_REQUEST' => '第三方登录请求',
         'PASSKEY_REGISTER_CHALLENGE' => 'Passkey注册挑战',
+        'PASSKEY_REGISTER_CHALLENGE_TOKEN' => 'Passkey注册挑战令牌',
         'PASSKEY_LOGIN_CHALLENGE' => 'Passkey登录挑战'
     ];
 
