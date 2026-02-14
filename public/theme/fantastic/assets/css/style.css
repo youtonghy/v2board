@@ -3274,6 +3274,119 @@ h3 {
     }
 }
 
+/* Site Footer */
+.site-footer {
+    margin: 2rem 0 1.5rem;
+}
+
+.site-footer .container {
+    display: block;
+}
+
+.site-footer-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-dark), var(--shadow-light);
+}
+
+.site-footer-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.site-footer-logo {
+    width: auto;
+    height: 32px;
+    filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.site-footer-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    text-shadow: var(--logo-text-shadow);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.site-footer-links {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.site-footer-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    color: var(--text-color);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.22s ease;
+}
+
+.site-footer-link:hover,
+.site-footer-link.active {
+    color: var(--primary-color);
+    background: var(--card-bg);
+    box-shadow: inset 5px 5px 10px rgba(var(--neu-shadow-dark-rgb), 0.55),
+        inset -5px -5px 10px rgba(var(--neu-shadow-light-rgb), 0.8);
+}
+
+.site-footer-link:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+@media (max-width: 768px) {
+    .site-footer {
+        margin-top: 1.5rem;
+        margin-bottom: calc(90px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .site-footer-inner {
+        padding: 0.9rem 1rem;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .site-footer-links {
+        width: 100%;
+        justify-content: flex-start;
+        gap: 0.5rem;
+    }
+
+    .site-footer-link {
+        min-height: 36px;
+        font-size: 0.84rem;
+        padding: 8px 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .site-footer-title {
+        font-size: 0.95rem;
+    }
+
+    .site-footer-logo {
+        height: 28px;
+    }
+}
+
 /* Desktop specific - show desktop nav */
 @media (min-width: 769px) {
     .mobile-nav {

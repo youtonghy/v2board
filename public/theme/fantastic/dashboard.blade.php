@@ -1140,6 +1140,46 @@
             </div>
         </main>
 
+        <!-- Site Footer -->
+        <footer class="site-footer" x-show="!['login', 'register'].includes(view)" style="display: none;">
+            <div class="container">
+                <div class="site-footer-inner">
+                    <div class="site-footer-brand">
+                        @if($logo)
+                            <img src="{{$logo}}" alt="{{$title}}" class="site-footer-logo">
+                        @endif
+                        <span class="site-footer-title">{{$title}}</span>
+                    </div>
+                    <nav class="site-footer-links" aria-label="Quick links">
+                        <a href="#/dashboard"
+                           class="site-footer-link"
+                           :class="{ 'active': ['dashboard', 'servers', 'transfer'].includes(view) }"
+                           :aria-current="['dashboard', 'servers', 'transfer'].includes(view) ? 'page' : 'false'"
+                           aria-label="Go to dashboard"
+                           @click.prevent="view = 'dashboard'">/dashboard</a>
+                        <a href="#/plan"
+                           class="site-footer-link"
+                           :class="{ 'active': ['plan', 'orders', 'redeem', 'payment'].includes(view) }"
+                           :aria-current="['plan', 'orders', 'redeem', 'payment'].includes(view) ? 'page' : 'false'"
+                           aria-label="Go to plan"
+                           @click.prevent="view = 'plan'">/plan</a>
+                        <a href="#/tickets"
+                           class="site-footer-link"
+                           :class="{ 'active': ['tickets', 'ticket_detail', 'knowledge', 'knowledge_detail'].includes(view) }"
+                           :aria-current="['tickets', 'ticket_detail', 'knowledge', 'knowledge_detail'].includes(view) ? 'page' : 'false'"
+                           aria-label="Go to tickets"
+                           @click.prevent="view = 'tickets'">/tickets</a>
+                        <a href="#/profile"
+                           class="site-footer-link"
+                           :class="{ 'active': ['profile', 'invites'].includes(view) }"
+                           :aria-current="['profile', 'invites'].includes(view) ? 'page' : 'false'"
+                           aria-label="Go to profile"
+                           @click.prevent="view = 'profile'">/profile</a>
+                    </nav>
+                </div>
+            </div>
+        </footer>
+
         <!-- Telegram Login Modal -->
         <div x-show="showTelegramLogin" class="modal-overlay" @click.self="showTelegramLogin = false" style="display: none;">
             <div class="modal-content telegram-modal">
