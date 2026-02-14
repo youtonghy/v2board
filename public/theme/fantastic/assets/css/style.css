@@ -159,6 +159,23 @@ img {
     align-items: center;
 }
 
+@media (min-width: 769px) {
+    .navbar {
+        background: transparent;
+        padding: 0;
+        box-shadow: none;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+
+    .navbar .container {
+        background: var(--card-bg);
+        padding: 1rem 20px;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-dark), var(--shadow-light);
+    }
+}
+
 .nav-container {
     flex-wrap: wrap;
 }
