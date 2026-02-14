@@ -94,6 +94,11 @@ class PasskeyService
             throw new \Exception(__('Unable to parse passkey credential id'));
         }
 
+        $requestCredentialId = $credential['id'] ?? ($credential['rawId'] ?? null);
+        if (!is_string($requestCredentialId) || $requestCredentialId === '') {
+            throw new \Exception(__('Missing passkey credential id'));
+        }
+
         $credentialId = $this->encodeBase64Url((string)$registerData->credentialId);
         $exists = UserPasskey::query()->where('credential_id', $credentialId)->first();
         if ($exists) {
@@ -144,7 +149,7 @@ class PasskeyService
 
     public function finishLogin(Request $request, array $credential): array
     {
-        $credentialId = $credential['id'] ?? null;
+        $credentialId = $credential['id'] ?? ($credential['rawId'] ?? null);
         $clientData = $credential['response']['clientDataJSON'] ?? null;
         $authenticatorData = $credential['response']['authenticatorData'] ?? null;
         $signature = $credential['response']['signature'] ?? null;
