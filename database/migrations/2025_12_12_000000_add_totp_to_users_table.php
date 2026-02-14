@@ -13,11 +13,21 @@ class AddTotpToUsersTable extends Migration
      */
     public function up()
     {
-        Schema::table('v2_user', function (Blueprint $table) {
-            $table->string('two_factor_type')->nullable()->default(null)->after('password');
-            $table->boolean('two_factor_verified')->default(0)->after('two_factor_type');
-            $table->string('totp_secret')->nullable()->default(null)->after('two_factor_verified');
-        });
+        if (!Schema::hasColumn('v2_user', 'two_factor_type')) {
+            Schema::table('v2_user', function (Blueprint $table) {
+                $table->string('two_factor_type')->nullable()->default(null)->after('password');
+            });
+        }
+        if (!Schema::hasColumn('v2_user', 'two_factor_verified')) {
+            Schema::table('v2_user', function (Blueprint $table) {
+                $table->boolean('two_factor_verified')->default(0)->after('two_factor_type');
+            });
+        }
+        if (!Schema::hasColumn('v2_user', 'totp_secret')) {
+            Schema::table('v2_user', function (Blueprint $table) {
+                $table->string('totp_secret')->nullable()->default(null)->after('two_factor_verified');
+            });
+        }
     }
 
     /**
