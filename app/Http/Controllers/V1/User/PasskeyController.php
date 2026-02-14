@@ -14,10 +14,13 @@ class PasskeyController extends Controller
         $this->ensurePasskeyEnabled();
         $user = $this->resolveCurrentUser($request);
         $service = new PasskeyService();
-
-        return response([
-            'data' => $service->beginRegistration($user, $request)
-        ]);
+        try {
+            return response([
+                'data' => $service->beginRegistration($user, $request)
+            ]);
+        } catch (\Throwable $e) {
+            abort(500, $e->getMessage());
+        }
     }
 
     public function registerVerify(Request $request)
@@ -35,10 +38,13 @@ class PasskeyController extends Controller
             'name' => 'nullable|string|max:64'
         ]);
         $service = new PasskeyService();
-
-        return response([
-            'data' => $service->finishRegistration($user, $request, $params['credential'], $params['name'] ?? null)
-        ]);
+        try {
+            return response([
+                'data' => $service->finishRegistration($user, $request, $params['credential'], $params['name'] ?? null)
+            ]);
+        } catch (\Throwable $e) {
+            abort(500, $e->getMessage());
+        }
     }
 
     public function fetch(Request $request)
@@ -46,10 +52,13 @@ class PasskeyController extends Controller
         $this->ensurePasskeyEnabled();
         $user = $this->resolveCurrentUser($request);
         $service = new PasskeyService();
-
-        return response([
-            'data' => $service->listPasskeys($user)
-        ]);
+        try {
+            return response([
+                'data' => $service->listPasskeys($user)
+            ]);
+        } catch (\Throwable $e) {
+            abort(500, $e->getMessage());
+        }
     }
 
     public function remove(Request $request)
@@ -60,11 +69,15 @@ class PasskeyController extends Controller
             'id' => 'required|integer|min:1'
         ]);
         $service = new PasskeyService();
-        $result = $service->deletePasskey($user, (int)$params['id']);
+        try {
+            $result = $service->deletePasskey($user, (int)$params['id']);
 
-        return response([
-            'data' => $result
-        ]);
+            return response([
+                'data' => $result
+            ]);
+        } catch (\Throwable $e) {
+            abort(500, $e->getMessage());
+        }
     }
 
     private function resolveCurrentUser(Request $request): User

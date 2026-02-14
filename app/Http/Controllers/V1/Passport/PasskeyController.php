@@ -16,9 +16,13 @@ class PasskeyController extends Controller
         ]);
 
         $service = new PasskeyService();
-        return response([
-            'data' => $service->beginLogin($request, $params['redirect'] ?? null)
-        ]);
+        try {
+            return response([
+                'data' => $service->beginLogin($request, $params['redirect'] ?? null)
+            ]);
+        } catch (\Throwable $e) {
+            abort(500, $e->getMessage());
+        }
     }
 
     public function loginVerify(Request $request)
@@ -36,9 +40,13 @@ class PasskeyController extends Controller
         ]);
 
         $service = new PasskeyService();
-        return response([
-            'data' => $service->finishLogin($request, $params['credential'])
-        ]);
+        try {
+            return response([
+                'data' => $service->finishLogin($request, $params['credential'])
+            ]);
+        } catch (\Throwable $e) {
+            abort(500, $e->getMessage());
+        }
     }
 
     private function ensurePasskeyEnabled(): void

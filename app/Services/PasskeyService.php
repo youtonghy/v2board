@@ -13,7 +13,7 @@ use lbuchs\WebAuthn\WebAuthnException;
 
 class PasskeyService
 {
-    private const CHALLENGE_EXPIRE_SECONDS = 300;
+    private const CHALLENGE_EXPIRE_SECONDS = 900;
 
     public function beginRegistration(User $user, Request $request): array
     {
@@ -52,18 +52,17 @@ class PasskeyService
             ['challenge' => $challenge, 'created_at' => time()],
             self::CHALLENGE_EXPIRE_SECONDS
         );
+        Cache::put(
+            CacheKey::get('PASSKEY_REGISTER_CHALLENGE_TOKEN', $challenge),
+            ['user_id' => (int)$user->id, 'created_at' => time()],
+            self::CHALLENGE_EXPIRE_SECONDS
+        );
 
         return json_decode(json_encode($options), true);
     }
 
     public function finishRegistration(User $user, Request $request, array $credential, ?string $name = null): array
     {
-        $cacheKey = CacheKey::get('PASSKEY_REGISTER_CHALLENGE', (int)$user->id);
-        $cached = Cache::get($cacheKey);
-        if (!is_array($cached) || empty($cached['challenge'])) {
-            throw new \Exception(__('Passkey registration challenge expired, please retry'));
-        }
-
         $clientData = $credential['response']['clientDataJSON'] ?? null;
         $attestationObject = $credential['response']['attestationObject'] ?? null;
         $responseTransports = $credential['response']['transports'] ?? [];
@@ -72,12 +71,38 @@ class PasskeyService
             throw new \Exception(__('Invalid passkey registration data'));
         }
 
+        $clientDataBinary = $this->decodeBase64Url($clientData);
+        $clientDataObject = json_decode($clientDataBinary, true);
+        $challengeFromClient = is_array($clientDataObject)
+            ? ($clientDataObject['challenge'] ?? null)
+            : null;
+
+        $challengeValue = null;
+        if (is_string($challengeFromClient) && $challengeFromClient !== '') {
+            $challengeTokenCache = Cache::get(CacheKey::get('PASSKEY_REGISTER_CHALLENGE_TOKEN', $challengeFromClient));
+            if (
+                is_array($challengeTokenCache) &&
+                (int)($challengeTokenCache['user_id'] ?? 0) === (int)$user->id
+            ) {
+                $challengeValue = $challengeFromClient;
+            }
+        }
+
+        if (!$challengeValue) {
+            $cacheKey = CacheKey::get('PASSKEY_REGISTER_CHALLENGE', (int)$user->id);
+            $cached = Cache::get($cacheKey);
+            if (!is_array($cached) || empty($cached['challenge'])) {
+                throw new \Exception(__('Passkey registration challenge expired, please retry'));
+            }
+            $challengeValue = (string)$cached['challenge'];
+        }
+
         $webAuthn = $this->buildWebAuthn($request);
-        $challenge = $this->decodeBase64Url((string)$cached['challenge']);
+        $challenge = $this->decodeBase64Url($challengeValue);
 
         try {
             $registerData = $webAuthn->processCreate(
-                $this->decodeBase64Url($clientData),
+                $clientDataBinary,
                 $this->decodeBase64Url($attestationObject),
                 $challenge,
                 false,
@@ -125,7 +150,8 @@ class PasskeyService
             throw new \Exception(__('Failed to save passkey'));
         }
 
-        Cache::forget($cacheKey);
+        Cache::forget(CacheKey::get('PASSKEY_REGISTER_CHALLENGE', (int)$user->id));
+        Cache::forget(CacheKey::get('PASSKEY_REGISTER_CHALLENGE_TOKEN', $challengeValue));
         return $this->formatPasskey($passkey);
     }
 
