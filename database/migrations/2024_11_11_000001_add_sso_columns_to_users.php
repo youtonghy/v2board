@@ -14,17 +14,36 @@ return new class extends Migration {
             if (!Schema::hasColumn('v2_user', 'sso_subject')) {
                 $table->string('sso_subject', 191)->nullable()->after('sso_provider');
             }
-            $table->unique(['sso_provider', 'sso_subject'], 'v2_user_sso_unique');
         });
+
+        if (Schema::hasColumn('v2_user', 'sso_provider') && Schema::hasColumn('v2_user', 'sso_subject')) {
+            try {
+                Schema::table('v2_user', function (Blueprint $table) {
+                    $table->unique(['sso_provider', 'sso_subject'], 'v2_user_sso_unique');
+                });
+            } catch (\Throwable $e) {
+                $message = strtolower($e->getMessage());
+                if (strpos($message, 'duplicate key name') === false && strpos($message, 'already exists') === false) {
+                    throw $e;
+                }
+            }
+        }
     }
 
     public function down(): void
     {
-        Schema::table('v2_user', function (Blueprint $table) {
-            if (Schema::hasColumn('v2_user', 'sso_subject')) {
+        if (Schema::hasColumn('v2_user', 'sso_subject')) {
+            try {
+                Schema::table('v2_user', function (Blueprint $table) {
                 $table->dropUnique('v2_user_sso_unique');
+                });
+            } catch (\Throwable $e) {
+                $message = strtolower($e->getMessage());
+                if (strpos($message, 'check that column/key exists') === false && strpos($message, 'does not exist') === false) {
+                    throw $e;
+                }
             }
-        });
+        }
         Schema::table('v2_user', function (Blueprint $table) {
             if (Schema::hasColumn('v2_user', 'sso_provider')) {
                 $table->dropColumn('sso_provider');

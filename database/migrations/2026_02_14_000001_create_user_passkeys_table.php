@@ -13,6 +13,10 @@ class CreateUserPasskeysTable extends Migration
      */
     public function up()
     {
+        if (Schema::hasTable('v2_user_passkey')) {
+            return;
+        }
+
         Schema::create('v2_user_passkey', function (Blueprint $table) {
             $table->id();
             $table->unsignedInteger('user_id')->index();

@@ -4,24 +4,31 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: ./update.sh [--no-git]
+Usage: ./update.sh [--no-git] [--skip-migrate]
 
 Options:
   --no-git        Skip git fetch/reset (useful for local dev testing)
+  --skip-migrate  Skip `php artisan migrate --force`
   -h, --help      Show this help
 
 Environment:
   SKIP_GIT_SYNC=1 Same as --no-git
+  SKIP_MIGRATE=1  Same as --skip-migrate
   COMPOSER_UPDATE=1  Run `composer update` instead of `composer install`
   COMPOSER_NO_DEV=0  Include dev dependencies
 EOF
 }
 
 skip_git_sync="${SKIP_GIT_SYNC:-0}"
+skip_migrate="${SKIP_MIGRATE:-0}"
 while [ "${1:-}" != "" ]; do
   case "$1" in
     --no-git)
       skip_git_sync=1
+      shift
+      ;;
+    --skip-migrate)
+      skip_migrate=1
       shift
       ;;
     -h|--help)
@@ -115,6 +122,12 @@ if [ "$composer_no_dev" = "1" ]; then
   composer_args+=(--no-dev)
 fi
 run_step "Composer ${composer_args[0]}" "${composer_cmd[@]}" "${composer_args[@]}"
+
+if [ "$skip_migrate" != "1" ]; then
+  run_step "php artisan migrate --force" php artisan migrate --force
+else
+  log_step "Skip php artisan migrate --force"
+fi
 
 php_main_version=$(php -v | head -n 1 | cut -d ' ' -f 2 | cut -d '.' -f 1)
 if [ $php_main_version -ge 8 ]; then
