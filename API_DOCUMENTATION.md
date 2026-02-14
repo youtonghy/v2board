@@ -286,6 +286,57 @@ Content-Type: application/json
 
 ---
 
+### Passkey 登录初始化（无用户名）
+
+**POST** `/api/v1/passport/auth/passkey/login/options`
+
+用途：生成 WebAuthn 登录挑战参数（支持 discoverable credentials，无需用户名）
+
+**请求参数：**
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| redirect | string | 否 | 登录后跳转路径 |
+
+**响应：**
+```json
+{
+  "data": {
+    "publicKey": {
+      "challenge": "base64url",
+      "rpId": "example.com",
+      "timeout": 60000,
+      "userVerification": "preferred"
+    }
+  }
+}
+```
+
+---
+
+### Passkey 登录校验
+
+**POST** `/api/v1/passport/auth/passkey/login/verify`
+
+用途：校验浏览器返回的 WebAuthn 断言并签发 `auth_data`
+
+**请求参数：**
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| credential | object | 是 | `navigator.credentials.get()` 返回对象（序列化后） |
+
+**响应：**
+```json
+{
+  "data": {
+    "token": "用户订阅 token",
+    "auth_data": "认证数据",
+    "redirect": "dashboard"
+  }
+}
+```
+
+---
+
 ### 第三方应用跳转登录
 
 用途：第三方应用发起授权登录，用户在浏览器中登录并授权后跳转回应用并携带一次性授权码（code），应用再使用 code 换取 access token。`redirect_uri` 需在后台配置白名单中。
@@ -579,6 +630,7 @@ V3 已完整支持以下接口：
     "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
     "sso_subject": null,
     "sso_provider": null,
+    "passkey_count": 2,
     "avatar_url": "https://cravatar.cn/avatar/xxx"
   }
 }
@@ -954,6 +1006,114 @@ V3 已完整支持以下接口：
 ```json
 {
   "data": "https://example.com/#/login?verify=xxx"
+}
+```
+
+---
+
+## Passkey 模块
+
+基础路径: `/api/v1/user/passkey`
+
+**认证要求：** 需要携带 `Authorization` Header
+
+### 生成 Passkey 注册参数
+
+**POST** `/api/v1/user/passkey/register/options`
+
+用途：生成 WebAuthn 注册参数（仅登录用户）
+
+**响应：**
+```json
+{
+  "data": {
+    "publicKey": {
+      "challenge": "base64url",
+      "rp": {
+        "name": "站点名称",
+        "id": "example.com"
+      },
+      "user": {
+        "id": "base64url",
+        "name": "user@example.com",
+        "displayName": "user@example.com"
+      }
+    }
+  }
+}
+```
+
+---
+
+### 完成 Passkey 注册
+
+**POST** `/api/v1/user/passkey/register/verify`
+
+用途：校验 WebAuthn 注册结果并保存密钥
+
+**请求参数：**
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| credential | object | 是 | `navigator.credentials.create()` 返回对象（序列化后） |
+| name | string | 否 | 密钥显示名称 |
+
+**响应：**
+```json
+{
+  "data": {
+    "id": 1,
+    "name": "My iPhone",
+    "credential_id_suffix": "AbCdEf12",
+    "is_multi_device": 1,
+    "last_used_at": null,
+    "created_at": 1700000000
+  }
+}
+```
+
+---
+
+### 获取 Passkey 列表
+
+**GET** `/api/v1/user/passkey/list`
+
+用途：获取当前账号已绑定的 Passkey 列表
+
+**响应：**
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "name": "My iPhone",
+      "credential_id_suffix": "AbCdEf12",
+      "transports": ["internal", "hybrid"],
+      "is_multi_device": 1,
+      "is_backup_eligible": 1,
+      "last_used_at": 1700000000,
+      "created_at": 1700000000
+    }
+  ]
+}
+```
+
+---
+
+### 删除 Passkey
+
+**POST** `/api/v1/user/passkey/delete`
+
+用途：删除当前账号的某个 Passkey
+
+**请求参数：**
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| id | integer | 是 | Passkey 记录 ID |
+
+**响应：**
+```json
+{
+  "data": true
 }
 ```
 
@@ -1682,6 +1842,7 @@ V3 已完整支持以下接口：
     "commission_distribution_l1": 100,
     "commission_distribution_l2": 0,
     "commission_distribution_l3": 0,
+    "passkey_login_enable": 1,
     "sso_login_enable": 0,
     "sso_auto_register": 1
   }
@@ -1806,6 +1967,7 @@ V3 已完整支持以下接口：
     "recaptcha_site_key": "xxx",
     "turnstile_site_key": "xxx",
     "telegram_login_enable": 1,
+    "passkey_login_enable": 1,
     "sso_login_enable": 0,
     "app_description": "站点描述",
     "app_url": "https://example.com",

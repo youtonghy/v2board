@@ -333,6 +333,7 @@ class ConfigController extends Controller
                 'password_limit_count' => config('v2board.password_limit_count', 5),
                 'password_limit_expire' => config('v2board.password_limit_expire', 60),
                 'totp_enable' => (int)config('v2board.totp_enable', 0),
+                'passkey_login_enable' => (int)config('v2board.passkey_login_enable', 0),
                 'api_v1_disable' => (int)config('v2board.api_v1_disable', 0),
                 'ip_no_log' => (int)config('v2board.ip_no_log', 0),
                 'rate_limit_ip' => (int)config('v2board.rate_limit_ip', 0),

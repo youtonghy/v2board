@@ -5955,6 +5955,12 @@
                     checked: parseInt(_.totp_enable),
                     onChange: e=>this.set("safe", "totp_enable", e ? 1 : 0)
                 })), f.a.createElement(m, {
+                    title: "Passkey/FIDO2\u767b\u5f55",
+                    description: "\u5f00\u542f\u540e\u7528\u6237\u53ef\u5728\u767b\u5f55\u9875\u4f7f\u7528 Passkey \u65e0\u7528\u6237\u540d\u767b\u5f55\uff0c\u5e76\u53ef\u5728\u4e2a\u4eba\u4e2d\u5fc3\u7ed1\u5b9a/\u89e3\u7ed1\u5bc6\u94a5\u3002"
+                }, f.a.createElement(l["a"], {
+                    checked: parseInt(_.passkey_login_enable || 0),
+                    onChange: e=>this.set("safe", "passkey_login_enable", e ? 1 : 0)
+                })), f.a.createElement(m, {
                     title: "\u90ae\u7bb1\u540e\u7f00\u767d\u540d\u5355",
                     description: "\u5f00\u542f\u540e\u5728\u540d\u5355\u4e2d\u7684\u90ae\u7bb1\u540e\u7f00\u624d\u5141\u8bb8\u8fdb\u884c\u6ce8\u518c\u3002"
                 }, f.a.createElement(l["a"], {

@@ -1826,6 +1826,7 @@ h3 {
 
 /* Alternative Login Buttons */
 .btn-telegram,
+.btn-passkey,
 .btn-sso {
     display: flex;
     align-items: center;
@@ -1840,6 +1841,15 @@ h3 {
 
 .btn-telegram:hover {
     background: linear-gradient(145deg, #006699, #0088cc) !important;
+}
+
+.btn-passkey {
+    background: linear-gradient(145deg, #475569, #64748b) !important;
+    color: white !important;
+}
+
+.btn-passkey:hover {
+    background: linear-gradient(145deg, #334155, #475569) !important;
 }
 
 .btn-sso {
@@ -1940,6 +1950,42 @@ h3 {
     transform: translateY(-2px);
     box-shadow: 6px 6px 15px rgba(var(--neu-shadow-dark-rgb), 0.5),
         -6px -6px 15px rgba(var(--neu-shadow-light-rgb), 0.9);
+}
+
+.binding-item-passkey {
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
+
+.passkey-list {
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.passkey-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+    padding: 0.7rem 0;
+    border-top: 1px solid rgba(var(--neu-shadow-dark-rgb), 0.15);
+}
+
+.passkey-meta {
+    min-width: 0;
+}
+
+.passkey-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.passkey-sub {
+    margin-top: 0.2rem;
+    font-size: 0.8rem;
+    color: var(--text-color);
+    opacity: 0.75;
 }
 
 .binding-header {
@@ -3235,11 +3281,13 @@ h3 {
 
     /* Auth buttons mobile */
     .btn-telegram,
+    .btn-passkey,
     .btn-sso {
         font-size: 0.9rem;
     }
 
     .btn-telegram svg,
+    .btn-passkey svg,
     .btn-sso svg {
         width: 18px;
         height: 18px;

@@ -135,6 +135,7 @@ document.addEventListener('alpine:init', () => {
             sso_id: null,
             sso_subject: null,
             sso_provider: null,
+            passkey_count: 0,
             uuid: '',
             token: '',
             expired_at: null,
@@ -219,6 +220,7 @@ document.addEventListener('alpine:init', () => {
 
         // Telegram Login
         telegram_login_enable: window.settings?.telegram_login_enable || 0,
+        passkey_login_enable: window.settings?.passkey_login_enable || 0,
         showTelegramLogin: false,
         telegramForm: { email: '' },
         telegramLoading: false,
@@ -229,6 +231,14 @@ document.addEventListener('alpine:init', () => {
         telegramPollingTimer: null,
         telegramPollingAttempts: 0,
         telegramPollingMaxAttempts: 40,
+
+        // Passkey
+        passkeySupported: typeof window !== 'undefined'
+            && window.isSecureContext
+            && typeof window.PublicKeyCredential !== 'undefined',
+        passkeyLoading: false,
+        passkeyLoginLoading: false,
+        passkeys: [],
 
         // SSO Login
         sso_login_enable: window.settings?.sso_login_enable || 0,
@@ -705,6 +715,9 @@ document.addEventListener('alpine:init', () => {
                 const data = await response.json();
                 if (data.data) {
                     this.siteConfig = data.data;
+                    if (typeof data.data.passkey_login_enable !== 'undefined') {
+                        this.passkey_login_enable = Number(data.data.passkey_login_enable) || 0;
+                    }
                     this.ensureRegisterAllowed();
                     if (this.siteConfig.is_recaptcha || this.siteConfig.is_turnstile) {
                         this.loadCaptchaScript();
@@ -815,6 +828,7 @@ document.addEventListener('alpine:init', () => {
                     this.fetchPaymentMethods();
                     this.fetchSubscribe();
                     this.fetchTodayTrafficOverview();
+                    this.fetchPasskeys();
                 }
             } catch (error) {
                 console.error('Error fetching user info:', error);
@@ -2082,6 +2096,258 @@ document.addEventListener('alpine:init', () => {
             }
 
             notify();
+        },
+
+        decodeBase64UrlToBuffer(value) {
+            const normalized = String(value || '').replace(/-/g, '+').replace(/_/g, '/');
+            const padding = '='.repeat((4 - (normalized.length % 4)) % 4);
+            const base64 = normalized + padding;
+            const raw = atob(base64);
+            const bytes = new Uint8Array(raw.length);
+            for (let i = 0; i < raw.length; i++) {
+                bytes[i] = raw.charCodeAt(i);
+            }
+            return bytes.buffer;
+        },
+
+        encodeBufferToBase64Url(value) {
+            const bytes = value instanceof ArrayBuffer ? new Uint8Array(value) : new Uint8Array(value.buffer);
+            let binary = '';
+            bytes.forEach((byte) => {
+                binary += String.fromCharCode(byte);
+            });
+            return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+        },
+
+        publicKeyCredentialToJSON(value) {
+            if (value instanceof ArrayBuffer) {
+                return this.encodeBufferToBase64Url(value);
+            }
+            if (ArrayBuffer.isView(value)) {
+                return this.encodeBufferToBase64Url(value.buffer);
+            }
+            if (Array.isArray(value)) {
+                return value.map((item) => this.publicKeyCredentialToJSON(item));
+            }
+            if (value && typeof value === 'object') {
+                const result = {};
+                Object.keys(value).forEach((key) => {
+                    result[key] = this.publicKeyCredentialToJSON(value[key]);
+                });
+                return result;
+            }
+            return value;
+        },
+
+        toPublicKeyCreationOptions(raw) {
+            const options = JSON.parse(JSON.stringify(raw?.publicKey ? raw.publicKey : raw));
+            options.challenge = this.decodeBase64UrlToBuffer(options.challenge);
+            if (options.user && options.user.id) {
+                options.user.id = this.decodeBase64UrlToBuffer(options.user.id);
+            }
+            if (Array.isArray(options.excludeCredentials)) {
+                options.excludeCredentials = options.excludeCredentials.map((item) => ({
+                    ...item,
+                    id: this.decodeBase64UrlToBuffer(item.id)
+                }));
+            }
+            return options;
+        },
+
+        toPublicKeyRequestOptions(raw) {
+            const options = JSON.parse(JSON.stringify(raw?.publicKey ? raw.publicKey : raw));
+            options.challenge = this.decodeBase64UrlToBuffer(options.challenge);
+            if (Array.isArray(options.allowCredentials) && options.allowCredentials.length > 0) {
+                options.allowCredentials = options.allowCredentials.map((item) => ({
+                    ...item,
+                    id: this.decodeBase64UrlToBuffer(item.id)
+                }));
+            }
+            return options;
+        },
+
+        async startPasskeyLogin() {
+            if (this.passkeyLoginLoading) return;
+            if (Number(this.passkey_login_enable) !== 1) {
+                this.showMessage('Passkey login is disabled by administrator');
+                return;
+            }
+            if (!this.passkeySupported) {
+                this.showMessage('Current browser does not support Passkey');
+                return;
+            }
+
+            this.passkeyLoginLoading = true;
+            try {
+                const redirect = this.getRedirectParam();
+                const payload = {};
+                if (redirect) payload.redirect = redirect;
+
+                const optionsResponse = await this.request('/api/v3/passport/auth/passkey/login/options', {
+                    method: 'POST',
+                    body: JSON.stringify(payload),
+                    skipAuth: true
+                });
+                if (!optionsResponse) return;
+
+                const optionsData = await optionsResponse.json();
+                if (!optionsData?.data) {
+                    throw new Error(optionsData?.message || 'Unable to initialize passkey login');
+                }
+
+                const assertion = await navigator.credentials.get({
+                    publicKey: this.toPublicKeyRequestOptions(optionsData.data)
+                });
+                if (!assertion) {
+                    throw new Error('Passkey request cancelled');
+                }
+
+                const verifyResponse = await this.request('/api/v3/passport/auth/passkey/login/verify', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        credential: this.publicKeyCredentialToJSON(assertion)
+                    }),
+                    skipAuth: true
+                });
+                if (!verifyResponse) return;
+
+                const verifyData = await verifyResponse.json();
+                if (!verifyData?.data?.auth_data) {
+                    throw new Error(verifyData?.message || 'Passkey login failed');
+                }
+
+                localStorage.setItem('auth_data', verifyData.data.auth_data);
+                localStorage.setItem('authorization', verifyData.data.auth_data);
+                this.fetchUserInfo();
+
+                const redirectTarget = this.normalizeRedirectTarget(
+                    verifyData.data.redirect || this.getRedirectParam() || 'dashboard'
+                );
+                this.suppressHashUpdate = true;
+                window.location.hash = `#/${redirectTarget}`;
+                this.applyRouteFromHash();
+                this.$nextTick(() => {
+                    this.suppressHashUpdate = false;
+                });
+            } catch (error) {
+                if (error?.name === 'NotAllowedError') {
+                    this.showMessage('Passkey request cancelled');
+                } else {
+                    this.showMessage(error?.message || 'Passkey login failed');
+                }
+            } finally {
+                this.passkeyLoginLoading = false;
+            }
+        },
+
+        async registerPasskey() {
+            if (this.passkeyLoading) return;
+            if (Number(this.passkey_login_enable) !== 1) {
+                this.showMessage('Passkey feature is disabled by administrator');
+                return;
+            }
+            if (!this.passkeySupported) {
+                this.showMessage('Current browser does not support Passkey');
+                return;
+            }
+
+            const passkeyName = prompt('Passkey name (optional, e.g. My iPhone)');
+            this.passkeyLoading = true;
+            try {
+                const optionsResponse = await this.request('/api/v3/user/passkey/register/options', {
+                    method: 'POST',
+                    body: JSON.stringify({})
+                });
+                if (!optionsResponse) return;
+
+                const optionsData = await optionsResponse.json();
+                if (!optionsData?.data) {
+                    throw new Error(optionsData?.message || 'Unable to initialize passkey registration');
+                }
+
+                const credential = await navigator.credentials.create({
+                    publicKey: this.toPublicKeyCreationOptions(optionsData.data)
+                });
+                if (!credential) {
+                    throw new Error('Passkey registration cancelled');
+                }
+
+                const payload = {
+                    credential: this.publicKeyCredentialToJSON(credential)
+                };
+                if (typeof passkeyName === 'string' && passkeyName.trim() !== '') {
+                    payload.name = passkeyName.trim();
+                }
+
+                const verifyResponse = await this.request('/api/v3/user/passkey/register/verify', {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                if (!verifyResponse) return;
+                const verifyData = await verifyResponse.json();
+                if (!verifyData?.data) {
+                    throw new Error(verifyData?.message || 'Passkey registration failed');
+                }
+
+                this.showMessage('Passkey linked successfully');
+                await this.fetchPasskeys();
+            } catch (error) {
+                if (error?.name === 'NotAllowedError') {
+                    this.showMessage('Passkey request cancelled');
+                } else {
+                    this.showMessage(error?.message || 'Passkey registration failed');
+                }
+            } finally {
+                this.passkeyLoading = false;
+            }
+        },
+
+        async fetchPasskeys() {
+            if (Number(this.passkey_login_enable) !== 1 || !this.passkeySupported) {
+                this.passkeys = [];
+                this.user.passkey_count = 0;
+                return;
+            }
+            try {
+                const response = await this.request('/api/v3/user/passkey/list');
+                if (!response) return;
+                const data = await response.json();
+                if (Array.isArray(data?.data)) {
+                    this.passkeys = data.data;
+                    this.user.passkey_count = data.data.length;
+                } else {
+                    this.passkeys = [];
+                    this.user.passkey_count = 0;
+                }
+            } catch (error) {
+                console.error('Error fetching passkeys:', error);
+            }
+        },
+
+        async removePasskey(item) {
+            if (!item?.id) return;
+            const ok = await this.showConfirm('Are you sure you want to remove this passkey?');
+            if (!ok) return;
+
+            this.passkeyLoading = true;
+            try {
+                const response = await this.request('/api/v3/user/passkey/delete', {
+                    method: 'POST',
+                    body: JSON.stringify({ id: item.id })
+                });
+                if (!response) return;
+                const data = await response.json();
+                if (data?.data === true || response.status === 200) {
+                    this.showMessage('Passkey removed');
+                    await this.fetchPasskeys();
+                } else {
+                    throw new Error(data?.message || 'Failed to remove passkey');
+                }
+            } catch (error) {
+                this.showMessage(error?.message || 'Failed to remove passkey');
+            } finally {
+                this.passkeyLoading = false;
+            }
         },
 
         // Telegram Login Functions

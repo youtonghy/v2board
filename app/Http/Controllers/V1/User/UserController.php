@@ -14,6 +14,7 @@ use App\Models\Ticket;
 use App\Models\User;
 use App\Services\AuthService;
 use App\Services\OrderService;
+use App\Services\PasskeyService;
 use App\Services\UserService;
 use App\Utils\CacheKey;
 use App\Utils\Helper;
@@ -268,6 +269,7 @@ class UserController extends Controller
     {
         $user = User::where('id', $request->user['id'])
             ->select([
+                'id',
                 'email',
                 'transfer_enable',
                 'device_limit',
@@ -295,6 +297,8 @@ class UserController extends Controller
         if (!$user) {
             abort(500, __('The user does not exist'));
         }
+        $passkeyService = new PasskeyService();
+        $user['passkey_count'] = $passkeyService->countPasskeys($user);
         $user['avatar_url'] = 'https://cravatar.cn/avatar/' . md5($user->email) . '?s=64&d=identicon';
         return response([
             'data' => $user

@@ -19,6 +19,8 @@ class PassportRoute
             $router->post('/auth/loginWithMailLink', 'V1\\Passport\\AuthController@loginWithMailLink')->middleware('dynamic_throttle:ip');
             $router->post('/auth/loginWithTelegram', 'V1\\Passport\\AuthController@loginWithTelegram')->middleware('dynamic_throttle:ip');
             $router->post('/auth/login2FA', 'V1\\Passport\\AuthController@login2FA')->middleware('dynamic_throttle:ip');
+            $router->post('/auth/passkey/login/options', 'V1\\Passport\\PasskeyController@loginOptions')->middleware('dynamic_throttle:ip');
+            $router->post('/auth/passkey/login/verify', 'V1\\Passport\\PasskeyController@loginVerify')->middleware('dynamic_throttle:ip');
             $router->get ('/auth/checkTelegramLogin', 'V1\\Passport\\AuthController@checkTelegramLogin');
             $router->get ('/auth/sso/init', 'V1\\Passport\\SsoController@init');
             $router->get ('/auth/sso/callback', 'V1\\Passport\\SsoController@callback');

@@ -44,7 +44,9 @@ class CacheKey
         'SSO_STATE' => '单点登录状态',
         'TOTP_SECRET' => 'TOTP密钥',
         'TWO_FACTOR_LOGIN' => '双重验证登录',
-        'THIRD_PARTY_LOGIN_REQUEST' => '第三方登录请求'
+        'THIRD_PARTY_LOGIN_REQUEST' => '第三方登录请求',
+        'PASSKEY_REGISTER_CHALLENGE' => 'Passkey注册挑战',
+        'PASSKEY_LOGIN_CHALLENGE' => 'Passkey登录挑战'
     ];
 
     public static function get(string $key, $uniqueValue)
