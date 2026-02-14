@@ -393,17 +393,43 @@
                         </button>
                     </div>
                 </div>
-                <div class="notice-carousel" aria-label="Announcements">
-                    <template x-for="notice in notices" :key="notice.id">
-                        <button type="button" class="notice-card-item notice-card-button" @click="openNotice(notice)">
-                            <div class="notice-header">
-                                <strong x-text="notice.title"></strong>
+                <div class="notice-slider" aria-label="Announcements" @mouseenter="noticeSliderHovered = true; stopNoticeAutoplay()" @mouseleave="noticeSliderHovered = false; startNoticeAutoplay()">
+                    <button
+                        type="button"
+                        class="notice-slide-card"
+                        :class="{ 'is-no-image': !getActiveNotice()?.img_url }"
+                        @click="openNotice(getActiveNotice())">
+                        <div class="notice-slide-main">
+                            <div class="notice-slide-content">
+                                <strong class="notice-slide-title" x-text="getActiveNotice()?.title || 'Announcement'"></strong>
+                                <div class="notice-tags notice-slide-tags" x-show="getNoticeTags(getActiveNotice()).length > 0">
+                                    <template x-for="(tag, tagIndex) in getNoticeTags(getActiveNotice())" :key="`notice-tag-${tagIndex}-${tag}`">
+                                        <span class="notice-tag" x-text="tag"></span>
+                                    </template>
+                                </div>
                             </div>
-                            <div class="notice-image" x-show="notice.img_url">
-                                <img :src="notice.img_url" :alt="notice.title" loading="lazy">
+                            <div class="notice-slide-image" x-show="getActiveNotice()?.img_url">
+                                <img :src="getActiveNotice()?.img_url" :alt="getActiveNotice()?.title || 'Announcement'" loading="lazy">
                             </div>
-                        </button>
-                    </template>
+                        </div>
+                    </button>
+
+                    <div class="notice-slide-controls" x-show="notices.length > 1">
+                        <button type="button" class="notice-nav-btn" @click.stop="prevNoticeSlide()" aria-label="Previous announcement">‹</button>
+                        <div class="notice-dots" role="tablist" aria-label="Notice slides">
+                            <template x-for="(notice, index) in notices" :key="notice.id || index">
+                                <button
+                                    type="button"
+                                    class="notice-dot"
+                                    :class="{ 'is-active': noticeSlideIndex === index }"
+                                    :aria-label="`Go to announcement ${index + 1}`"
+                                    :aria-current="noticeSlideIndex === index ? 'true' : 'false'"
+                                    @click.stop="goToNoticeSlide(index)">
+                                </button>
+                            </template>
+                        </div>
+                        <button type="button" class="notice-nav-btn" @click.stop="nextNoticeSlide()" aria-label="Next announcement">›</button>
+                    </div>
                 </div>
             </div>
 

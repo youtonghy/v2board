@@ -180,6 +180,10 @@ document.addEventListener('alpine:init', () => {
         showNotices: true,
         noticeModalOpen: false,
         activeNotice: null,
+        noticeSlideIndex: 0,
+        noticeSlideTimer: null,
+        noticeSlideIntervalMs: 3000,
+        noticeSliderHovered: false,
         paymentMethods: [],
         serverModalOpen: false,
         selectedServer: null,
@@ -319,6 +323,22 @@ document.addEventListener('alpine:init', () => {
                     this.telegramLoading = false;
                     this.telegramWaiting = false;
                 }
+            });
+
+            this.$watch('showNotices', (value) => {
+                if (!value) {
+                    this.stopNoticeAutoplay();
+                    return;
+                }
+                this.startNoticeAutoplay();
+            });
+
+            this.$watch('noticeModalOpen', (value) => {
+                if (value) {
+                    this.stopNoticeAutoplay();
+                    return;
+                }
+                this.startNoticeAutoplay();
             });
         },
 
@@ -520,6 +540,11 @@ document.addEventListener('alpine:init', () => {
                 }
                 if (value === 'dashboard' && !this.todayTrafficLoaded && !this.todayTrafficLoading) {
                     this.fetchTodayTrafficOverview();
+                }
+                if (value === 'dashboard') {
+                    this.startNoticeAutoplay();
+                } else {
+                    this.stopNoticeAutoplay();
                 }
                 if (value === 'servers') {
                     this.refreshServersMap(true);
@@ -942,6 +967,7 @@ document.addEventListener('alpine:init', () => {
         },
 
         async logout() {
+            this.stopNoticeAutoplay();
             localStorage.removeItem('auth_data');
             localStorage.removeItem('authorization');
             window.location.reload();
@@ -1323,24 +1349,116 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
+        getNoticeTags(notice) {
+            if (!notice) return [];
+            const tags = notice.tags;
+            if (Array.isArray(tags)) {
+                return tags
+                    .filter((tag) => typeof tag === 'string' && tag.trim())
+                    .map((tag) => tag.trim());
+            }
+            if (typeof tags === 'string' && tags.trim()) {
+                return [tags.trim()];
+            }
+            return [];
+        },
+
+        getActiveNotice() {
+            if (!Array.isArray(this.notices) || this.notices.length === 0) return null;
+            const index = Number.isInteger(this.noticeSlideIndex)
+                && this.noticeSlideIndex >= 0
+                && this.noticeSlideIndex < this.notices.length
+                ? this.noticeSlideIndex
+                : 0;
+            return this.notices[index] || null;
+        },
+
+        resetNoticeSlideIndexIfNeeded() {
+            if (!Array.isArray(this.notices) || this.notices.length === 0) {
+                this.noticeSlideIndex = 0;
+                return;
+            }
+            if (!Number.isInteger(this.noticeSlideIndex)) {
+                this.noticeSlideIndex = 0;
+                return;
+            }
+            if (this.noticeSlideIndex < 0 || this.noticeSlideIndex >= this.notices.length) {
+                this.noticeSlideIndex = 0;
+            }
+        },
+
+        startNoticeAutoplay() {
+            this.stopNoticeAutoplay();
+            if (this.view !== 'dashboard' || !this.showNotices || this.noticeModalOpen || this.noticeSliderHovered) return;
+            if (!Array.isArray(this.notices) || this.notices.length <= 1) return;
+
+            this.noticeSlideTimer = setInterval(() => {
+                if (document.hidden) return;
+                if (this.view !== 'dashboard' || !this.showNotices || this.noticeModalOpen) return;
+                this.nextNoticeSlide(false);
+            }, this.noticeSlideIntervalMs);
+        },
+
+        stopNoticeAutoplay() {
+            if (this.noticeSlideTimer) {
+                clearInterval(this.noticeSlideTimer);
+                this.noticeSlideTimer = null;
+            }
+        },
+
+        restartNoticeAutoplay() {
+            if (this.noticeSliderHovered) return;
+            this.stopNoticeAutoplay();
+            this.startNoticeAutoplay();
+        },
+
+        nextNoticeSlide(restartTimer = true) {
+            if (!Array.isArray(this.notices) || this.notices.length <= 1) return;
+            this.noticeSlideIndex = (this.noticeSlideIndex + 1) % this.notices.length;
+            if (restartTimer) this.restartNoticeAutoplay();
+        },
+
+        prevNoticeSlide() {
+            if (!Array.isArray(this.notices) || this.notices.length <= 1) return;
+            this.noticeSlideIndex = (this.noticeSlideIndex - 1 + this.notices.length) % this.notices.length;
+            this.restartNoticeAutoplay();
+        },
+
+        goToNoticeSlide(index) {
+            if (!Array.isArray(this.notices) || this.notices.length <= 1) return;
+            const target = Number(index);
+            if (!Number.isInteger(target) || target < 0 || target >= this.notices.length) return;
+            this.noticeSlideIndex = target;
+            this.restartNoticeAutoplay();
+        },
+
         async fetchNotices() {
             try {
                 const response = await this.request('/api/v3/user/notice/fetch');
                 if (!response) return;
                 const data = await response.json();
-                if (data.data) {
-                    this.notices = data.data;
-                    const version = this.getNoticesVersion(this.notices);
+                const notices = Array.isArray(data.data) ? data.data : [];
+                this.notices = notices;
+                this.resetNoticeSlideIndexIfNeeded();
+
+                if (notices.length > 0) {
+                    const version = this.getNoticesVersion(notices);
                     const dismissedVersion = localStorage.getItem('fantastic_notices_version');
                     this.showNotices = !(dismissedVersion && dismissedVersion === version);
+                } else {
+                    this.showNotices = false;
                 }
+
+                this.startNoticeAutoplay();
             } catch (error) {
                 console.error('Error fetching notices:', error);
+                this.stopNoticeAutoplay();
             }
         },
 
         openNotice(notice) {
             if (!notice) return;
+            this.stopNoticeAutoplay();
             this.activeNotice = notice;
             this.noticeModalOpen = true;
         },
@@ -1348,6 +1466,7 @@ document.addEventListener('alpine:init', () => {
         closeNoticeModal() {
             this.noticeModalOpen = false;
             this.activeNotice = null;
+            this.startNoticeAutoplay();
         },
 
         async fetchPaymentMethods() {
@@ -2115,6 +2234,7 @@ document.addEventListener('alpine:init', () => {
                 localStorage.setItem('fantastic_notices_version', version);
             }
             this.showNotices = false;
+            this.stopNoticeAutoplay();
         },
 
         openServerModal(server) {
