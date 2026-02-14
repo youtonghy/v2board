@@ -278,6 +278,14 @@
                         <p><strong>Rate:</strong> <span x-text="(selectedServer.rate || 1) + 'x'"></span></p>
                         <p><strong>Type:</strong> <span x-text="selectedServer.type || 'Unknown'"></span></p>
                         <p x-show="selectedServer.label"><strong>Label:</strong> <span x-text="selectedServer.label"></span></p>
+                        <div class="server-modal-tags" x-show="getServerTags(selectedServer).length > 0">
+                            <strong>Tags:</strong>
+                            <div class="server-modal-tag-list">
+                                <template x-for="(tag, tagIdx) in getServerTags(selectedServer)" :key="'server-tag-' + tagIdx + '-' + (selectedServer?.id || 'x')">
+                                    <span class="badge" x-text="tag"></span>
+                                </template>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -543,6 +551,9 @@
                     <div class="servers-map-empty" x-show="!serverMap.ready">
                         Loading world map...
                     </div>
+                    <div class="servers-map-empty servers-map-error" x-show="serverMap.loadFailed">
+                        Map tiles are temporarily unavailable, but node cards are still available below.
+                    </div>
                     <div class="servers-map-empty" x-show="serverMap.ready && !serverMap.hasMarkers">
                         No valid country tags were found. Add two-letter tags like US to show markers.
                     </div>
@@ -553,12 +564,17 @@
                         <span x-text="'Total: ' + (servers.length || 0)"></span>
                     </div>
                     <div class="server-grid">
-                        <template x-for="server in servers" :key="server.id">
+                        <template x-for="(server, idx) in servers" :key="(server.type || 'node') + '-' + (server.id || idx) + '-' + idx">
                             <div class="server-card" 
                                  :class="{ 'server-offline': !server.online }"
                                  @click="openServerModal(server)">
                                 <div class="server-card-header">
-                                    <span class="server-name" x-text="server.name"></span>
+                                    <span class="server-name" x-text="server.name || 'Unnamed Node'"></span>
+                                </div>
+                                <div class="server-meta">
+                                    <span class="badge" x-text="(server.type || 'unknown').toUpperCase()"></span>
+                                    <span class="badge" x-text="'Rate ' + (server.rate || 1) + 'x'"></span>
+                                    <span class="badge" :class="server.online ? 'badge-success' : 'badge-muted'" x-text="server.online ? 'Online' : 'Offline'"></span>
                                 </div>
                             </div>
                         </template>
