@@ -508,11 +508,11 @@
 
                 <div class="card today-traffic-card">
                     <div class="today-traffic-header">
-                        <h3>今日统计</h3>
-                        <span class="today-traffic-loading" x-show="todayTrafficLoading">更新中...</span>
+                        <h3>Today's Statistics</h3>
+                        <span class="today-traffic-loading" x-show="todayTrafficLoading">Updating...</span>
                     </div>
                     <div class="today-traffic-total">
-                        <span class="today-traffic-total-label">今日总流量</span>
+                        <span class="today-traffic-total-label">Today's Total Traffic</span>
                         <span class="today-traffic-total-value" x-text="formatTrafficGb(todayTrafficOverview.total_usage_gb, todayTrafficOverview.unit)"></span>
                     </div>
                     <div class="today-traffic-podium">
