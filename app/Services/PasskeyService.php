@@ -376,10 +376,32 @@ class PasskeyService
             return null;
         }
         if (is_object($aaguid) && method_exists($aaguid, 'getHex')) {
-            return (string)$aaguid->getHex();
+            $hex = strtolower(trim((string)$aaguid->getHex()));
+            if ($hex === '') {
+                return null;
+            }
+            return mb_substr(str_replace('-', '', $hex), 0, 64);
         }
         if (is_string($aaguid)) {
-            return $aaguid;
+            $raw = trim($aaguid);
+            if ($raw === '') {
+                return null;
+            }
+
+            $lower = strtolower($raw);
+            if (preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/', $lower)) {
+                return str_replace('-', '', $lower);
+            }
+            if (preg_match('/^[0-9a-f]{32}$/', $lower)) {
+                return $lower;
+            }
+
+            // lbuchs/webauthn returns binary 16-byte AAGUID by default.
+            if (strlen($raw) === 16 || preg_match('/[^\x20-\x7E]/', $raw)) {
+                return strtolower(bin2hex($raw));
+            }
+
+            return mb_substr($lower, 0, 64);
         }
         return null;
     }
