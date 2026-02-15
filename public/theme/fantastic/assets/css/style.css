@@ -1993,6 +1993,7 @@ h3 {
     align-items: center;
     gap: 1rem;
     flex: 1;
+    min-width: 0;
 }
 
 .binding-icon {
@@ -2009,6 +2010,7 @@ h3 {
 
 .binding-info {
     flex: 1;
+    min-width: 0;
 }
 
 .binding-info h4 {
@@ -2063,6 +2065,21 @@ h3 {
     display: flex;
     gap: 0.5rem;
     flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+    .binding-item-sso .binding-status {
+        flex-wrap: wrap;
+        row-gap: 0.35rem;
+    }
+
+    .binding-item-sso .binding-account {
+        flex: 1 0 100%;
+        margin-left: 1rem;
+        margin-top: 0;
+        max-width: 100%;
+        overflow-wrap: anywhere;
+    }
 }
 
 .btn-danger {

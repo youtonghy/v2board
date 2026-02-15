@@ -1082,7 +1082,7 @@
                     
                     <!-- SSO Linking -->
                     @if ($sso_login_enable)
-                    <div class="binding-item">
+                    <div class="binding-item binding-item-sso">
                         <div class="binding-header">
                             <div class="binding-icon" style="background: linear-gradient(135deg, #4f9cff, #82c4ff);">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
