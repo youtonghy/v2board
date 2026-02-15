@@ -2979,7 +2979,7 @@ h3 {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: 1300;
     padding: 20px;
     animation: fadeIn 0.3s ease;
 }
@@ -3223,11 +3223,19 @@ h3 {
 
 /* Mobile modal adjustments */
 @media (max-width: 768px) {
+    .modal-overlay {
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    }
+
     .modal-content {
         max-width: 100%;
-        border-radius: 20px 20px 0 0;
-        margin-top: auto;
-        max-height: 85vh;
+        border-radius: var(--radius);
+        margin-top: 0;
+        max-height: calc(100vh - 32px - env(safe-area-inset-bottom, 0px));
+        max-height: calc(100dvh - 32px - env(safe-area-inset-bottom, 0px));
     }
 
     .modal-header {
