@@ -152,9 +152,8 @@ document.addEventListener('alpine:init', () => {
         traffics: [],
         trafficsLoaded: false,
         todayTrafficOverview: {
-            total_usage_gb: 0,
-            top_usage_gb: [],
-            unit: 'GB'
+            total: 0,
+            top: []
         },
         todayTrafficLoaded: false,
         todayTrafficLoading: false,
@@ -1336,23 +1335,19 @@ document.addEventListener('alpine:init', () => {
             if (!token) return;
             this.todayTrafficLoading = true;
             try {
-                const response = await this.request('/api/v1/guest/stat/todayTrafficOverview');
+                const response = await this.request('/api/v3/guest/stat/todayTrafficOverview');
                 if (!response) return;
                 const data = await this.safeJsonParse(response);
                 if (data && data.data) {
-                    const total = Number(data.data.total_usage_gb);
-                    const unit = typeof data.data.unit === 'string' && data.data.unit.trim()
-                        ? data.data.unit.trim()
-                        : 'GB';
-                    const rawTop = Array.isArray(data.data.top_usage_gb) ? data.data.top_usage_gb : [];
+                    const total = Number(data.data.total);
+                    const rawTop = Array.isArray(data.data.top) ? data.data.top : [];
                     const top = rawTop.map((item) => {
                         const usage = Number(item);
                         return Number.isFinite(usage) && usage > 0 ? usage : 0;
                     });
                     this.todayTrafficOverview = {
-                        total_usage_gb: Number.isFinite(total) && total > 0 ? total : 0,
-                        top_usage_gb: top,
-                        unit
+                        total: Number.isFinite(total) && total > 0 ? total : 0,
+                        top
                     };
                     this.todayTrafficLoaded = true;
                 }
@@ -3014,42 +3009,42 @@ document.addEventListener('alpine:init', () => {
             return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
         },
 
-        normalizeTrafficGb(value) {
+        normalizeTrafficValue(value) {
             const usage = Number(value);
             return Number.isFinite(usage) && usage > 0 ? usage : 0;
         },
 
-        formatTrafficGb(value, unit = 'GB') {
-            const usage = this.normalizeTrafficGb(value);
+        formatTrafficValue(value) {
+            const usage = this.normalizeTrafficValue(value);
             let decimals = 4;
             if (usage >= 100) decimals = 1;
             else if (usage >= 10) decimals = 2;
             else if (usage >= 1) decimals = 3;
-            return `${parseFloat(usage.toFixed(decimals))} ${unit || 'GB'}`;
+            return `${parseFloat(usage.toFixed(decimals))}`;
         },
 
         getTodayTrafficPodium() {
-            const topUsage = Array.isArray(this.todayTrafficOverview.top_usage_gb)
-                ? this.todayTrafficOverview.top_usage_gb
+            const topUsage = Array.isArray(this.todayTrafficOverview.top)
+                ? this.todayTrafficOverview.top
                 : [];
 
             const ranking = [
                 {
                     rank: 1,
                     name: 'Fang Binxing',
-                    usage: this.normalizeTrafficGb(topUsage[0]),
+                    usage: this.normalizeTrafficValue(topUsage[0]),
                     medal: 'gold'
                 },
                 {
                     rank: 2,
                     name: 'CAC',
-                    usage: this.normalizeTrafficGb(topUsage[1]),
+                    usage: this.normalizeTrafficValue(topUsage[1]),
                     medal: 'silver'
                 },
                 {
                     rank: 3,
                     name: 'breakwa11',
-                    usage: this.normalizeTrafficGb(topUsage[2]),
+                    usage: this.normalizeTrafficValue(topUsage[2]),
                     medal: 'bronze'
                 }
             ];

@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\DB;
 
 class StatController extends Controller
 {
+    private const TRAFFIC_OVERVIEW_UNIT_BYTES = 536870912; // 512MB
+
     public function todayTrafficOverview()
     {
         $startAt = strtotime(date('Y-m-d'));
@@ -28,17 +30,22 @@ class StatController extends Controller
             ->limit(5)
             ->pluck('total_usage')
             ->map(function ($usage) {
-                return round($usage / 1073741824, 4);
+                return $this->convertBytesToTrafficUnit($usage);
             })
             ->values()
             ->all();
 
         return response([
             'data' => [
-                'total_usage_gb' => round($totalUsageBytes / 1073741824, 4),
-                'top_usage_gb' => $topUsage,
-                'unit' => 'GB'
+                'total' => $this->convertBytesToTrafficUnit($totalUsageBytes),
+                'top' => $topUsage
             ]
         ]);
+    }
+
+    private function convertBytesToTrafficUnit($bytes): int
+    {
+        $converted = round(((float)$bytes) / self::TRAFFIC_OVERVIEW_UNIT_BYTES);
+        return $converted > 0 ? (int)$converted : 0;
     }
 }
