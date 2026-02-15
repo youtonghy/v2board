@@ -267,30 +267,31 @@
                 </div>
         </div>
 
+        </nav>
+
         <!-- Server Detail Modal -->
         <div x-show="serverModalOpen" class="modal-overlay" @click.self="serverModalOpen = false" style="display: none;">
             <div class="modal-content server-modal">
-                    <div class="modal-header">
-                        <h3 x-text="selectedServer?.name || 'Server'"></h3>
-                        <button class="modal-close" @click="serverModalOpen = false">×</button>
-                    </div>
-                    <div class="modal-body" x-show="selectedServer">
-                        <p><strong>Status:</strong> <span x-text="selectedServer.online ? 'Online' : 'Offline'"></span></p>
-                        <p><strong>Rate:</strong> <span x-text="(selectedServer.rate || 1) + 'x'"></span></p>
-                        <p><strong>Type:</strong> <span x-text="selectedServer.type || 'Unknown'"></span></p>
-                        <p x-show="selectedServer.label"><strong>Label:</strong> <span x-text="selectedServer.label"></span></p>
-                        <div class="server-modal-tags" x-show="getServerTags(selectedServer).length > 0">
-                            <strong>Tags:</strong>
-                            <div class="server-modal-tag-list">
-                                <template x-for="(tag, tagIdx) in getServerTags(selectedServer)" :key="'server-tag-' + tagIdx + '-' + (selectedServer?.id || 'x')">
-                                    <span class="badge" x-text="tag"></span>
-                                </template>
-                            </div>
+                <div class="modal-header">
+                    <h3 x-text="selectedServer?.name || 'Server'"></h3>
+                    <button class="modal-close" @click="serverModalOpen = false">×</button>
+                </div>
+                <div class="modal-body" x-show="selectedServer">
+                    <p><strong>Status:</strong> <span x-text="selectedServer.online ? 'Online' : 'Offline'"></span></p>
+                    <p><strong>Rate:</strong> <span x-text="(selectedServer.rate || 1) + 'x'"></span></p>
+                    <p><strong>Type:</strong> <span x-text="selectedServer.type || 'Unknown'"></span></p>
+                    <p x-show="selectedServer.label"><strong>Label:</strong> <span x-text="selectedServer.label"></span></p>
+                    <div class="server-modal-tags" x-show="getServerTags(selectedServer).length > 0">
+                        <strong>Tags:</strong>
+                        <div class="server-modal-tag-list">
+                            <template x-for="(tag, tagIdx) in getServerTags(selectedServer)" :key="'server-tag-' + tagIdx + '-' + (selectedServer?.id || 'x')">
+                                <span class="badge" x-text="tag"></span>
+                            </template>
                         </div>
                     </div>
                 </div>
             </div>
-        </nav>
+        </div>
 
         <!-- Main Content -->
         <main class="container">
