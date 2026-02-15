@@ -529,7 +529,7 @@
                     </div>
                     <div class="today-traffic-total">
                         <span class="today-traffic-total-label">Today's Total Traffic</span>
-                        <span class="today-traffic-total-value" x-text="formatTrafficGb(todayTrafficOverview.total_usage_gb, todayTrafficOverview.unit)"></span>
+                        <span class="today-traffic-total-value" x-text="formatTrafficValue(todayTrafficOverview.total)"></span>
                     </div>
                     <div class="today-traffic-podium">
                         <template x-for="item in getTodayTrafficPodium()" :key="item.rank">
@@ -537,7 +537,7 @@
                                 <div class="podium-rank" x-text="'#' + item.rank"></div>
                                 <div class="podium-name" x-text="item.name"></div>
                                 <div class="podium-bar">
-                                    <span class="podium-usage" x-text="formatTrafficGb(item.usage, todayTrafficOverview.unit)"></span>
+                                    <span class="podium-usage" x-text="formatTrafficValue(item.usage)"></span>
                                 </div>
                             </div>
                         </template>
