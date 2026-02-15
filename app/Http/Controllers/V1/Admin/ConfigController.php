@@ -12,9 +12,11 @@ use App\Services\TelegramService;
 use App\Utils\Dict;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class ConfigController extends Controller
 {
@@ -315,6 +317,10 @@ class ConfigController extends Controller
             'safe' => [
                 'email_verify' => (int)config('v2board.email_verify', 0),
                 'safe_mode_enable' => (int)config('v2board.safe_mode_enable', 0),
+                'cors_separate_frontend_enable' => (int)config('v2board.cors_separate_frontend_enable', 0),
+                'cors_allowed_origins' => is_array(config('v2board.cors_allowed_origins', []))
+                    ? array_values(config('v2board.cors_allowed_origins', []))
+                    : [],
                 'subscribe_burn_after_read' => (int)config('v2board.subscribe_burn_after_read', 0),
                 'secure_path' => config('v2board.secure_path', config('v2board.frontend_admin_path', hash('crc32b', config('app.key')))),
                 'email_whitelist_enable' => (int)config('v2board.email_whitelist_enable', 0),
@@ -356,6 +362,7 @@ class ConfigController extends Controller
     public function save(ConfigSave $request)
     {
         $data = $request->validated();
+        $data = $this->normalizeCorsSafeConfig($data);
         $config = config('v2board');
         foreach (ConfigSave::RULES as $k => $v) {
             if (!in_array($k, array_keys(ConfigSave::RULES))) {
@@ -406,6 +413,87 @@ class ConfigController extends Controller
         return response([
             'data' => true
         ]);
+    }
+
+    private function normalizeCorsSafeConfig(array $data): array
+    {
+        if (array_key_exists('cors_allowed_origins', $data)) {
+            $data['cors_allowed_origins'] = $this->normalizeCorsOriginList((array)$data['cors_allowed_origins']);
+        }
+
+        $corsEnabled = array_key_exists('cors_separate_frontend_enable', $data)
+            ? (int)$data['cors_separate_frontend_enable']
+            : (int)config('v2board.cors_separate_frontend_enable', 0);
+
+        if ($corsEnabled !== 1) {
+            return $data;
+        }
+
+        $origins = array_key_exists('cors_allowed_origins', $data)
+            ? $data['cors_allowed_origins']
+            : config('v2board.cors_allowed_origins', []);
+        $origins = $this->normalizeCorsOriginList(is_array($origins) ? $origins : []);
+        if (!empty($origins)) {
+            $data['cors_allowed_origins'] = $origins;
+            return $data;
+        }
+
+        $appUrl = array_key_exists('app_url', $data)
+            ? (string)$data['app_url']
+            : (string)config('v2board.app_url');
+        $defaultOrigin = $this->normalizeOrigin($appUrl);
+        if ($defaultOrigin === null) {
+            throw ValidationException::withMessages([
+                'cors_allowed_origins' => '启用前后端分离部署时，必须配置 CORS 白名单，且站点URL需为可解析 Origin 的合法 URL。'
+            ]);
+        }
+
+        $data['cors_allowed_origins'] = [$defaultOrigin];
+        return $data;
+    }
+
+    private function normalizeCorsOriginList(array $origins): array
+    {
+        $result = [];
+        foreach ($origins as $origin) {
+            $normalized = $this->normalizeOrigin((string)$origin);
+            if ($normalized !== null) {
+                $result[$normalized] = true;
+            }
+        }
+
+        return array_keys($result);
+    }
+
+    private function normalizeOrigin(string $origin): ?string
+    {
+        $origin = trim($origin);
+        if ($origin === '') {
+            return null;
+        }
+
+        $parts = parse_url($origin);
+        if ($parts === false || empty($parts['scheme']) || empty($parts['host'])) {
+            return null;
+        }
+
+        $scheme = strtolower($parts['scheme']);
+        if (!in_array($scheme, ['http', 'https'], true)) {
+            return null;
+        }
+
+        if (isset($parts['query']) || isset($parts['fragment']) || isset($parts['user']) || isset($parts['pass'])) {
+            return null;
+        }
+
+        if (isset($parts['path']) && $parts['path'] !== '' && $parts['path'] !== '/') {
+            return null;
+        }
+
+        $host = strtolower($parts['host']);
+        $port = isset($parts['port']) ? ':' . (int)$parts['port'] : '';
+
+        return "{$scheme}://{$host}{$port}";
     }
 
     private function buildDefaultSsoCallbackUrl(): string
