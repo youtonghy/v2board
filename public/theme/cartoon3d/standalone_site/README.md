@@ -11,6 +11,7 @@
 
 ## 注意事项
 
-- 前后端分离部署时，后端必须允许你的前端域名跨域访问（CORS），否则浏览器会拦截 `/api/v3/*` 请求。
+- 前后端分离部署时，需要先在后台 `配置 -> 安全` 中开启 `Allow Frontend-Backend Separation (CORS)`。
+- 开启后请配置 `CORS Allowed Origins` 白名单（每行一个 Origin，例如 `https://frontend.example.com`），仅白名单域名可跨域访问。
+- 默认情况下该开关关闭，跨域请求不会被允许。
 - Telegram/SSO 等跳转流程通常还依赖后端的 `v2board.app_url` 配置（需要与你实际前端域名匹配）。
-

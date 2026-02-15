@@ -5904,6 +5904,23 @@
                     checked: parseInt(_.safe_mode_enable),
                     onChange: e=>this.set("safe", "safe_mode_enable", e ? 1 : 0)
                 })), f.a.createElement(m, {
+                    title: "Allow Frontend-Backend Separation (CORS)",
+                    description: "When enabled, only origins in the CORS whitelist can access API responses cross-origin."
+                }, f.a.createElement(l["a"], {
+                    checked: parseInt(_.cors_separate_frontend_enable || 0),
+                    onChange: e=>this.set("safe", "cors_separate_frontend_enable", e ? 1 : 0)
+                })), 1 !== parseInt(_.cors_separate_frontend_enable || 0) ? "" : f.a.createElement(m, {
+                    isChildren: !0,
+                    title: "CORS Allowed Origins",
+                    description: "One origin per line, for example https://frontend.example.com"
+                }, f.a.createElement("textarea", {
+                    rows: "4",
+                    type: "text",
+                    className: "form-control",
+                    placeholder: "https://frontend.example.com",
+                    defaultValue: Array.isArray(_.cors_allowed_origins) ? _.cors_allowed_origins.join("\n") : "",
+                    onChange: e=>this.set("safe", "cors_allowed_origins", e.target.value.split(/\r?\n/).map(e=>e.trim()).filter(Boolean))
+                })), f.a.createElement(m, {
                     title: "\u8ba2\u9605\u94fe\u63a5\u9605\u540e\u5373\u711a",
                     description: "\u5f00\u542f\u540e\u8ba2\u9605\u94fe\u63a5\u8bbf\u95ee\u4e00\u6b21\u540e\u5c06\u81ea\u52a8\u5931\u6548\uff0c\u5e76\u5237\u65b0\u7528\u6237UUID\u53ca\u8ba2\u9605URL\u3002"
                 }, f.a.createElement(l["a"], {

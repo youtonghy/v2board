@@ -114,6 +114,8 @@ class ConfigSave extends FormRequest
         'turnstile_site_key' => 'nullable|string',
         'email_verify' => 'in:0,1',
         'safe_mode_enable' => 'in:0,1',
+        'cors_separate_frontend_enable' => 'in:0,1',
+        'cors_allowed_origins' => 'nullable|array',
         'subscribe_burn_after_read' => 'in:0,1',
         'register_limit_by_ip_enable' => 'in:0,1',
         'register_limit_count' => 'integer',
@@ -256,6 +258,24 @@ class ConfigSave extends FormRequest
                 }
             }]
         );
+        $rules['cors_allowed_origins'] = array_merge(
+            $this->normalizeRule($rules['cors_allowed_origins']),
+            [function ($attribute, $value, $fail) {
+                if (!is_array($value)) {
+                    return;
+                }
+                foreach ($value as $origin) {
+                    $origin = trim((string) $origin);
+                    if ($origin === '') {
+                        continue;
+                    }
+                    if ($this->normalizeOrigin($origin) === null) {
+                        $fail('CORS白名单格式不正确，必须为 Origin 格式（例如 https://frontend.example.com）');
+                        return;
+                    }
+                }
+            }]
+        );
         return $rules;
     }
 
@@ -272,6 +292,7 @@ class ConfigSave extends FormRequest
             'logo.url' => 'LOGO URL格式不正确，必须携带https(s)://',
             'secure_path.min' => '后台路径长度最小为8位',
             'secure_path.regex' => '后台路径只能为字母或数字',
+            'cors_allowed_origins.array' => 'CORS白名单必须是数组',
         ];
     }
 
@@ -284,5 +305,31 @@ class ConfigSave extends FormRequest
             return array_filter(explode('|', $rule));
         }
         return (array)$rule;
+    }
+
+    private function normalizeOrigin(string $origin): ?string
+    {
+        $parts = parse_url($origin);
+        if ($parts === false || empty($parts['scheme']) || empty($parts['host'])) {
+            return null;
+        }
+
+        $scheme = strtolower($parts['scheme']);
+        if (!in_array($scheme, ['http', 'https'], true)) {
+            return null;
+        }
+
+        if (isset($parts['query']) || isset($parts['fragment']) || isset($parts['user']) || isset($parts['pass'])) {
+            return null;
+        }
+
+        if (isset($parts['path']) && $parts['path'] !== '' && $parts['path'] !== '/') {
+            return null;
+        }
+
+        $host = strtolower($parts['host']);
+        $port = isset($parts['port']) ? ':' . (int) $parts['port'] : '';
+
+        return "{$scheme}://{$host}{$port}";
     }
 }

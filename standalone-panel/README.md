@@ -38,11 +38,18 @@ Edit `config.js` to customize your panel:
 
 ## CORS Configuration
 
-If deploying on a different domain than your backend, you need to configure CORS on your backend server.
+If deploying on a different domain than your backend, you need to enable CORS in the admin security settings first.
+
+1. Go to `Admin -> Config -> Security`.
+2. Enable `Allow Frontend-Backend Separation (CORS)`.
+3. Set `CORS Allowed Origins` (one origin per line).
+4. Keep your frontend domain in the whitelist.
+
+By default this feature is disabled, so cross-origin frontend deployments are blocked until explicitly enabled.
 
 ### For Nginx (Backend)
 
-Add these headers to your backend Nginx configuration:
+If you terminate requests at Nginx and override headers there, keep the same whitelist policy and do not use `*`:
 
 ```nginx
 location /api/ {
