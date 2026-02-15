@@ -2691,7 +2691,13 @@ document.addEventListener('alpine:init', () => {
             if (typeof cb === 'function') cb();
         },
 
+        isLongTermPlan() {
+            return Boolean(this.user.plan_id) && this.user.expired_at === null;
+        },
+
         getTimeRemainingPercentage() {
+            if (this.isLongTermPlan()) return 100;
+
             const exp = Number(this.user.expired_at || 0);
             const started = Number(this.user.plan_started_at || 0);
 
@@ -2735,6 +2741,8 @@ document.addEventListener('alpine:init', () => {
         },
 
         formatRemainingTime() {
+            if (this.isLongTermPlan()) return 'PP';
+
             const seconds = this.getRemainingSeconds();
             if (!seconds) return 'Expired';
             const days = Math.floor(seconds / 86400);
