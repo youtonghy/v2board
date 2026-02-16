@@ -12,6 +12,8 @@ use Illuminate\Http\Request;
 
 class AuthService
 {
+    private const AUTH_DATA_EXPIRE_SECONDS = 7 * 24 * 60 * 60;
+
     private $user;
 
     public function __construct(User $user)
@@ -21,18 +23,23 @@ class AuthService
 
     public function generateAuthData(Request $request)
     {
+        $now = time();
+        $exp = $now + self::AUTH_DATA_EXPIRE_SECONDS;
         $guid = Helper::guid();
         $authData = JWT::encode([
             'id' => $this->user->id,
             'session' => $guid,
+            'iat' => $now,
+            'exp' => $exp,
         ], config('app.key'), 'HS256');
         self::addSession($this->user->id, $guid, [
             'ip' => $request->ip(),
-            'login_at' => time(),
+            'login_at' => $now,
+            'exp_at' => $exp,
             'ua' => $request->userAgent(),
             'auth_data' => $authData
         ]);
-        $this->recordRecentLoginIp($request->ip(), time());
+        $this->recordRecentLoginIp($request->ip(), $now);
         return [
             'token' => $this->user->token,
             'is_admin' => $this->user->is_admin,
@@ -43,20 +50,30 @@ class AuthService
     public static function decryptAuthData($jwt)
     {
         try {
-            if (!Cache::has($jwt)) {
-                $data = (array)JWT::decode($jwt, new Key(config('app.key'), 'HS256'));
-                if (!self::checkSession($data['id'], $data['session'])) return false;
-                $user = User::select([
-                    'id',
-                    'email',
-                    'is_admin',
-                    'is_staff'
-                ])
-                    ->find($data['id']);
-                if (!$user) return false;
-                Cache::put($jwt, $user->toArray(), 3600);
+            $data = (array)JWT::decode($jwt, new Key(config('app.key'), 'HS256'));
+            if (!isset($data['id'], $data['session'], $data['exp'])) return false;
+
+            $now = time();
+            $expAt = (int)$data['exp'];
+            if ($expAt <= $now) return false;
+            if (!self::checkSession((int)$data['id'], (string)$data['session'])) return false;
+
+            if (Cache::has($jwt)) {
+                return Cache::get($jwt);
             }
-            return Cache::get($jwt);
+
+            $user = User::select([
+                'id',
+                'email',
+                'is_admin',
+                'is_staff'
+            ])
+                ->find($data['id']);
+            if (!$user) return false;
+
+            $ttl = max(1, min(3600, $expAt - $now));
+            Cache::put($jwt, $user->toArray(), $ttl);
+            return $user->toArray();
         } catch (\Exception $e) {
             return false;
         }
@@ -64,9 +81,8 @@ class AuthService
 
     private static function checkSession($userId, $session)
     {
-        $sessions = (array)Cache::get(CacheKey::get("USER_SESSIONS", $userId)) ?? [];
-        if (!in_array($session, array_keys($sessions))) return false;
-        return true;
+        $sessions = (array)Cache::get(CacheKey::get("USER_SESSIONS", $userId), []);
+        return isset($sessions[$session]);
     }
 
     private static function addSession($userId, $guid, $meta)
@@ -90,6 +106,9 @@ class AuthService
     {
         $cacheKey = CacheKey::get("USER_SESSIONS", $this->user->id);
         $sessions = (array)Cache::get($cacheKey, []);
+        if (isset($sessions[$sessionId]['auth_data'])) {
+            Cache::forget($sessions[$sessionId]['auth_data']);
+        }
         unset($sessions[$sessionId]);
         if (!Cache::put(
             $cacheKey,
