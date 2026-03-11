@@ -735,6 +735,9 @@ class UserController extends Controller
         if (in_array($scheme, ['http', 'https'], true) && empty($parts['host'])) {
             abort(422, 'redirect_uri is invalid');
         }
+        if (in_array($scheme, ['http', 'https'], true) && (isset($parts['user']) || isset($parts['pass']))) {
+            abort(422, 'redirect_uri is invalid');
+        }
 
         if (!$this->isThirdPartyRedirectAllowed($redirectUri)) {
             abort(422, 'redirect_uri is not allowed');
@@ -755,7 +758,7 @@ class UserController extends Controller
                 continue;
             }
             if (stripos($allowed, '://') !== false) {
-                if (str_starts_with($redirectUri, $allowed)) {
+                if ($this->isAllowedAbsoluteRedirectUri($redirectUri, $allowed)) {
                     return true;
                 }
                 continue;
@@ -780,6 +783,40 @@ class UserController extends Controller
         }
 
         return false;
+    }
+
+    private function isAllowedAbsoluteRedirectUri(string $redirectUri, string $allowedUri): bool
+    {
+        $redirect = parse_url($redirectUri);
+        $allowed = parse_url($allowedUri);
+        if ($redirect === false || $allowed === false) {
+            return false;
+        }
+
+        $redirectScheme = strtolower($redirect['scheme'] ?? '');
+        $allowedScheme = strtolower($allowed['scheme'] ?? '');
+        $redirectHost = strtolower($redirect['host'] ?? '');
+        $allowedHost = strtolower($allowed['host'] ?? '');
+
+        if ($redirectScheme === '' || $allowedScheme === '' || $redirectHost === '' || $allowedHost === '') {
+            return false;
+        }
+        if ($redirectScheme !== $allowedScheme || $redirectHost !== $allowedHost) {
+            return false;
+        }
+        if (($redirect['port'] ?? null) !== ($allowed['port'] ?? null)) {
+            return false;
+        }
+
+        $allowedPath = $allowed['path'] ?? '';
+        if ($allowedPath === '') {
+            return true;
+        }
+        $redirectPath = $redirect['path'] ?? '';
+        if ($redirectPath === $allowedPath) {
+            return true;
+        }
+        return str_starts_with($redirectPath, rtrim($allowedPath, '/') . '/');
     }
 
     private function hostMatchesDomain(string $host, string $domain): bool
