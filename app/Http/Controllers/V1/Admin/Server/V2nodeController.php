@@ -9,7 +9,6 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use ParagonIE_Sodium_Compat as SodiumCompat;
 use App\Utils\Helper;
-use Illuminate\Support\Facades\Cache;
 
 class V2nodeController extends Controller
 {
@@ -75,7 +74,6 @@ class V2nodeController extends Controller
             'dynamic_rate.*.end' => 'required_with:dynamic_rate|string',
             'dynamic_rate.*.rate' => 'required_with:dynamic_rate|numeric'
         ]);
-
         try {
             $params['dynamic_rate'] = DynamicRate::sanitize($params['dynamic_rate'] ?? null);
         } catch (\InvalidArgumentException $exception) {
@@ -84,7 +82,10 @@ class V2nodeController extends Controller
             ]);
         }
 
-        if (in_array($params['protocol'], ['anytls', 'hysteria2', 'trojan', 'tuic'])) {
+        if ($params['protocol'] === 'anytls' && (int) $params['tls'] === 0) {
+            $params['tls'] = 1;
+        }
+        if (in_array($params['protocol'], ['hysteria2', 'trojan', 'tuic'])) {
             $params['tls'] = 1;
         }
         if (isset($params['tls']) && (int)$params['tls'] === 2) {
