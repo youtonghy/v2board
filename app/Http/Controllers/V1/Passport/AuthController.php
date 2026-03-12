@@ -72,7 +72,7 @@ class AuthController extends Controller
         ]);
 
         return response([
-            'data' => $link
+            'data' => true
         ]);
 
     }
