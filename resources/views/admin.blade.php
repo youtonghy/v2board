@@ -26,10 +26,10 @@
 
             function installAdminAssets() {
                 var scripts = [
-                    "/assets/admin/vendors.async.js?v={{$version}}",
-                    "/assets/admin/components.async.js?v={{$version}}",
+                    "/assets/admin/vendors.async.js?v={{$version}}&m={{ filemtime(public_path('assets/admin/vendors.async.js')) }}",
+                    "/assets/admin/components.async.js?v={{$version}}&m={{ filemtime(public_path('assets/admin/components.async.js')) }}",
                     "/assets/admin/umi.js?v={{$version}}&m={{ filemtime(public_path('assets/admin/umi.js')) }}",
-                    "/assets/admin/broadcast.js?v={{$version}}"
+                    "/assets/admin/broadcast.js?v={{$version}}&m={{ filemtime(public_path('assets/admin/broadcast.js')) }}"
                 ];
 
                 function loadNext(index) {
@@ -310,9 +310,9 @@
             xhr.send(JSON.stringify({ endpoint: 'user/checkLogin', method: 'GET', params: {} }));
         })();
     </script>
-    <link rel="stylesheet" href="/assets/admin/components.chunk.css?v={{$version}}">
-    <link rel="stylesheet" href="/assets/admin/umi.css?v={{$version}}">
-    <link rel="stylesheet" href="/assets/admin/custom.css?v={{$version}}">
+    <link rel="stylesheet" href="/assets/admin/components.chunk.css?v={{$version}}&m={{ filemtime(public_path('assets/admin/components.chunk.css')) }}">
+    <link rel="stylesheet" href="/assets/admin/umi.css?v={{$version}}&m={{ filemtime(public_path('assets/admin/umi.css')) }}">
+    <link rel="stylesheet" href="/assets/admin/custom.css?v={{$version}}&m={{ filemtime(public_path('assets/admin/custom.css')) }}">
     <!-- <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito+Sans:300,400,400i,600,700"> -->
     <script>window.routerBase = "/";</script>
     <script>
