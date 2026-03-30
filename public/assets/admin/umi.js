@@ -72577,7 +72577,7 @@ class p extends h.a.Component {
                   , o = t.pagination
                   , a = t.filters
                   , s = t.createVisible
-                  , l = t.createForm
+                  , N = t.createForm
                   , c = [{
                     title: "ID",
                     dataIndex: "id",
@@ -72805,7 +72805,7 @@ class p extends h.a.Component {
                     className: "form-group"
                 }, g.a.createElement("label", null, "\u9080\u8bf7\u4ebaID"), g.a.createElement("input", {
                     className: "form-control",
-                    value: l.user_id,
+                    value: N.user_id,
                     onChange: function(t) {
                         return e.updateCreateForm("user_id", t.target.value)
                     },
@@ -72814,7 +72814,7 @@ class p extends h.a.Component {
                     className: "form-group"
                 }, g.a.createElement("label", null, "\u88ab\u9080\u8bf7\u4eba\u59d3\u540d"), g.a.createElement("input", {
                     className: "form-control",
-                    value: l.invitee_name,
+                    value: N.invitee_name,
                     onChange: function(t) {
                         return e.updateCreateForm("invitee_name", t.target.value)
                     }
@@ -72823,7 +72823,7 @@ class p extends h.a.Component {
                 }, g.a.createElement("label", null, "\u9080\u8bf7\u5185\u5bb9"), g.a.createElement("textarea", {
                     className: "form-control",
                     rows: 4,
-                    value: l.content,
+                    value: N.content,
                     onChange: function(t) {
                         return e.updateCreateForm("content", t.target.value)
                     }
@@ -72831,7 +72831,7 @@ class p extends h.a.Component {
                     className: "form-group"
                 }, g.a.createElement("label", null, "\u6709\u6548\u6b21\u6570"), g.a.createElement("input", {
                     className: "form-control",
-                    value: l.max_use,
+                    value: N.max_use,
                     onChange: function(t) {
                         return e.updateCreateForm("max_use", t.target.value)
                     },
@@ -72840,7 +72840,7 @@ class p extends h.a.Component {
                     className: "form-group"
                 }, g.a.createElement("label", null, "\u6709\u6548\u65f6\u957f(\u5c0f\u65f6)"), g.a.createElement("input", {
                     className: "form-control",
-                    value: l.expire_hours,
+                    value: N.expire_hours,
                     onChange: function(t) {
                         return e.updateCreateForm("expire_hours", t.target.value)
                     },
