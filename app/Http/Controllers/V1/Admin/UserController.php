@@ -10,6 +10,7 @@ use App\Http\Requests\Admin\UserSendMail;
 use App\Http\Requests\Admin\UserUpdate;
 use App\Jobs\SendEmailJob;
 use App\Models\InviteCode;
+use App\Models\InviteLink;
 use App\Models\Ticket;
 use App\Models\Order;
 use App\Models\Plan;
@@ -517,7 +518,15 @@ class UserController extends Controller
 
     public function generateInviteCode(Request $request)
     {
-        $userId = $request->input('user_id');
+        $params = $request->validate([
+            'user_id' => 'required|integer',
+            'invitee_name' => 'nullable|string|max:255',
+            'content' => 'nullable|string|max:5000',
+            'max_use' => 'nullable|integer|min:1',
+            'expire_hours' => 'nullable|integer|min:1',
+        ]);
+
+        $userId = $params['user_id'];
         if (!$userId) {
             abort(500, '请选择用户');
         }
@@ -526,15 +535,88 @@ class UserController extends Controller
             abort(500, '用户不存在');
         }
 
-        $inviteCode = new InviteCode();
-        $inviteCode->user_id = $userId;
-        $inviteCode->code = Helper::randomChar(8);
-        if (!$inviteCode->save()) {
-            abort(500, '生成邀请码失败');
+        $expireHours = (int)($params['expire_hours'] ?? config('v2board.invite_link_default_expire_hours', 72));
+        $inviteLink = InviteLink::create([
+            'user_id' => $userId,
+            'token' => hash('sha256', Helper::guid() . Helper::guid(true)),
+            'invitee_name' => $params['invitee_name'] ?? null,
+            'content' => $params['content'] ?? null,
+            'max_use' => (int)($params['max_use'] ?? config('v2board.invite_link_default_max_use', 1)),
+            'expired_at' => time() + ($expireHours * 3600),
+            'status' => InviteLink::STATUS_ACTIVE
+        ]);
+        if (!$inviteLink) {
+            abort(500, '生成邀请链接失败');
         }
 
+        $baseUrl = rtrim(config('v2board.app_url') ?: url('/'), '/');
         return response([
-            'data' => $inviteCode->code
+            'data' => $baseUrl . '/invite/' . $inviteLink->token
+        ]);
+    }
+
+    public function fetchInviteLinks(Request $request)
+    {
+        $current = max(1, (int)$request->input('current', 1));
+        $pageSize = max(10, (int)$request->input('page_size', 10));
+
+        $builder = InviteLink::query()->orderByDesc('id');
+        $total = $builder->count();
+        $links = $builder->forPage($current, $pageSize)->get();
+        $users = User::whereIn('id', $links->pluck('user_id')->unique()->values()->all())
+            ->get(['id', 'email'])
+            ->keyBy('id');
+
+        $data = $links->map(function (InviteLink $link) use ($users) {
+            return [
+                'id' => $link->id,
+                'user_id' => $link->user_id,
+                'user_email' => optional($users->get($link->user_id))->email,
+                'token' => $link->token,
+                'invitee_name' => $link->invitee_name,
+                'content' => $link->content,
+                'visit_count' => (int)$link->visit_count,
+                'use_count' => (int)$link->use_count,
+                'max_use' => (int)$link->max_use,
+                'expired_at' => $link->expired_at,
+                'status' => (int)$link->status,
+                'last_visited_at' => $link->last_visited_at,
+                'last_used_at' => $link->last_used_at,
+            ];
+        })->values();
+
+        return response([
+            'data' => $data,
+            'total' => $total
+        ]);
+    }
+
+    public function updateInviteLinkStatus(Request $request)
+    {
+        $params = $request->validate([
+            'id' => 'required|integer',
+            'status' => 'required|in:0,3'
+        ]);
+
+        $link = InviteLink::find($params['id']);
+        if (!$link) {
+            abort(404, '邀请链接不存在');
+        }
+
+        if ((int)$params['status'] === InviteLink::STATUS_ACTIVE) {
+            if ($link->isExpired()) {
+                abort(422, '邀请链接已过期');
+            }
+            if (!$link->hasRemainingUses()) {
+                abort(422, '邀请链接已用尽');
+            }
+        }
+
+        $link->status = (int)$params['status'];
+        $link->save();
+
+        return response([
+            'data' => true
         ]);
     }
 

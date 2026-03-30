@@ -193,6 +193,39 @@ class AuthController extends Controller
 
     public function register(AuthRegister $request)
     {
+        $this->validateRegistrationRequest($request, true);
+        if ((int)config('v2board.invite_force', 0)) {
+            if (empty($request->input('invite_code'))) {
+                abort(500, __('You must use the invitation code to register'));
+            }
+        }
+        $user = $this->createRegisteredUser($request);
+        if ($request->input('invite_code')) {
+            $inviteCode = InviteCode::where('code', $request->input('invite_code'))
+                ->where('status', 0)
+                ->first();
+            if (!$inviteCode) {
+                if ((int)config('v2board.invite_force', 0)) {
+                    abort(500, __('Invalid invitation code'));
+                }
+            } else {
+                $user->invite_user_id = $inviteCode->user_id ? $inviteCode->user_id : null;
+                if (!(int)config('v2board.invite_never_expire', 0)) {
+                    $inviteCode->status = 1;
+                    $inviteCode->save();
+                }
+            }
+        }
+
+        $this->applyTryOutPlan($user);
+
+        return response()->json([
+            'data' => $this->persistRegisteredUser($user, $request)
+        ]);
+    }
+
+    protected function validateRegistrationRequest(Request $request, bool $requirePublicRegistrationEnabled): void
+    {
         if ((int)config('v2board.register_limit_by_ip_enable', 0)) {
             $registerCountByIP = Cache::get(CacheKey::get('REGISTER_IP_RATE_LIMIT', $request->ip())) ?? 0;
             if ((int)$registerCountByIP >= (int)config('v2board.register_limit_count', 3)) {
@@ -200,6 +233,7 @@ class AuthController extends Controller
                     'minute' => config('v2board.register_limit_expire', 60)
                 ]));
             }
+            $request->attributes->set('register_count_by_ip', (int)$registerCountByIP);
         }
         $this->ensureCaptchaPassed($request);
         if ((int)config('v2board.email_whitelist_enable', 0)) {
@@ -219,10 +253,8 @@ class AuthController extends Controller
         if ((int)config('v2board.stop_register', 0)) {
             abort(500, __('Registration has closed'));
         }
-        if ((int)config('v2board.invite_force', 0)) {
-            if (empty($request->input('invite_code'))) {
-                abort(500, __('You must use the invitation code to register'));
-            }
+        if ($requirePublicRegistrationEnabled && !(int)config('v2board.public_register_enable', 0)) {
+            abort(500, __('Registration has closed'));
         }
         if ((int)config('v2board.email_verify', 0)) {
             if (empty($request->input('email_code'))) {
@@ -232,47 +264,45 @@ class AuthController extends Controller
                 abort(500, __('Incorrect email verification code'));
             }
         }
+    }
+
+    protected function createRegisteredUser(Request $request): User
+    {
         $email = $request->input('email');
-        $password = $request->input('password');
-        $exist = User::where('email', $email)->first();
-        if ($exist) {
+        if (User::where('email', $email)->exists()) {
             abort(500, __('Email already exists'));
         }
+
         $user = new User();
         $user->email = $email;
-        $user->password = Hash::make($password);
+        $user->password = Hash::make($request->input('password'));
         $user->uuid = Helper::guid(true);
         $user->token = Helper::guid();
-        if ($request->input('invite_code')) {
-            $inviteCode = InviteCode::where('code', $request->input('invite_code'))
-                ->where('status', 0)
-                ->first();
-            if (!$inviteCode) {
-                if ((int)config('v2board.invite_force', 0)) {
-                    abort(500, __('Invalid invitation code'));
-                }
-            } else {
-                $user->invite_user_id = $inviteCode->user_id ? $inviteCode->user_id : null;
-                if (!(int)config('v2board.invite_never_expire', 0)) {
-                    $inviteCode->status = 1;
-                    $inviteCode->save();
-                }
-            }
+
+        return $user;
+    }
+
+    protected function applyTryOutPlan(User $user): void
+    {
+        if (!(int)config('v2board.try_out_plan_id', 0)) {
+            return;
         }
 
-        // try out
-        if ((int)config('v2board.try_out_plan_id', 0)) {
-            $plan = Plan::find(config('v2board.try_out_plan_id'));
-            if ($plan) {
-                $user->transfer_enable = $plan->transfer_enable * 1073741824;
-                $user->device_limit = $plan->device_limit;
-                $user->plan_id = $plan->id;
-                $user->group_id = $plan->group_id;
-                $user->expired_at = time() + (config('v2board.try_out_hour', 1) * 3600);
-                $user->speed_limit = $plan->speed_limit;
-            }
+        $plan = Plan::find(config('v2board.try_out_plan_id'));
+        if (!$plan) {
+            return;
         }
 
+        $user->transfer_enable = $plan->transfer_enable * 1073741824;
+        $user->device_limit = $plan->device_limit;
+        $user->plan_id = $plan->id;
+        $user->group_id = $plan->group_id;
+        $user->expired_at = time() + (config('v2board.try_out_hour', 1) * 3600);
+        $user->speed_limit = $plan->speed_limit;
+    }
+
+    protected function persistRegisteredUser(User $user, Request $request): array
+    {
         if (!$user->save()) {
             abort(500, __('Register failed'));
         }
@@ -286,16 +316,13 @@ class AuthController extends Controller
         if ((int)config('v2board.register_limit_by_ip_enable', 0)) {
             Cache::put(
                 CacheKey::get('REGISTER_IP_RATE_LIMIT', $request->ip()),
-                (int)$registerCountByIP + 1,
+                (int)$request->attributes->get('register_count_by_ip', 0) + 1,
                 (int)config('v2board.register_limit_expire', 60) * 60
             );
         }
 
         $authService = new AuthService($user);
-
-        return response()->json([
-            'data' => $authService->generateAuthData($request)
-        ]);
+        return $authService->generateAuthData($request);
     }
 
     public function login(AuthLogin $request)

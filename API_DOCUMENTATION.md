@@ -132,6 +132,10 @@ Content-Type: application/json
 | recaptcha_data | string | 否 | reCAPTCHA 验证数据 |
 | turnstile_token | string | 否 | Turnstile 验证 Token |
 
+说明：
+- 当后台关闭公开注册 `public_register_enable=0` 时，该接口会拒绝普通注册。
+- 邀请链接注册请使用下方“邀请链接模块”接口。
+
 **响应：**
 ```json
 {
@@ -1452,6 +1456,71 @@ V3 已完整支持以下接口：
 
 ---
 
+## 邀请链接模块
+
+基础路径: `/api/v1/passport/invite`
+
+### 获取邀请链接信息
+
+**GET** `/api/v1/passport/invite/fetch`
+
+用途：根据邀请链接 token 获取欢迎内容与注册所需配置，同时累计访问次数
+
+**请求参数：**
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| token | string | 是 | 邀请链接 token |
+
+**响应：**
+```json
+{
+  "data": {
+    "token": "64位token",
+    "invitee_name": "Alice",
+    "content": "Welcome to our service.",
+    "remaining_uses": 1,
+    "expired_at": 1767225600,
+    "is_email_verify": 0,
+    "is_recaptcha": 0,
+    "is_turnstile": 1,
+    "recaptcha_site_key": "",
+    "turnstile_site_key": "xxx",
+    "app_name": "V2Board",
+    "logo": "https://..."
+  }
+}
+```
+
+---
+
+### 邀请链接注册
+
+**POST** `/api/v1/passport/invite/register`
+
+用途：使用邀请链接直接完成注册，注册成功后自动扣减有效次数
+
+**请求参数：**
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| token | string | 是 | 邀请链接 token |
+| email | string | 是 | 邮箱地址 |
+| password | string | 是 | 密码 |
+| email_code | string | 否 | 邮箱验证码（如开启邮箱验证则必填） |
+| recaptcha_data | string | 否 | reCAPTCHA 验证数据 |
+| turnstile_token | string | 否 | Turnstile 验证 Token |
+
+**响应：**
+```json
+{
+  "data": {
+    "token": "用户token",
+    "auth_data": "认证数据"
+  }
+}
+```
+
+---
+
 ## 工单模块
 
 基础路径: `/api/v1/user/ticket`
@@ -1960,6 +2029,8 @@ V3 已完整支持以下接口：
   "data": {
     "tos_url": "https://...",
     "is_email_verify": 1,
+    "public_register_enable": 0,
+    "user_invite_page_enable": 0,
     "is_invite_force": 0,
     "email_whitelist_suffix": ["gmail.com", "qq.com"],
     "is_recaptcha": 0,

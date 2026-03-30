@@ -186,6 +186,8 @@ class ServerRoute
             'passport/auth/token2Login',
             'passport/auth/sso/init',
             'passport/auth/sso/callback',
+            'passport/invite/fetch',
+            'passport/invite/register',
         ];
 
         return in_array($endpoint, $publicAuthEndpoints, true);

@@ -33,6 +33,9 @@ class PassportRoute
             // Comm
             $router->post('/comm/sendEmailVerify', 'V1\\Passport\\CommController@sendEmailVerify');
             $router->post('/comm/pv', 'V1\\Passport\\CommController@pv');
+            // Invite
+            $router->get('/invite/fetch', 'V1\\Passport\\InviteController@fetch');
+            $router->post('/invite/register', 'V1\\Passport\\InviteController@register')->middleware('dynamic_throttle:ip');
         });
     }
 }

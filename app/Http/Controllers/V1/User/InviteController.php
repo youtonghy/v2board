@@ -14,6 +14,9 @@ class InviteController extends Controller
 {
     public function save(Request $request)
     {
+        if (!(int)config('v2board.user_invite_page_enable', 0)) {
+            abort(403);
+        }
         // 检查是否仅允许管理员生成邀请码
         if (config('v2board.invite_admin_only', 0)) {
             abort(500, __('Only administrators can generate invite codes'));
@@ -31,6 +34,9 @@ class InviteController extends Controller
 
     public function details(Request $request)
     {
+        if (!(int)config('v2board.user_invite_page_enable', 0)) {
+            abort(403);
+        }
         $current = $request->input('current') ? $request->input('current') : 1;
         $pageSize = $request->input('page_size') >= 10 ? $request->input('page_size') : 10;
         $builder = CommissionLog::where('invite_user_id', $request->user['id'])
@@ -54,6 +60,9 @@ class InviteController extends Controller
 
     public function fetch(Request $request)
     {
+        if (!(int)config('v2board.user_invite_page_enable', 0)) {
+            abort(403);
+        }
         $codes = InviteCode::where('user_id', $request->user['id'])
             ->where('status', 0)
             ->get();
@@ -86,7 +95,8 @@ class InviteController extends Controller
             'data' => [
                 'codes' => $codes,
                 'stat' => $stat,
-                'invite_admin_only' => (int)config('v2board.invite_admin_only', 0)
+                'invite_admin_only' => (int)config('v2board.invite_admin_only', 0),
+                'user_invite_page_enable' => (int)config('v2board.user_invite_page_enable', 0)
             ]
         ]);
     }

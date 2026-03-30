@@ -84,6 +84,28 @@ CREATE TABLE `v2_invite_code` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
+DROP TABLE IF EXISTS `v2_invite_link`;
+CREATE TABLE `v2_invite_link` (
+                                  `id` int(11) NOT NULL AUTO_INCREMENT,
+                                  `user_id` int(11) NOT NULL,
+                                  `token` char(64) NOT NULL,
+                                  `invitee_name` varchar(255) DEFAULT NULL,
+                                  `content` text,
+                                  `visit_count` int(11) NOT NULL DEFAULT '0',
+                                  `use_count` int(11) NOT NULL DEFAULT '0',
+                                  `max_use` int(11) NOT NULL DEFAULT '1',
+                                  `expired_at` int(11) DEFAULT NULL,
+                                  `status` tinyint(1) NOT NULL DEFAULT '0' COMMENT '0 active 1 used_up 2 expired 3 disabled',
+                                  `last_visited_at` int(11) DEFAULT NULL,
+                                  `last_used_at` int(11) DEFAULT NULL,
+                                  `created_at` int(11) NOT NULL,
+                                  `updated_at` int(11) NOT NULL,
+                                  PRIMARY KEY (`id`),
+                                  UNIQUE KEY `token` (`token`),
+                                  KEY `idx_user_status` (`user_id`,`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
 DROP TABLE IF EXISTS `v2_knowledge`;
 CREATE TABLE `v2_knowledge` (
                                 `id` int(11) NOT NULL AUTO_INCREMENT,
