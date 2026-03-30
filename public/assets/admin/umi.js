@@ -72789,7 +72789,7 @@ class p extends h.a.Component {
                             pageSize: t.pageSize
                         })
                     }
-                })))), g.a.createElement(p["a"], {
+                }))), g.a.createElement(p["a"], {
                     visible: s,
                     title: "\u65b0\u5efa\u9080\u8bf7\u94fe\u63a5",
                     onCancel: function() {
