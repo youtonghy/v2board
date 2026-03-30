@@ -571,8 +571,22 @@ document.addEventListener('alpine:init', () => {
             });
         },
 
+        getRegisterMode() {
+            const mode = Number(this.siteConfig?.register_mode);
+            if ([0, 1, 2].includes(mode)) {
+                return mode;
+            }
+            if (Number(this.siteConfig?.stop_register) === 1) {
+                return 2;
+            }
+            if (Number(this.siteConfig?.public_register_enable) === 1 && Number(this.siteConfig?.is_invite_force) !== 1) {
+                return 0;
+            }
+            return 1;
+        },
+
         isRegisterDisabled() {
-            return Number(this.siteConfig?.stop_register) === 1 || Number(this.siteConfig?.public_register_enable) !== 1;
+            return this.getRegisterMode() !== 0;
         },
 
         isInvitePageEnabled() {

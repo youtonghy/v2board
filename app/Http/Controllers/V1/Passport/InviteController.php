@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V1\Passport;
 
 use App\Http\Requests\Passport\AuthRegister;
 use App\Models\InviteLink;
+use App\Utils\RegisterMode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -11,6 +12,9 @@ class InviteController extends AuthController
 {
     public function fetch(Request $request)
     {
+        if (!RegisterMode::canInviteLinkRegister()) {
+            abort(404);
+        }
         $params = $request->validate([
             'token' => 'required|string'
         ]);
@@ -51,6 +55,9 @@ class InviteController extends AuthController
 
     public function register(AuthRegister $request)
     {
+        if (!RegisterMode::canInviteLinkRegister()) {
+            abort(404);
+        }
         $params = $request->validate([
             'token' => 'required|string'
         ]);

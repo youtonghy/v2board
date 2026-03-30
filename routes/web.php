@@ -2,6 +2,7 @@
 
 use App\Models\InviteLink;
 use App\Services\ThemeService;
+use App\Utils\RegisterMode;
 use Illuminate\Http\Request;
 
 /*
@@ -47,6 +48,10 @@ Route::get('/invite/{token}', function (Request $request, string $token) {
         if ($request->server('HTTP_HOST') !== parse_url(config('v2board.app_url'))['host']) {
             abort(403);
         }
+    }
+
+    if (!RegisterMode::canInviteLinkRegister()) {
+        return redirect('/');
     }
 
     $inviteLink = InviteLink::where('token', $token)->first();

@@ -16,6 +16,7 @@ use App\Services\TurnstileService;
 use App\Utils\CacheKey;
 use App\Utils\Dict;
 use App\Utils\Helper;
+use App\Utils\RegisterMode;
 use App\Utils\Google2FA;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -194,20 +195,13 @@ class AuthController extends Controller
     public function register(AuthRegister $request)
     {
         $this->validateRegistrationRequest($request, true);
-        if ((int)config('v2board.invite_force', 0)) {
-            if (empty($request->input('invite_code'))) {
-                abort(500, __('You must use the invitation code to register'));
-            }
-        }
         $user = $this->createRegisteredUser($request);
         if ($request->input('invite_code')) {
             $inviteCode = InviteCode::where('code', $request->input('invite_code'))
                 ->where('status', 0)
                 ->first();
             if (!$inviteCode) {
-                if ((int)config('v2board.invite_force', 0)) {
-                    abort(500, __('Invalid invitation code'));
-                }
+                abort(500, __('Invalid invitation code'));
             } else {
                 $user->invite_user_id = $inviteCode->user_id ? $inviteCode->user_id : null;
                 if (!(int)config('v2board.invite_never_expire', 0)) {
@@ -226,6 +220,7 @@ class AuthController extends Controller
 
     protected function validateRegistrationRequest(Request $request, bool $requirePublicRegistrationEnabled): void
     {
+        $registerMode = RegisterMode::resolve();
         if ((int)config('v2board.register_limit_by_ip_enable', 0)) {
             $registerCountByIP = Cache::get(CacheKey::get('REGISTER_IP_RATE_LIMIT', $request->ip())) ?? 0;
             if ((int)$registerCountByIP >= (int)config('v2board.register_limit_count', 3)) {
@@ -250,10 +245,10 @@ class AuthController extends Controller
                 abort(500, __('Gmail alias is not supported'));
             }
         }
-        if ((int)config('v2board.stop_register', 0)) {
+        if (RegisterMode::isClosed($registerMode)) {
             abort(500, __('Registration has closed'));
         }
-        if ($requirePublicRegistrationEnabled && !(int)config('v2board.public_register_enable', 0)) {
+        if ($requirePublicRegistrationEnabled && !RegisterMode::canPublicRegister($registerMode)) {
             abort(500, __('Registration has closed'));
         }
         if ((int)config('v2board.email_verify', 0)) {

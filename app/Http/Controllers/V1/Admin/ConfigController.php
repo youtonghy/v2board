@@ -10,6 +10,7 @@ use App\Models\Plan;
 use App\Models\User;
 use App\Services\TelegramService;
 use App\Utils\Dict;
+use App\Utils\RegisterMode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
@@ -203,6 +204,8 @@ class ConfigController extends Controller
     public function fetch(Request $request)
     {
         $key = $request->input('key');
+        $registerMode = RegisterMode::resolve();
+        $legacyRegisterFlags = RegisterMode::legacyFlagsForMode($registerMode);
         $data = [
             'ticket' => [
                 'ticket_status' => config('v2board.ticket_status', 0)
@@ -211,7 +214,7 @@ class ConfigController extends Controller
                 'deposit_bounus' => config('v2board.deposit_bounus', [])
             ],
             'invite' => [
-                'invite_force' => (int)config('v2board.invite_force', 0),
+                'invite_force' => (int)$legacyRegisterFlags['invite_force'],
                 'invite_commission' => config('v2board.invite_commission', 10),
                 'invite_gen_limit' => config('v2board.invite_gen_limit', 5),
                 'invite_never_expire' => config('v2board.invite_never_expire', 0),
@@ -232,8 +235,9 @@ class ConfigController extends Controller
             'site' => [
                 'logo' => config('v2board.logo'),
                 'force_https' => (int)config('v2board.force_https', 0),
-                'stop_register' => (int)config('v2board.stop_register', 0),
-                'public_register_enable' => (int)config('v2board.public_register_enable', 0),
+                'register_mode' => $registerMode,
+                'stop_register' => (int)$legacyRegisterFlags['stop_register'],
+                'public_register_enable' => (int)$legacyRegisterFlags['public_register_enable'],
                 'app_name' => config('v2board.app_name', 'V2Board'),
                 'app_description' => config('v2board.app_description', 'V2Board is best!'),
                 'app_url' => config('v2board.app_url'),
@@ -368,6 +372,9 @@ class ConfigController extends Controller
     {
         $data = $request->validated();
         $data = $this->normalizeCorsSafeConfig($data);
+        if (array_key_exists('register_mode', $data)) {
+            $data = array_merge($data, RegisterMode::legacyFlagsForMode((int)$data['register_mode']));
+        }
         $config = config('v2board');
         foreach (ConfigSave::RULES as $k => $v) {
             if (!in_array($k, array_keys(ConfigSave::RULES))) {

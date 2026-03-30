@@ -127,13 +127,16 @@ Content-Type: application/json
 |------|------|------|------|
 | email | string | 是 | 邮箱地址 |
 | password | string | 是 | 密码 |
-| invite_code | string | 否 | 邀请码（如开启强制邀请则必填） |
+| invite_code | string | 否 | 邀请码（仅开放模式下兼容旧注册流程） |
 | email_code | string | 否 | 邮箱验证码（如开启邮箱验证则必填） |
 | recaptcha_data | string | 否 | reCAPTCHA 验证数据 |
 | turnstile_token | string | 否 | Turnstile 验证 Token |
 
 说明：
-- 当后台关闭公开注册 `public_register_enable=0` 时，该接口会拒绝普通注册。
+- 注册行为由 `register_mode` 统一控制：
+  - `0=open`：允许公开注册，也允许邀请链接注册。
+  - `1=invite_only`：关闭公开注册，仅允许邀请链接注册。
+  - `2=closed`：彻底关闭注册，公开注册与邀请链接注册都不可用。
 - 邀请链接注册请使用下方“邀请链接模块”接口。
 
 **响应：**
@@ -2028,6 +2031,7 @@ V3 已完整支持以下接口：
 {
   "data": {
     "tos_url": "https://...",
+    "register_mode": 1,
     "is_email_verify": 1,
     "public_register_enable": 0,
     "user_invite_page_enable": 0,
@@ -2048,6 +2052,13 @@ V3 已完整支持以下接口：
   }
 }
 ```
+
+说明：
+- `register_mode` 为注册模式主字段：
+  - `0`：开放模式
+  - `1`：半封闭模式，仅邀请链接可注册
+  - `2`：完全封闭模式
+- `public_register_enable`、`stop_register`、`is_invite_force` 为兼容字段，由 `register_mode` 派生，不再建议作为独立设置理解。
 
 ---
 

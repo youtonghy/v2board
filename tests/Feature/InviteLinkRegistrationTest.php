@@ -2,12 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Models\User;
+use App\Services\AuthService;
+use App\Utils\RegisterMode;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use App\Models\User;
-use App\Services\AuthService;
 use Tests\TestCase;
 
 class InviteLinkRegistrationTest extends TestCase
@@ -17,8 +18,10 @@ class InviteLinkRegistrationTest extends TestCase
         parent::setUp();
 
         config()->set('v2board.api_v1_disable', 0);
+        config()->set('v2board.register_mode', RegisterMode::INVITE_ONLY);
         config()->set('v2board.stop_register', 0);
         config()->set('v2board.public_register_enable', 0);
+        config()->set('v2board.invite_force', 1);
         config()->set('v2board.email_verify', 0);
         config()->set('v2board.turnstile_enable', 0);
         config()->set('v2board.recaptcha_enable', 0);
@@ -83,84 +86,138 @@ class InviteLinkRegistrationTest extends TestCase
         ]);
     }
 
+    private function setRegisterMode(int $mode): void
+    {
+        config()->set('v2board.register_mode', $mode);
+        foreach (RegisterMode::legacyFlagsForMode($mode) as $key => $value) {
+            config()->set("v2board.{$key}", $value);
+        }
+    }
+
+    private function createInviteLink(string $token, int $maxUse = 1): void
+    {
+        DB::table('v2_invite_link')->insert([
+            'user_id' => 1,
+            'token' => $token,
+            'invitee_name' => 'Alice',
+            'content' => 'Welcome aboard.',
+            'visit_count' => 0,
+            'use_count' => 0,
+            'max_use' => $maxUse,
+            'expired_at' => time() + 3600,
+            'status' => 0,
+            'created_at' => time(),
+            'updated_at' => time(),
+        ]);
+    }
+
     private function getAdminAuthData(): string
     {
         $user = User::find(1);
+
         return (new AuthService($user))->generateAuthData(Request::create('/admin-test', 'GET'))['auth_data'];
     }
 
-    public function testPublicRegisterEndpointIsClosedWhenDisabled(): void
+    public function testOpenModeAllowsPublicRegister(): void
     {
+        $this->setRegisterMode(RegisterMode::OPEN);
+
         $response = $this->postJson('/api/v1/passport/auth/register', [
             'email' => 'user@example.com',
-            'password' => 'password123'
+            'password' => 'password123',
+        ]);
+
+        $response->assertOk();
+        $this->assertDatabaseHas('v2_user', [
+            'email' => 'user@example.com',
+        ]);
+    }
+
+    public function testInviteOnlyModeBlocksPublicRegister(): void
+    {
+        $this->setRegisterMode(RegisterMode::INVITE_ONLY);
+
+        $response = $this->postJson('/api/v1/passport/auth/register', [
+            'email' => 'user@example.com',
+            'password' => 'password123',
+            'invite_code' => 'legacy-code',
         ]);
 
         $response->assertStatus(500);
         $this->assertNotEmpty($response->json('message'));
     }
 
-    public function testInviteFetchIncrementsVisitCount(): void
+    public function testInviteFetchIncrementsVisitCountInInviteOnlyMode(): void
     {
-        DB::table('v2_invite_link')->insert([
-            'user_id' => 1,
-            'token' => str_repeat('a', 64),
-            'invitee_name' => 'Alice',
-            'content' => 'Welcome aboard.',
-            'visit_count' => 0,
-            'use_count' => 0,
-            'max_use' => 2,
-            'expired_at' => time() + 3600,
-            'status' => 0,
-            'created_at' => time(),
-            'updated_at' => time(),
-        ]);
+        $this->setRegisterMode(RegisterMode::INVITE_ONLY);
+        $token = str_repeat('a', 64);
+        $this->createInviteLink($token, 2);
 
-        $response = $this->getJson('/api/v1/passport/invite/fetch?token=' . str_repeat('a', 64));
+        $response = $this->getJson('/api/v1/passport/invite/fetch?token=' . $token);
 
         $response->assertOk();
         $response->assertJsonPath('data.invitee_name', 'Alice');
-        $this->assertSame(1, (int) DB::table('v2_invite_link')->where('token', str_repeat('a', 64))->value('visit_count'));
+        $this->assertSame(1, (int) DB::table('v2_invite_link')->where('token', $token)->value('visit_count'));
     }
 
     public function testInviteRegisterCreatesUserAndInvalidatesSingleUseLink(): void
     {
-        DB::table('v2_invite_link')->insert([
-            'user_id' => 1,
-            'token' => str_repeat('b', 64),
-            'invitee_name' => 'Bob',
-            'content' => 'Welcome aboard.',
-            'visit_count' => 0,
-            'use_count' => 0,
-            'max_use' => 1,
-            'expired_at' => time() + 3600,
-            'status' => 0,
-            'created_at' => time(),
-            'updated_at' => time(),
-        ]);
+        $this->setRegisterMode(RegisterMode::INVITE_ONLY);
+        $token = str_repeat('b', 64);
+        $this->createInviteLink($token);
 
         $response = $this->postJson('/api/v1/passport/invite/register', [
-            'token' => str_repeat('b', 64),
+            'token' => $token,
             'email' => 'invitee@example.com',
-            'password' => 'password123'
+            'password' => 'password123',
         ]);
 
         $response->assertOk();
         $response->assertJsonStructure([
-            'data' => ['token', 'auth_data']
+            'data' => ['token', 'auth_data'],
         ]);
 
         $registeredUser = DB::table('v2_user')->where('email', 'invitee@example.com')->first();
         $this->assertNotNull($registeredUser);
         $this->assertSame(1, (int) $registeredUser->invite_user_id);
 
-        $inviteLink = DB::table('v2_invite_link')->where('token', str_repeat('b', 64))->first();
+        $inviteLink = DB::table('v2_invite_link')->where('token', $token)->first();
         $this->assertSame(1, (int) $inviteLink->use_count);
         $this->assertSame(1, (int) $inviteLink->status);
     }
 
+    public function testClosedModeDisablesInviteEndpointsAndRoute(): void
+    {
+        $this->setRegisterMode(RegisterMode::CLOSED);
+        $token = str_repeat('c', 64);
+        $this->createInviteLink($token);
+
+        $this->getJson('/api/v1/passport/invite/fetch?token=' . $token)->assertStatus(404);
+        $this->postJson('/api/v1/passport/invite/register', [
+            'token' => $token,
+            'email' => 'closed@example.com',
+            'password' => 'password123',
+        ])->assertStatus(404);
+        $this->get('/invite/' . $token)->assertRedirect('/');
+    }
+
+    public function testGuestConfigReturnsUnifiedRegisterModeAndDerivedFlags(): void
+    {
+        $this->setRegisterMode(RegisterMode::CLOSED);
+
+        $response = $this->getJson('/api/v1/guest/comm/config');
+
+        $response->assertOk();
+        $response->assertJsonPath('data.register_mode', RegisterMode::CLOSED);
+        $response->assertJsonPath('data.stop_register', 1);
+        $response->assertJsonPath('data.public_register_enable', 0);
+        $response->assertJsonPath('data.is_invite_force', 0);
+    }
+
     public function testAdminInviteLinkFetchSupportsEmailAndStatusFilters(): void
     {
+        $this->setRegisterMode(RegisterMode::INVITE_ONLY);
+
         DB::table('v2_user')->insert([
             'id' => 2,
             'email' => 'another@example.com',
@@ -201,19 +258,12 @@ class InviteLinkRegistrationTest extends TestCase
         ]);
 
         $response = $this->withHeaders([
-            'authorization' => $this->getAdminAuthData()
+            'authorization' => $this->getAdminAuthData(),
         ])->getJson('/api/v1/' . config('v2board.secure_path', 'd63e0a01') . '/user/inviteLink/fetch?user_email=inviter@example.com&status=0');
 
         $response->assertOk();
         $response->assertJsonCount(1, 'data');
         $response->assertJsonPath('data.0.user_email', 'inviter@example.com');
         $response->assertJsonPath('data.0.status', 0);
-    }
-
-    public function testInvalidInviteRouteRedirectsHome(): void
-    {
-        $response = $this->get('/invite/' . str_repeat('c', 64));
-
-        $response->assertRedirect('/');
     }
 }

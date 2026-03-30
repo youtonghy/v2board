@@ -4,20 +4,24 @@ namespace App\Http\Controllers\V1\Guest;
 
 use App\Http\Controllers\Controller;
 use App\Utils\Dict;
+use App\Utils\RegisterMode;
 use Illuminate\Support\Facades\Http;
 
 class CommController extends Controller
 {
     public function config()
     {
+        $registerMode = RegisterMode::resolve();
+        $legacyRegisterFlags = RegisterMode::legacyFlagsForMode($registerMode);
         return response([
             'data' => [
                 'tos_url' => config('v2board.tos_url'),
                 'is_email_verify' => (int)config('v2board.email_verify', 0) ? 1 : 0,
-                'stop_register' => (int)config('v2board.stop_register', 0) ? 1 : 0,
-                'public_register_enable' => (int)config('v2board.public_register_enable', 0) ? 1 : 0,
+                'register_mode' => $registerMode,
+                'stop_register' => (int)$legacyRegisterFlags['stop_register'],
+                'public_register_enable' => (int)$legacyRegisterFlags['public_register_enable'],
                 'user_invite_page_enable' => (int)config('v2board.user_invite_page_enable', 0) ? 1 : 0,
-                'is_invite_force' => (int)config('v2board.invite_force', 0) ? 1 : 0,
+                'is_invite_force' => (int)$legacyRegisterFlags['invite_force'],
                 'email_whitelist_suffix' => (int)config('v2board.email_whitelist_enable', 0)
                     ? $this->getEmailSuffix()
                     : 0,

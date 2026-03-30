@@ -5832,18 +5832,20 @@
                     defaultValue: t.tos_url,
                     onChange: e=>this.set("site", "tos_url", e.target.value)
                 })), f.a.createElement(m, {
-                    title: "\u505c\u6b62\u65b0\u7528\u6237\u6ce8\u518c",
-                    description: "\u5f00\u542f\u540e\u4efb\u4f55\u4eba\u90fd\u5c06\u65e0\u6cd5\u8fdb\u884c\u6ce8\u518c\u3002"
-                }, f.a.createElement(l["a"], {
-                    checked: parseInt(t.stop_register),
-                    onChange: e=>this.set("site", "stop_register", e ? 1 : 0)
-                })), f.a.createElement(m, {
-                    title: "\u663e\u793a\u516c\u5f00\u6ce8\u518c\u5165\u53e3",
-                    description: "\u5173\u95ed\u540e\u9996\u9875\u5c06\u4e0d\u518d\u663e\u793a\u6ce8\u518c\u6309\u94ae\uff0c\u4ec5\u80fd\u901a\u8fc7\u9080\u8bf7\u94fe\u63a5\u6ce8\u518c\u3002"
-                }, f.a.createElement(l["a"], {
-                    checked: parseInt(t.public_register_enable),
-                    onChange: e=>this.set("site", "public_register_enable", e ? 1 : 0)
-                })), f.a.createElement(m, {
+                    title: "\u6ce8\u518c\u6a21\u5f0f",
+                    description: "\u5f00\u653e\u6a21\u5f0f\u540c\u65f6\u652f\u6301\u516c\u5f00\u6ce8\u518c\u4e0e\u9080\u8bf7\u6ce8\u518c\uff1b\u534a\u5c01\u95ed\u6a21\u5f0f\u4ec5\u5141\u8bb8\u901a\u8fc7\u9080\u8bf7\u94fe\u63a5\u6ce8\u518c\uff1b\u5b8c\u5168\u5c01\u95ed\u6a21\u5f0f\u5c06\u5173\u95ed\u6240\u6709\u6ce8\u518c\u5165\u53e3\u3002"
+                }, f.a.createElement("select", {
+                    onChange: e=>this.set("site", "register_mode", parseInt(e.target.value)),
+                    className: "form-control",
+                    value: null != t.register_mode ? t.register_mode : 1
+                }, f.a.createElement("option", {
+                    value: 0
+                }, "\u5f00\u653e\u6a21\u5f0f"), f.a.createElement("option", {
+                    value: 1
+                }, "\u534a\u5c01\u95ed\u6a21\u5f0f"), f.a.createElement("option", {
+                    value: 2
+                }, "\u5b8c\u5168\u5c01\u95ed\u6a21\u5f0f")
+                )), f.a.createElement(m, {
                     title: "\u6ce8\u518c\u8bd5\u7528",
                     description: "\u9009\u62e9\u9700\u8981\u8bd5\u7528\u7684\u8ba2\u9605\uff0c\u5982\u679c\u6ca1\u6709\u9009\u9879\u8bf7\u5148\u524d\u5f80\u8ba2\u9605\u7ba1\u7406\u6dfb\u52a0\u3002"
                 }, f.a.createElement("select", {
@@ -6259,12 +6261,6 @@
                 }, f.a.createElement("div", {
                     className: ""
                 }, f.a.createElement(m, {
-                    title: "\u5f00\u542f\u5f3a\u5236\u9080\u8bf7",
-                    description: "\u5f00\u542f\u540e\u53ea\u6709\u88ab\u9080\u8bf7\u7684\u7528\u6237\u624d\u53ef\u4ee5\u8fdb\u884c\u6ce8\u518c\u3002"
-                }, f.a.createElement(l["a"], {
-                    checked: parseInt(n.invite_force),
-                    onChange: e=>this.set("invite", "invite_force", e ? 1 : 0)
-                })), f.a.createElement(m, {
                     title: "\u9080\u8bf7\u4f63\u91d1\u767e\u5206\u6bd4",
                     description: "\u9ed8\u8ba4\u5168\u5c40\u7684\u4f63\u91d1\u5206\u914d\u6bd4\u4f8b\uff0c\u4f60\u53ef\u4ee5\u5728\u7528\u6237\u7ba1\u7406\u5355\u72ec\u914d\u7f6e\u5355\u4e2a\u6bd4\u4f8b\u3002"
                 }, f.a.createElement("input", {
