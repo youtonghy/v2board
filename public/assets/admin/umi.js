@@ -72573,7 +72573,7 @@ class p extends h.a.Component {
                 var e = this
                   , t = this.state
                   , n = t.records
-                  , i = t.loading
+                  , m = t.loading
                   , o = t.pagination
                   , a = t.filters
                   , s = t.createVisible
@@ -72691,7 +72691,7 @@ class p extends h.a.Component {
                 return g.a.createElement(v["a"], i()({}, this.props, {
                     title: "\u9080\u8bf7\u7ba1\u7406"
                 }), g.a.createElement(P["a"], {
-                    loading: i
+                    loading: m
                 }, g.a.createElement("div", {
                     className: "block border-bottom"
                 }, g.a.createElement("div", {
