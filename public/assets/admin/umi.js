@@ -21720,6 +21720,13 @@ class E extends d.a.Component {
                             className: "nav-main-link-icon si si-users"
                         })
                     }, {
+                        title: "\u9080\u8bf7\u7ba1\u7406",
+                        type: "item",
+                        href: "/invite-link",
+                        icon: o.a.createElement("i", {
+                            className: "nav-main-link-icon si si-link"
+                        })
+                    }, {
                         title: "\u516c\u544a\u7ba1\u7406",
                         type: "item",
                         href: "/notice",
@@ -71887,6 +71894,9 @@ class p extends h.a.Component {
                     cancelText: "\u53d6\u6d88"
                 })
             }
+            openInviteManager() {
+                _.a.push("/invite-link")
+            }
             render() {
                 var e, t, n, r, o, p, m = this.props.user, b = m.users, x = m.pagination, _ = m.fetchLoading, E = m.filter, M = this.props.serverGroup.groups, R = this.props.plan.plans, N = [{
                     title: "ID",
@@ -72235,7 +72245,12 @@ class p extends h.a.Component {
                     }), " \u6279\u91cf\u5220\u9664")))
                 }, g.a.createElement(s["a"], null, g.a.createElement(u["a"], {
                     type: "select"
-                }), "\u64cd\u4f5c")))), g.a.createElement(T["a"], null, g.a.createElement(s["a"], {
+                }), "\u64cd\u4f5c")), g.a.createElement(s["a"], {
+                    className: "ml-2",
+                    onClick: ()=>this.openInviteManager()
+                }, g.a.createElement(u["a"], {
+                    type: "link"
+                }), " \u9080\u8bf7\u7ba1\u7406"))), g.a.createElement(T["a"], null, g.a.createElement(s["a"], {
                     className: "ml-2"
                 }, g.a.createElement(u["a"], {
                     type: "user-add"
@@ -72336,6 +72351,513 @@ class p extends h.a.Component {
                 }), " \u5220\u9664\u7528\u6237"))))))))
             }
         }
+        class R extends g.a.Component {
+            constructor(e) {
+                super(e),
+                this.state = {
+                    loading: !1,
+                    creating: !1,
+                    createVisible: !1,
+                    records: [],
+                    pagination: {
+                        current: 1,
+                        pageSize: 10,
+                        total: 0
+                    },
+                    filters: {
+                        user_email: "",
+                        keyword: "",
+                        status: ""
+                    },
+                    createForm: {
+                        user_id: "",
+                        invitee_name: "",
+                        content: "",
+                        max_use: "",
+                        expire_hours: ""
+                    }
+                }
+            }
+            componentDidMount() {
+                this.fetchInviteLinks()
+            }
+            getApiPath(e) {
+                var t = window.settings && window.settings.secure_path ? window.settings.secure_path : "";
+                return "/api/v1/" + t + "/" + e
+            }
+            getAuthHeaders() {
+                var e = {};
+                try {
+                    var t = window.localStorage ? window.localStorage.getItem("authorization") : null;
+                    t && (e.authorization = t)
+                } catch (e) {}
+                return e
+            }
+            fetchInviteLinks() {
+                var e = arguments.length > 0 && void 0 !== arguments[0] ? arguments[0] : {}
+                  , t = this
+                  , n = this.state.pagination
+                  , i = this.state.filters
+                  , o = {
+                    current: e.current || n.current,
+                    page_size: e.pageSize || n.pageSize
+                };
+                i.user_email && (o.user_email = i.user_email),
+                i.keyword && (o.keyword = i.keyword),
+                "" !== i.status && (o.status = i.status),
+                this.setState({
+                    loading: !0
+                });
+                var a = Object.keys(o).map(function(e) {
+                    return encodeURIComponent(e) + "=" + encodeURIComponent(o[e])
+                }).join("&");
+                window.fetch(this.getApiPath("user/inviteLink/fetch") + (a ? "?" + a : ""), {
+                    headers: this.getAuthHeaders(),
+                    credentials: "include"
+                }).then(function(e) {
+                    return e.ok ? e.json() : e.json().catch(function() {
+                        return null
+                    })
+                }).then(function(e) {
+                    if (!e)
+                        return void t.setState({
+                            loading: !1
+                        });
+                    var n = Array.isArray(e.data) ? e.data : []
+                      , r = "number" === typeof e.total ? e.total : 0;
+                    t.setState({
+                        loading: !1,
+                        records: n,
+                        pagination: {
+                            current: o.current,
+                            pageSize: o.page_size,
+                            total: r
+                        }
+                    })
+                }).catch(function() {
+                    t.setState({
+                        loading: !1
+                    }),
+                    r["a"].error("\u9080\u8bf7\u94fe\u63a5\u52a0\u8f7d\u5931\u8d25")
+                })
+            }
+            updateFilter(e, t) {
+                this.setState(n=>({
+                    filters: a()({}, n.filters, {
+                        [e]: t
+                    })
+                }))
+            }
+            resetFilters() {
+                this.setState({
+                    filters: {
+                        user_email: "",
+                        keyword: "",
+                        status: ""
+                    }
+                }, ()=>this.fetchInviteLinks({
+                    current: 1
+                }))
+            }
+            openCreateModal() {
+                this.setState({
+                    createVisible: !0,
+                    createForm: {
+                        user_id: "",
+                        invitee_name: "",
+                        content: "",
+                        max_use: "",
+                        expire_hours: ""
+                    }
+                })
+            }
+            closeCreateModal() {
+                this.setState({
+                    createVisible: !1
+                })
+            }
+            updateCreateForm(e, t) {
+                this.setState(n=>({
+                    createForm: a()({}, n.createForm, {
+                        [e]: t
+                    })
+                }))
+            }
+            submitCreate() {
+                var e = this
+                  , t = this.state.createForm;
+                if (!t.user_id)
+                    return void r["a"].warning("\u8bf7\u8f93\u5165\u9080\u8bf7\u4ebaID");
+                var n = {
+                    user_id: parseInt(t.user_id, 10)
+                };
+                t.invitee_name && (n.invitee_name = t.invitee_name),
+                t.content && (n.content = t.content),
+                t.max_use && (n.max_use = parseInt(t.max_use, 10)),
+                t.expire_hours && (n.expire_hours = parseInt(t.expire_hours, 10)),
+                this.setState({
+                    creating: !0
+                }),
+                window.fetch(this.getApiPath("user/generateInviteCode"), {
+                    method: "POST",
+                    headers: Object.assign({
+                        "Content-Type": "application/json"
+                    }, this.getAuthHeaders()),
+                    credentials: "include",
+                    body: JSON.stringify(n)
+                }).then(function(e) {
+                    return e.ok ? e.json() : e.json().catch(function() {
+                        return null
+                    })
+                }).then(function(t) {
+                    e.setState({
+                        creating: !1
+                    }),
+                    t && t.data ? (r["a"].success("\u9080\u8bf7\u94fe\u63a5\u751f\u6210\u6210\u529f"),
+                    Object(L["a"])(t.data),
+                    e.setState({
+                        createVisible: !1
+                    }),
+                    e.fetchInviteLinks()) : r["a"].error(t && t.message ? t.message : "\u521b\u5efa\u5931\u8d25")
+                }).catch(function() {
+                    e.setState({
+                        creating: !1
+                    }),
+                    r["a"].error("\u521b\u5efa\u5931\u8d25")
+                })
+            }
+            toggleStatus(e) {
+                var t = this
+                  , n = 3 === e.status ? 0 : 3
+                  , i = 3 === e.status ? "\u542f\u7528" : "\u7981\u7528";
+                p["a"].confirm({
+                    title: i + "\u9080\u8bf7\u94fe\u63a5",
+                    content: "\u786e\u5b9a\u8981".concat(i, "\u8be5\u9080\u8bf7\u94fe\u63a5\u5417\uff1f"),
+                    onOk: function() {
+                        return window.fetch(t.getApiPath("user/inviteLink/updateStatus"), {
+                            method: "POST",
+                            headers: Object.assign({
+                                "Content-Type": "application/json"
+                            }, t.getAuthHeaders()),
+                            credentials: "include",
+                            body: JSON.stringify({
+                                id: e.id,
+                                status: n
+                            })
+                        }).then(function(e) {
+                            return e.ok ? e.json() : e.json().catch(function() {
+                                return null
+                            })
+                        }).then(function(e) {
+                            e && e.data ? (r["a"].success("\u64cd\u4f5c\u6210\u529f"),
+                            t.fetchInviteLinks()) : r["a"].error(e && e.message ? e.message : "\u64cd\u4f5c\u5931\u8d25")
+                        }).catch(function() {
+                            r["a"].error("\u64cd\u4f5c\u5931\u8d25")
+                        })
+                    },
+                    okText: "\u786e\u5b9a",
+                    cancelText: "\u53d6\u6d88"
+                })
+            }
+            formatTime(e) {
+                return e ? w()(1e3 * e).format("YYYY/MM/DD HH:mm") : "-"
+            }
+            renderStatus(e, t) {
+                var n = "green";
+                return 1 === e ? n = "orange" : 2 === e ? n = "red" : 3 === e && (n = "default"),
+                g.a.createElement(h["a"], {
+                    color: n
+                }, t || "Unknown")
+            }
+            render() {
+                var e = this
+                  , t = this.state
+                  , n = t.records
+                  , i = t.loading
+                  , o = t.pagination
+                  , a = t.filters
+                  , s = t.createVisible
+                  , l = t.createForm
+                  , c = [{
+                    title: "ID",
+                    dataIndex: "id",
+                    key: "id",
+                    width: 70
+                }, {
+                    title: "\u9080\u8bf7\u4eba\u90ae\u7bb1",
+                    dataIndex: "user_email",
+                    key: "user_email",
+                    render: function(e) {
+                        return e || "-"
+                    }
+                }, {
+                    title: "\u88ab\u9080\u8bf7\u4eba",
+                    dataIndex: "invitee_name",
+                    key: "invitee_name",
+                    render: function(e) {
+                        return e || "-"
+                    }
+                }, {
+                    title: "\u9080\u8bf7\u5185\u5bb9",
+                    dataIndex: "content",
+                    key: "content",
+                    render: function(e) {
+                        var t = e || "-";
+                        return t.length > 40 ? t.slice(0, 40) + "..." : t
+                    }
+                }, {
+                    title: "\u94fe\u63a5",
+                    dataIndex: "link_url",
+                    key: "link_url",
+                    render: function(t) {
+                        return g.a.createElement("a", {
+                            onClick: function() {
+                                return Object(L["a"])(t)
+                            }
+                        }, g.a.createElement(u["a"], {
+                            type: "copy"
+                        }), " \u590d\u5236")
+                    }
+                }, {
+                    title: "\u8bbf\u95ee",
+                    dataIndex: "visit_count",
+                    key: "visit_count",
+                    width: 80
+                }, {
+                    title: "\u4f7f\u7528",
+                    dataIndex: "use_count",
+                    key: "use_count",
+                    width: 90,
+                    render: function(t, e) {
+                        return "".concat(t, "/").concat(e.max_use)
+                    }
+                }, {
+                    title: "\u72b6\u6001",
+                    dataIndex: "status",
+                    key: "status",
+                    render: function(t, n) {
+                        return e.renderStatus(t, n.status_text)
+                    }
+                }, {
+                    title: "\u8fc7\u671f\u65f6\u95f4",
+                    dataIndex: "expired_at",
+                    key: "expired_at",
+                    render: function(t) {
+                        return e.formatTime(t)
+                    }
+                }, {
+                    title: "\u6700\u8fd1\u8bbf\u95ee",
+                    dataIndex: "last_visited_at",
+                    key: "last_visited_at",
+                    render: function(t) {
+                        return e.formatTime(t)
+                    }
+                }, {
+                    title: "\u6700\u8fd1\u4f7f\u7528",
+                    dataIndex: "last_used_at",
+                    key: "last_used_at",
+                    render: function(t) {
+                        return e.formatTime(t)
+                    }
+                }, {
+                    title: "\u521b\u5efa\u65f6\u95f4",
+                    dataIndex: "created_at",
+                    key: "created_at",
+                    render: function(t) {
+                        return e.formatTime(t)
+                    }
+                }, {
+                    title: "\u64cd\u4f5c",
+                    dataIndex: "action",
+                    key: "action",
+                    align: "right",
+                    render: function(t, n) {
+                        return g.a.createElement(g.a.Fragment, null, g.a.createElement("a", {
+                            onClick: function() {
+                                return Object(L["a"])(n.link_url)
+                            }
+                        }, "\u590d\u5236"), g.a.createElement("span", {
+                            style: {
+                                margin: "0 8px",
+                                color: "#d9d9d9"
+                            }
+                        }, "|"), g.a.createElement("a", {
+                            onClick: function() {
+                                return e.toggleStatus(n)
+                            }
+                        }, 3 === n.status ? "\u542f\u7528" : "\u7981\u7528"))
+                    }
+                }];
+                return g.a.createElement(v["a"], i()({}, this.props, {
+                    title: "\u9080\u8bf7\u7ba1\u7406"
+                }), g.a.createElement(P["a"], {
+                    loading: i
+                }, g.a.createElement("div", {
+                    className: "block border-bottom"
+                }, g.a.createElement("div", {
+                    className: "bg-white"
+                }, g.a.createElement("div", {
+                    className: "v2board-table-action",
+                    style: {
+                        padding: 15
+                    }
+                }, g.a.createElement("input", {
+                    className: "form-control",
+                    style: {
+                        width: 180,
+                        display: "inline-block",
+                        marginRight: 8
+                    },
+                    placeholder: "\u9080\u8bf7\u4eba\u90ae\u7bb1",
+                    value: a.user_email,
+                    onChange: function(t) {
+                        return e.updateFilter("user_email", t.target.value)
+                    }
+                }), g.a.createElement("input", {
+                    className: "form-control",
+                    style: {
+                        width: 240,
+                        display: "inline-block",
+                        marginRight: 8
+                    },
+                    placeholder: "\u641c\u7d22\u59d3\u540d / token / \u5185\u5bb9",
+                    value: a.keyword,
+                    onChange: function(t) {
+                        return e.updateFilter("keyword", t.target.value)
+                    }
+                }), g.a.createElement("select", {
+                    className: "form-control",
+                    style: {
+                        width: 160,
+                        display: "inline-block",
+                        marginRight: 8
+                    },
+                    value: a.status,
+                    onChange: function(t) {
+                        return e.updateFilter("status", t.target.value)
+                    }
+                }, g.a.createElement("option", {
+                    value: ""
+                }, "\u5168\u90e8\u72b6\u6001"), g.a.createElement("option", {
+                    value: "0"
+                }, "Active"), g.a.createElement("option", {
+                    value: "1"
+                }, "Used Up"), g.a.createElement("option", {
+                    value: "2"
+                }, "Expired"), g.a.createElement("option", {
+                    value: "3"
+                }, "Disabled")), g.a.createElement(l["a"], {
+                    type: "primary",
+                    onClick: function() {
+                        return e.fetchInviteLinks({
+                            current: 1
+                        })
+                    }
+                }, g.a.createElement(u["a"], {
+                    type: "search"
+                }), " \u67e5\u8be2"), g.a.createElement(l["a"], {
+                    className: "ml-2",
+                    onClick: function() {
+                        return e.resetFilters()
+                    }
+                }, "\u91cd\u7f6e"), g.a.createElement(l["a"], {
+                    className: "ml-2",
+                    onClick: function() {
+                        return e.openCreateModal()
+                    }
+                }, g.a.createElement(u["a"], {
+                    type: "plus"
+                }), " \u65b0\u5efa\u9080\u8bf7\u94fe\u63a5"))), g.a.createElement(A["a"], {
+                    className: "v2board-table",
+                    dataSource: n,
+                    rowKey: "id",
+                    pagination: {
+                        size: "small",
+                        showSizeChanger: !0,
+                        current: o.current,
+                        total: o.total,
+                        pageSize: o.pageSize,
+                        pageSizeOptions: [10, 20, 50, 100]
+                    },
+                    columns: c,
+                    scroll: {
+                        x: 1400
+                    },
+                    onChange: function(t) {
+                        return e.fetchInviteLinks({
+                            current: t.current,
+                            pageSize: t.pageSize
+                        })
+                    }
+                })))), g.a.createElement(p["a"], {
+                    visible: s,
+                    title: "\u65b0\u5efa\u9080\u8bf7\u94fe\u63a5",
+                    onCancel: function() {
+                        return e.closeCreateModal()
+                    },
+                    onOk: function() {
+                        return e.submitCreate()
+                    },
+                    confirmLoading: this.state.creating,
+                    okText: "\u521b\u5efa",
+                    cancelText: "\u53d6\u6d88"
+                }, g.a.createElement("div", null, g.a.createElement("div", {
+                    className: "form-group"
+                }, g.a.createElement("label", null, "\u9080\u8bf7\u4ebaID"), g.a.createElement("input", {
+                    className: "form-control",
+                    value: l.user_id,
+                    onChange: function(t) {
+                        return e.updateCreateForm("user_id", t.target.value)
+                    },
+                    placeholder: "\u5fc5\u586b"
+                })), g.a.createElement("div", {
+                    className: "form-group"
+                }, g.a.createElement("label", null, "\u88ab\u9080\u8bf7\u4eba\u59d3\u540d"), g.a.createElement("input", {
+                    className: "form-control",
+                    value: l.invitee_name,
+                    onChange: function(t) {
+                        return e.updateCreateForm("invitee_name", t.target.value)
+                    }
+                })), g.a.createElement("div", {
+                    className: "form-group"
+                }, g.a.createElement("label", null, "\u9080\u8bf7\u5185\u5bb9"), g.a.createElement("textarea", {
+                    className: "form-control",
+                    rows: 4,
+                    value: l.content,
+                    onChange: function(t) {
+                        return e.updateCreateForm("content", t.target.value)
+                    }
+                })), g.a.createElement("div", {
+                    className: "form-group"
+                }, g.a.createElement("label", null, "\u6709\u6548\u6b21\u6570"), g.a.createElement("input", {
+                    className: "form-control",
+                    value: l.max_use,
+                    onChange: function(t) {
+                        return e.updateCreateForm("max_use", t.target.value)
+                    },
+                    placeholder: "\u9ed8\u8ba4\u4f7f\u7528\u7cfb\u7edf\u914d\u7f6e"
+                })), g.a.createElement("div", {
+                    className: "form-group"
+                }, g.a.createElement("label", null, "\u6709\u6548\u65f6\u957f(\u5c0f\u65f6)"), g.a.createElement("input", {
+                    className: "form-control",
+                    value: l.expire_hours,
+                    onChange: function(t) {
+                        return e.updateCreateForm("expire_hours", t.target.value)
+                    },
+                    placeholder: "\u9ed8\u8ba4\u4f7f\u7528\u7cfb\u7edf\u914d\u7f6e"
+                })), g.a.createElement("div", {
+                    style: {
+                        color: "#999"
+                    }
+                }, "\u5feb\u901f\u6309\u7528\u6237\u521b\u5efa\u65f6\uff0c\u4ecd\u53ef\u5728\u7528\u6237\u7ba1\u7406\u9875\u7684\u64cd\u4f5c\u83dc\u5355\u4e2d\u76f4\u63a5\u751f\u6210\u3002"))))
+            }
+        }
+        class N extends g.a.Component {
+            render() {
+                var e = this.props.location && this.props.location.pathname;
+                return "/invite-link" === e ? g.a.createElement(R, this.props) : g.a.createElement(M, this.props)
+            }
+        }
         t["default"] = Object(E["c"])(e=>{
             var t = e.user
               , n = e.serverGroup
@@ -72346,7 +72868,7 @@ class p extends h.a.Component {
                 plan: r
             }
         }
-        )(M)
+        )(N)
     },
     dI71: function(e, t, n) {
         "use strict";
@@ -83471,6 +83993,10 @@ class p extends h.a.Component {
             component: n("RJTe").default
         }, {
             path: "/user",
+            exact: !0,
+            component: n("d1ca").default
+        }, {
+            path: "/invite-link",
             exact: !0,
             component: n("d1ca").default
         }];

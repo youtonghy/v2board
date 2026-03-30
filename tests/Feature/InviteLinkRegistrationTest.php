@@ -3,8 +3,11 @@
 namespace Tests\Feature;
 
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use App\Models\User;
+use App\Services\AuthService;
 use Tests\TestCase;
 
 class InviteLinkRegistrationTest extends TestCase
@@ -74,9 +77,16 @@ class InviteLinkRegistrationTest extends TestCase
             'password' => bcrypt('password123'),
             'uuid' => 'inviter-uuid',
             'token' => 'inviter-token',
+            'is_admin' => 1,
             'created_at' => time(),
             'updated_at' => time(),
         ]);
+    }
+
+    private function getAdminAuthData(): string
+    {
+        $user = User::find(1);
+        return (new AuthService($user))->generateAuthData(Request::create('/admin-test', 'GET'))['auth_data'];
     }
 
     public function testPublicRegisterEndpointIsClosedWhenDisabled(): void
@@ -147,6 +157,57 @@ class InviteLinkRegistrationTest extends TestCase
         $inviteLink = DB::table('v2_invite_link')->where('token', str_repeat('b', 64))->first();
         $this->assertSame(1, (int) $inviteLink->use_count);
         $this->assertSame(1, (int) $inviteLink->status);
+    }
+
+    public function testAdminInviteLinkFetchSupportsEmailAndStatusFilters(): void
+    {
+        DB::table('v2_user')->insert([
+            'id' => 2,
+            'email' => 'another@example.com',
+            'password' => bcrypt('password123'),
+            'uuid' => 'another-uuid',
+            'token' => 'another-token',
+            'created_at' => time(),
+            'updated_at' => time(),
+        ]);
+
+        DB::table('v2_invite_link')->insert([
+            [
+                'user_id' => 1,
+                'token' => str_repeat('d', 64),
+                'invitee_name' => 'Filter One',
+                'content' => 'Match inviter email',
+                'visit_count' => 0,
+                'use_count' => 0,
+                'max_use' => 1,
+                'expired_at' => time() + 3600,
+                'status' => 0,
+                'created_at' => time(),
+                'updated_at' => time(),
+            ],
+            [
+                'user_id' => 2,
+                'token' => str_repeat('e', 64),
+                'invitee_name' => 'Filter Two',
+                'content' => 'Different inviter',
+                'visit_count' => 0,
+                'use_count' => 1,
+                'max_use' => 1,
+                'expired_at' => time() + 3600,
+                'status' => 1,
+                'created_at' => time(),
+                'updated_at' => time(),
+            ],
+        ]);
+
+        $response = $this->withHeaders([
+            'authorization' => $this->getAdminAuthData()
+        ])->getJson('/api/v1/' . config('v2board.secure_path', 'd63e0a01') . '/user/inviteLink/fetch?user_email=inviter@example.com&status=0');
+
+        $response->assertOk();
+        $response->assertJsonCount(1, 'data');
+        $response->assertJsonPath('data.0.user_email', 'inviter@example.com');
+        $response->assertJsonPath('data.0.status', 0);
     }
 
     public function testInvalidInviteRouteRedirectsHome(): void

@@ -557,31 +557,74 @@ class UserController extends Controller
 
     public function fetchInviteLinks(Request $request)
     {
-        $current = max(1, (int)$request->input('current', 1));
-        $pageSize = max(10, (int)$request->input('page_size', 10));
+        $params = $request->validate([
+            'current' => 'nullable|integer|min:1',
+            'page_size' => 'nullable|integer|min:1|max:100',
+            'user_id' => 'nullable|integer',
+            'user_email' => 'nullable|string',
+            'status' => 'nullable|integer|in:0,1,2,3',
+            'keyword' => 'nullable|string|max:255',
+        ]);
 
-        $builder = InviteLink::query()->orderByDesc('id');
+        $current = max(1, (int)($params['current'] ?? 1));
+        $pageSize = max(10, (int)($params['page_size'] ?? 10));
+
+        $builder = InviteLink::query();
+
+        if (!empty($params['user_id'])) {
+            $builder->where('user_id', (int)$params['user_id']);
+        }
+
+        if (!empty($params['user_email'])) {
+            $matchedUser = User::where('email', 'like', '%' . trim($params['user_email']) . '%')->pluck('id')->all();
+            $builder->whereIn('user_id', $matchedUser ?: [0]);
+        }
+
+        if (array_key_exists('status', $params) && $params['status'] !== null && $params['status'] !== '') {
+            $builder->where('status', (int)$params['status']);
+        }
+
+        if (!empty($params['keyword'])) {
+            $keyword = trim($params['keyword']);
+            $builder->where(function ($query) use ($keyword) {
+                $query->where('token', 'like', '%' . $keyword . '%')
+                    ->orWhere('invitee_name', 'like', '%' . $keyword . '%')
+                    ->orWhere('content', 'like', '%' . $keyword . '%');
+            });
+        }
+
+        $builder->orderByDesc('id');
         $total = $builder->count();
         $links = $builder->forPage($current, $pageSize)->get();
         $users = User::whereIn('id', $links->pluck('user_id')->unique()->values()->all())
             ->get(['id', 'email'])
             ->keyBy('id');
+        $baseUrl = rtrim(config('v2board.app_url') ?: url('/'), '/');
 
-        $data = $links->map(function (InviteLink $link) use ($users) {
+        $data = $links->map(function (InviteLink $link) use ($users, $baseUrl) {
+            $status = (int)$link->status;
+            if ($status === InviteLink::STATUS_ACTIVE && $link->isExpired()) {
+                $status = InviteLink::STATUS_EXPIRED;
+            } elseif ($status === InviteLink::STATUS_ACTIVE && !$link->hasRemainingUses()) {
+                $status = InviteLink::STATUS_USED_UP;
+            }
             return [
                 'id' => $link->id,
                 'user_id' => $link->user_id,
                 'user_email' => optional($users->get($link->user_id))->email,
                 'token' => $link->token,
+                'link_url' => $baseUrl . '/invite/' . $link->token,
                 'invitee_name' => $link->invitee_name,
                 'content' => $link->content,
                 'visit_count' => (int)$link->visit_count,
                 'use_count' => (int)$link->use_count,
                 'max_use' => (int)$link->max_use,
                 'expired_at' => $link->expired_at,
-                'status' => (int)$link->status,
+                'status' => $status,
+                'status_text' => $this->formatInviteLinkStatusText($status),
                 'last_visited_at' => $link->last_visited_at,
                 'last_used_at' => $link->last_used_at,
+                'created_at' => $link->created_at,
             ];
         })->values();
 
@@ -618,6 +661,21 @@ class UserController extends Controller
         return response([
             'data' => true
         ]);
+    }
+
+    private function formatInviteLinkStatusText(int $status): string
+    {
+        switch ($status) {
+            case InviteLink::STATUS_USED_UP:
+                return 'Used Up';
+            case InviteLink::STATUS_EXPIRED:
+                return 'Expired';
+            case InviteLink::STATUS_DISABLED:
+                return 'Disabled';
+            case InviteLink::STATUS_ACTIVE:
+            default:
+                return 'Active';
+        }
     }
 
     public function thirdPartyLoginInit(Request $request)
