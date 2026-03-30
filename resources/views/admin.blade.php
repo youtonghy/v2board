@@ -10,6 +10,18 @@
         (function () {
             try { document.documentElement.classList.add('__admin_auth_blocked'); } catch (e) {}
 
+            function isNewAdminHash(hash) {
+                return /^#\/new(?:\/|$)/.test(hash || '');
+            }
+
+            var __adminRenderMode = isNewAdminHash(window.location.hash) ? 'new' : 'legacy';
+            window.addEventListener('hashchange', function () {
+                var nextMode = isNewAdminHash(window.location.hash) ? 'new' : 'legacy';
+                if (nextMode !== __adminRenderMode) {
+                    window.location.reload();
+                }
+            });
+
             function redirectHome(clearToken) {
                 if (clearToken) {
                     try { localStorage.removeItem('auth_data'); } catch (e) {}
@@ -24,7 +36,33 @@
                 window.location.replace('/#/login');
             }
 
+            function showAppRoot(mode) {
+                var legacyRoot = document.getElementById('root');
+                var nextRoot = document.getElementById('admin-v2-root');
+                if (legacyRoot) legacyRoot.style.display = mode === 'legacy' ? '' : 'none';
+                if (nextRoot) nextRoot.style.display = mode === 'new' ? '' : 'none';
+            }
+
+            function ensureStyles(styleList, prefix) {
+                styleList.forEach(function (href, index) {
+                    var id = prefix + '-' + index;
+                    if (document.getElementById(id)) return;
+                    var link = document.createElement('link');
+                    link.rel = 'stylesheet';
+                    link.href = href;
+                    link.id = id;
+                    document.head.appendChild(link);
+                });
+            }
+
             function installAdminAssets() {
+                showAppRoot('legacy');
+                ensureStyles([
+                    "/assets/admin/components.chunk.css?v={{$version}}&m={{ filemtime(public_path('assets/admin/components.chunk.css')) }}",
+                    "/assets/admin/umi.css?v={{$version}}&m={{ filemtime(public_path('assets/admin/umi.css')) }}",
+                    "/assets/admin/custom.css?v={{$version}}&m={{ filemtime(public_path('assets/admin/custom.css')) }}"
+                ], 'legacy-admin-style');
+
                 var scripts = [
                     "/assets/admin/vendors.async.js?v={{$version}}&m={{ filemtime(public_path('assets/admin/vendors.async.js')) }}",
                     "/assets/admin/components.async.js?v={{$version}}&m={{ filemtime(public_path('assets/admin/components.async.js')) }}",
@@ -48,6 +86,32 @@
                 }
 
                 loadNext(0);
+            }
+
+            function installNewAdminAssets() {
+                showAppRoot('new');
+                ensureStyles([
+                    "/assets/admin-v2/index.css?v={{$version}}&m={{ filemtime(public_path('assets/admin-v2/index.css')) }}"
+                ], 'new-admin-style');
+
+                if (document.getElementById('__admin_v2_script')) return;
+
+                function loadModule() {
+                    var script = document.createElement('script');
+                    script.type = 'module';
+                    script.id = '__admin_v2_script';
+                    script.src = "/assets/admin-v2/index.js?v={{$version}}&m={{ filemtime(public_path('assets/admin-v2/index.js')) }}";
+                    script.onerror = function () {
+                        redirectHome(false);
+                    };
+                    document.body.appendChild(script);
+                }
+
+                if (!document.body) {
+                    return document.addEventListener('DOMContentLoaded', loadModule, { once: true });
+                }
+
+                loadModule();
             }
 
             function parseUrl(rawUrl) {
@@ -302,7 +366,11 @@
                     if (!data.is_admin) return redirectHome(false);
                     installApiGateway();
                     try { document.documentElement.classList.remove('__admin_auth_blocked'); } catch (e) {}
-                    installAdminAssets();
+                    if (__adminRenderMode === 'new') {
+                        installNewAdminAssets();
+                    } else {
+                        installAdminAssets();
+                    }
                 } catch (e) {
                     return redirectLogin(false);
                 }
@@ -310,9 +378,6 @@
             xhr.send(JSON.stringify({ endpoint: 'user/checkLogin', method: 'GET', params: {} }));
         })();
     </script>
-    <link rel="stylesheet" href="/assets/admin/components.chunk.css?v={{$version}}&m={{ filemtime(public_path('assets/admin/components.chunk.css')) }}">
-    <link rel="stylesheet" href="/assets/admin/umi.css?v={{$version}}&m={{ filemtime(public_path('assets/admin/umi.css')) }}">
-    <link rel="stylesheet" href="/assets/admin/custom.css?v={{$version}}&m={{ filemtime(public_path('assets/admin/custom.css')) }}">
     <!-- <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito+Sans:300,400,400i,600,700"> -->
     <script>window.routerBase = "/";</script>
     <script>
@@ -329,11 +394,19 @@
             secure_path: '{{$secure_path}}',
             apiHost: '{{ request()->getSchemeAndHttpHost() }}'
         }
+        window.__ADMIN_V2_BOOTSTRAP__ = {
+            title: '{{$title}}',
+            version: '{{$version}}',
+            logo: '{{$logo}}',
+            securePath: '{{$secure_path}}',
+            apiHost: '{{ request()->getSchemeAndHttpHost() }}'
+        }
     </script>
 </head>
 
 <body>
 <div id="root"></div>
+<div id="admin-v2-root" style="display:none"></div>
 </body>
 
 </html>
