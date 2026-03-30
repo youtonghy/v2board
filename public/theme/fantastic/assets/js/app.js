@@ -147,7 +147,8 @@ document.addEventListener('alpine:init', () => {
         invites: {
             codes: [],
             stat: [],
-            invite_admin_only: 0
+            invite_admin_only: 0,
+            user_invite_page_enable: 0
         },
         traffics: [],
         trafficsLoaded: false,
@@ -255,7 +256,7 @@ document.addEventListener('alpine:init', () => {
         twoFactorToken: null,
 
         // Forms
-        authForm: { email: '', password: '', invite_code: '', email_code: '' },
+        authForm: { email: '', password: '', email_code: '' },
         ticketForm: { subject: '', message: '' },
         ticketReplyForm: { id: null, message: '' },
         passwordForm: { old_password: '', new_password: '' },
@@ -571,17 +572,21 @@ document.addEventListener('alpine:init', () => {
         },
 
         isRegisterDisabled() {
-            return Number(this.siteConfig?.stop_register) === 1;
+            return Number(this.siteConfig?.stop_register) === 1 || Number(this.siteConfig?.public_register_enable) !== 1;
         },
 
-        isInviteRequired() {
-            return Number(this.siteConfig?.is_invite_force) === 1;
+        isInvitePageEnabled() {
+            return Number(this.siteConfig?.user_invite_page_enable) === 1
+                && Number(this.invites?.user_invite_page_enable ?? this.siteConfig?.user_invite_page_enable) === 1;
         },
 
         ensureRegisterAllowed() {
             if (!this.isRegisterDisabled()) return;
             if (this.view === 'register') {
                 this.view = 'login';
+            }
+            if (!this.isInvitePageEnabled() && this.view === 'invites') {
+                this.view = 'profile';
             }
         },
 
@@ -718,6 +723,9 @@ document.addEventListener('alpine:init', () => {
                         this.passkey_login_enable = Number(data.data.passkey_login_enable) || 0;
                     }
                     this.ensureRegisterAllowed();
+                    if (Number(this.siteConfig.user_invite_page_enable) !== 1 && this.view === 'invites') {
+                        this.view = 'profile';
+                    }
                     if (this.siteConfig.is_recaptcha || this.siteConfig.is_turnstile) {
                         this.loadCaptchaScript();
                         this.$nextTick(() => {
@@ -820,7 +828,9 @@ document.addEventListener('alpine:init', () => {
                     this.fetchPlans();
                     this.fetchOrders();
                     this.fetchTickets();
-                    this.fetchInvites();
+                    if (Number(this.siteConfig?.user_invite_page_enable) === 1) {
+                        this.fetchInvites();
+                    }
                     this.fetchKnowledge();
                     this.fetchServers();
                     this.fetchNotices();
@@ -901,14 +911,9 @@ document.addEventListener('alpine:init', () => {
                     this.showMessage('Registration is currently disabled.');
                     return;
                 }
-                if (this.isInviteRequired() && !this.authForm.invite_code) {
-                    this.showMessage('Please enter an invite code.');
-                    return;
-                }
                 const params = {
                     email: this.authForm.email,
                     password: this.authForm.password,
-                    invite_code: this.authForm.invite_code,
                     email_code: this.authForm.email_code
                 };
                 if (this.siteConfig.is_turnstile) params.turnstile_token = this.captcha.token;
@@ -1055,6 +1060,7 @@ document.addEventListener('alpine:init', () => {
                     this.invites = data.data;
                 }
             } catch (error) {
+                this.invites.user_invite_page_enable = 0;
                 console.error('Error fetching invites:', error);
             }
         },
@@ -3215,6 +3221,9 @@ document.addEventListener('alpine:init', () => {
                 'profile': 'Profile / Settings',
                 'invites': 'Profile / Invites'
             };
+            if (this.view === 'invites' && !this.isInvitePageEnabled()) {
+                return 'Profile / Settings';
+            }
             return breadcrumbs[this.view] || 'Dashboard';
         },
 

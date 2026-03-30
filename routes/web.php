@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\InviteLink;
 use App\Services\ThemeService;
 use Illuminate\Http\Request;
 
@@ -39,6 +40,44 @@ Route::get('/', function (Request $request) {
 
     $renderParams['theme_config'] = config('theme.' . config('v2board.frontend_theme', 'default'));
     return view('theme::' . config('v2board.frontend_theme', 'default') . '.dashboard', $renderParams);
+});
+
+Route::get('/invite/{token}', function (Request $request, string $token) {
+    if (config('v2board.app_url') && config('v2board.safe_mode_enable', 0)) {
+        if ($request->server('HTTP_HOST') !== parse_url(config('v2board.app_url'))['host']) {
+            abort(403);
+        }
+    }
+
+    $inviteLink = InviteLink::where('token', $token)->first();
+    if (!$inviteLink || !$inviteLink->isAvailable()) {
+        if ($inviteLink && (int)$inviteLink->status !== InviteLink::STATUS_DISABLED) {
+            if ($inviteLink->isExpired()) {
+                $inviteLink->status = InviteLink::STATUS_EXPIRED;
+                $inviteLink->save();
+            } elseif (!$inviteLink->hasRemainingUses()) {
+                $inviteLink->status = InviteLink::STATUS_USED_UP;
+                $inviteLink->save();
+            }
+        }
+        return redirect('/');
+    }
+
+    $theme = 'fantastic';
+    if (!config("theme.{$theme}")) {
+        $themeService = new ThemeService($theme);
+        $themeService->init();
+    }
+
+    return view('theme::fantastic.invite', [
+        'title' => config('v2board.app_name', 'V2Board'),
+        'theme' => $theme,
+        'version' => config('app.version'),
+        'description' => config('v2board.app_description', 'V2Board is best'),
+        'logo' => config('v2board.logo'),
+        'token' => $token,
+        'theme_config' => config('theme.' . $theme)
+    ]);
 });
 
 //TODO:: 兼容

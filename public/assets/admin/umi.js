@@ -5838,6 +5838,12 @@
                     checked: parseInt(t.stop_register),
                     onChange: e=>this.set("site", "stop_register", e ? 1 : 0)
                 })), f.a.createElement(m, {
+                    title: "\u663e\u793a\u516c\u5f00\u6ce8\u518c\u5165\u53e3",
+                    description: "\u5173\u95ed\u540e\u9996\u9875\u5c06\u4e0d\u518d\u663e\u793a\u6ce8\u518c\u6309\u94ae\uff0c\u4ec5\u80fd\u901a\u8fc7\u9080\u8bf7\u94fe\u63a5\u6ce8\u518c\u3002"
+                }, f.a.createElement(l["a"], {
+                    checked: parseInt(t.public_register_enable),
+                    onChange: e=>this.set("site", "public_register_enable", e ? 1 : 0)
+                })), f.a.createElement(m, {
                     title: "\u6ce8\u518c\u8bd5\u7528",
                     description: "\u9009\u62e9\u9700\u8981\u8bd5\u7528\u7684\u8ba2\u9605\uff0c\u5982\u679c\u6ca1\u6709\u9009\u9879\u8bf7\u5148\u524d\u5f80\u8ba2\u9605\u7ba1\u7406\u6dfb\u52a0\u3002"
                 }, f.a.createElement("select", {
@@ -6287,6 +6293,34 @@
                 }, f.a.createElement(l["a"], {
                     checked: parseInt(n.invite_admin_only),
                     onChange: e=>this.set("invite", "invite_admin_only", e ? 1 : 0)
+                })), f.a.createElement(m, {
+                    title: "\u663e\u793a\u7528\u6237\u9080\u8bf7\u9875",
+                    description: "\u5173\u95ed\u540e\u524d\u53f0\u7528\u6237\u7aef\u4e0d\u518d\u663e\u793a Invites \u9875\u9762\uff0c\u4ec5\u7ba1\u7406\u5458\u53ef\u751f\u6210\u9080\u8bf7\u94fe\u63a5\u3002"
+                }, f.a.createElement(l["a"], {
+                    checked: parseInt(n.user_invite_page_enable),
+                    onChange: e=>this.set("invite", "user_invite_page_enable", e ? 1 : 0)
+                })), f.a.createElement(m, {
+                    title: "\u9080\u8bf7\u94fe\u63a5\u9ed8\u8ba4\u6709\u6548\u6b21\u6570"
+                }, f.a.createElement("input", {
+                    type: "text",
+                    className: "form-control",
+                    placeholder: "\u8bf7\u8f93\u5165",
+                    defaultValue: n.invite_link_default_max_use,
+                    onChange: e=>this.set("invite", "invite_link_default_max_use", parseInt(e.target.value))
+                })), f.a.createElement(m, {
+                    title: "\u9080\u8bf7\u94fe\u63a5\u9ed8\u8ba4\u6709\u6548\u65f6\u957f(\u5c0f\u65f6)"
+                }, f.a.createElement("input", {
+                    type: "text",
+                    className: "form-control",
+                    placeholder: "\u8bf7\u8f93\u5165",
+                    defaultValue: n.invite_link_default_expire_hours,
+                    onChange: e=>this.set("invite", "invite_link_default_expire_hours", parseInt(e.target.value))
+                })), f.a.createElement(m, {
+                    title: "\u7edf\u8ba1\u9080\u8bf7\u94fe\u63a5\u8bbf\u95ee\u6570",
+                    description: "\u5f00\u542f\u540e\u4f1a\u7d2f\u79ef\u8bbf\u95ee\u6b21\u6570\u3001\u6700\u8fd1\u8bbf\u95ee\u65f6\u95f4\u4e0e\u4f7f\u7528\u6570\u3002"
+                }, f.a.createElement(l["a"], {
+                    checked: parseInt(n.invite_link_stats_enable),
+                    onChange: e=>this.set("invite", "invite_link_stats_enable", e ? 1 : 0)
                 })), f.a.createElement(m, {
                     title: "\u4f63\u91d1\u4ec5\u9996\u6b21\u53d1\u653e",
                     description: "\u5f00\u542f\u540e\u88ab\u9080\u8bf7\u4eba\u9996\u6b21\u652f\u4ed8\u65f6\u624d\u4f1a\u4ea7\u751f\u4f63\u91d1\uff0c\u53ef\u4ee5\u5728\u7528\u6237\u7ba1\u7406\u5bf9\u7528\u6237\u8fdb\u884c\u5355\u72ec\u914d\u7f6e\u3002"
@@ -71826,8 +71860,8 @@ class p extends h.a.Component {
             generateInviteCode(e) {
                 var t = this;
                 p["a"].confirm({
-                    title: "\u751f\u6210\u9080\u8bf7\u7801",
-                    content: "\u786e\u5b9a\u8981\u4e3a".concat(e.email, "\u751f\u6210\u9080\u8bf7\u7801\u5417\uff1f"),
+                    title: "\u751f\u6210\u9080\u8bf7\u94fe\u63a5",
+                    content: "\u786e\u5b9a\u8981\u4e3a".concat(e.email, "\u751f\u6210\u9080\u8bf7\u94fe\u63a5\u5417\uff1f"),
                     onOk() {
                         t.props.dispatch({
                             type: "user/generateInviteCode",
@@ -83142,7 +83176,7 @@ class p extends h.a.Component {
                                     }
                                     return e.abrupt("return");
                                 case 5:
-                                    return r["a"].success("\u9080\u8bf7\u7801\u751f\u6210\u6210\u529f: " + t.data),
+                                    return r["a"].success("\u9080\u8bf7\u94fe\u63a5\u751f\u6210\u6210\u529f: " + t.data),
                                     e.next = 8,
                                     i({
                                         type: "fetch"

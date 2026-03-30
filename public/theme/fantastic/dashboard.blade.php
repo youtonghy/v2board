@@ -200,7 +200,7 @@
                         <a href="#" class="nav-link">Profile</a>
                         <div class="nav-dropdown">
                             <a href="#" @click.prevent="view = 'profile'" :class="{ 'active': view === 'profile' }">Profile</a>
-                            <a href="#" @click.prevent="view = 'invites'" :class="{ 'active': view === 'invites' }">Invites</a>
+                            <a href="#" x-show="isInvitePageEnabled()" @click.prevent="view = 'invites'" :class="{ 'active': view === 'invites' }">Invites</a>
                         </div>
                     </div>
                 </div>
@@ -234,7 +234,7 @@
                         <div class="breadcrumb-section">
                             <div class="breadcrumb-title">Profile</div>
                             <a href="#" @click.prevent="view = 'profile'; mobileMenuOpen = false" :class="{ 'active': view === 'profile' }">Profile</a>
-                            <a href="#" @click.prevent="view = 'invites'; mobileMenuOpen = false" :class="{ 'active': view === 'invites' }">Invites</a>
+                            <a href="#" x-show="isInvitePageEnabled()" @click.prevent="view = 'invites'; mobileMenuOpen = false" :class="{ 'active': view === 'invites' }">Invites</a>
                         </div>
                         <div class="breadcrumb-section logout-section">
                             <a href="#" class="btn-logout-mobile" @click.prevent="mobileMenuOpen = false; logout()">Logout</a>
@@ -379,17 +379,10 @@
                         <div class="form-group">
                             <input type="password" x-model="authForm.password" placeholder="Password" class="form-input">
                         </div>
-                        <div class="form-group">
-                            <input type="text"
-                                   x-model="authForm.invite_code"
-                                   :placeholder="isInviteRequired() ? 'Invite Code' : 'Invite Code (Optional)'"
-                                   :required="isInviteRequired()"
-                                   class="form-input">
-                        </div>
                         <div id="captcha-register" class="form-group"></div>
                         <button class="btn-3d btn-block"
                                 @click="register()"
-                                :disabled="loading || (isInviteRequired() && !authForm.invite_code)"
+                                :disabled="loading"
                                 x-text="loading ? 'Registering...' : 'Register'"></button>
                         <div class="auth-links">
                             <a href="#" @click.prevent="view = 'login'">Already have an account? Login</a>
@@ -888,7 +881,7 @@
             </div>
 
             <!-- Invites View -->
-            <div x-show="view === 'invites'" class="view-invites" style="display: none;">
+            <div x-show="view === 'invites' && isInvitePageEnabled()" class="view-invites" style="display: none;">
                 <h2>My Invites</h2>
                 <div class="stats-grid">
                     <div class="card stat-card">
