@@ -72746,8 +72746,9 @@ class p extends h.a.Component {
                     value: "2"
                 }, "Expired"), g.a.createElement("option", {
                     value: "3"
-                }, "Disabled")), g.a.createElement(l["a"], {
-                    type: "primary",
+                }, "Disabled")), g.a.createElement("button", {
+                    type: "button",
+                    className: "ant-btn ant-btn-primary",
                     onClick: function() {
                         return e.fetchInviteLinks({
                             current: 1
@@ -72755,13 +72756,15 @@ class p extends h.a.Component {
                     }
                 }, g.a.createElement(u["a"], {
                     type: "search"
-                }), " \u67e5\u8be2"), g.a.createElement(l["a"], {
-                    className: "ml-2",
+                }), " \u67e5\u8be2"), g.a.createElement("button", {
+                    type: "button",
+                    className: "ant-btn ml-2",
                     onClick: function() {
                         return e.resetFilters()
                     }
-                }, "\u91cd\u7f6e"), g.a.createElement(l["a"], {
-                    className: "ml-2",
+                }, "\u91cd\u7f6e"), g.a.createElement("button", {
+                    type: "button",
+                    className: "ant-btn ml-2",
                     onClick: function() {
                         return e.openCreateModal()
                     }
