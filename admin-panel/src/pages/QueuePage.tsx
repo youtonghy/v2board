@@ -10,6 +10,7 @@ import { useEffect, useMemo, useState } from "react";
 import { adminRequest, getEnvelopeError, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { asArray, asRecord } from "../lib/admin-format";
+import { SectionCard, StatGrid } from "../components/AdminContent";
 
 interface QueueState {
   loading: boolean;
@@ -79,6 +80,15 @@ export function QueuePage() {
       }))
     );
   }, [state.stats, state.workload]);
+  const statCards = useMemo(
+    () =>
+      metrics.slice(0, 4).map(metric => ({
+        label: metric.key,
+        value: metric.value,
+        hint: "Live queue metric"
+      })),
+    [metrics]
+  );
 
   return (
     <PageFrame
@@ -94,83 +104,43 @@ export function QueuePage() {
         </Card>
       ) : null}
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {metrics.map(metric => (
-          <Card key={metric.key} className="border border-white/60 bg-white/90 shadow-panel">
-            <CardBody className="gap-2 p-5">
-              <Chip variant="flat" className="w-fit">{metric.key}</Chip>
-              <p className="text-2xl font-semibold text-slate-900">{metric.value}</p>
-            </CardBody>
-          </Card>
-        ))}
-      </div>
+      <StatGrid items={statCards} />
 
       {state.loading ? (
         <Card className="border border-default-200 shadow-none">
           <CardBody className="flex min-h-[320px] items-center justify-center">
-            <Spinner color="warning" label="Loading queue" />
+            <Spinner color="primary" label="Loading queue" />
           </CardBody>
         </Card>
       ) : (
         <div className="grid gap-6 xl:grid-cols-2">
-          <Card className="border border-white/60 bg-white/90 shadow-panel">
-            <CardHeader>
-              <div>
-                <p className="text-lg font-semibold text-slate-900">Queue Stats</p>
-                <p className="text-sm text-slate-500">Live counters and queue-level backlog information.</p>
-              </div>
-            </CardHeader>
-            <CardBody>
+          <SectionCard title="Queue Stats" description="Live counters and queue-level backlog information.">
               <pre className="overflow-x-auto whitespace-pre-wrap text-xs text-slate-600">
                 {JSON.stringify(state.stats, null, 2)}
               </pre>
-            </CardBody>
-          </Card>
+          </SectionCard>
 
-          <Card className="border border-white/60 bg-white/90 shadow-panel">
-            <CardHeader>
-              <div>
-                <p className="text-lg font-semibold text-slate-900">Queue Workload</p>
-                <p className="text-sm text-slate-500">Worker and runtime pressure details returned by the backend.</p>
-              </div>
-            </CardHeader>
-            <CardBody>
+          <SectionCard title="Queue Workload" description="Worker and runtime pressure details returned by the backend.">
               <pre className="overflow-x-auto whitespace-pre-wrap text-xs text-slate-600">
                 {JSON.stringify(state.workload, null, 2)}
               </pre>
-            </CardBody>
-          </Card>
+          </SectionCard>
 
-          <Card className="border border-white/60 bg-white/90 shadow-panel">
-            <CardHeader>
-              <div>
-                <p className="text-lg font-semibold text-slate-900">Master Supervisors</p>
-                <p className="text-sm text-slate-500">Horizon master supervisor payload.</p>
-              </div>
-            </CardHeader>
-            <CardBody>
+          <SectionCard title="Master Supervisors" description="Horizon master supervisor payload.">
               <pre className="overflow-x-auto whitespace-pre-wrap text-xs text-slate-600">
                 {JSON.stringify(state.masters, null, 2)}
               </pre>
-            </CardBody>
-          </Card>
+          </SectionCard>
 
-          <Card className="border border-white/60 bg-white/90 shadow-panel">
-            <CardHeader className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-lg font-semibold text-slate-900">System Log</p>
-                <p className="text-sm text-slate-500">Current backend runtime output for quick inspection.</p>
-              </div>
-              <Button size="sm" variant="flat" onPress={() => void loadQueue()}>
-                Reload log
-              </Button>
-            </CardHeader>
-            <CardBody>
+          <SectionCard
+            title="System Log"
+            description="Current backend runtime output for quick inspection."
+            action={<Button size="sm" variant="flat" onPress={() => void loadQueue()}>Reload log</Button>}
+          >
               <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap text-xs text-slate-600">
                 {typeof state.log === "string" ? state.log : JSON.stringify(state.log, null, 2)}
               </pre>
-            </CardBody>
-          </Card>
+          </SectionCard>
         </div>
       )}
     </PageFrame>

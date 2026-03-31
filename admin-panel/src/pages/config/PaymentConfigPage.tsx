@@ -23,6 +23,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { adminRequest, unwrapEnvelope } from "../../lib/api";
 import { PageFrame } from "../../components/PageFrame";
+import { SectionCard, StatGrid } from "../../components/AdminContent";
 
 type PaymentRecord = Record<string, unknown> & {
   id?: number;
@@ -205,6 +206,17 @@ export function PaymentConfigPage() {
   const selectedPaymentMethod = useMemo(() => {
     return selected?.payment ? new Set([String(selected.payment)]) : new Set<string>();
   }, [selected]);
+  const stats = useMemo(() => {
+    const enabled = payments.filter(payment => Boolean(Number(payment.enable ?? 0))).length;
+    const configured = payments.filter(payment => Object.keys(normalizeConfigValue(payment.config)).length > 0).length;
+
+    return [
+      { label: "Providers", value: String(payments.length), hint: "Registered payment entries" },
+      { label: "Enabled", value: String(enabled), hint: "Available at checkout" },
+      { label: "Configured", value: String(configured), hint: "Has provider config payload" },
+      { label: "Methods", value: String(methods.length), hint: "Selectable provider types" }
+    ];
+  }, [methods.length, payments]);
 
   return (
     <PageFrame
@@ -214,14 +226,15 @@ export function PaymentConfigPage() {
       onRefresh={() => void loadPayments()}
       loading={loading}
     >
-      <Card className="border border-white/60 bg-white/90 shadow-panel">
-        <CardHeader className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-lg font-semibold text-slate-900">Payment Providers</p>
-            <p className="text-sm text-slate-500">Create, toggle, inspect, and edit provider records in the new shell.</p>
-          </div>
+      <StatGrid items={stats} />
+
+      <SectionCard
+        title="Payment Providers"
+        description="Create, toggle, inspect, and edit provider records in the new shell."
+        action={
           <Button
             color="primary"
+            radius="full"
             onPress={() => {
               setSelected(normalizePaymentRecord());
               setDynamicForm({});
@@ -230,15 +243,22 @@ export function PaymentConfigPage() {
           >
             Add payment
           </Button>
-        </CardHeader>
-        <CardBody>
+        }
+      >
           {error ? <div className="mb-4 rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">{error}</div> : null}
           {loading ? (
             <div className="flex min-h-[280px] items-center justify-center">
-              <Spinner color="warning" label="Loading payments" />
+              <Spinner color="primary" label="Loading payments" />
             </div>
           ) : (
-            <Table removeWrapper aria-label="Payments">
+            <Table
+              removeWrapper
+              aria-label="Payments"
+              classNames={{
+                th: "bg-slate-50 text-slate-500 uppercase text-[11px] tracking-[0.18em]",
+                td: "py-4"
+              }}
+            >
               <TableHeader>
                 <TableColumn>Sort</TableColumn>
                 <TableColumn>ID</TableColumn>
@@ -307,8 +327,7 @@ export function PaymentConfigPage() {
               </TableBody>
             </Table>
           )}
-        </CardBody>
-      </Card>
+      </SectionCard>
 
       <Modal isOpen={editorOpen} onOpenChange={open => !open && setEditorOpen(false)} size="5xl" scrollBehavior="inside">
         <ModalContent>

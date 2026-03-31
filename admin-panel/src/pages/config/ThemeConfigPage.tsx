@@ -1,8 +1,9 @@
 import { Button, Card, CardBody, CardHeader, Divider, Spinner, Tab, Tabs } from "@heroui/react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { adminRequest, unwrapEnvelope } from "../../lib/api";
 import { PageFrame } from "../../components/PageFrame";
 import { ObjectRecordEditor } from "../../components/ObjectRecordEditor";
+import { SectionCard, StatGrid } from "../../components/AdminContent";
 
 interface ThemeSummaryResponse {
   themes?: Record<string, Record<string, unknown>>;
@@ -80,6 +81,16 @@ export function ThemeConfigPage() {
     void loadThemes();
   }, []);
 
+  const stats = useMemo(
+    () => [
+      { label: "Installed", value: String(themes.length), hint: "Detected theme packages" },
+      { label: "Active", value: active || "—", hint: "Current live theme" },
+      { label: "Editing", value: currentTheme || "—", hint: "Config target" },
+      { label: "Template keys", value: String(Object.keys((template as Record<string, unknown>) || {}).length), hint: "Template snapshot size" }
+    ],
+    [active, currentTheme, template, themes.length]
+  );
+
   return (
     <PageFrame
       title="Theme Config"
@@ -88,30 +99,27 @@ export function ThemeConfigPage() {
       onRefresh={() => void loadThemes(currentTheme)}
       loading={loading}
     >
+      <StatGrid items={stats} />
+
       {loading ? (
         <Card className="border border-default-200 shadow-none">
           <CardBody className="flex min-h-[320px] items-center justify-center">
-            <Spinner color="warning" label="Loading themes" />
+            <Spinner color="primary" label="Loading themes" />
           </CardBody>
         </Card>
       ) : (
         <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
-          <Card className="border border-white/60 bg-white/90 shadow-panel">
-            <CardHeader className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-lg font-semibold text-slate-900">Installed Themes</p>
-                <p className="text-sm text-slate-500">Active theme: {active || "Unknown"}</p>
-              </div>
-              <Button color="primary" onPress={() => void saveTheme()} isLoading={saving}>
-                Save theme config
-              </Button>
-            </CardHeader>
-            <CardBody className="gap-6">
+          <SectionCard
+            title="Installed Themes"
+            description={`Active theme: ${active || "Unknown"}`}
+            action={<Button color="primary" radius="full" onPress={() => void saveTheme()} isLoading={saving}>Save theme config</Button>}
+            bodyClassName="gap-6"
+          >
               <Tabs
                 selectedKey={currentTheme}
                 onSelectionChange={key => void loadThemes(String(key))}
                 variant="underlined"
-                color="warning"
+                color="primary"
               >
                 {themes.map(theme => (
                   <Tab key={theme} title={theme} />
@@ -125,8 +133,7 @@ export function ThemeConfigPage() {
                 </div>
               ) : null}
               <ObjectRecordEditor value={config} onChange={setConfig} />
-            </CardBody>
-          </Card>
+          </SectionCard>
 
           <Card className="border border-default-200 bg-white/90 shadow-panel">
             <CardHeader>
