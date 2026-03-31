@@ -21,6 +21,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { adminRequest } from "../lib/api";
 import { GIFTCARD_TYPE_OPTIONS, fromDatetimeInput, toDatetimeInput } from "../lib/admin-constants";
+import { ModalField } from "../components/ModalField";
 import { PageFrame } from "../components/PageFrame";
 import {
   adminCardClassName,
@@ -236,102 +237,41 @@ export function GiftCardPage() {
         <Modal.Backdrop>
           <Modal.Container>
             <Modal.Dialog>
-          <Modal.Header>
-              <Modal.Heading>{selected?.id ? "Edit gift card" : "Create gift card"}</Modal.Heading>
-            </Modal.Header>
-          <Modal.Body className="grid gap-5 md:grid-cols-2">
-            <Input label="Name" labelPlacement="outside" value={selected?.name || ""} onValueChange={value => setSelected(current => (current ? { ...current, name: value } : current))} />
-            <Input label="Code" labelPlacement="outside" value={selected?.code || ""} onValueChange={value => setSelected(current => (current ? { ...current, code: value, generate_count: undefined } : current))} />
-            <Select
-              label="Type"
-              labelPlacement="outside"
-              items={typeOptions}
-              selectedKey={selectedType}
-              onSelectionChange={key => {
-                const nextType = Number(key || 1);
-                setSelected(current => (current ? { ...current, type: nextType, value: nextType === 4 ? 0 : current.value } : current));
-              }}
-            >
-              <Select.Trigger>
-                <Select.Value />
-                <Select.Indicator />
-              </Select.Trigger>
-              <Select.Popover>
-                <ListBox items={typeOptions}>
-                  {item => (
-                    <ListBoxItem id={item.id} textValue={item.label}>
-                      {item.label}
-                    </ListBoxItem>
-                  )}
-                </ListBox>
-              </Select.Popover>
-            </Select>
-            <Input
-              label="Value"
-              labelPlacement="outside"
-              type="number"
-              isDisabled={selected?.type === 4}
-              value={String(selected?.type === 4 ? 0 : selected?.value ?? "")}
-              onValueChange={value => setSelected(current => (current ? { ...current, value } : current))}
-            />
-            {selected?.type === 5 ? (
-              <Select
-                label="Plan"
-                labelPlacement="outside"
-                items={planOptions}
-                selectedKey={selectedPlan}
-                onSelectionChange={key => {
-                  setSelected(current => (current ? { ...current, plan_id: String(key || "") } : current));
-                }}
-              >
-                <Select.Trigger>
-                  <Select.Value />
-                  <Select.Indicator />
-                </Select.Trigger>
-                <Select.Popover>
-                  <ListBox items={planOptions}>
-                    {item => (
-                      <ListBoxItem id={item.id} textValue={item.label}>
-                        {item.label}
-                      </ListBoxItem>
-                    )}
-                  </ListBox>
-                </Select.Popover>
-              </Select>
-            ) : null}
-            <Input
-              label="Start Time"
-              labelPlacement="outside"
-              type="datetime-local"
-              value={toDatetimeInput(selected?.started_at)}
-              onValueChange={value => setSelected(current => (current ? { ...current, started_at: fromDatetimeInput(value) } : current))}
-            />
-            <Input
-              label="End Time"
-              labelPlacement="outside"
-              type="datetime-local"
-              value={toDatetimeInput(selected?.ended_at)}
-              onValueChange={value => setSelected(current => (current ? { ...current, ended_at: fromDatetimeInput(value) } : current))}
-            />
-            <Input label="Max Uses" labelPlacement="outside" type="number" value={String(selected?.limit_use ?? "")} onValueChange={value => setSelected(current => (current ? { ...current, limit_use: value } : current))} />
-            {!selected?.id && !selected?.code ? (
-              <Input
-                label="Generate Count"
-                labelPlacement="outside"
-                type="number"
-                value={String(selected?.generate_count ?? "")}
-                onValueChange={value => setSelected(current => (current ? { ...current, generate_count: value } : current))}
-              />
-            ) : null}
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="light" onPress={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button color="primary" onPress={() => void saveGiftCard()} isLoading={saving}>
-              Save gift card
-            </Button>
-          </Modal.Footer>
+              <Modal.Header>
+                <Modal.Heading>{selected?.id ? "Edit gift card" : "Create gift card"}</Modal.Heading>
+              </Modal.Header>
+              <Modal.Body className="grid gap-5 md:grid-cols-2">
+                <ModalField label="Name"><Input aria-label="Name" value={selected?.name || ""} onValueChange={value => setSelected(current => (current ? { ...current, name: value } : current))} /></ModalField>
+                <ModalField label="Code"><Input aria-label="Code" value={selected?.code || ""} onValueChange={value => setSelected(current => (current ? { ...current, code: value, generate_count: undefined } : current))} /></ModalField>
+                <ModalField label="Type">
+                  <Select aria-label="Type" items={typeOptions} selectedKey={selectedType} onSelectionChange={key => {
+                    const nextType = Number(key || 1);
+                    setSelected(current => (current ? { ...current, type: nextType, value: nextType === 4 ? 0 : current.value } : current));
+                  }}>
+                    <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
+                    <Select.Popover><ListBox items={typeOptions}>{item => <ListBoxItem id={item.id} textValue={item.label}>{item.label}</ListBoxItem>}</ListBox></Select.Popover>
+                  </Select>
+                </ModalField>
+                <ModalField label="Value"><Input aria-label="Value" type="number" isDisabled={selected?.type === 4} value={String(selected?.type === 4 ? 0 : selected?.value ?? "")} onValueChange={value => setSelected(current => (current ? { ...current, value } : current))} /></ModalField>
+                {selected?.type === 5 ? (
+                  <ModalField label="Plan">
+                    <Select aria-label="Plan" items={planOptions} selectedKey={selectedPlan} onSelectionChange={key => { setSelected(current => (current ? { ...current, plan_id: String(key || "") } : current)); }}>
+                      <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
+                      <Select.Popover><ListBox items={planOptions}>{item => <ListBoxItem id={item.id} textValue={item.label}>{item.label}</ListBoxItem>}</ListBox></Select.Popover>
+                    </Select>
+                  </ModalField>
+                ) : null}
+                <ModalField label="Start Time"><Input aria-label="Start Time" type="datetime-local" value={toDatetimeInput(selected?.started_at)} onValueChange={value => setSelected(current => (current ? { ...current, started_at: fromDatetimeInput(value) } : current))} /></ModalField>
+                <ModalField label="End Time"><Input aria-label="End Time" type="datetime-local" value={toDatetimeInput(selected?.ended_at)} onValueChange={value => setSelected(current => (current ? { ...current, ended_at: fromDatetimeInput(value) } : current))} /></ModalField>
+                <ModalField label="Max Uses"><Input aria-label="Max Uses" type="number" value={String(selected?.limit_use ?? "")} onValueChange={value => setSelected(current => (current ? { ...current, limit_use: value } : current))} /></ModalField>
+                {!selected?.id && !selected?.code ? (
+                  <ModalField label="Generate Count"><Input aria-label="Generate Count" type="number" value={String(selected?.generate_count ?? "")} onValueChange={value => setSelected(current => (current ? { ...current, generate_count: value } : current))} /></ModalField>
+                ) : null}
+              </Modal.Body>
+              <Modal.Footer>
+                <Button variant="light" onPress={() => setOpen(false)}>Cancel</Button>
+                <Button color="primary" onPress={() => void saveGiftCard()} isLoading={saving}>Save gift card</Button>
+              </Modal.Footer>
         </Modal.Dialog>
           </Modal.Container>
         </Modal.Backdrop>

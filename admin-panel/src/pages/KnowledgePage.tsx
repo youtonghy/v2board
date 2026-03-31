@@ -29,6 +29,7 @@ import {
   useSortableTableSensors
 } from "../components/SortableTable";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
+import { ModalField } from "../components/ModalField";
 import { PageFrame } from "../components/PageFrame";
 import { asArray, formatDateTime } from "../lib/admin-format";
 import {
@@ -379,23 +380,19 @@ export function KnowledgePage() {
         <Modal.Backdrop>
           <Modal.Container>
             <Modal.Dialog>
-          <Modal.Header>
-              <Modal.Heading>{selected.id ? "Edit article" : "Create article"}</Modal.Heading>
-            </Modal.Header>
-          <Modal.Body className="grid gap-4 md:grid-cols-2">
-            <Input label="Title" labelPlacement="outside" value={selected.title} onValueChange={value => setSelected(current => ({ ...current, title: value }))} />
-            <Input label="Language" labelPlacement="outside" value={selected.language || "en-US"} onValueChange={value => setSelected(current => ({ ...current, language: value }))} />
-            <Input className="md:col-span-2" label="Category" labelPlacement="outside" value={selected.category} onValueChange={value => setSelected(current => ({ ...current, category: value }))} />
-            <TextArea className="md:col-span-2" label="Body" labelPlacement="outside" minRows={16} value={selected.body || ""} onValueChange={value => setSelected(current => ({ ...current, body: value }))} />
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="light" onPress={() => setEditorOpen(false)}>
-              Cancel
-            </Button>
-            <Button color="primary" onPress={() => void saveKnowledge()} isLoading={submitting}>
-              Save article
-            </Button>
-          </Modal.Footer>
+              <Modal.Header>
+                <Modal.Heading>{selected.id ? "Edit article" : "Create article"}</Modal.Heading>
+              </Modal.Header>
+              <Modal.Body className="grid gap-4 md:grid-cols-2">
+                <ModalField label="Title"><Input aria-label="Title" value={selected.title} onValueChange={value => setSelected(current => ({ ...current, title: value }))} /></ModalField>
+                <ModalField label="Language"><Input aria-label="Language" value={selected.language || "en-US"} onValueChange={value => setSelected(current => ({ ...current, language: value }))} /></ModalField>
+                <ModalField label="Category" className="md:col-span-2"><Input aria-label="Category" value={selected.category} onValueChange={value => setSelected(current => ({ ...current, category: value }))} /></ModalField>
+                <ModalField label="Body" className="md:col-span-2"><TextArea aria-label="Body" minRows={16} value={selected.body || ""} onValueChange={value => setSelected(current => ({ ...current, body: value }))} /></ModalField>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button variant="light" onPress={() => setEditorOpen(false)}>Cancel</Button>
+                <Button color="primary" onPress={() => void saveKnowledge()} isLoading={submitting}>Save article</Button>
+              </Modal.Footer>
         </Modal.Dialog>
           </Modal.Container>
         </Modal.Backdrop>

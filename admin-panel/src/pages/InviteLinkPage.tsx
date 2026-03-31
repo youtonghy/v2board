@@ -22,6 +22,7 @@ import {
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
+import { ModalField } from "../components/ModalField";
 import { PageFrame } from "../components/PageFrame";
 import { formatDateTime } from "../lib/admin-format";
 import {
@@ -352,44 +353,25 @@ export function InviteLinkPage() {
         <Modal.Backdrop>
           <Modal.Container>
             <Modal.Dialog>
-          <Modal.Header>
-              <Modal.Heading>Generate invite link</Modal.Heading>
-            </Modal.Header>
-          <Modal.Body className="grid gap-4 md:grid-cols-2">
-            <Select
-              label="Owner"
-              labelPlacement="outside"
-              items={userOptions.map(user => ({ id: String(user.id), label: user.email }))}
-              selectedKey={selectedUser}
-              onSelectionChange={key => setGenerateUserId(String(key || ""))}
-            >
-              <Select.Trigger>
-                <Select.Value />
-                <Select.Indicator />
-              </Select.Trigger>
-              <Select.Popover>
-                <ListBox items={userOptions.map(user => ({ id: String(user.id), label: user.email }))}>
-                  {item => (
-                    <ListBoxItem id={item.id} textValue={item.label}>
-                      {item.label}
-                    </ListBoxItem>
-                  )}
-                </ListBox>
-              </Select.Popover>
-            </Select>
-            <Input label="Invitee Name" labelPlacement="outside" value={inviteeName} onValueChange={setInviteeName} />
-            <Input label="Max Use" labelPlacement="outside" type="number" value={maxUse} onValueChange={setMaxUse} />
-            <Input label="Expire Hours" labelPlacement="outside" type="number" value={expireHours} onValueChange={setExpireHours} />
-            <TextArea className="md:col-span-2" label="Content" labelPlacement="outside" minRows={4} value={content} onValueChange={setContent} />
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="light" onPress={() => setGenerateOpen(false)}>
-              Cancel
-            </Button>
-            <Button color="primary" onPress={() => void generateInviteLink()} isLoading={submitting}>
-              Generate
-            </Button>
-          </Modal.Footer>
+              <Modal.Header>
+                <Modal.Heading>Generate invite link</Modal.Heading>
+              </Modal.Header>
+              <Modal.Body className="grid gap-4 md:grid-cols-2">
+                <ModalField label="Owner">
+                  <Select aria-label="Owner" items={userOptions.map(user => ({ id: String(user.id), label: user.email }))} selectedKey={selectedUser} onSelectionChange={key => setGenerateUserId(String(key || ""))}>
+                    <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
+                    <Select.Popover><ListBox items={userOptions.map(user => ({ id: String(user.id), label: user.email }))}>{item => <ListBoxItem id={item.id} textValue={item.label}>{item.label}</ListBoxItem>}</ListBox></Select.Popover>
+                  </Select>
+                </ModalField>
+                <ModalField label="Invitee Name"><Input aria-label="Invitee Name" value={inviteeName} onValueChange={setInviteeName} /></ModalField>
+                <ModalField label="Max Use"><Input aria-label="Max Use" type="number" value={maxUse} onValueChange={setMaxUse} /></ModalField>
+                <ModalField label="Expire Hours"><Input aria-label="Expire Hours" type="number" value={expireHours} onValueChange={setExpireHours} /></ModalField>
+                <ModalField label="Content" className="md:col-span-2"><TextArea aria-label="Content" minRows={4} value={content} onValueChange={setContent} /></ModalField>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button variant="light" onPress={() => setGenerateOpen(false)}>Cancel</Button>
+                <Button color="primary" onPress={() => void generateInviteLink()} isLoading={submitting}>Generate</Button>
+              </Modal.Footer>
         </Modal.Dialog>
           </Modal.Container>
         </Modal.Backdrop>

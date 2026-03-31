@@ -19,6 +19,7 @@ import {
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
+import { ModalField } from "../components/ModalField";
 import { PageFrame } from "../components/PageFrame";
 import { asArray } from "../lib/admin-format";
 import {
@@ -224,59 +225,32 @@ export function ServerRoutePage() {
         <Modal.Backdrop>
           <Modal.Container>
             <Modal.Dialog>
-          <Modal.Header>
-              <Modal.Heading>{selected.id ? "Edit route" : "Create route"}</Modal.Heading>
-            </Modal.Header>
-          <Modal.Body className="grid gap-4 md:grid-cols-2">
-            <Input label="Remarks" labelPlacement="outside" value={selected.remarks} onValueChange={value => setSelected(current => ({ ...current, remarks: value }))} />
-            <Select
-              label="Action"
-              labelPlacement="outside"
-              items={ACTION_OPTIONS.map(action => ({ id: action, label: action }))}
-              selectedKey={selectedAction}
-              onSelectionChange={key =>
-                setSelected(current => ({ ...current, action: String(key || "block") }))
-              }
-            >
-              <Select.Trigger>
-                <Select.Value />
-                <Select.Indicator />
-              </Select.Trigger>
-              <Select.Popover>
-                <ListBox items={ACTION_OPTIONS.map(action => ({ id: action, label: action }))}>
-                  {item => (
-                    <ListBoxItem id={item.id} textValue={item.label}>
-                      {item.label}
-                    </ListBoxItem>
-                  )}
-                </ListBox>
-              </Select.Popover>
-            </Select>
-            <Input className="md:col-span-2" label="Action Value" labelPlacement="outside" value={selected.action_value || ""} onValueChange={value => setSelected(current => ({ ...current, action_value: value }))} />
+              <Modal.Header>
+                <Modal.Heading>{selected.id ? "Edit route" : "Create route"}</Modal.Heading>
+              </Modal.Header>
+              <Modal.Body className="grid gap-4 md:grid-cols-2">
+            <ModalField label="Remarks"><Input aria-label="Remarks" value={selected.remarks} onValueChange={value => setSelected(current => ({ ...current, remarks: value }))} /></ModalField>
+            <ModalField label="Action">
+              <Select aria-label="Action" items={ACTION_OPTIONS.map(action => ({ id: action, label: action }))} selectedKey={selectedAction} onSelectionChange={key => setSelected(current => ({ ...current, action: String(key || "block") }))}>
+                <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
+                <Select.Popover><ListBox items={ACTION_OPTIONS.map(action => ({ id: action, label: action }))}>{item => <ListBoxItem id={item.id} textValue={item.label}>{item.label}</ListBoxItem>}</ListBox></Select.Popover>
+              </Select>
+            </ModalField>
+            <ModalField label="Action Value" className="md:col-span-2"><Input aria-label="Action Value" value={selected.action_value || ""} onValueChange={value => setSelected(current => ({ ...current, action_value: value }))} /></ModalField>
             {selected.action !== "default_out" ? (
-              <TextArea
-                className="md:col-span-2"
-                label="Match Rules"
-                labelPlacement="outside"
-                minRows={10}
-                description="One match item per line."
-                value={Array.isArray(selected.match) ? selected.match.join("\n") : selected.match || ""}
-                onValueChange={value => setSelected(current => ({ ...current, match: value }))}
-              />
+              <ModalField label="Match Rules" description="One match item per line." className="md:col-span-2">
+                <TextArea aria-label="Match Rules" minRows={10} value={Array.isArray(selected.match) ? selected.match.join("\n") : selected.match || ""} onValueChange={value => setSelected(current => ({ ...current, match: value }))} />
+              </ModalField>
             ) : (
               <div className="md:col-span-2 rounded-2xl border border-default-200 bg-default-50 p-4 text-sm text-slate-600">
                 Default out rules do not require explicit match values.
               </div>
             )}
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="light" onPress={() => setEditorOpen(false)}>
-              Cancel
-            </Button>
-            <Button color="primary" onPress={() => void saveRoute()} isLoading={submitting}>
-              Save route
-            </Button>
-          </Modal.Footer>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button variant="light" onPress={() => setEditorOpen(false)}>Cancel</Button>
+                <Button color="primary" onPress={() => void saveRoute()} isLoading={submitting}>Save route</Button>
+              </Modal.Footer>
         </Modal.Dialog>
           </Modal.Container>
         </Modal.Backdrop>

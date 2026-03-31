@@ -5,7 +5,7 @@ import {
   CardHeader,
   Input,
   Modal,
-          Spinner,
+  Spinner,
   Table,
   TableBody,
   TableCell,
@@ -15,6 +15,7 @@ import {
 } from "@heroui/react";
 import { useEffect, useState } from "react";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
+import { ModalField } from "../components/ModalField";
 import { PageFrame } from "../components/PageFrame";
 import { asArray } from "../lib/admin-format";
 import {
@@ -190,20 +191,18 @@ export function ServerGroupPage() {
         <Modal.Backdrop>
           <Modal.Container>
             <Modal.Dialog>
-          <Modal.Header>
-              <Modal.Heading>{selected ? "Edit group" : "Create group"}</Modal.Heading>
-            </Modal.Header>
-          <Modal.Body>
-            <Input label="Group Name" labelPlacement="outside" value={name} onValueChange={setName} />
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="light" onPress={() => setEditorOpen(false)}>
-              Cancel
-            </Button>
-            <Button color="primary" onPress={() => void saveGroup()} isLoading={submitting}>
-              Save group
-            </Button>
-          </Modal.Footer>
+              <Modal.Header>
+                <Modal.Heading>{selected ? "Edit group" : "Create group"}</Modal.Heading>
+              </Modal.Header>
+              <Modal.Body>
+                <ModalField label="Group Name">
+                  <Input aria-label="Group Name" value={name} onValueChange={setName} />
+                </ModalField>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button variant="light" onPress={() => setEditorOpen(false)}>Cancel</Button>
+                <Button color="primary" onPress={() => void saveGroup()} isLoading={submitting}>Save group</Button>
+              </Modal.Footer>
         </Modal.Dialog>
           </Modal.Container>
         </Modal.Backdrop>

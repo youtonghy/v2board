@@ -27,6 +27,7 @@ import {
 } from "../../components/SortableTable";
 import { adminRequest, unwrapEnvelope } from "../../lib/api";
 import { PageFrame } from "../../components/PageFrame";
+import { ModalField } from "../../components/ModalField";
 import {
   adminCardClassName,
   adminSectionBodyClassName,
@@ -370,76 +371,26 @@ export function PaymentConfigPage() {
         <Modal.Backdrop>
           <Modal.Container>
             <Modal.Dialog>
-          <Modal.Header>
-              <Modal.Heading>{selected?.id ? "Edit payment" : "Create payment"}</Modal.Heading>
-            </Modal.Header>
-          <Modal.Body className="gap-5">
-            <Input
-              label="Display Name"
-              labelPlacement="outside"
-              value={String(selected?.name || "")}
-              onValueChange={value => setSelected(current => (current ? { ...current, name: value } : current))}
-            />
-            <Select
-              label="Provider"
-              labelPlacement="outside"
-              items={methods.map(method => ({ id: method, label: method }))}
-              selectedKey={selectedPaymentMethod}
-              onSelectionChange={keys => {
+              <Modal.Header>
+                <Modal.Heading>{selected?.id ? "Edit payment" : "Create payment"}</Modal.Heading>
+              </Modal.Header>
+              <Modal.Body className="gap-5">
+            <ModalField label="Display Name"><Input aria-label="Display Name" value={String(selected?.name || "")} onValueChange={value => setSelected(current => (current ? { ...current, name: value } : current))} /></ModalField>
+            <ModalField label="Provider">
+              <Select aria-label="Provider" items={methods.map(method => ({ id: method, label: method }))} selectedKey={selectedPaymentMethod} onSelectionChange={keys => {
                 const nextPayment = String(keys || "");
                 setSelected(current => (current ? { ...current, payment: nextPayment, config: normalizeConfigValue(current.config) } : current));
                 void loadPaymentForm(nextPayment, Number(selected?.id || 0) || undefined);
-              }}
-            >
-              <Select.Trigger>
-                <Select.Value />
-                <Select.Indicator />
-              </Select.Trigger>
-              <Select.Popover>
-                <ListBox items={methods.map(method => ({ id: method, label: method }))}>
-                  {item => (
-                    <ListBoxItem id={item.id} textValue={item.label}>
-                      {item.label}
-                    </ListBoxItem>
-                  )}
-                </ListBox>
-              </Select.Popover>
-            </Select>
+              }}>
+                <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
+                <Select.Popover><ListBox items={methods.map(method => ({ id: method, label: method }))}>{item => <ListBoxItem id={item.id} textValue={item.label}>{item.label}</ListBoxItem>}</ListBox></Select.Popover>
+              </Select>
+            </ModalField>
             <div className="grid gap-5 md:grid-cols-2">
-              <Input
-                label="Icon URL"
-                labelPlacement="outside"
-                value={String(selected?.icon || "")}
-                onValueChange={value => setSelected(current => (current ? { ...current, icon: value } : current))}
-              />
-              <Input
-                label="Notify Domain"
-                labelPlacement="outside"
-                value={String(selected?.notify_domain || "")}
-                onValueChange={value => setSelected(current => (current ? { ...current, notify_domain: value } : current))}
-              />
-              <Input
-                label="Handling Fee (%)"
-                labelPlacement="outside"
-                type="number"
-                value={String(selected?.handling_fee_percent ?? "")}
-                onValueChange={value =>
-                  setSelected(current => (current ? { ...current, handling_fee_percent: value } : current))
-                }
-              />
-              <Input
-                label="Fixed Handling Fee"
-                labelPlacement="outside"
-                type="number"
-                value={String(
-                  selected?.handling_fee_fixed === undefined || selected?.handling_fee_fixed === null || selected?.handling_fee_fixed === ""
-                    ? ""
-                    : Number(selected.handling_fee_fixed) / 100
-                )}
-                onValueChange={value =>
-                  setSelected(current => (current ? { ...current, handling_fee_fixed: value === "" ? "" : String(Math.round(Number(value) * 100)) } : current))
-                }
-              />
+              <ModalField label="Icon URL"><Input aria-label="Icon URL" value={String(selected?.icon || "")} onValueChange={value => setSelected(current => (current ? { ...current, icon: value } : current))} /></ModalField>
+              <ModalField label="Notify Domain"><Input aria-label="Notify Domain" value={String(selected?.notify_domain || "")} onValueChange={value => setSelected(current => (current ? { ...current, notify_domain: value } : current))} /></ModalField>
+              <ModalField label="Handling Fee (%)"><Input aria-label="Handling Fee (%)" type="number" value={String(selected?.handling_fee_percent ?? "")} onValueChange={value => setSelected(current => (current ? { ...current, handling_fee_percent: value } : current))} /></ModalField>
+              <ModalField label="Fixed Handling Fee"><Input aria-label="Fixed Handling Fee" type="number" value={String(selected?.handling_fee_fixed === undefined || selected?.handling_fee_fixed === null || selected?.handling_fee_fixed === "" ? "" : Number(selected.handling_fee_fixed) / 100)} onValueChange={value => setSelected(current => (current ? { ...current, handling_fee_fixed: value === "" ? "" : String(Math.round(Number(value) * 100)) } : current))} /></ModalField>
             </div>
             {formLoading ? (
               <div className="flex min-h-[120px] items-center justify-center rounded-2xl border border-default-200 bg-default-50">
@@ -449,25 +400,24 @@ export function PaymentConfigPage() {
             {Object.keys(dynamicForm).length ? (
               <div className="grid gap-4 md:grid-cols-2">
                 {Object.entries(dynamicForm).map(([key, field]) => (
-                  <Input
-                    key={key}
-                    label={field.label || key}
-                    labelPlacement="outside"
-                    description={field.description || ""}
-                    value={String(normalizeConfigValue(selected?.config)[key] ?? field.value ?? "")}
-                    onValueChange={value =>
-                      setSelected(current => {
-                        if (!current) return current;
-                        return {
-                          ...current,
-                          config: {
-                            ...normalizeConfigValue(current.config),
-                            [key]: value
-                          }
-                        };
-                      })
-                    }
-                  />
+                  <ModalField key={key} label={field.label || key} description={field.description || ""}>
+                    <Input
+                      aria-label={field.label || key}
+                      value={String(normalizeConfigValue(selected?.config)[key] ?? field.value ?? "")}
+                      onValueChange={value =>
+                        setSelected(current => {
+                          if (!current) return current;
+                          return {
+                            ...current,
+                            config: {
+                              ...normalizeConfigValue(current.config),
+                              [key]: value
+                            }
+                          };
+                        })
+                      }
+                    />
+                  </ModalField>
                 ))}
               </div>
             ) : null}
@@ -484,15 +434,11 @@ export function PaymentConfigPage() {
                 </div>
               </div>
             ) : null}
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="light" onPress={() => setEditorOpen(false)}>
-              Cancel
-            </Button>
-            <Button color="primary" onPress={() => void savePayment()} isLoading={saving}>
-              Save payment
-            </Button>
-          </Modal.Footer>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button variant="light" onPress={() => setEditorOpen(false)}>Cancel</Button>
+                <Button color="primary" onPress={() => void savePayment()} isLoading={saving}>Save payment</Button>
+              </Modal.Footer>
         </Modal.Dialog>
           </Modal.Container>
         </Modal.Backdrop>

@@ -21,6 +21,7 @@ import {
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
+import { ModalField } from "../components/ModalField";
 import { PageFrame } from "../components/PageFrame";
 import { formatDateTime, formatMoney, asArray } from "../lib/admin-format";
 import { PERIOD_OPTIONS } from "../lib/admin-constants";
@@ -435,63 +436,29 @@ export function OrderPage() {
         <Modal.Backdrop>
           <Modal.Container>
             <Modal.Dialog>
-          <Modal.Header>
-              <Modal.Heading>Assign order</Modal.Heading>
-            </Modal.Header>
-          <Modal.Body className="grid gap-4 md:grid-cols-2">
-            <Input label="User Email" labelPlacement="outside" value={assignEmail} onValueChange={setAssignEmail} />
-            <Input label="Total Amount (cents)" labelPlacement="outside" type="number" value={assignAmount} onValueChange={setAssignAmount} />
-            <Select
-              label="Plan"
-              labelPlacement="outside"
-              items={plans.map(plan => ({ id: String(plan.id), label: plan.name }))}
-              selectedKey={selectedPlan}
-              onSelectionChange={key => setAssignPlanId(String(key || ""))}
-            >
-              <Select.Trigger>
-                <Select.Value />
-                <Select.Indicator />
-              </Select.Trigger>
-              <Select.Popover>
-                <ListBox items={plans.map(plan => ({ id: String(plan.id), label: plan.name }))}>
-                  {item => (
-                    <ListBoxItem id={item.id} textValue={item.label}>
-                      {item.label}
-                    </ListBoxItem>
-                  )}
-                </ListBox>
-              </Select.Popover>
-            </Select>
-            <Select
-              label="Period"
-              labelPlacement="outside"
-              items={PERIOD_OPTIONS.map(option => ({ id: option.key, label: option.label }))}
-              selectedKey={selectedPeriod}
-              onSelectionChange={key => setAssignPeriod(String(key || "month_price"))}
-            >
-              <Select.Trigger>
-                <Select.Value />
-                <Select.Indicator />
-              </Select.Trigger>
-              <Select.Popover>
-                <ListBox items={PERIOD_OPTIONS.map(option => ({ id: option.key, label: option.label }))}>
-                  {item => (
-                    <ListBoxItem id={item.id} textValue={item.label}>
-                      {item.label}
-                    </ListBoxItem>
-                  )}
-                </ListBox>
-              </Select.Popover>
-            </Select>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="light" onPress={() => setAssignOpen(false)}>
-              Cancel
-            </Button>
-            <Button color="primary" onPress={() => void assignOrder()} isLoading={submitting}>
-              Create order
-            </Button>
-          </Modal.Footer>
+              <Modal.Header>
+                <Modal.Heading>Assign order</Modal.Heading>
+              </Modal.Header>
+              <Modal.Body className="grid gap-4 md:grid-cols-2">
+                <ModalField label="User Email"><Input aria-label="User Email" value={assignEmail} onValueChange={setAssignEmail} /></ModalField>
+                <ModalField label="Total Amount (cents)"><Input aria-label="Total Amount (cents)" type="number" value={assignAmount} onValueChange={setAssignAmount} /></ModalField>
+                <ModalField label="Plan">
+                  <Select aria-label="Plan" items={plans.map(plan => ({ id: String(plan.id), label: plan.name }))} selectedKey={selectedPlan} onSelectionChange={key => setAssignPlanId(String(key || ""))}>
+                    <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
+                    <Select.Popover><ListBox items={plans.map(plan => ({ id: String(plan.id), label: plan.name }))}>{item => <ListBoxItem id={item.id} textValue={item.label}>{item.label}</ListBoxItem>}</ListBox></Select.Popover>
+                  </Select>
+                </ModalField>
+                <ModalField label="Period">
+                  <Select aria-label="Period" items={PERIOD_OPTIONS.map(option => ({ id: option.key, label: option.label }))} selectedKey={selectedPeriod} onSelectionChange={key => setAssignPeriod(String(key || "month_price"))}>
+                    <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
+                    <Select.Popover><ListBox items={PERIOD_OPTIONS.map(option => ({ id: option.key, label: option.label }))}>{item => <ListBoxItem id={item.id} textValue={item.label}>{item.label}</ListBoxItem>}</ListBox></Select.Popover>
+                  </Select>
+                </ModalField>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button variant="light" onPress={() => setAssignOpen(false)}>Cancel</Button>
+                <Button color="primary" onPress={() => void assignOrder()} isLoading={submitting}>Create order</Button>
+              </Modal.Footer>
         </Modal.Dialog>
           </Modal.Container>
         </Modal.Backdrop>

@@ -6,7 +6,7 @@ import {
   Chip,
   Input,
   Modal,
-          Spinner,
+  Spinner,
   Switch,
   Table,
   TableBody,
@@ -18,6 +18,7 @@ import {
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
 import { adminRequest } from "../lib/api";
+import { ModalField } from "../components/ModalField";
 import { PageFrame } from "../components/PageFrame";
 import {
   adminCardClassName,
@@ -226,57 +227,27 @@ export function NoticePage() {
         <Modal.Backdrop>
           <Modal.Container>
             <Modal.Dialog>
-          <Modal.Header>
-              <Modal.Heading>{selected?.id ? "Edit notice" : "Create notice"}</Modal.Heading>
-            </Modal.Header>
-          <Modal.Body className="gap-5">
-            <Input
-              label="Title"
-              labelPlacement="outside"
-              value={selected?.title || ""}
-              onValueChange={value => setSelected(current => (current ? { ...current, title: value } : current))}
-            />
-            <TextArea
-              label="Content"
-              labelPlacement="outside"
-              minRows={10}
-              value={selected?.content || ""}
-              onValueChange={value => setSelected(current => (current ? { ...current, content: value } : current))}
-            />
-            <Input
-              label="Image URL"
-              labelPlacement="outside"
-              value={selected?.img_url || ""}
-              onValueChange={value => setSelected(current => (current ? { ...current, img_url: value } : current))}
-            />
-            <Input
-              label="Tags"
-              labelPlacement="outside"
-              description="Comma separated"
-              value={(selected?.tags || []).join(", ")}
-              onValueChange={value =>
-                setSelected(current =>
-                  current
-                    ? {
-                        ...current,
-                        tags: value
-                          .split(",")
-                          .map(item => item.trim())
-                          .filter(Boolean)
-                      }
-                    : current
-                )
-              }
-            />
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="light" onPress={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button color="primary" onPress={() => void saveNotice()} isLoading={saving}>
-              Save notice
-            </Button>
-          </Modal.Footer>
+              <Modal.Header>
+                <Modal.Heading>{selected?.id ? "Edit notice" : "Create notice"}</Modal.Heading>
+              </Modal.Header>
+              <Modal.Body className="gap-5">
+                <ModalField label="Title">
+                  <Input aria-label="Title" value={selected?.title || ""} onValueChange={value => setSelected(current => (current ? { ...current, title: value } : current))} />
+                </ModalField>
+                <ModalField label="Content">
+                  <TextArea aria-label="Content" minRows={10} value={selected?.content || ""} onValueChange={value => setSelected(current => (current ? { ...current, content: value } : current))} />
+                </ModalField>
+                <ModalField label="Image URL">
+                  <Input aria-label="Image URL" value={selected?.img_url || ""} onValueChange={value => setSelected(current => (current ? { ...current, img_url: value } : current))} />
+                </ModalField>
+                <ModalField label="Tags" description="Comma separated">
+                  <Input aria-label="Tags" value={(selected?.tags || []).join(", ")} onValueChange={value => setSelected(current => current ? { ...current, tags: value.split(",").map(item => item.trim()).filter(Boolean) } : current)} />
+                </ModalField>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button variant="light" onPress={() => setOpen(false)}>Cancel</Button>
+                <Button color="primary" onPress={() => void saveNotice()} isLoading={saving}>Save notice</Button>
+              </Modal.Footer>
         </Modal.Dialog>
           </Modal.Container>
         </Modal.Backdrop>
