@@ -129,6 +129,23 @@ interface MailFormState {
 
 const PAGE_SIZE = 10;
 
+function ModalField({
+  label,
+  children,
+  className
+}: {
+  label: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={className}>
+      <p className="mb-2 text-sm font-medium text-slate-700">{label}</p>
+      {children}
+    </div>
+  );
+}
+
 function emptyUserForm(record?: UserRecord | null): UserFormState {
   return {
     id: record?.id,
@@ -798,77 +815,102 @@ export function UserPage() {
         <Modal.Backdrop>
           <Modal.Container>
             <Modal.Dialog>
-          <Modal.Header>
-              <Modal.Heading>Edit user</Modal.Heading>
-            </Modal.Header>
-          <Modal.Body className="grid gap-4 md:grid-cols-2">
-            <Input label="Email" labelPlacement="outside" value={form.email} onValueChange={value => setForm(current => ({ ...current, email: value }))} />
-            <Input label="New Password" labelPlacement="outside" type="password" value={form.password} onValueChange={value => setForm(current => ({ ...current, password: value }))} />
-            <Select
-              label="Plan"
-              labelPlacement="outside"
-              items={plans.map(plan => ({ id: String(plan.id), label: plan.name }))}
-              selectedKey={selectedPlan}
-              onSelectionChange={key =>
-                setForm(current => ({ ...current, plan_id: String(key || "") }))
-              }
-            >
-              <Select.Trigger>
-                <Select.Value />
-                <Select.Indicator />
-              </Select.Trigger>
-              <Select.Popover>
-                <ListBox items={plans.map(plan => ({ id: String(plan.id), label: plan.name }))}>
-                  {item => (
-                    <ListBoxItem id={item.id} textValue={item.label}>
-                      {item.label}
-                    </ListBoxItem>
-                  )}
-                </ListBox>
-              </Select.Popover>
-            </Select>
-            <Input label="Transfer (GB)" labelPlacement="outside" type="number" value={form.transfer_enable} onValueChange={value => setForm(current => ({ ...current, transfer_enable: value }))} />
-            <Input label="Device Limit" labelPlacement="outside" type="number" value={form.device_limit} onValueChange={value => setForm(current => ({ ...current, device_limit: value }))} />
-            <Input label="Expire Timestamp" labelPlacement="outside" value={form.expired_at} onValueChange={value => setForm(current => ({ ...current, expired_at: value }))} />
-            <Input label="Balance (cents)" labelPlacement="outside" value={form.balance} onValueChange={value => setForm(current => ({ ...current, balance: value }))} />
-            <Input label="Commission Balance (cents)" labelPlacement="outside" value={form.commission_balance} onValueChange={value => setForm(current => ({ ...current, commission_balance: value }))} />
-            <Input label="Commission Rate" labelPlacement="outside" type="number" value={form.commission_rate} onValueChange={value => setForm(current => ({ ...current, commission_rate: value }))} />
-            <Input label="Discount" labelPlacement="outside" type="number" value={form.discount} onValueChange={value => setForm(current => ({ ...current, discount: value }))} />
-            <Input label="Speed Limit" labelPlacement="outside" type="number" value={form.speed_limit} onValueChange={value => setForm(current => ({ ...current, speed_limit: value }))} />
-            <Input label="Invite User Email" labelPlacement="outside" value={form.invite_user_email} onValueChange={value => setForm(current => ({ ...current, invite_user_email: value }))} />
-            <TextArea className="md:col-span-2" label="Remarks" labelPlacement="outside" minRows={4} value={form.remarks} onValueChange={value => setForm(current => ({ ...current, remarks: value }))} />
-            <div className="md:col-span-2 grid gap-3 md:grid-cols-3">
-              <div className="rounded-2xl border border-default-200 bg-default-50 p-4">
-                <p className="mb-3 text-sm font-semibold">Banned</p>
-                <Switch isSelected={form.banned} onValueChange={value => setForm(current => ({ ...current, banned: value }))} />
-              </div>
-              <div className="rounded-2xl border border-default-200 bg-default-50 p-4">
-                <p className="mb-3 text-sm font-semibold">Admin</p>
-                <Switch isSelected={form.is_admin} onValueChange={value => setForm(current => ({ ...current, is_admin: value }))} />
-              </div>
-              <div className="rounded-2xl border border-default-200 bg-default-50 p-4">
-                <p className="mb-3 text-sm font-semibold">Staff</p>
-                <Switch isSelected={form.is_staff} onValueChange={value => setForm(current => ({ ...current, is_staff: value }))} />
-              </div>
-            </div>
-            {selected ? (
-              <div className="md:col-span-2 rounded-2xl border border-default-200 bg-default-50 p-4 text-sm text-slate-600">
-                <p>Subscription URL</p>
-                <p className="mt-2 break-all text-slate-900">{selected.subscribe_url || "Unavailable"}</p>
-                <p className="mt-4">Recent online IPs: {(selected.recent_ips || []).join(", ") || "—"}</p>
-                <p className="mt-2">Recent login IPs: {(selected.recent_login_ips || []).join(", ") || "—"}</p>
-              </div>
-            ) : null}
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="light" onPress={() => setEditorOpen(false)}>
-              Cancel
-            </Button>
-            <Button color="primary" onPress={() => void submitUserUpdate()} isLoading={submitting}>
-              Save user
-            </Button>
-          </Modal.Footer>
-        </Modal.Dialog>
+              <Modal.Header>
+                <Modal.Heading>Edit user</Modal.Heading>
+              </Modal.Header>
+              <Modal.Body className="grid gap-4 md:grid-cols-2">
+                <ModalField label="Email">
+                  <Input aria-label="Email" value={form.email} onValueChange={value => setForm(current => ({ ...current, email: value }))} />
+                </ModalField>
+                <ModalField label="New Password">
+                  <Input aria-label="New Password" type="password" value={form.password} onValueChange={value => setForm(current => ({ ...current, password: value }))} />
+                </ModalField>
+                <ModalField label="Plan">
+                  <Select
+                    aria-label="Plan"
+                    items={plans.map(plan => ({ id: String(plan.id), label: plan.name }))}
+                    selectedKey={selectedPlan}
+                    onSelectionChange={key =>
+                      setForm(current => ({ ...current, plan_id: String(key || "") }))
+                    }
+                  >
+                    <Select.Trigger>
+                      <Select.Value />
+                      <Select.Indicator />
+                    </Select.Trigger>
+                    <Select.Popover>
+                      <ListBox items={plans.map(plan => ({ id: String(plan.id), label: plan.name }))}>
+                        {item => (
+                          <ListBoxItem id={item.id} textValue={item.label}>
+                            {item.label}
+                          </ListBoxItem>
+                        )}
+                      </ListBox>
+                    </Select.Popover>
+                  </Select>
+                </ModalField>
+                <ModalField label="Transfer (GB)">
+                  <Input aria-label="Transfer (GB)" type="number" value={form.transfer_enable} onValueChange={value => setForm(current => ({ ...current, transfer_enable: value }))} />
+                </ModalField>
+                <ModalField label="Device Limit">
+                  <Input aria-label="Device Limit" type="number" value={form.device_limit} onValueChange={value => setForm(current => ({ ...current, device_limit: value }))} />
+                </ModalField>
+                <ModalField label="Expire Timestamp">
+                  <Input aria-label="Expire Timestamp" value={form.expired_at} onValueChange={value => setForm(current => ({ ...current, expired_at: value }))} />
+                </ModalField>
+                <ModalField label="Balance (cents)">
+                  <Input aria-label="Balance (cents)" value={form.balance} onValueChange={value => setForm(current => ({ ...current, balance: value }))} />
+                </ModalField>
+                <ModalField label="Commission Balance (cents)">
+                  <Input aria-label="Commission Balance (cents)" value={form.commission_balance} onValueChange={value => setForm(current => ({ ...current, commission_balance: value }))} />
+                </ModalField>
+                <ModalField label="Commission Rate">
+                  <Input aria-label="Commission Rate" type="number" value={form.commission_rate} onValueChange={value => setForm(current => ({ ...current, commission_rate: value }))} />
+                </ModalField>
+                <ModalField label="Discount">
+                  <Input aria-label="Discount" type="number" value={form.discount} onValueChange={value => setForm(current => ({ ...current, discount: value }))} />
+                </ModalField>
+                <ModalField label="Speed Limit">
+                  <Input aria-label="Speed Limit" type="number" value={form.speed_limit} onValueChange={value => setForm(current => ({ ...current, speed_limit: value }))} />
+                </ModalField>
+                <ModalField label="Invite User Email">
+                  <Input aria-label="Invite User Email" value={form.invite_user_email} onValueChange={value => setForm(current => ({ ...current, invite_user_email: value }))} />
+                </ModalField>
+                <ModalField label="Remarks" className="md:col-span-2">
+                  <TextArea aria-label="Remarks" minRows={4} value={form.remarks} onValueChange={value => setForm(current => ({ ...current, remarks: value }))} />
+                </ModalField>
+                <div className="md:col-span-2 grid gap-3 md:grid-cols-3">
+                  <div className="rounded-2xl border border-default-200 bg-default-50 p-4">
+                    <p className="mb-3 text-sm font-semibold">Banned</p>
+                    <Switch isSelected={form.banned} onValueChange={value => setForm(current => ({ ...current, banned: value }))} />
+                  </div>
+                  <div className="rounded-2xl border border-default-200 bg-default-50 p-4">
+                    <p className="mb-3 text-sm font-semibold">Admin</p>
+                    <Switch isSelected={form.is_admin} onValueChange={value => setForm(current => ({ ...current, is_admin: value }))} />
+                  </div>
+                  <div className="rounded-2xl border border-default-200 bg-default-50 p-4">
+                    <p className="mb-3 text-sm font-semibold">Staff</p>
+                    <Switch isSelected={form.is_staff} onValueChange={value => setForm(current => ({ ...current, is_staff: value }))} />
+                  </div>
+                </div>
+                {selected ? (
+                  <div className="md:col-span-2 rounded-2xl border border-default-200 bg-default-50 p-4 text-sm text-slate-600">
+                    <p>Subscription URL</p>
+                    <p className="mt-2 break-all text-slate-900">{selected.subscribe_url || "Unavailable"}</p>
+                    <p className="mt-4">Recent online IPs: {(selected.recent_ips || []).join(", ") || "—"}</p>
+                    <p className="mt-2">Recent login IPs: {(selected.recent_login_ips || []).join(", ") || "—"}</p>
+                  </div>
+                ) : null}
+              </Modal.Body>
+              <Modal.Footer>
+                <Button variant="light" onPress={() => setEditorOpen(false)}>
+                  Cancel
+                </Button>
+                <Button color="primary" onPress={() => void submitUserUpdate()} isLoading={submitting}>
+                  Save user
+                </Button>
+              </Modal.Footer>
+            </Modal.Dialog>
           </Modal.Container>
         </Modal.Backdrop>
       </Modal>
