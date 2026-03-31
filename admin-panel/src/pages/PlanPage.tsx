@@ -70,6 +70,8 @@ function normalizePlan(record?: PlanRecord | null): PlanRecord {
 export function PlanPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [sortingId, setSortingId] = useState<number | null>(null);
+  const [error, setError] = useState<string>();
   const [records, setRecords] = useState<PlanRecord[]>([]);
   const [groups, setGroups] = useState<ServerGroup[]>([]);
   const [currency, setCurrency] = useState("¥");
@@ -78,18 +80,26 @@ export function PlanPage() {
 
   async function loadPlans() {
     setLoading(true);
-    const [planResponse, groupsResponse, configResponse] = await Promise.all([
-      adminRequest<PlanRecord[]>("plan/fetch"),
-      adminRequest<ServerGroup[]>("server/group/fetch"),
-      adminRequest<Record<string, SiteConfig>>("config/fetch", {
-        query: { key: "site" }
-      })
-    ]);
+    setError(undefined);
+    try {
+      const [planResponse, groupsResponse, configResponse] = await Promise.all([
+        adminRequest<PlanRecord[]>("plan/fetch"),
+        adminRequest<ServerGroup[]>("server/group/fetch"),
+        adminRequest<Record<string, SiteConfig>>("config/fetch", {
+          query: { key: "site" }
+        })
+      ]);
 
-    setRecords(planResponse.data || []);
-    setGroups(groupsResponse.data || []);
-    setCurrency(configResponse.data?.site?.currency_symbol || "¥");
-    setLoading(false);
+      setRecords(planResponse.data || []);
+      setGroups(groupsResponse.data || []);
+      setCurrency(configResponse.data?.site?.currency_symbol || "¥");
+    } catch (nextError) {
+      setRecords([]);
+      setGroups([]);
+      setError(nextError instanceof Error ? nextError.message : "Failed to load plans");
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function savePlan() {
@@ -121,6 +131,33 @@ export function PlanPage() {
       body: { id: record.id, key, value }
     });
     await loadPlans();
+  }
+
+  async function reorderPlans(fromIndex: number, toIndex: number) {
+    if (toIndex < 0 || toIndex >= records.length) return;
+
+    const nextRecords = [...records];
+    const [current] = nextRecords.splice(fromIndex, 1);
+    nextRecords.splice(toIndex, 0, current);
+
+    setRecords(nextRecords);
+    setSortingId(Number(current.id || 0));
+    setError(undefined);
+
+    try {
+      await adminRequest("plan/sort", {
+        method: "POST",
+        body: {
+          plan_ids: nextRecords.map(item => item.id).filter(Boolean)
+        }
+      });
+      await loadPlans();
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : "Failed to sort plans");
+      await loadPlans();
+    } finally {
+      setSortingId(null);
+    }
   }
 
   useEffect(() => {
@@ -161,6 +198,7 @@ export function PlanPage() {
           </Button>
         </CardHeader>
         <CardBody>
+          {error ? <div className="mb-4 rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">{error}</div> : null}
           {loading ? (
             <div className="flex min-h-[280px] items-center justify-center">
               <Spinner color="warning" label="Loading plans" />
@@ -168,6 +206,7 @@ export function PlanPage() {
           ) : (
             <Table removeWrapper aria-label="Plans">
               <TableHeader>
+                <TableColumn>Sort</TableColumn>
                 <TableColumn>Enabled</TableColumn>
                 <TableColumn>Renew</TableColumn>
                 <TableColumn>Name</TableColumn>
@@ -178,8 +217,32 @@ export function PlanPage() {
                 <TableColumn align="end">Actions</TableColumn>
               </TableHeader>
               <TableBody items={records} emptyContent="No plans found">
-                {item => (
+                {(item) => {
+                  const index = records.findIndex(record => record.id === item.id);
+                  const sorting = sortingId === Number(item.id || 0);
+
+                  return (
                   <TableRow key={String(item.id || Math.random())}>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="flat"
+                          isDisabled={sorting || index <= 0}
+                          onPress={() => void reorderPlans(index, index - 1)}
+                        >
+                          Up
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="flat"
+                          isDisabled={sorting || index === -1 || index >= records.length - 1}
+                          onPress={() => void reorderPlans(index, index + 1)}
+                        >
+                          Down
+                        </Button>
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <Switch isSelected={Boolean(Number(item.show ?? 0))} onValueChange={value => void updateField(item, "show", value ? 1 : 0)} />
                     </TableCell>
@@ -209,7 +272,7 @@ export function PlanPage() {
                       </div>
                     </TableCell>
                   </TableRow>
-                )}
+                )}}
               </TableBody>
             </Table>
           )}
