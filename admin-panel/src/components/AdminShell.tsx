@@ -144,21 +144,30 @@ function SidebarContent({
 }) {
   return (
     <>
-      <div className="flex items-center justify-between px-4 py-6">
-        <div className={["flex items-center gap-3 transition-all", collapsed ? "justify-center" : ""].join(" ")}>
-          <div className="admin-orb h-11 w-11 rounded-full" />
-          {!collapsed ? (
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Fantastic</p>
-              <p className="mt-1 text-lg font-semibold text-slate-900">{adminBootstrap.title}</p>
-            </div>
-          ) : null}
-        </div>
+      <div className="relative z-10 flex items-center justify-between px-4 py-6">
+        <Button
+          variant="light"
+          className={[
+            "h-auto min-h-0 justify-start rounded-[1.25rem] px-2 py-2 text-left text-slate-900",
+            collapsed ? "w-auto min-w-0 justify-center" : "w-full max-w-[188px]"
+          ].join(" ")}
+          onPress={() => onNavigate("/new/dashboard")}
+        >
+          <div className={["flex items-center gap-3 transition-all", collapsed ? "justify-center" : ""].join(" ")}>
+            <div className="admin-orb h-11 w-11 rounded-full shrink-0" />
+            {!collapsed ? (
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Fantastic</p>
+                <p className="mt-1 text-lg font-semibold text-slate-900">{adminBootstrap.title}</p>
+              </div>
+            ) : null}
+          </div>
+        </Button>
         {showDesktopToggle ? (
           <Button
             isIconOnly
             variant="light"
-            className="hidden text-slate-500 md:inline-flex"
+            className="hidden shrink-0 text-slate-500 md:inline-flex"
             onPress={onToggleCollapse}
           >
             {collapsed ? (

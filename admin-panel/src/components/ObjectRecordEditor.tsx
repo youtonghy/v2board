@@ -65,6 +65,17 @@ export function ObjectRecordEditor({
   const booleanEntries = entries.filter(([, currentValue]) => typeof currentValue === "boolean");
   const fieldEntries = entries.filter(([, currentValue]) => typeof currentValue !== "boolean");
 
+  if (!entries.length) {
+    return (
+      <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50/80 p-5">
+        <p className="text-sm font-semibold text-slate-900">No editable fields</p>
+        <p className="mt-2 text-sm leading-6 text-slate-500">
+          The current section does not expose configurable values in this view yet.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       {booleanEntries.length ? (
