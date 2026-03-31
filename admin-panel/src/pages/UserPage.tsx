@@ -27,6 +27,7 @@ import { useEffect, useMemo, useState } from "react";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { formatBytes, formatDateTime, formatMoney } from "../lib/admin-format";
+import { FilterPanel, SectionCard, StatGrid } from "../components/AdminContent";
 
 interface PlanRecord {
   id: number;
@@ -509,6 +510,19 @@ export function UserPage() {
     () => (generateForm.plan_id ? new Set([generateForm.plan_id]) : new Set<string>()),
     [generateForm.plan_id]
   );
+  const stats = useMemo(() => {
+    const activeUsers = records.filter(record => !Number(record.banned || 0)).length;
+    const adminUsers = records.filter(record => Number(record.is_admin || 0)).length;
+    const totalBalance = records.reduce((sum, record) => sum + Number(record.balance || 0), 0) / 100;
+    const totalTraffic = records.reduce((sum, record) => sum + Number(record.total_used || 0), 0);
+
+    return [
+      { label: "Current page", value: String(records.length), hint: `Page ${page} inventory` },
+      { label: "Active users", value: String(activeUsers), hint: "Available accounts" },
+      { label: "Admins", value: String(adminUsers), hint: "Privileged accounts" },
+      { label: "Traffic used", value: formatBytes(totalTraffic), hint: `Balance ${formatMoney(totalBalance)}` }
+    ];
+  }, [page, records]);
 
   return (
     <PageFrame
@@ -518,13 +532,12 @@ export function UserPage() {
       onRefresh={() => void loadUsers(page)}
       loading={loading}
     >
-      <Card className="border border-white/60 bg-white/90 shadow-panel">
-        <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="text-lg font-semibold text-slate-900">User Directory</p>
-            <p className="text-sm text-slate-500">Search active accounts, review balance and plan state, and open actions from one place.</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
+      <StatGrid items={stats} />
+
+      <SectionCard
+        title="User Directory"
+        description="Search active accounts, review balance and plan state, and open actions from one place."
+        action={<div className="flex flex-wrap gap-2">
             <Button variant="flat" onPress={() => void dumpCsv()} isLoading={submitting}>
               Export CSV
             </Button>
@@ -537,10 +550,10 @@ export function UserPage() {
             <Button color="primary" onPress={() => setGenerateOpen(true)}>
               Generate users
             </Button>
-          </div>
-        </CardHeader>
-        <CardBody className="gap-5">
-          <div className="grid gap-3 md:grid-cols-4">
+          </div>}
+        bodyClassName="gap-5"
+      >
+          <FilterPanel>
             <Input
               label="Email"
               labelPlacement="outside"
@@ -586,7 +599,7 @@ export function UserPage() {
                 Reset
               </Button>
             </div>
-          </div>
+          </FilterPanel>
 
           {error ? (
             <div className="rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">
@@ -596,11 +609,18 @@ export function UserPage() {
 
           {loading ? (
             <div className="flex min-h-[320px] items-center justify-center">
-              <Spinner color="warning" label="Loading users" />
+              <Spinner color="primary" label="Loading users" />
             </div>
           ) : (
             <>
-              <Table removeWrapper aria-label="Users">
+              <Table
+                removeWrapper
+                aria-label="Users"
+                classNames={{
+                  th: "bg-slate-50 text-slate-500 uppercase text-[11px] tracking-[0.18em]",
+                  td: "py-4"
+                }}
+              >
                 <TableHeader>
                   <TableColumn>Email</TableColumn>
                   <TableColumn>Plan</TableColumn>
@@ -706,8 +726,7 @@ export function UserPage() {
               </div>
             </>
           )}
-        </CardBody>
-      </Card>
+      </SectionCard>
 
       <Modal isOpen={editorOpen} onOpenChange={isOpen => !isOpen && setEditorOpen(false)} size="5xl" scrollBehavior="inside">
         <ModalContent>

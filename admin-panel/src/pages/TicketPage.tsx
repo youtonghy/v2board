@@ -23,6 +23,7 @@ import { useNavigate } from "react-router-dom";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { asArray, formatDateTime } from "../lib/admin-format";
+import { FilterPanel, SectionCard, StatGrid } from "../components/AdminContent";
 
 interface TicketRecord {
   id: number;
@@ -87,6 +88,18 @@ export function TicketPage() {
     () => (replyStatus ? new Set([replyStatus]) : new Set<string>()),
     [replyStatus]
   );
+  const stats = useMemo(() => {
+    const open = records.filter(record => record.status === 0).length;
+    const pendingAdmin = records.filter(record => record.reply_status === 0).length;
+    const resolved = records.filter(record => record.reply_status === 2).length;
+
+    return [
+      { label: "Current page", value: String(records.length), hint: `Page ${page} inventory` },
+      { label: "Open", value: String(open), hint: "Tickets awaiting closure" },
+      { label: "Pending admin", value: String(pendingAdmin), hint: "Need a staff reply" },
+      { label: "Resolved", value: String(resolved), hint: "Reply cycle completed" }
+    ];
+  }, [page, records]);
 
   return (
     <PageFrame
@@ -96,12 +109,13 @@ export function TicketPage() {
       onRefresh={() => void loadTickets(page)}
       loading={loading}
     >
-      <Card className="border border-white/60 bg-white/90 shadow-panel">
-        <CardHeader className="flex flex-col gap-4">
-          <div>
-            <p className="text-lg font-semibold text-slate-900">Support Queue</p>
-            <p className="text-sm text-slate-500">Filter open tickets, sort by recency, and jump directly into the threaded detail workflow.</p>
-          </div>
+      <StatGrid items={stats} />
+
+      <SectionCard
+        title="Support Queue"
+        description="Filter open tickets, sort by recency, and jump directly into the threaded detail workflow."
+        bodyClassName="gap-5"
+      >
           <Tabs
             selectedKey={status}
             onSelectionChange={key => {
@@ -115,9 +129,8 @@ export function TicketPage() {
               <Tab key={tab.key} title={tab.label} />
             ))}
           </Tabs>
-        </CardHeader>
-        <CardBody className="gap-5">
-          <div className="grid gap-3 md:grid-cols-3">
+
+          <FilterPanel>
             <Input label="User Email" labelPlacement="outside" value={email} onValueChange={setEmail} />
             <Select
               label="Reply Status"
@@ -130,7 +143,7 @@ export function TicketPage() {
               <SelectItem key="1">Waiting User Reply</SelectItem>
               <SelectItem key="2">Resolved</SelectItem>
             </Select>
-            <div className="flex items-end gap-2">
+            <div className="flex items-end gap-2 md:col-span-2">
               <Button color="primary" onPress={() => { setPage(1); void loadTickets(1); }}>
                 Apply
               </Button>
@@ -147,17 +160,24 @@ export function TicketPage() {
                 Reset
               </Button>
             </div>
-          </div>
+          </FilterPanel>
 
           {error ? <div className="rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">{error}</div> : null}
 
           {loading ? (
             <div className="flex min-h-[320px] items-center justify-center">
-              <Spinner color="warning" label="Loading tickets" />
+              <Spinner color="primary" label="Loading tickets" />
             </div>
           ) : (
             <>
-              <Table removeWrapper aria-label="Tickets">
+              <Table
+                removeWrapper
+                aria-label="Tickets"
+                classNames={{
+                  th: "bg-slate-50 text-slate-500 uppercase text-[11px] tracking-[0.18em]",
+                  td: "py-4"
+                }}
+              >
                 <TableHeader>
                   <TableColumn>ID</TableColumn>
                   <TableColumn>Subject</TableColumn>
@@ -203,8 +223,7 @@ export function TicketPage() {
               </div>
             </>
           )}
-        </CardBody>
-      </Card>
+      </SectionCard>
     </PageFrame>
   );
 }

@@ -26,6 +26,7 @@ import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { formatDateTime, formatMoney, asArray } from "../lib/admin-format";
 import { PERIOD_OPTIONS } from "../lib/admin-constants";
+import { FilterPanel, SectionCard, StatGrid } from "../components/AdminContent";
 
 interface OrderRecord {
   id: number;
@@ -187,6 +188,18 @@ export function OrderPage() {
     () => (assignPeriod ? new Set([assignPeriod]) : new Set<string>()),
     [assignPeriod]
   );
+  const stats = useMemo(() => {
+    const paid = records.filter(record => record.status === 1).length;
+    const pending = records.filter(record => record.status === 0).length;
+    const volume = records.reduce((sum, record) => sum + Number(record.total_amount || 0), 0) / 100;
+
+    return [
+      { label: "Current page", value: String(records.length), hint: `Page ${page} inventory` },
+      { label: "Pending", value: String(pending), hint: "Waiting payment or action" },
+      { label: "Paid", value: String(paid), hint: "Completed payment state" },
+      { label: "Volume", value: formatMoney(volume), hint: "Current page turnover" }
+    ];
+  }, [page, records]);
 
   return (
     <PageFrame
@@ -196,18 +209,15 @@ export function OrderPage() {
       onRefresh={() => void loadOrders(page)}
       loading={loading}
     >
-      <Card className="border border-white/60 bg-white/90 shadow-panel">
-        <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="text-lg font-semibold text-slate-900">Order Operations</p>
-            <p className="text-sm text-slate-500">Review payment state, inspect order details, and manually assign or settle orders without switching back to the old page.</p>
-          </div>
-          <Button color="primary" onPress={() => setAssignOpen(true)}>
-            Assign order
-          </Button>
-        </CardHeader>
-        <CardBody className="gap-5">
-          <div className="grid gap-3 md:grid-cols-4">
+      <StatGrid items={stats} />
+
+      <SectionCard
+        title="Order Operations"
+        description="Review payment state, inspect order details, and manually assign or settle orders without switching back to the old page."
+        action={<Button color="primary" radius="full" onPress={() => setAssignOpen(true)}>Assign order</Button>}
+        bodyClassName="gap-5"
+      >
+          <FilterPanel>
             <Input label="User Email" labelPlacement="outside" value={email} onValueChange={setEmail} />
             <Input label="Trade No" labelPlacement="outside" value={tradeNo} onValueChange={setTradeNo} />
             <Select
@@ -238,17 +248,24 @@ export function OrderPage() {
                 Reset
               </Button>
             </div>
-          </div>
+          </FilterPanel>
 
           {error ? <div className="rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">{error}</div> : null}
 
           {loading ? (
             <div className="flex min-h-[320px] items-center justify-center">
-              <Spinner color="warning" label="Loading orders" />
+              <Spinner color="primary" label="Loading orders" />
             </div>
           ) : (
             <>
-              <Table removeWrapper aria-label="Orders">
+              <Table
+                removeWrapper
+                aria-label="Orders"
+                classNames={{
+                  th: "bg-slate-50 text-slate-500 uppercase text-[11px] tracking-[0.18em]",
+                  td: "py-4"
+                }}
+              >
                 <TableHeader>
                   <TableColumn>Trade</TableColumn>
                   <TableColumn>Plan</TableColumn>
@@ -309,8 +326,7 @@ export function OrderPage() {
               </div>
             </>
           )}
-        </CardBody>
-      </Card>
+      </SectionCard>
 
       <Modal isOpen={detailOpen} onOpenChange={isOpen => !isOpen && setDetailOpen(false)} size="5xl" scrollBehavior="inside">
         <ModalContent>

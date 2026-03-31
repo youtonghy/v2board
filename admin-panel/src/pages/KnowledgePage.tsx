@@ -26,6 +26,7 @@ import { useEffect, useMemo, useState } from "react";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { asArray, formatDateTime } from "../lib/admin-format";
+import { FilterPanel, SectionCard, StatGrid } from "../components/AdminContent";
 
 interface KnowledgeRecord {
   id: number;
@@ -173,6 +174,17 @@ export function KnowledgePage() {
     () => records.filter(record => activeCategory === "all" || record.category === activeCategory),
     [records, activeCategory]
   );
+  const stats = useMemo(() => {
+    const visible = filtered.filter(record => Boolean(Number(record.show ?? 0))).length;
+    const localized = filtered.filter(record => Boolean(record.language)).length;
+
+    return [
+      { label: "Visible set", value: String(filtered.length), hint: activeCategory === "all" ? "All categories" : activeCategory },
+      { label: "Visible", value: String(visible), hint: "Shown in the help center" },
+      { label: "Categories", value: String(categories.length), hint: "Available category groups" },
+      { label: "Localized", value: String(localized), hint: "Language metadata set" }
+    ];
+  }, [activeCategory, categories.length, filtered]);
 
   return (
     <PageFrame
@@ -182,13 +194,12 @@ export function KnowledgePage() {
       onRefresh={() => void loadKnowledge()}
       loading={loading}
     >
-      <Card className="border border-white/60 bg-white/90 shadow-panel">
-        <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="text-lg font-semibold text-slate-900">Knowledge Base</p>
-            <p className="text-sm text-slate-500">Keep categories organized and maintain article visibility without relying on the old editor page.</p>
-          </div>
-          <div className="flex gap-2">
+      <StatGrid items={stats} />
+
+      <SectionCard
+        title="Knowledge Base"
+        description="Keep categories organized and maintain article visibility without relying on the old editor page."
+        action={<div className="flex gap-2">
             <Select
               className="min-w-[220px]"
               label="Category"
@@ -201,20 +212,27 @@ export function KnowledgePage() {
                 <SelectItem key={category}>{category}</SelectItem>
               ))}
             </Select>
-            <Button color="primary" onPress={() => void openEditor()}>
+            <Button color="primary" radius="full" onPress={() => void openEditor()}>
               Add article
             </Button>
-          </div>
-        </CardHeader>
-        <CardBody className="gap-5">
+          </div>}
+        bodyClassName="gap-5"
+      >
           {error ? <div className="rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">{error}</div> : null}
 
           {loading ? (
             <div className="flex min-h-[320px] items-center justify-center">
-              <Spinner color="warning" label="Loading knowledge articles" />
+              <Spinner color="primary" label="Loading knowledge articles" />
             </div>
           ) : (
-            <Table removeWrapper aria-label="Knowledge Articles">
+            <Table
+              removeWrapper
+              aria-label="Knowledge Articles"
+              classNames={{
+                th: "bg-slate-50 text-slate-500 uppercase text-[11px] tracking-[0.18em]",
+                td: "py-4"
+              }}
+            >
               <TableHeader>
                 <TableColumn>Sort</TableColumn>
                 <TableColumn>Title</TableColumn>
@@ -252,9 +270,7 @@ export function KnowledgePage() {
                       </div>
                     </TableCell>
                     <TableCell>{item.title}</TableCell>
-                    <TableCell>
-                      <Chip variant="flat">{item.category}</Chip>
-                    </TableCell>
+                    <TableCell><Chip variant="flat" className="bg-sky-50 text-sky-700">{item.category}</Chip></TableCell>
                     <TableCell>{item.language || "en-US"}</TableCell>
                     <TableCell>{formatDateTime(item.updated_at || null)}</TableCell>
                     <TableCell>
@@ -275,8 +291,7 @@ export function KnowledgePage() {
               </TableBody>
             </Table>
           )}
-        </CardBody>
-      </Card>
+      </SectionCard>
 
       <Modal isOpen={editorOpen} onOpenChange={isOpen => !isOpen && setEditorOpen(false)} size="5xl" scrollBehavior="inside">
         <ModalContent>
