@@ -1,4 +1,13 @@
 import {
+  Ban,
+  Globe,
+  Key,
+  LockOpen,
+  PencilToLine,
+  SquareChartBar,
+  TrashBin
+} from "@gravity-ui/icons";
+import {
   Accordion,
   Button,
   Card,
@@ -745,55 +754,83 @@ export function UserPage() {
                               size="sm"
                               color="primary"
                               variant="light"
+                              isIconOnly
+                              radius="full"
+                              aria-label={`Edit ${item.email}`}
+                              title="Edit user"
                               onPress={() => void openEditor(item)}
                               isLoading={submitting}
                             >
-                              Edit
+                              <PencilToLine width={16} height={16} aria-hidden="true" />
                             </Button>
                             <Button
                               size="sm"
                               color="secondary"
                               variant="light"
+                              isIconOnly
+                              radius="full"
+                              aria-label={`Reset secret for ${item.email}`}
+                              title="Reset key"
                               onPress={() => void runRowAction("user/resetSecret", { id: item.id })}
                               isLoading={submitting}
                             >
-                              Reset key
+                              <Key width={16} height={16} aria-hidden="true" />
                             </Button>
                             <Button
                               size="sm"
                               color="primary"
                               variant="light"
+                              isIconOnly
+                              radius="full"
+                              aria-label={`View traffic for ${item.email}`}
+                              title="Traffic stats"
                               onPress={() => void openTrafficStats(item)}
                               isLoading={submitting}
                             >
-                              Traffic
+                              <SquareChartBar width={16} height={16} aria-hidden="true" />
                             </Button>
                             <Button
                               size="sm"
                               color="secondary"
                               variant="light"
+                              isIconOnly
+                              radius="full"
+                              aria-label={`View IP geography for ${item.email}`}
+                              title="IP geo"
                               onPress={() => void openIpGeo(item)}
                               isLoading={submitting}
                             >
-                              IP geo
+                              <Globe width={16} height={16} aria-hidden="true" />
                             </Button>
                             <Button
                               size="sm"
                               color={Number(item.banned || 0) ? "success" : "warning"}
                               variant="light"
+                              isIconOnly
+                              radius="full"
+                              aria-label={Number(item.banned || 0) ? `Unban ${item.email}` : `Ban ${item.email}`}
+                              title={Number(item.banned || 0) ? "Unban user" : "Ban user"}
                               onPress={() => void runRowAction("user/ban", { filter: [{ key: "id", condition: "=", value: item.id }] })}
                               isLoading={submitting}
                             >
-                              {Number(item.banned || 0) ? "Ban selected" : "Ban"}
+                              {Number(item.banned || 0) ? (
+                                <LockOpen width={16} height={16} aria-hidden="true" />
+                              ) : (
+                                <Ban width={16} height={16} aria-hidden="true" />
+                              )}
                             </Button>
                             <Button
                               size="sm"
                               color="danger"
                               variant="light"
+                              isIconOnly
+                              radius="full"
+                              aria-label={`Delete ${item.email}`}
+                              title="Delete user"
                               onPress={() => void runRowAction("user/delUser", { id: item.id })}
                               isLoading={submitting}
                             >
-                              Delete
+                              <TrashBin width={16} height={16} aria-hidden="true" />
                             </Button>
                           </div>
                         </TableCell>

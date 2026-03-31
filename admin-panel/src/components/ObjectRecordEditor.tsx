@@ -52,6 +52,28 @@ function parseTextValue(originalValue: unknown, rawValue: string): unknown {
   return rawValue;
 }
 
+function EditorField({
+  label,
+  description,
+  children,
+  className
+}: {
+  label: string;
+  description: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={className}>
+      <div className="mb-2 space-y-1">
+        <p className="text-sm font-semibold text-slate-900">{label}</p>
+        <p className="text-xs text-slate-500">{description}</p>
+      </div>
+      {children}
+    </div>
+  );
+}
+
 export function ObjectRecordEditor({
   value,
   onChange,
@@ -90,6 +112,7 @@ export function ObjectRecordEditor({
                   <p className="text-xs text-slate-500">{key}</p>
                 </div>
                 <Switch
+                  aria-label={label}
                   isSelected={Boolean(currentValue)}
                   onValueChange={nextValue => onChange({ ...value, [key]: nextValue })}
                 >
@@ -142,45 +165,60 @@ export function ObjectRecordEditor({
 
         if (selectValues && selectValues.length > 0 && selectValues.length <= 8) {
           return (
-            <Select
-              key={key}
-              label={label}
-              labelPlacement="outside"
-              items={selectValues.map(item => ({ id: item, label: item }))}
-              selectedKeys={new Set(selectValues)}
-              selectionMode="multiple"
-              onSelectionChange={keys =>
-                onChange({
-                  ...value,
-                  [key]: Array.from(keys).map(item => String(item))
-                })
-              }
-              description={key}
-            >
-              <Select.Trigger>
-                <Select.Value />
-                <Select.Indicator />
-              </Select.Trigger>
-              <Select.Popover>
-                <ListBox items={selectValues.map(item => ({ id: item, label: item }))}>
-                  {item => (
-                    <ListBoxItem id={item.id} textValue={item.label}>
-                      {item.label}
-                    </ListBoxItem>
-                  )}
-                </ListBox>
-              </Select.Popover>
-            </Select>
+            <EditorField key={key} label={label} description={key}>
+              <Select
+                aria-label={label}
+                items={selectValues.map(item => ({ id: item, label: item }))}
+                selectedKeys={new Set(selectValues)}
+                selectionMode="multiple"
+                onSelectionChange={keys =>
+                  onChange({
+                    ...value,
+                    [key]: Array.from(keys).map(item => String(item))
+                  })
+                }
+              >
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox items={selectValues.map(item => ({ id: item, label: item }))}>
+                    {item => (
+                      <ListBoxItem id={item.id} textValue={item.label}>
+                        {item.label}
+                      </ListBoxItem>
+                    )}
+                  </ListBox>
+                </Select.Popover>
+              </Select>
+            </EditorField>
           );
         }
 
         if (useTextarea) {
           return (
-            <TextArea
-              key={key}
-              label={label}
-              labelPlacement="outside"
-              minRows={4}
+            <EditorField key={key} label={label} description={key}>
+              <TextArea
+                aria-label={label}
+                minRows={4}
+                value={editorValue}
+                onValueChange={nextValue =>
+                  onChange({
+                    ...value,
+                    [key]: parseTextValue(currentValue, nextValue)
+                  })
+                }
+              />
+            </EditorField>
+          );
+        }
+
+        return (
+          <EditorField key={key} label={label} description={key}>
+            <Input
+              aria-label={label}
+              type={typeof currentValue === "number" ? "number" : "text"}
               value={editorValue}
               onValueChange={nextValue =>
                 onChange({
@@ -188,26 +226,8 @@ export function ObjectRecordEditor({
                   [key]: parseTextValue(currentValue, nextValue)
                 })
               }
-              description={key}
             />
-          );
-        }
-
-        return (
-          <Input
-            key={key}
-            label={label}
-            labelPlacement="outside"
-            type={typeof currentValue === "number" ? "number" : "text"}
-            value={editorValue}
-            onValueChange={nextValue =>
-              onChange({
-                ...value,
-                [key]: parseTextValue(currentValue, nextValue)
-              })
-            }
-            description={key}
-          />
+          </EditorField>
         );
                 })}
               </div>

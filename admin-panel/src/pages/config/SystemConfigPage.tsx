@@ -259,24 +259,25 @@ export function SystemConfigPage() {
               <div className="rounded-2xl border border-default-200 bg-default-50 p-4">
                 <p className="text-sm font-semibold text-slate-900">Telegram Webhook</p>
                 <p className="mt-1 text-sm text-slate-500">Use the token from the Telegram section to register the webhook endpoint.</p>
-                <Input
-                  className="mt-4"
-                  label="Telegram Bot Token"
-                  labelPlacement="outside"
-                  value={String(state.sections.telegram?.telegram_bot_token || "")}
-                  onValueChange={value =>
-                    setState(current => ({
-                      ...current,
-                      sections: {
-                        ...current.sections,
-                        telegram: {
-                          ...(current.sections.telegram || {}),
-                          telegram_bot_token: value
+                <div className="mt-4">
+                  <p className="mb-2 text-sm font-medium text-slate-700">Telegram Bot Token</p>
+                  <Input
+                    aria-label="Telegram Bot Token"
+                    value={String(state.sections.telegram?.telegram_bot_token || "")}
+                    onValueChange={value =>
+                      setState(current => ({
+                        ...current,
+                        sections: {
+                          ...current.sections,
+                          telegram: {
+                            ...(current.sections.telegram || {}),
+                            telegram_bot_token: value
+                          }
                         }
-                      }
-                    }))
-                  }
-                />
+                      }))
+                    }
+                  />
+                </div>
                 <Button className="mt-4" color="primary" variant="light" onPress={() => void setTelegramWebhook()} isLoading={state.settingWebhook}>
                   Set webhook
                 </Button>
