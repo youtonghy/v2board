@@ -23,7 +23,7 @@ import { useEffect, useMemo, useState } from "react";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { formatDateTime } from "../lib/admin-format";
-import { FilterPanel, SectionCard, StatGrid } from "../components/AdminContent";
+import { adminTableClassNames, FilterPanel, SectionCard, StatGrid } from "../components/AdminContent";
 
 interface InviteLinkRecord {
   id: number;
@@ -225,14 +225,7 @@ export function InviteLinkPage() {
             </div>
           ) : (
             <>
-              <Table
-                removeWrapper
-                aria-label="Invite Links"
-                classNames={{
-                  th: "bg-slate-50 text-slate-500 uppercase text-[11px] tracking-[0.18em]",
-                  td: "py-4"
-                }}
-              >
+              <Table aria-label="Invite Links" classNames={adminTableClassNames}>
                 <TableHeader>
                   <TableColumn>Owner</TableColumn>
                   <TableColumn>Invitee</TableColumn>
@@ -269,11 +262,11 @@ export function InviteLinkPage() {
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           {item.status === 3 ? (
-                            <Button size="sm" variant="flat" onPress={() => void updateStatus(item, 0)} isLoading={submitting}>
+                            <Button size="sm" color="success" variant="light" onPress={() => void updateStatus(item, 0)} isLoading={submitting}>
                               Enable
                             </Button>
                           ) : (
-                            <Button size="sm" color="warning" variant="flat" onPress={() => void updateStatus(item, 3)} isLoading={submitting}>
+                            <Button size="sm" color="warning" variant="light" onPress={() => void updateStatus(item, 3)} isLoading={submitting}>
                               Disable
                             </Button>
                           )}

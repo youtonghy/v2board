@@ -26,7 +26,7 @@ import { useEffect, useMemo, useState } from "react";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { asArray, formatDateTime } from "../lib/admin-format";
-import { FilterPanel, SectionCard, StatGrid } from "../components/AdminContent";
+import { adminTableClassNames, FilterPanel, SectionCard, StatGrid } from "../components/AdminContent";
 
 interface KnowledgeRecord {
   id: number;
@@ -225,14 +225,7 @@ export function KnowledgePage() {
               <Spinner color="primary" label="Loading knowledge articles" />
             </div>
           ) : (
-            <Table
-              removeWrapper
-              aria-label="Knowledge Articles"
-              classNames={{
-                th: "bg-slate-50 text-slate-500 uppercase text-[11px] tracking-[0.18em]",
-                td: "py-4"
-              }}
-            >
+            <Table aria-label="Knowledge Articles" classNames={adminTableClassNames}>
               <TableHeader>
                 <TableColumn>Sort</TableColumn>
                 <TableColumn>Title</TableColumn>
@@ -253,7 +246,8 @@ export function KnowledgePage() {
                       <div className="flex gap-2">
                         <Button
                           size="sm"
-                          variant="flat"
+                          color="default"
+                          variant="light"
                           isDisabled={sorting || index <= 0}
                           onPress={() => void reorderKnowledge(index, index - 1)}
                         >
@@ -261,7 +255,8 @@ export function KnowledgePage() {
                         </Button>
                         <Button
                           size="sm"
-                          variant="flat"
+                          color="default"
+                          variant="light"
                           isDisabled={sorting || index >= filtered.length - 1}
                           onPress={() => void reorderKnowledge(index, index + 1)}
                         >
@@ -278,10 +273,10 @@ export function KnowledgePage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button size="sm" variant="flat" onPress={() => void openEditor(item)} isLoading={submitting}>
+                        <Button size="sm" color="primary" variant="light" onPress={() => void openEditor(item)} isLoading={submitting}>
                           Edit
                         </Button>
-                        <Button size="sm" color="danger" variant="flat" onPress={() => void runAction("knowledge/drop", { id: item.id })} isLoading={submitting}>
+                        <Button size="sm" color="danger" variant="light" onPress={() => void runAction("knowledge/drop", { id: item.id })} isLoading={submitting}>
                           Delete
                         </Button>
                       </div>

@@ -135,7 +135,7 @@ export function QueuePage() {
           <SectionCard
             title="System Log"
             description="Current backend runtime output for quick inspection."
-            action={<Button size="sm" variant="flat" onPress={() => void loadQueue()}>Reload log</Button>}
+            action={<Button size="sm" color="primary" variant="light" onPress={() => void loadQueue()}>Reload log</Button>}
           >
               <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap text-xs text-slate-600">
                 {typeof state.log === "string" ? state.log : JSON.stringify(state.log, null, 2)}

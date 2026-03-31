@@ -25,7 +25,7 @@ import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { ObjectRecordEditor } from "../components/ObjectRecordEditor";
 import { asArray, formatDateTime } from "../lib/admin-format";
-import { SectionCard, StatGrid } from "../components/AdminContent";
+import { adminTableClassNames, SectionCard, StatGrid } from "../components/AdminContent";
 
 type ServerProtocol = "shadowsocks" | "vmess" | "vless" | "trojan" | "tuic" | "hysteria" | "anytls" | "v2node";
 
@@ -360,14 +360,7 @@ export function ServerManagePage() {
               <Spinner color="primary" label="Loading servers" />
             </div>
           ) : (
-            <Table
-              removeWrapper
-              aria-label="Servers"
-              classNames={{
-                th: "bg-slate-50 text-slate-500 uppercase text-[11px] tracking-[0.18em]",
-                td: "py-4"
-              }}
-            >
+            <Table aria-label="Servers" classNames={adminTableClassNames}>
               <TableHeader>
                 <TableColumn>Sort</TableColumn>
                 <TableColumn>Name</TableColumn>
@@ -390,7 +383,8 @@ export function ServerManagePage() {
                       <div className="flex gap-2">
                         <Button
                           size="sm"
-                          variant="flat"
+                          color="default"
+                          variant="light"
                           isDisabled={sorting || index <= 0}
                           onPress={() => void reorderServer(index, index - 1)}
                         >
@@ -398,7 +392,8 @@ export function ServerManagePage() {
                         </Button>
                         <Button
                           size="sm"
-                          variant="flat"
+                          color="default"
+                          variant="light"
                           isDisabled={sorting || index >= filtered.length - 1}
                           onPress={() => void reorderServer(index, index + 1)}
                         >
@@ -429,7 +424,8 @@ export function ServerManagePage() {
                       <div className="flex justify-end gap-2">
                         <Button
                           size="sm"
-                          variant="flat"
+                          color="primary"
+                          variant="light"
                           onPress={() => {
                             setSelected({ ...item });
                             setEditorOpen(true);
@@ -437,10 +433,10 @@ export function ServerManagePage() {
                         >
                           Edit
                         </Button>
-                        <Button size="sm" variant="flat" onPress={() => void runAction(COPY_ENDPOINTS[item.type], { id: item.id })} isLoading={submitting}>
+                        <Button size="sm" color="secondary" variant="light" onPress={() => void runAction(COPY_ENDPOINTS[item.type], { id: item.id })} isLoading={submitting}>
                           Copy
                         </Button>
-                        <Button size="sm" color="danger" variant="flat" onPress={() => void runAction(DROP_ENDPOINTS[item.type], { id: item.id })} isLoading={submitting}>
+                        <Button size="sm" color="danger" variant="light" onPress={() => void runAction(DROP_ENDPOINTS[item.type], { id: item.id })} isLoading={submitting}>
                           Delete
                         </Button>
                       </div>

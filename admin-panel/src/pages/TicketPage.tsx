@@ -23,7 +23,7 @@ import { useNavigate } from "react-router-dom";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { asArray, formatDateTime } from "../lib/admin-format";
-import { FilterPanel, SectionCard, StatGrid } from "../components/AdminContent";
+import { adminTableClassNames, FilterPanel, SectionCard, StatGrid } from "../components/AdminContent";
 
 interface TicketRecord {
   id: number;
@@ -170,14 +170,7 @@ export function TicketPage() {
             </div>
           ) : (
             <>
-              <Table
-                removeWrapper
-                aria-label="Tickets"
-                classNames={{
-                  th: "bg-slate-50 text-slate-500 uppercase text-[11px] tracking-[0.18em]",
-                  td: "py-4"
-                }}
-              >
+              <Table aria-label="Tickets" classNames={adminTableClassNames}>
                 <TableHeader>
                   <TableColumn>ID</TableColumn>
                   <TableColumn>Subject</TableColumn>
@@ -209,7 +202,7 @@ export function TicketPage() {
                       </TableCell>
                       <TableCell>{formatDateTime(item.updated_at || item.created_at || null)}</TableCell>
                       <TableCell className="text-right">
-                        <Button size="sm" variant="flat" onPress={() => navigate(`/new/ticket/${item.id}`)}>
+                        <Button size="sm" color="primary" variant="light" onPress={() => navigate(`/new/ticket/${item.id}`)}>
                           Open thread
                         </Button>
                       </TableCell>

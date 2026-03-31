@@ -23,7 +23,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { adminRequest, unwrapEnvelope } from "../../lib/api";
 import { PageFrame } from "../../components/PageFrame";
-import { SectionCard, StatGrid } from "../../components/AdminContent";
+import { adminTableClassNames, SectionCard, StatGrid } from "../../components/AdminContent";
 
 type PaymentRecord = Record<string, unknown> & {
   id?: number;
@@ -251,14 +251,7 @@ export function PaymentConfigPage() {
               <Spinner color="primary" label="Loading payments" />
             </div>
           ) : (
-            <Table
-              removeWrapper
-              aria-label="Payments"
-              classNames={{
-                th: "bg-slate-50 text-slate-500 uppercase text-[11px] tracking-[0.18em]",
-                td: "py-4"
-              }}
-            >
+            <Table aria-label="Payments" classNames={adminTableClassNames}>
               <TableHeader>
                 <TableColumn>Sort</TableColumn>
                 <TableColumn>ID</TableColumn>
@@ -278,7 +271,8 @@ export function PaymentConfigPage() {
                       <div className="flex gap-2">
                         <Button
                           size="sm"
-                          variant="flat"
+                          color="default"
+                          variant="light"
                           isDisabled={sorting || index <= 0}
                           onPress={() => void reorderPayments(index, index - 1)}
                         >
@@ -286,7 +280,8 @@ export function PaymentConfigPage() {
                         </Button>
                         <Button
                           size="sm"
-                          variant="flat"
+                          color="default"
+                          variant="light"
                           isDisabled={sorting || index === -1 || index >= payments.length - 1}
                           onPress={() => void reorderPayments(index, index + 1)}
                         >
@@ -307,7 +302,8 @@ export function PaymentConfigPage() {
                       <div className="flex justify-end gap-2">
                         <Button
                           size="sm"
-                          variant="flat"
+                          color="primary"
+                          variant="light"
                           onPress={() => {
                             setSelected(normalizePaymentRecord(item));
                             setDynamicForm({});
@@ -317,7 +313,7 @@ export function PaymentConfigPage() {
                         >
                           Edit
                         </Button>
-                        <Button size="sm" color="danger" variant="flat" onPress={() => void dropPayment(item)}>
+                        <Button size="sm" color="danger" variant="light" onPress={() => void dropPayment(item)}>
                           Delete
                         </Button>
                       </div>

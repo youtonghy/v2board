@@ -22,7 +22,7 @@ import { useEffect, useMemo, useState } from "react";
 import { adminRequest } from "../lib/api";
 import { GIFTCARD_TYPE_OPTIONS, fromDatetimeInput, toDatetimeInput } from "../lib/admin-constants";
 import { PageFrame } from "../components/PageFrame";
-import { SectionCard, StatGrid } from "../components/AdminContent";
+import { adminTableClassNames, SectionCard, StatGrid } from "../components/AdminContent";
 
 interface PlanOption {
   id: number;
@@ -157,14 +157,7 @@ export function GiftCardPage() {
             </div>
           ) : (
             <>
-              <Table
-                removeWrapper
-                aria-label="Gift cards"
-                classNames={{
-                  th: "bg-slate-50 text-slate-500 uppercase text-[11px] tracking-[0.18em]",
-                  td: "py-4"
-                }}
-              >
+              <Table aria-label="Gift cards" classNames={adminTableClassNames}>
                 <TableHeader>
                   <TableColumn>ID</TableColumn>
                   <TableColumn>Name</TableColumn>
@@ -185,7 +178,8 @@ export function GiftCardPage() {
                         <div className="flex justify-end gap-2">
                           <Button
                             size="sm"
-                            variant="flat"
+                            color="primary"
+                            variant="light"
                             onPress={() => {
                               setSelected(normalizeGiftCard(item));
                               setOpen(true);
@@ -193,7 +187,7 @@ export function GiftCardPage() {
                           >
                             Edit
                           </Button>
-                          <Button size="sm" color="danger" variant="flat" onPress={() => void dropGiftCard(item)}>
+                          <Button size="sm" color="danger" variant="light" onPress={() => void dropGiftCard(item)}>
                             Delete
                           </Button>
                         </div>

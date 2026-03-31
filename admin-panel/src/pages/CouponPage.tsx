@@ -23,7 +23,7 @@ import { useEffect, useMemo, useState } from "react";
 import { adminRequest } from "../lib/api";
 import { COUPON_TYPE_OPTIONS, PERIOD_OPTIONS, fromDatetimeInput, toDatetimeInput } from "../lib/admin-constants";
 import { PageFrame } from "../components/PageFrame";
-import { SectionCard, StatGrid } from "../components/AdminContent";
+import { adminTableClassNames, SectionCard, StatGrid } from "../components/AdminContent";
 
 interface PlanOption {
   id: number;
@@ -179,14 +179,7 @@ export function CouponPage() {
             </div>
           ) : (
             <>
-              <Table
-                removeWrapper
-                aria-label="Coupons"
-                classNames={{
-                  th: "bg-slate-50 text-slate-500 uppercase text-[11px] tracking-[0.18em]",
-                  td: "py-4"
-                }}
-              >
+              <Table aria-label="Coupons" classNames={adminTableClassNames}>
                 <TableHeader>
                   <TableColumn>ID</TableColumn>
                   <TableColumn>Enabled</TableColumn>
@@ -216,7 +209,8 @@ export function CouponPage() {
                         <div className="flex justify-end gap-2">
                           <Button
                             size="sm"
-                            variant="flat"
+                            color="primary"
+                            variant="light"
                             onPress={() => {
                               setSelected(normalizeCoupon(item));
                               setOpen(true);
@@ -224,7 +218,7 @@ export function CouponPage() {
                           >
                             Edit
                           </Button>
-                          <Button size="sm" color="danger" variant="flat" onPress={() => void dropCoupon(item)}>
+                          <Button size="sm" color="danger" variant="light" onPress={() => void dropCoupon(item)}>
                             Delete
                           </Button>
                         </div>

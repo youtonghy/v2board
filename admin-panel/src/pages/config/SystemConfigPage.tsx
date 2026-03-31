@@ -246,7 +246,7 @@ export function SystemConfigPage() {
                     }))
                   }
                 />
-                <Button className="mt-4" color="primary" variant="flat" onPress={() => void setTelegramWebhook()} isLoading={state.settingWebhook}>
+                <Button className="mt-4" color="primary" variant="light" onPress={() => void setTelegramWebhook()} isLoading={state.settingWebhook}>
                   Set webhook
                 </Button>
                 {state.webhookResult ? (

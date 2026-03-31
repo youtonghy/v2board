@@ -128,7 +128,7 @@ export function TicketDetailPage() {
           <SectionCard
             title={state.detail?.subject || `Ticket #${ticketId}`}
             description="Reply directly from the new admin thread view."
-            action={<Button color="warning" variant="flat" onPress={() => void closeTicket()} isLoading={submitting} isDisabled={state.detail?.status === 1}>Close ticket</Button>}
+            action={<Button color="warning" variant="light" onPress={() => void closeTicket()} isLoading={submitting} isDisabled={state.detail?.status === 1}>Close ticket</Button>}
             bodyClassName="gap-4"
           >
               <div className="space-y-4">

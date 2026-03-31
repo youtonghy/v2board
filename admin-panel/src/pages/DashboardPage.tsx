@@ -40,6 +40,7 @@ import type { ApiEnvelope } from "../types";
 import { PageFrame } from "../components/PageFrame";
 import { asArray, asRecord, formatBytes, formatDateTime, formatMoney } from "../lib/admin-format";
 import { BellIcon, DownloadIcon, RefreshIcon } from "../components/AdminIcons";
+import { adminTableClassNames } from "../components/AdminContent";
 
 interface DashboardState {
   loading: boolean;
@@ -414,7 +415,7 @@ export function DashboardPage() {
         <Card className="border border-danger-200 bg-danger-50 shadow-none">
           <CardBody className="gap-4 p-6">
             <p className="text-sm text-danger-700">{state.error}</p>
-            <Button color="danger" variant="flat" onPress={() => void loadDashboard()}>
+            <Button color="danger" variant="light" onPress={() => void loadDashboard()}>
               Retry dashboard
             </Button>
           </CardBody>
@@ -611,7 +612,7 @@ export function DashboardPage() {
               </div>
             ) : (
               <>
-                <Table removeWrapper aria-label="Traffic detail">
+                <Table aria-label="Traffic detail" classNames={adminTableClassNames}>
                   <TableHeader>
                     <TableColumn>Date</TableColumn>
                     <TableColumn>Upload</TableColumn>

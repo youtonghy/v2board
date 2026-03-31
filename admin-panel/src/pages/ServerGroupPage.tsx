@@ -21,7 +21,7 @@ import { useEffect, useState } from "react";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { asArray } from "../lib/admin-format";
-import { SectionCard, StatGrid } from "../components/AdminContent";
+import { adminTableClassNames, SectionCard, StatGrid } from "../components/AdminContent";
 
 interface ServerGroupRecord {
   id: number;
@@ -126,14 +126,7 @@ export function ServerGroupPage() {
               <Spinner color="primary" label="Loading groups" />
             </div>
           ) : (
-            <Table
-              removeWrapper
-              aria-label="Server Groups"
-              classNames={{
-                th: "bg-slate-50 text-slate-500 uppercase text-[11px] tracking-[0.18em]",
-                td: "py-4"
-              }}
-            >
+            <Table aria-label="Server Groups" classNames={adminTableClassNames}>
               <TableHeader>
                 <TableColumn>ID</TableColumn>
                 <TableColumn>Name</TableColumn>
@@ -152,7 +145,8 @@ export function ServerGroupPage() {
                       <div className="flex justify-end gap-2">
                         <Button
                           size="sm"
-                          variant="flat"
+                          color="primary"
+                          variant="light"
                           onPress={() => {
                             setSelected(item);
                             setName(item.name);
@@ -161,7 +155,7 @@ export function ServerGroupPage() {
                         >
                           Edit
                         </Button>
-                        <Button size="sm" color="danger" variant="flat" onPress={() => void deleteGroup(item.id)} isLoading={submitting}>
+                        <Button size="sm" color="danger" variant="light" onPress={() => void deleteGroup(item.id)} isLoading={submitting}>
                           Delete
                         </Button>
                       </div>

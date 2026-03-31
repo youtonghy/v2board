@@ -27,7 +27,7 @@ import { useEffect, useMemo, useState } from "react";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { formatBytes, formatDateTime, formatMoney } from "../lib/admin-format";
-import { FilterPanel, SectionCard, StatGrid } from "../components/AdminContent";
+import { adminTableClassNames, FilterPanel, SectionCard, StatGrid } from "../components/AdminContent";
 
 interface PlanRecord {
   id: number;
@@ -538,13 +538,13 @@ export function UserPage() {
         title="User Directory"
         description="Search active accounts, review balance and plan state, and open actions from one place."
         action={<div className="flex flex-wrap gap-2">
-            <Button variant="flat" onPress={() => void dumpCsv()} isLoading={submitting}>
+            <Button color="default" variant="light" onPress={() => void dumpCsv()} isLoading={submitting}>
               Export CSV
             </Button>
-            <Button variant="flat" onPress={() => setMailOpen(true)}>
+            <Button color="secondary" variant="light" onPress={() => setMailOpen(true)}>
               Mass mail
             </Button>
-            <Button color="danger" variant="flat" onPress={() => void bulkDelete()} isLoading={submitting}>
+            <Button color="danger" variant="light" onPress={() => void bulkDelete()} isLoading={submitting}>
               Bulk delete
             </Button>
             <Button color="primary" onPress={() => setGenerateOpen(true)}>
@@ -613,14 +613,7 @@ export function UserPage() {
             </div>
           ) : (
             <>
-              <Table
-                removeWrapper
-                aria-label="Users"
-                classNames={{
-                  th: "bg-slate-50 text-slate-500 uppercase text-[11px] tracking-[0.18em]",
-                  td: "py-4"
-                }}
-              >
+              <Table aria-label="Users" classNames={adminTableClassNames}>
                 <TableHeader>
                   <TableColumn>Email</TableColumn>
                   <TableColumn>Plan</TableColumn>
@@ -666,7 +659,8 @@ export function UserPage() {
                         <div className="flex justify-end gap-2">
                           <Button
                             size="sm"
-                            variant="flat"
+                            color="primary"
+                            variant="light"
                             onPress={() => void openEditor(item)}
                             isLoading={submitting}
                           >
@@ -674,7 +668,8 @@ export function UserPage() {
                           </Button>
                           <Button
                             size="sm"
-                            variant="flat"
+                            color="secondary"
+                            variant="light"
                             onPress={() => void runRowAction("user/resetSecret", { id: item.id })}
                             isLoading={submitting}
                           >
@@ -682,7 +677,8 @@ export function UserPage() {
                           </Button>
                           <Button
                             size="sm"
-                            variant="flat"
+                            color="primary"
+                            variant="light"
                             onPress={() => void openTrafficStats(item)}
                             isLoading={submitting}
                           >
@@ -690,7 +686,8 @@ export function UserPage() {
                           </Button>
                           <Button
                             size="sm"
-                            variant="flat"
+                            color="secondary"
+                            variant="light"
                             onPress={() => void openIpGeo(item)}
                             isLoading={submitting}
                           >
@@ -699,7 +696,7 @@ export function UserPage() {
                           <Button
                             size="sm"
                             color={Number(item.banned || 0) ? "success" : "warning"}
-                            variant="flat"
+                            variant="light"
                             onPress={() => void runRowAction("user/ban", { filter: [{ key: "id", condition: "=", value: item.id }] })}
                             isLoading={submitting}
                           >
@@ -708,7 +705,7 @@ export function UserPage() {
                           <Button
                             size="sm"
                             color="danger"
-                            variant="flat"
+                            variant="light"
                             onPress={() => void runRowAction("user/delUser", { id: item.id })}
                             isLoading={submitting}
                           >
@@ -841,7 +838,7 @@ export function UserPage() {
         <ModalContent>
           <ModalHeader>Traffic logs for {statsUser?.email || "user"}</ModalHeader>
           <ModalBody className="gap-4">
-            <Table removeWrapper aria-label="User traffic logs">
+            <Table aria-label="User traffic logs" classNames={adminTableClassNames}>
               <TableHeader>
                 <TableColumn>Date</TableColumn>
                 <TableColumn>Upload</TableColumn>
@@ -891,12 +888,12 @@ export function UserPage() {
                   <SelectItem key={provider.key}>{provider.name}</SelectItem>
                 ))}
               </Select>
-              <Button variant="flat" onPress={() => void fetchAllGeo()}>
+              <Button color="primary" variant="light" onPress={() => void fetchAllGeo()}>
                 Refresh geo
               </Button>
             </div>
 
-            <Table removeWrapper aria-label="IP geo records">
+            <Table aria-label="IP geo records" classNames={adminTableClassNames}>
               <TableHeader>
                 <TableColumn>IP</TableColumn>
                 <TableColumn>Last Seen</TableColumn>

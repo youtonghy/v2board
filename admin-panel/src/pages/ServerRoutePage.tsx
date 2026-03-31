@@ -24,7 +24,7 @@ import { useEffect, useMemo, useState } from "react";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { asArray } from "../lib/admin-format";
-import { SectionCard, StatGrid } from "../components/AdminContent";
+import { adminTableClassNames, SectionCard, StatGrid } from "../components/AdminContent";
 
 interface ServerRouteRecord {
   id: number;
@@ -167,14 +167,7 @@ export function ServerRoutePage() {
               <Spinner color="primary" label="Loading routes" />
             </div>
           ) : (
-            <Table
-              removeWrapper
-              aria-label="Server Routes"
-              classNames={{
-                th: "bg-slate-50 text-slate-500 uppercase text-[11px] tracking-[0.18em]",
-                td: "py-4"
-              }}
-            >
+            <Table aria-label="Server Routes" classNames={adminTableClassNames}>
               <TableHeader>
                 <TableColumn>Remarks</TableColumn>
                 <TableColumn>Action</TableColumn>
@@ -195,10 +188,10 @@ export function ServerRoutePage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button size="sm" variant="flat" onPress={() => { setSelected(item); setEditorOpen(true); }}>
+                        <Button size="sm" color="primary" variant="light" onPress={() => { setSelected(item); setEditorOpen(true); }}>
                           Edit
                         </Button>
-                        <Button size="sm" color="danger" variant="flat" onPress={() => void deleteRoute(item.id)} isLoading={submitting}>
+                        <Button size="sm" color="danger" variant="light" onPress={() => void deleteRoute(item.id)} isLoading={submitting}>
                           Delete
                         </Button>
                       </div>

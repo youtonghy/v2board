@@ -1,6 +1,12 @@
 import { Card, CardBody, CardHeader } from "@heroui/react";
 import type { ReactNode } from "react";
 
+export const adminTableClassNames = {
+  wrapper: "rounded-[1.5rem] border border-slate-100 shadow-none",
+  th: "bg-slate-50 text-slate-500 uppercase text-[11px] tracking-[0.18em]",
+  td: "py-4"
+};
+
 function joinClasses(...values: Array<string | false | null | undefined>) {
   return values.filter(Boolean).join(" ");
 }

@@ -23,7 +23,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { adminRequest } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
-import { SectionCard, StatGrid } from "../components/AdminContent";
+import { adminTableClassNames, SectionCard, StatGrid } from "../components/AdminContent";
 import { formatDateTime } from "../lib/admin-format";
 
 interface NoticeRecord {
@@ -143,14 +143,7 @@ export function NoticePage() {
             <Spinner color="primary" label="Loading notices" />
           </div>
         ) : (
-          <Table
-            removeWrapper
-            aria-label="Notices"
-            classNames={{
-              th: "bg-slate-50 text-slate-500 uppercase text-[11px] tracking-[0.18em]",
-              td: "py-4"
-            }}
-          >
+          <Table aria-label="Notices" classNames={adminTableClassNames}>
             <TableHeader>
               <TableColumn>ID</TableColumn>
               <TableColumn>Visible</TableColumn>
@@ -189,7 +182,8 @@ export function NoticePage() {
                     <div className="flex justify-end gap-2">
                       <Button
                         size="sm"
-                        variant="flat"
+                        color="primary"
+                        variant="light"
                         onPress={() => {
                           setSelected(normalizeNotice(item));
                           setOpen(true);
@@ -197,7 +191,7 @@ export function NoticePage() {
                       >
                         Edit
                       </Button>
-                      <Button size="sm" color="danger" variant="flat" onPress={() => void dropNotice(item)}>
+                      <Button size="sm" color="danger" variant="light" onPress={() => void dropNotice(item)}>
                         Delete
                       </Button>
                     </div>

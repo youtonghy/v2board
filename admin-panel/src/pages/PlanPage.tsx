@@ -22,7 +22,7 @@ import { useEffect, useMemo, useState } from "react";
 import { adminRequest } from "../lib/api";
 import { PERIOD_OPTIONS, RESET_TRAFFIC_OPTIONS } from "../lib/admin-constants";
 import { PageFrame } from "../components/PageFrame";
-import { SectionCard, StatGrid } from "../components/AdminContent";
+import { adminTableClassNames, SectionCard, StatGrid } from "../components/AdminContent";
 
 interface ServerGroup {
   id: number;
@@ -218,14 +218,7 @@ export function PlanPage() {
               <Spinner color="primary" label="Loading plans" />
             </div>
           ) : (
-            <Table
-              removeWrapper
-              aria-label="Plans"
-              classNames={{
-                th: "bg-slate-50 text-slate-500 uppercase text-[11px] tracking-[0.18em]",
-                td: "py-4"
-              }}
-            >
+            <Table aria-label="Plans" classNames={adminTableClassNames}>
               <TableHeader>
                 <TableColumn>Sort</TableColumn>
                 <TableColumn>Enabled</TableColumn>
@@ -248,7 +241,8 @@ export function PlanPage() {
                       <div className="flex gap-2">
                         <Button
                           size="sm"
-                          variant="flat"
+                          color="default"
+                          variant="light"
                           isDisabled={sorting || index <= 0}
                           onPress={() => void reorderPlans(index, index - 1)}
                         >
@@ -256,7 +250,8 @@ export function PlanPage() {
                         </Button>
                         <Button
                           size="sm"
-                          variant="flat"
+                          color="default"
+                          variant="light"
                           isDisabled={sorting || index === -1 || index >= records.length - 1}
                           onPress={() => void reorderPlans(index, index + 1)}
                         >
@@ -279,7 +274,8 @@ export function PlanPage() {
                       <div className="flex justify-end gap-2">
                         <Button
                           size="sm"
-                          variant="flat"
+                          color="primary"
+                          variant="light"
                           onPress={() => {
                             setSelected(normalizePlan(item));
                             setOpen(true);
@@ -287,7 +283,7 @@ export function PlanPage() {
                         >
                           Edit
                         </Button>
-                        <Button size="sm" color="danger" variant="flat" onPress={() => void dropPlan(item)}>
+                        <Button size="sm" color="danger" variant="light" onPress={() => void dropPlan(item)}>
                           Delete
                         </Button>
                       </div>

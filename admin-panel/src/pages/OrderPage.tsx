@@ -26,7 +26,7 @@ import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { formatDateTime, formatMoney, asArray } from "../lib/admin-format";
 import { PERIOD_OPTIONS } from "../lib/admin-constants";
-import { FilterPanel, SectionCard, StatGrid } from "../components/AdminContent";
+import { adminTableClassNames, FilterPanel, SectionCard, StatGrid } from "../components/AdminContent";
 
 interface OrderRecord {
   id: number;
@@ -258,14 +258,7 @@ export function OrderPage() {
             </div>
           ) : (
             <>
-              <Table
-                removeWrapper
-                aria-label="Orders"
-                classNames={{
-                  th: "bg-slate-50 text-slate-500 uppercase text-[11px] tracking-[0.18em]",
-                  td: "py-4"
-                }}
-              >
+              <Table aria-label="Orders" classNames={adminTableClassNames}>
                 <TableHeader>
                   <TableColumn>Trade</TableColumn>
                   <TableColumn>Plan</TableColumn>
@@ -301,15 +294,15 @@ export function OrderPage() {
                       <TableCell>{formatDateTime(item.created_at || null)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button size="sm" variant="flat" onPress={() => void openDetail(item)} isLoading={submitting}>
+                          <Button size="sm" color="primary" variant="light" onPress={() => void openDetail(item)} isLoading={submitting}>
                             Details
                           </Button>
                           {item.status === 0 ? (
                             <>
-                              <Button size="sm" color="success" variant="flat" onPress={() => void runAction("order/paid", { trade_no: item.trade_no })} isLoading={submitting}>
+                              <Button size="sm" color="success" variant="light" onPress={() => void runAction("order/paid", { trade_no: item.trade_no })} isLoading={submitting}>
                                 Mark paid
                               </Button>
-                              <Button size="sm" color="warning" variant="flat" onPress={() => void runAction("order/cancel", { trade_no: item.trade_no })} isLoading={submitting}>
+                              <Button size="sm" color="warning" variant="light" onPress={() => void runAction("order/cancel", { trade_no: item.trade_no })} isLoading={submitting}>
                                 Cancel
                               </Button>
                             </>
@@ -344,10 +337,10 @@ export function OrderPage() {
               <p>Status: {COMMISSION_STATUS[selected?.commission_status || 0] || "Pending"}</p>
               <p>Balance: {formatMoney(((selected?.commission_balance || 0) as number) / 100)}</p>
               <div className="flex gap-2">
-                <Button size="sm" variant="flat" onPress={() => void runAction("order/update", { trade_no: selected?.trade_no, commission_status: 1 })} isLoading={submitting}>
+                <Button size="sm" color="success" variant="light" onPress={() => void runAction("order/update", { trade_no: selected?.trade_no, commission_status: 1 })} isLoading={submitting}>
                   Settle
                 </Button>
-                <Button size="sm" color="danger" variant="flat" onPress={() => void runAction("order/update", { trade_no: selected?.trade_no, commission_status: 3 })} isLoading={submitting}>
+                <Button size="sm" color="danger" variant="light" onPress={() => void runAction("order/update", { trade_no: selected?.trade_no, commission_status: 3 })} isLoading={submitting}>
                   Reject
                 </Button>
               </div>
