@@ -1,8 +1,5 @@
 import {
   Button,
-  Card,
-  CardBody,
-  CardHeader,
   Chip,
   Input,
   Modal,
@@ -26,6 +23,7 @@ import { useEffect, useMemo, useState } from "react";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { formatDateTime } from "../lib/admin-format";
+import { FilterPanel, SectionCard, StatGrid } from "../components/AdminContent";
 
 interface InviteLinkRecord {
   id: number;
@@ -151,6 +149,19 @@ export function InviteLinkPage() {
     () => (generateUserId ? new Set([generateUserId]) : new Set<string>()),
     [generateUserId]
   );
+  const stats = useMemo(() => {
+    const active = records.filter(record => record.status === 0).length;
+    const disabled = records.filter(record => record.status === 3).length;
+    const totalVisits = records.reduce((sum, record) => sum + Number(record.visit_count || 0), 0);
+    const totalUses = records.reduce((sum, record) => sum + Number(record.use_count || 0), 0);
+
+    return [
+      { label: "Visible page", value: String(records.length), hint: `Page ${page} inventory` },
+      { label: "Active links", value: String(active), hint: "Ready for sharing" },
+      { label: "Disabled", value: String(disabled), hint: "Manually paused links" },
+      { label: "Visits / uses", value: `${totalVisits} / ${totalUses}`, hint: "Current page engagement" }
+    ];
+  }, [page, records]);
 
   return (
     <PageFrame
@@ -160,18 +171,19 @@ export function InviteLinkPage() {
       onRefresh={() => void loadLinks(page)}
       loading={loading}
     >
-      <Card className="border border-white/60 bg-white/90 shadow-panel">
-        <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="text-lg font-semibold text-slate-900">Invite Link Inventory</p>
-            <p className="text-sm text-slate-500">Track issued links, see who they belong to, and disable invalid links without leaving the new panel.</p>
-          </div>
-          <Button color="primary" onPress={() => setGenerateOpen(true)}>
+      <StatGrid items={stats} />
+
+      <SectionCard
+        title="Invite Link Inventory"
+        description="Track issued links, see who they belong to, and disable invalid links without leaving the new panel."
+        action={
+          <Button color="primary" radius="full" onPress={() => setGenerateOpen(true)}>
             Generate invite link
           </Button>
-        </CardHeader>
-        <CardBody className="gap-5">
-          <div className="grid gap-3 md:grid-cols-4">
+        }
+        bodyClassName="gap-5"
+      >
+          <FilterPanel>
             <Input label="User Email" labelPlacement="outside" value={email} onValueChange={setEmail} />
             <Input label="Keyword" labelPlacement="outside" value={keyword} onValueChange={setKeyword} />
             <Select
@@ -203,17 +215,24 @@ export function InviteLinkPage() {
                 Reset
               </Button>
             </div>
-          </div>
+          </FilterPanel>
 
           {error ? <div className="rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">{error}</div> : null}
 
           {loading ? (
             <div className="flex min-h-[320px] items-center justify-center">
-              <Spinner color="warning" label="Loading invite links" />
+              <Spinner color="primary" label="Loading invite links" />
             </div>
           ) : (
             <>
-              <Table removeWrapper aria-label="Invite Links">
+              <Table
+                removeWrapper
+                aria-label="Invite Links"
+                classNames={{
+                  th: "bg-slate-50 text-slate-500 uppercase text-[11px] tracking-[0.18em]",
+                  td: "py-4"
+                }}
+              >
                 <TableHeader>
                   <TableColumn>Owner</TableColumn>
                   <TableColumn>Invitee</TableColumn>
@@ -243,7 +262,7 @@ export function InviteLinkPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Chip color={item.status === 0 ? "success" : item.status === 3 ? "warning" : "default"} variant="flat">
+                        <Chip color={item.status === 0 ? "success" : item.status === 3 ? "warning" : "default"} variant="flat" className="font-medium">
                           {item.status_text}
                         </Chip>
                       </TableCell>
@@ -270,8 +289,7 @@ export function InviteLinkPage() {
               </div>
             </>
           )}
-        </CardBody>
-      </Card>
+      </SectionCard>
 
       <Modal isOpen={generateOpen} onOpenChange={isOpen => !isOpen && setGenerateOpen(false)} size="3xl">
         <ModalContent>

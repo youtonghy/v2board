@@ -1,8 +1,5 @@
 import {
   Button,
-  Card,
-  CardBody,
-  CardHeader,
   Chip,
   Input,
   Modal,
@@ -25,6 +22,7 @@ import { useEffect, useMemo, useState } from "react";
 import { adminRequest } from "../lib/api";
 import { GIFTCARD_TYPE_OPTIONS, fromDatetimeInput, toDatetimeInput } from "../lib/admin-constants";
 import { PageFrame } from "../components/PageFrame";
+import { SectionCard, StatGrid } from "../components/AdminContent";
 
 interface PlanOption {
   id: number;
@@ -113,6 +111,18 @@ export function GiftCardPage() {
     () => (selected?.plan_id ? new Set([String(selected.plan_id)]) : new Set<string>()),
     [selected]
   );
+  const stats = useMemo(() => {
+    const exchangeCards = records.filter(record => Number(record.type) === 5).length;
+    const resetCards = records.filter(record => Number(record.type) === 4).length;
+    const coded = records.filter(record => Boolean(record.code)).length;
+
+    return [
+      { label: "Current page", value: String(records.length), hint: `Page ${page} inventory` },
+      { label: "Plan exchange", value: String(exchangeCards), hint: "Cards bound to plan conversion" },
+      { label: "Reset traffic", value: String(resetCards), hint: "Traffic reset type cards" },
+      { label: "Predefined codes", value: String(coded), hint: "Non-auto generated codes" }
+    ];
+  }, [page, records]);
 
   return (
     <PageFrame
@@ -122,14 +132,15 @@ export function GiftCardPage() {
       onRefresh={() => void loadGiftCards(page)}
       loading={loading}
     >
-      <Card className="border border-white/60 bg-white/90 shadow-panel">
-        <CardHeader className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-lg font-semibold text-slate-900">Gift Card Inventory</p>
-            <p className="text-sm text-slate-500">Create or edit gift card batches without dropping back to the generic data explorer.</p>
-          </div>
+      <StatGrid items={stats} />
+
+      <SectionCard
+        title="Gift Card Inventory"
+        description="Create or edit gift card batches without dropping back to the generic data explorer."
+        action={
           <Button
             color="primary"
+            radius="full"
             onPress={() => {
               setSelected(normalizeGiftCard());
               setOpen(true);
@@ -137,15 +148,23 @@ export function GiftCardPage() {
           >
             Add gift card
           </Button>
-        </CardHeader>
-        <CardBody className="gap-4">
+        }
+        bodyClassName="gap-4"
+      >
           {loading ? (
             <div className="flex min-h-[280px] items-center justify-center">
-              <Spinner color="warning" label="Loading gift cards" />
+              <Spinner color="primary" label="Loading gift cards" />
             </div>
           ) : (
             <>
-              <Table removeWrapper aria-label="Gift cards">
+              <Table
+                removeWrapper
+                aria-label="Gift cards"
+                classNames={{
+                  th: "bg-slate-50 text-slate-500 uppercase text-[11px] tracking-[0.18em]",
+                  td: "py-4"
+                }}
+              >
                 <TableHeader>
                   <TableColumn>ID</TableColumn>
                   <TableColumn>Name</TableColumn>
@@ -161,7 +180,7 @@ export function GiftCardPage() {
                       <TableCell>{item.name || "Untitled"}</TableCell>
                       <TableCell>{GIFTCARD_TYPE_OPTIONS.find(option => option.value === Number(item.type))?.label || "Unknown"}</TableCell>
                       <TableCell>{item.value ?? "—"}</TableCell>
-                      <TableCell>{item.code ? <Chip size="sm" variant="flat">{item.code}</Chip> : "Auto"}</TableCell>
+                      <TableCell>{item.code ? <Chip size="sm" variant="flat" className="bg-sky-50 text-sky-700">{item.code}</Chip> : "Auto"}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button
@@ -193,8 +212,7 @@ export function GiftCardPage() {
               </div>
             </>
           )}
-        </CardBody>
-      </Card>
+      </SectionCard>
 
       <Modal isOpen={open} onOpenChange={isOpen => !isOpen && setOpen(false)} size="5xl" scrollBehavior="inside">
         <ModalContent>

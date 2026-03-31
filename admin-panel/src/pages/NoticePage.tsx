@@ -20,9 +20,11 @@ import {
   TableRow,
   Textarea
 } from "@heroui/react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { adminRequest } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
+import { SectionCard, StatGrid } from "../components/AdminContent";
+import { formatDateTime } from "../lib/admin-format";
 
 interface NoticeRecord {
   id?: number;
@@ -97,6 +99,19 @@ export function NoticePage() {
     void loadNotices();
   }, []);
 
+  const stats = useMemo(() => {
+    const visible = records.filter(record => Boolean(Number(record.show ?? 0))).length;
+    const tagged = records.filter(record => (record.tags || []).length > 0).length;
+    const withImages = records.filter(record => Boolean(record.img_url)).length;
+
+    return [
+      { label: "Total notices", value: String(records.length), hint: "Current published inventory" },
+      { label: "Visible", value: String(visible), hint: "Enabled for the frontend" },
+      { label: "Tagged", value: String(tagged), hint: "Notices with topic labels" },
+      { label: "With image", value: String(withImages), hint: "Visual announcements ready" }
+    ];
+  }, [records]);
+
   return (
     <PageFrame
       title="Notices"
@@ -105,14 +120,15 @@ export function NoticePage() {
       onRefresh={() => void loadNotices()}
       loading={loading}
     >
-      <Card className="border border-white/60 bg-white/90 shadow-panel">
-        <CardHeader className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-lg font-semibold text-slate-900">Announcement Feed</p>
-            <p className="text-sm text-slate-500">Edit title, content, tags, image URL, and visibility without leaving the new shell.</p>
-          </div>
+      <StatGrid items={stats} />
+
+      <SectionCard
+        title="Announcement Feed"
+        description="Edit title, content, tags, image URL, and visibility without leaving the new shell."
+        action={
           <Button
             color="primary"
+            radius="full"
             onPress={() => {
               setSelected(normalizeNotice());
               setOpen(true);
@@ -120,69 +136,78 @@ export function NoticePage() {
           >
             Add notice
           </Button>
-        </CardHeader>
-        <CardBody>
-          {loading ? (
-            <div className="flex min-h-[280px] items-center justify-center">
-              <Spinner color="warning" label="Loading notices" />
-            </div>
-          ) : (
-            <Table removeWrapper aria-label="Notices">
-              <TableHeader>
-                <TableColumn>ID</TableColumn>
-                <TableColumn>Visible</TableColumn>
-                <TableColumn>Title</TableColumn>
-                <TableColumn>Tags</TableColumn>
-                <TableColumn>Created</TableColumn>
-                <TableColumn align="end">Actions</TableColumn>
-              </TableHeader>
-              <TableBody items={records} emptyContent="No notices found">
-                {item => (
-                  <TableRow key={String(item.id || Math.random())}>
-                    <TableCell>{item.id ?? "—"}</TableCell>
-                    <TableCell>
-                      <Switch
-                        isSelected={Boolean(Number(item.show ?? 0))}
-                        onValueChange={() => void toggleNotice(item)}
-                      />
-                    </TableCell>
-                    <TableCell>{item.title || "Untitled"}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-2">
-                        {(item.tags || []).map(tag => (
-                          <Chip key={tag} size="sm" variant="flat">
-                            {tag}
-                          </Chip>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {item.created_at ? new Date(item.created_at * 1000).toLocaleString() : "—"}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          size="sm"
-                          variant="flat"
-                          onPress={() => {
-                            setSelected(normalizeNotice(item));
-                            setOpen(true);
-                          }}
-                        >
-                          Edit
-                        </Button>
-                        <Button size="sm" color="danger" variant="flat" onPress={() => void dropNotice(item)}>
-                          Delete
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          )}
-        </CardBody>
-      </Card>
+        }
+      >
+        {loading ? (
+          <div className="flex min-h-[280px] items-center justify-center">
+            <Spinner color="primary" label="Loading notices" />
+          </div>
+        ) : (
+          <Table
+            removeWrapper
+            aria-label="Notices"
+            classNames={{
+              th: "bg-slate-50 text-slate-500 uppercase text-[11px] tracking-[0.18em]",
+              td: "py-4"
+            }}
+          >
+            <TableHeader>
+              <TableColumn>ID</TableColumn>
+              <TableColumn>Visible</TableColumn>
+              <TableColumn>Title</TableColumn>
+              <TableColumn>Tags</TableColumn>
+              <TableColumn>Created</TableColumn>
+              <TableColumn align="end">Actions</TableColumn>
+            </TableHeader>
+            <TableBody items={records} emptyContent="No notices found">
+              {item => (
+                <TableRow key={String(item.id || Math.random())}>
+                  <TableCell>{item.id ?? "—"}</TableCell>
+                  <TableCell>
+                    <Switch
+                      isSelected={Boolean(Number(item.show ?? 0))}
+                      onValueChange={() => void toggleNotice(item)}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <div>
+                      <p className="font-medium text-slate-900">{item.title || "Untitled"}</p>
+                      <p className="mt-1 text-xs text-slate-500 line-clamp-1">{item.content || "No content preview"}</p>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-2">
+                      {(item.tags || []).map(tag => (
+                        <Chip key={tag} size="sm" variant="flat" className="bg-sky-50 text-sky-700">
+                          {tag}
+                        </Chip>
+                      ))}
+                    </div>
+                  </TableCell>
+                  <TableCell>{formatDateTime(item.created_at)}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        size="sm"
+                        variant="flat"
+                        onPress={() => {
+                          setSelected(normalizeNotice(item));
+                          setOpen(true);
+                        }}
+                      >
+                        Edit
+                      </Button>
+                      <Button size="sm" color="danger" variant="flat" onPress={() => void dropNotice(item)}>
+                        Delete
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        )}
+      </SectionCard>
 
       <Modal isOpen={open} onOpenChange={isOpen => !isOpen && setOpen(false)} size="4xl" scrollBehavior="inside">
         <ModalContent>

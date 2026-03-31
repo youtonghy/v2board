@@ -1,8 +1,5 @@
 import {
   Button,
-  Card,
-  CardBody,
-  CardHeader,
   Input,
   Modal,
   ModalBody,
@@ -25,6 +22,7 @@ import { useEffect, useMemo, useState } from "react";
 import { adminRequest } from "../lib/api";
 import { PERIOD_OPTIONS, RESET_TRAFFIC_OPTIONS } from "../lib/admin-constants";
 import { PageFrame } from "../components/PageFrame";
+import { SectionCard, StatGrid } from "../components/AdminContent";
 
 interface ServerGroup {
   id: number;
@@ -172,6 +170,21 @@ export function PlanPage() {
     const matched = RESET_TRAFFIC_OPTIONS.find(option => option.value === (selected?.reset_traffic_method ?? null));
     return matched ? new Set([matched.key]) : new Set(["null"]);
   }, [selected]);
+  const stats = useMemo(() => {
+    const enabled = records.filter(record => Boolean(Number(record.show ?? 0))).length;
+    const renewable = records.filter(record => Boolean(Number(record.renew ?? 0))).length;
+    const monthlyAverage =
+      records.length > 0
+        ? records.reduce((sum, record) => sum + Number(record.month_price || 0), 0) / records.length
+        : 0;
+
+    return [
+      { label: "Total plans", value: String(records.length), hint: "Subscription packages configured" },
+      { label: "Visible", value: String(enabled), hint: "Shown to customers" },
+      { label: "Renewable", value: String(renewable), hint: "Supports renewal actions" },
+      { label: "Avg monthly", value: `${currency}${monthlyAverage.toFixed(2)}`, hint: "Average monthly list price" }
+    ];
+  }, [currency, records]);
 
   return (
     <PageFrame
@@ -181,14 +194,15 @@ export function PlanPage() {
       onRefresh={() => void loadPlans()}
       loading={loading}
     >
-      <Card className="border border-white/60 bg-white/90 shadow-panel">
-        <CardHeader className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-lg font-semibold text-slate-900">Plan Catalog</p>
-            <p className="text-sm text-slate-500">Create and maintain subscription plans without staying in the legacy table.</p>
-          </div>
+      <StatGrid items={stats} />
+
+      <SectionCard
+        title="Plan Catalog"
+        description="Create and maintain subscription plans without staying in the legacy table."
+        action={
           <Button
             color="primary"
+            radius="full"
             onPress={() => {
               setSelected(normalizePlan());
               setOpen(true);
@@ -196,15 +210,22 @@ export function PlanPage() {
           >
             Add plan
           </Button>
-        </CardHeader>
-        <CardBody>
+        }
+      >
           {error ? <div className="mb-4 rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">{error}</div> : null}
           {loading ? (
             <div className="flex min-h-[280px] items-center justify-center">
-              <Spinner color="warning" label="Loading plans" />
+              <Spinner color="primary" label="Loading plans" />
             </div>
           ) : (
-            <Table removeWrapper aria-label="Plans">
+            <Table
+              removeWrapper
+              aria-label="Plans"
+              classNames={{
+                th: "bg-slate-50 text-slate-500 uppercase text-[11px] tracking-[0.18em]",
+                td: "py-4"
+              }}
+            >
               <TableHeader>
                 <TableColumn>Sort</TableColumn>
                 <TableColumn>Enabled</TableColumn>
@@ -276,8 +297,7 @@ export function PlanPage() {
               </TableBody>
             </Table>
           )}
-        </CardBody>
-      </Card>
+      </SectionCard>
 
       <Modal isOpen={open} onOpenChange={isOpen => !isOpen && setOpen(false)} size="5xl" scrollBehavior="inside">
         <ModalContent>

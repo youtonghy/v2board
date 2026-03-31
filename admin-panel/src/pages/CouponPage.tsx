@@ -1,8 +1,5 @@
 import {
   Button,
-  Card,
-  CardBody,
-  CardHeader,
   Chip,
   Input,
   Modal,
@@ -26,6 +23,7 @@ import { useEffect, useMemo, useState } from "react";
 import { adminRequest } from "../lib/api";
 import { COUPON_TYPE_OPTIONS, PERIOD_OPTIONS, fromDatetimeInput, toDatetimeInput } from "../lib/admin-constants";
 import { PageFrame } from "../components/PageFrame";
+import { SectionCard, StatGrid } from "../components/AdminContent";
 
 interface PlanOption {
   id: number;
@@ -135,6 +133,18 @@ export function CouponPage() {
     () => new Set(selected?.limit_period || []),
     [selected]
   );
+  const stats = useMemo(() => {
+    const enabled = records.filter(record => Boolean(Number(record.show ?? 0))).length;
+    const amountCoupons = records.filter(record => Number(record.type) === 1).length;
+    const percentageCoupons = records.filter(record => Number(record.type) === 2).length;
+
+    return [
+      { label: "Current page", value: String(records.length), hint: `Page ${page} inventory` },
+      { label: "Enabled", value: String(enabled), hint: "Available for redemption" },
+      { label: "Amount based", value: String(amountCoupons), hint: "Fixed discount coupons" },
+      { label: "Percentage", value: String(percentageCoupons), hint: "Rate based coupons" }
+    ];
+  }, [page, records]);
 
   return (
     <PageFrame
@@ -144,14 +154,15 @@ export function CouponPage() {
       onRefresh={() => void loadCoupons(page)}
       loading={loading}
     >
-      <Card className="border border-white/60 bg-white/90 shadow-panel">
-        <CardHeader className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-lg font-semibold text-slate-900">Coupon Inventory</p>
-            <p className="text-sm text-slate-500">List, create, edit, toggle, and delete coupons directly in the new shell.</p>
-          </div>
+      <StatGrid items={stats} />
+
+      <SectionCard
+        title="Coupon Inventory"
+        description="List, create, edit, toggle, and delete coupons directly in the new shell."
+        action={
           <Button
             color="primary"
+            radius="full"
             onPress={() => {
               setSelected(normalizeCoupon());
               setOpen(true);
@@ -159,15 +170,23 @@ export function CouponPage() {
           >
             Add coupon
           </Button>
-        </CardHeader>
-        <CardBody className="gap-4">
+        }
+        bodyClassName="gap-4"
+      >
           {loading ? (
             <div className="flex min-h-[280px] items-center justify-center">
-              <Spinner color="warning" label="Loading coupons" />
+              <Spinner color="primary" label="Loading coupons" />
             </div>
           ) : (
             <>
-              <Table removeWrapper aria-label="Coupons">
+              <Table
+                removeWrapper
+                aria-label="Coupons"
+                classNames={{
+                  th: "bg-slate-50 text-slate-500 uppercase text-[11px] tracking-[0.18em]",
+                  td: "py-4"
+                }}
+              >
                 <TableHeader>
                   <TableColumn>ID</TableColumn>
                   <TableColumn>Enabled</TableColumn>
@@ -190,7 +209,7 @@ export function CouponPage() {
                       <TableCell>{item.name || "Untitled"}</TableCell>
                       <TableCell>{item.type === 2 ? "Percentage" : "Amount"}</TableCell>
                       <TableCell>
-                        {item.code ? <Chip size="sm" variant="flat">{item.code}</Chip> : "Auto"}
+                        {item.code ? <Chip size="sm" variant="flat" className="bg-sky-50 text-sky-700">{item.code}</Chip> : "Auto"}
                       </TableCell>
                       <TableCell>{item.limit_use ?? "Unlimited"}</TableCell>
                       <TableCell className="text-right">
@@ -224,8 +243,7 @@ export function CouponPage() {
               </div>
             </>
           )}
-        </CardBody>
-      </Card>
+      </SectionCard>
 
       <Modal isOpen={open} onOpenChange={isOpen => !isOpen && setOpen(false)} size="5xl" scrollBehavior="inside">
         <ModalContent>
