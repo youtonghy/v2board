@@ -25,6 +25,7 @@ import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { ObjectRecordEditor } from "../components/ObjectRecordEditor";
 import { asArray, formatDateTime } from "../lib/admin-format";
+import { SectionCard, StatGrid } from "../components/AdminContent";
 
 type ServerProtocol = "shadowsocks" | "vmess" | "vless" | "trojan" | "tuic" | "hysteria" | "anytls" | "v2node";
 
@@ -302,6 +303,18 @@ export function ServerManagePage() {
     () => records.filter(record => record.type === activeProtocol),
     [records, activeProtocol]
   );
+  const stats = useMemo(() => {
+    const visible = filtered.filter(record => Boolean(Number(record.show || 0))).length;
+    const online = filtered.reduce((sum, record) => sum + Number(record.online || 0), 0);
+    const avgRate = filtered.length ? filtered.reduce((sum, record) => sum + Number(record.rate || 1), 0) / filtered.length : 0;
+
+    return [
+      { label: "Protocol set", value: String(filtered.length), hint: PROTOCOLS.find(item => item.key === activeProtocol)?.label || activeProtocol },
+      { label: "Visible", value: String(visible), hint: "Shown to subscribers" },
+      { label: "Online", value: String(online), hint: "Current online count" },
+      { label: "Average rate", value: avgRate.toFixed(2), hint: "Billing multiplier" }
+    ];
+  }, [activeProtocol, filtered]);
 
   return (
     <PageFrame
@@ -311,23 +324,25 @@ export function ServerManagePage() {
       onRefresh={() => void loadServers()}
       loading={loading}
     >
-      <Card className="border border-white/60 bg-white/90 shadow-panel">
-        <CardHeader className="flex flex-col gap-4">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <p className="text-lg font-semibold text-slate-900">Node Inventory</p>
-              <p className="text-sm text-slate-500">Browse each protocol independently, keep visibility under control, and edit raw settings without falling back to the old UI.</p>
-            </div>
-            <Button
-              color="primary"
-              onPress={() => {
-                setSelected(defaultServer(activeProtocol));
-                setEditorOpen(true);
-              }}
-            >
-              Add {PROTOCOLS.find(item => item.key === activeProtocol)?.label}
-            </Button>
-          </div>
+      <StatGrid items={stats} />
+
+      <SectionCard
+        title="Node Inventory"
+        description="Browse each protocol independently, keep visibility under control, and edit raw settings without falling back to the old UI."
+        bodyClassName="gap-5"
+        action={
+          <Button
+            color="primary"
+            radius="full"
+            onPress={() => {
+              setSelected(defaultServer(activeProtocol));
+              setEditorOpen(true);
+            }}
+          >
+            Add {PROTOCOLS.find(item => item.key === activeProtocol)?.label}
+          </Button>
+        }
+      >
           <Tabs
             selectedKey={activeProtocol}
             onSelectionChange={key => setActiveProtocol(String(key) as ServerProtocol)}
@@ -338,15 +353,21 @@ export function ServerManagePage() {
               <Tab key={protocol.key} title={protocol.label} />
             ))}
           </Tabs>
-        </CardHeader>
-        <CardBody className="gap-5">
+
           {error ? <div className="rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">{error}</div> : null}
           {loading ? (
             <div className="flex min-h-[320px] items-center justify-center">
-              <Spinner color="warning" label="Loading servers" />
+              <Spinner color="primary" label="Loading servers" />
             </div>
           ) : (
-            <Table removeWrapper aria-label="Servers">
+            <Table
+              removeWrapper
+              aria-label="Servers"
+              classNames={{
+                th: "bg-slate-50 text-slate-500 uppercase text-[11px] tracking-[0.18em]",
+                td: "py-4"
+              }}
+            >
               <TableHeader>
                 <TableColumn>Sort</TableColumn>
                 <TableColumn>Name</TableColumn>
@@ -393,7 +414,7 @@ export function ServerManagePage() {
                     </TableCell>
                     <TableCell>{String(item.host || "—")}:{String(item.port || "—")}</TableCell>
                     <TableCell>
-                      <Chip variant="flat">{Array.isArray(item.group_id) ? item.group_id.join(", ") : String(item.group_id || "—")}</Chip>
+                      <Chip variant="flat" className="bg-sky-50 text-sky-700">{Array.isArray(item.group_id) ? item.group_id.join(", ") : String(item.group_id || "—")}</Chip>
                     </TableCell>
                     <TableCell>{String(item.rate || "1")}</TableCell>
                     <TableCell>{Number(item.online || 0)}</TableCell>
@@ -429,8 +450,7 @@ export function ServerManagePage() {
               </TableBody>
             </Table>
           )}
-        </CardBody>
-      </Card>
+      </SectionCard>
 
       <Modal isOpen={editorOpen} onOpenChange={isOpen => !isOpen && setEditorOpen(false)} size="5xl" scrollBehavior="inside">
         <ModalContent>

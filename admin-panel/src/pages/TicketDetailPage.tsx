@@ -3,6 +3,7 @@ import {
   Card,
   CardBody,
   CardHeader,
+  Chip,
   Spinner,
   Textarea
 } from "@heroui/react";
@@ -11,6 +12,7 @@ import { useParams } from "react-router-dom";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { formatDateTime } from "../lib/admin-format";
+import { SectionCard, StatGrid } from "../components/AdminContent";
 
 interface TicketMessageRecord {
   id: number;
@@ -92,6 +94,15 @@ export function TicketDetailPage() {
     void loadDetail();
   }, [ticketId]);
 
+  const stats = state.detail
+    ? [
+        { label: "Status", value: state.detail.status === 1 ? "Closed" : "Open", hint: "Current ticket lifecycle" },
+        { label: "Reply state", value: String(state.detail.reply_status ?? 0), hint: "Backend reply state value" },
+        { label: "Priority", value: String(state.detail.level ?? 0), hint: "Ticket level" },
+        { label: "Messages", value: String((state.detail.message || []).length), hint: "Thread entries loaded" }
+      ]
+    : [];
+
   return (
     <PageFrame
       title={`Ticket #${ticketId || "Unknown"}`}
@@ -100,10 +111,12 @@ export function TicketDetailPage() {
       onRefresh={() => void loadDetail()}
       loading={state.loading}
     >
+      {state.detail ? <StatGrid items={stats} /> : null}
+
       {state.loading ? (
         <Card className="border border-default-200 shadow-none">
           <CardBody className="flex min-h-[280px] items-center justify-center">
-            <Spinner color="warning" label="Loading ticket detail" />
+            <Spinner color="primary" label="Loading ticket detail" />
           </CardBody>
         </Card>
       ) : state.error ? (
@@ -112,24 +125,19 @@ export function TicketDetailPage() {
         </Card>
       ) : (
         <div className="grid gap-6 xl:grid-cols-[1.7fr_1fr]">
-          <Card className="border border-white/60 bg-white/90 shadow-panel">
-            <CardHeader className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-lg font-semibold text-slate-900">{state.detail?.subject || `Ticket #${ticketId}`}</p>
-                <p className="text-sm text-slate-500">Reply directly from the new admin thread view.</p>
-              </div>
-              <Button color="warning" variant="flat" onPress={() => void closeTicket()} isLoading={submitting} isDisabled={state.detail?.status === 1}>
-                Close ticket
-              </Button>
-            </CardHeader>
-            <CardBody className="gap-4">
+          <SectionCard
+            title={state.detail?.subject || `Ticket #${ticketId}`}
+            description="Reply directly from the new admin thread view."
+            action={<Button color="warning" variant="flat" onPress={() => void closeTicket()} isLoading={submitting} isDisabled={state.detail?.status === 1}>Close ticket</Button>}
+            bodyClassName="gap-4"
+          >
               <div className="space-y-4">
                 {(state.detail?.message || []).map(item => (
                   <div
                     key={item.id}
                     className={`rounded-3xl p-4 ${
                       item.is_me
-                        ? "ml-8 bg-amber-50 text-slate-800"
+                        ? "ml-8 bg-sky-50 text-slate-800"
                         : "mr-8 bg-slate-100 text-slate-800"
                     }`}
                   >
@@ -151,13 +159,16 @@ export function TicketDetailPage() {
                   Send reply
                 </Button>
               </div>
-            </CardBody>
-          </Card>
+          </SectionCard>
 
-          <Card className="border border-white/60 bg-white/90 shadow-panel">
-            <CardBody className="gap-4 p-6 text-sm text-slate-600">
+          <SectionCard title="Ticket Meta" description="Operational reference for the active support thread." bodyClassName="gap-4 text-sm text-slate-600">
               <div>
-                <p className="font-semibold text-slate-900">Ticket Meta</p>
+                <div className="flex gap-2">
+                  <Chip color={state.detail?.status === 1 ? "default" : "success"} variant="flat">
+                    {state.detail?.status === 1 ? "Closed" : "Open"}
+                  </Chip>
+                  <Chip variant="flat">Reply {state.detail?.reply_status ?? 0}</Chip>
+                </div>
               </div>
               <p>ID: #{state.detail?.id}</p>
               <p>User ID: {state.detail?.user_id}</p>
@@ -166,8 +177,7 @@ export function TicketDetailPage() {
               <p>Priority: {state.detail?.level ?? 0}</p>
               <p>Created: {formatDateTime(state.detail?.created_at || null)}</p>
               <p>Updated: {formatDateTime(state.detail?.updated_at || null)}</p>
-            </CardBody>
-          </Card>
+          </SectionCard>
         </div>
       )}
     </PageFrame>

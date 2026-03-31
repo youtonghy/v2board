@@ -24,6 +24,7 @@ import { useEffect, useMemo, useState } from "react";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { asArray } from "../lib/admin-format";
+import { SectionCard, StatGrid } from "../components/AdminContent";
 
 interface ServerRouteRecord {
   id: number;
@@ -122,6 +123,17 @@ export function ServerRoutePage() {
     () => (selected.action ? new Set([selected.action]) : new Set<string>()),
     [selected.action]
   );
+  const stats = useMemo(() => {
+    const defaultOut = records.filter(record => record.action === "default_out").length;
+    const withMatch = records.filter(record => Array.isArray(record.match) ? record.match.length > 0 : Boolean(record.match)).length;
+
+    return [
+      { label: "Routes", value: String(records.length), hint: "Total routing policies" },
+      { label: "Default out", value: String(defaultOut), hint: "Fallback outbound routes" },
+      { label: "Match based", value: String(withMatch), hint: "Explicit rule matching" },
+      { label: "Actions", value: String(new Set(records.map(record => record.action)).size), hint: "Action types in use" }
+    ];
+  }, [records]);
 
   return (
     <PageFrame
@@ -131,14 +143,15 @@ export function ServerRoutePage() {
       onRefresh={() => void loadRoutes()}
       loading={loading}
     >
-      <Card className="border border-white/60 bg-white/90 shadow-panel">
-        <CardHeader className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-lg font-semibold text-slate-900">Routing Rules</p>
-            <p className="text-sm text-slate-500">Review route actions, edit match conditions, and keep the route table manageable inside the new panel.</p>
-          </div>
+      <StatGrid items={stats} />
+
+      <SectionCard
+        title="Routing Rules"
+        description="Review route actions, edit match conditions, and keep the route table manageable inside the new panel."
+        action={
           <Button
             color="primary"
+            radius="full"
             onPress={() => {
               setSelected(defaultRouteRecord());
               setEditorOpen(true);
@@ -146,15 +159,22 @@ export function ServerRoutePage() {
           >
             Add route
           </Button>
-        </CardHeader>
-        <CardBody>
+        }
+      >
           {error ? <div className="rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">{error}</div> : null}
           {loading ? (
             <div className="flex min-h-[300px] items-center justify-center">
-              <Spinner color="warning" label="Loading routes" />
+              <Spinner color="primary" label="Loading routes" />
             </div>
           ) : (
-            <Table removeWrapper aria-label="Server Routes">
+            <Table
+              removeWrapper
+              aria-label="Server Routes"
+              classNames={{
+                th: "bg-slate-50 text-slate-500 uppercase text-[11px] tracking-[0.18em]",
+                td: "py-4"
+              }}
+            >
               <TableHeader>
                 <TableColumn>Remarks</TableColumn>
                 <TableColumn>Action</TableColumn>
@@ -188,8 +208,7 @@ export function ServerRoutePage() {
               </TableBody>
             </Table>
           )}
-        </CardBody>
-      </Card>
+      </SectionCard>
 
       <Modal isOpen={editorOpen} onOpenChange={isOpen => !isOpen && setEditorOpen(false)} size="4xl" scrollBehavior="inside">
         <ModalContent>

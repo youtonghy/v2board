@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { adminRequest } from "../../lib/api";
 import { PageFrame } from "../../components/PageFrame";
 import { ObjectRecordEditor } from "../../components/ObjectRecordEditor";
+import { SectionCard, StatGrid } from "../../components/AdminContent";
 
 interface SystemConfigState {
   loading: boolean;
@@ -131,6 +132,15 @@ export function SystemConfigPage() {
   }, []);
 
   const sectionKeys = useMemo(() => Object.keys(state.sections), [state.sections]);
+  const stats = useMemo(
+    () => [
+      { label: "Sections", value: String(sectionKeys.length), hint: "Config groups detected" },
+      { label: "Current section", value: state.activeKey || "—", hint: "Editing target" },
+      { label: "Template keys", value: String(Object.keys((state.emailTemplate as Record<string, unknown>) || {}).length), hint: "Email template snapshot size" },
+      { label: "Telegram token", value: state.sections.telegram?.telegram_bot_token ? "Configured" : "Missing", hint: "Webhook readiness" }
+    ],
+    [sectionKeys.length, state.activeKey, state.emailTemplate, state.sections.telegram]
+  );
 
   return (
     <PageFrame
@@ -140,31 +150,28 @@ export function SystemConfigPage() {
       onRefresh={() => void loadConfig()}
       loading={state.loading}
     >
+      <StatGrid items={stats} />
+
       {state.loading ? (
         <Card className="border border-default-200 shadow-none">
           <CardBody className="flex min-h-[320px] items-center justify-center">
-            <Spinner color="warning" label="Loading system config" />
+            <Spinner color="primary" label="Loading system config" />
           </CardBody>
         </Card>
       ) : (
         <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
-          <Card className="border border-white/60 bg-white/90 shadow-panel">
-            <CardHeader className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-lg font-semibold text-slate-900">Config Sections</p>
-                <p className="text-sm text-slate-500">Editable scalar fields stay inline; arrays and nested objects fall back to JSON-safe textareas.</p>
-              </div>
-              <Button color="primary" onPress={() => void saveCurrentSection()} isLoading={state.saving}>
-                Save section
-              </Button>
-            </CardHeader>
-            <CardBody className="gap-6">
+          <SectionCard
+            title="Config Sections"
+            description="Editable scalar fields stay inline; arrays and nested objects fall back to JSON-safe textareas."
+            action={<Button color="primary" radius="full" onPress={() => void saveCurrentSection()} isLoading={state.saving}>Save section</Button>}
+            bodyClassName="gap-6"
+          >
               {sectionKeys.length ? (
                 <Tabs
                   selectedKey={state.activeKey}
                   onSelectionChange={key => setState(current => ({ ...current, activeKey: String(key) }))}
                   variant="underlined"
-                  color="warning"
+                  color="primary"
                   classNames={{ tabList: "overflow-x-auto" }}
                 >
                   {sectionKeys.map(key => (
@@ -184,8 +191,7 @@ export function SystemConfigPage() {
                   }))
                 }
               />
-            </CardBody>
-          </Card>
+          </SectionCard>
 
           <Card className="border border-default-200 bg-white/90 shadow-panel">
             <CardHeader>
@@ -202,15 +208,12 @@ export function SystemConfigPage() {
             </CardBody>
           </Card>
 
-          <Card className="border border-default-200 bg-white/90 shadow-panel xl:col-span-2">
-            <CardHeader>
-              <div>
-                <p className="text-lg font-semibold text-slate-900">Validation Actions</p>
-                <p className="text-sm text-slate-500">Run the same test actions that existed in the legacy admin without leaving the new panel.</p>
-              </div>
-            </CardHeader>
-            <Divider />
-            <CardBody className="grid gap-6 md:grid-cols-2">
+          <SectionCard
+            title="Validation Actions"
+            description="Run the same test actions that existed in the legacy admin without leaving the new panel."
+            className="xl:col-span-2"
+            bodyClassName="grid gap-6 md:grid-cols-2"
+          >
               <div className="rounded-2xl border border-default-200 bg-default-50 p-4">
                 <p className="text-sm font-semibold text-slate-900">Test Mail Delivery</p>
                 <p className="mt-1 text-sm text-slate-500">Send a test message to the current admin account using the active SMTP settings.</p>
@@ -250,8 +253,7 @@ export function SystemConfigPage() {
                   <p className="mt-3 text-sm text-slate-600">{state.webhookResult}</p>
                 ) : null}
               </div>
-            </CardBody>
-          </Card>
+          </SectionCard>
         </div>
       )}
       {state.error ? <p className="text-sm text-danger">{state.error}</p> : null}

@@ -21,6 +21,7 @@ import { useEffect, useState } from "react";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { asArray } from "../lib/admin-format";
+import { SectionCard, StatGrid } from "../components/AdminContent";
 
 interface ServerGroupRecord {
   id: number;
@@ -85,6 +86,13 @@ export function ServerGroupPage() {
     void loadGroups();
   }, []);
 
+  const stats = [
+    { label: "Groups", value: String(records.length), hint: "Access scopes configured" },
+    { label: "Users", value: String(records.reduce((sum, record) => sum + Number(record.user_count || 0), 0)), hint: "Accounts linked to groups" },
+    { label: "Servers", value: String(records.reduce((sum, record) => sum + Number(record.server_count || 0), 0)), hint: "Nodes mapped to groups" },
+    { label: "Busy groups", value: String(records.filter(record => Number(record.server_count || 0) > 0).length), hint: "Groups in active use" }
+  ];
+
   return (
     <PageFrame
       title="Server Groups"
@@ -93,14 +101,15 @@ export function ServerGroupPage() {
       onRefresh={() => void loadGroups()}
       loading={loading}
     >
-      <Card className="border border-white/60 bg-white/90 shadow-panel">
-        <CardHeader className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-lg font-semibold text-slate-900">Server Groups</p>
-            <p className="text-sm text-slate-500">Manage permission groups and inspect how many users and servers depend on each group.</p>
-          </div>
+      <StatGrid items={stats} />
+
+      <SectionCard
+        title="Server Groups"
+        description="Manage permission groups and inspect how many users and servers depend on each group."
+        action={
           <Button
             color="primary"
+            radius="full"
             onPress={() => {
               setSelected(null);
               setName("");
@@ -109,15 +118,22 @@ export function ServerGroupPage() {
           >
             Add group
           </Button>
-        </CardHeader>
-        <CardBody>
+        }
+      >
           {error ? <div className="rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">{error}</div> : null}
           {loading ? (
             <div className="flex min-h-[300px] items-center justify-center">
-              <Spinner color="warning" label="Loading groups" />
+              <Spinner color="primary" label="Loading groups" />
             </div>
           ) : (
-            <Table removeWrapper aria-label="Server Groups">
+            <Table
+              removeWrapper
+              aria-label="Server Groups"
+              classNames={{
+                th: "bg-slate-50 text-slate-500 uppercase text-[11px] tracking-[0.18em]",
+                td: "py-4"
+              }}
+            >
               <TableHeader>
                 <TableColumn>ID</TableColumn>
                 <TableColumn>Name</TableColumn>
@@ -155,8 +171,7 @@ export function ServerGroupPage() {
               </TableBody>
             </Table>
           )}
-        </CardBody>
-      </Card>
+      </SectionCard>
 
       <Modal isOpen={editorOpen} onOpenChange={isOpen => !isOpen && setEditorOpen(false)}>
         <ModalContent>
