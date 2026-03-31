@@ -22,7 +22,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
-import { formatDateTime } from "../lib/admin-format";
+import { asArray, formatDateTime } from "../lib/admin-format";
 
 interface TicketRecord {
   id: number;
@@ -67,7 +67,7 @@ export function TicketPage() {
           reply_status: replyStatus ? [replyStatus] : undefined
         }
       });
-      setRecords(unwrapEnvelope(envelope));
+      setRecords(asArray(unwrapEnvelope(envelope)) as TicketRecord[]);
       setTotal(Number(envelope.total || 0));
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "Failed to load tickets");

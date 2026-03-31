@@ -25,7 +25,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
-import { formatDateTime } from "../lib/admin-format";
+import { asArray, formatDateTime } from "../lib/admin-format";
 
 interface KnowledgeRecord {
   id: number;
@@ -67,8 +67,8 @@ export function KnowledgePage() {
         adminRequest<KnowledgeRecord[]>("knowledge/fetch"),
         adminRequest<string[]>("knowledge/getCategory")
       ]);
-      setRecords(unwrapEnvelope(knowledgeEnvelope));
-      setCategories(unwrapEnvelope(categoryEnvelope));
+      setRecords(asArray(unwrapEnvelope(knowledgeEnvelope)) as KnowledgeRecord[]);
+      setCategories(asArray(unwrapEnvelope(categoryEnvelope)).map(item => String(item)));
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "Failed to load knowledge base");
       setRecords([]);

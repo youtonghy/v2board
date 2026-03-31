@@ -23,6 +23,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
+import { asArray } from "../lib/admin-format";
 
 interface ServerRouteRecord {
   id: number;
@@ -66,7 +67,7 @@ export function ServerRoutePage() {
     setError(null);
     try {
       const envelope = await adminRequest<ServerRouteRecord[]>("server/route/fetch");
-      setRecords(unwrapEnvelope(envelope));
+      setRecords(asArray(unwrapEnvelope(envelope)) as ServerRouteRecord[]);
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "Failed to load routes");
       setRecords([]);

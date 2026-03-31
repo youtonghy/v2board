@@ -24,7 +24,7 @@ import { useEffect, useMemo, useState } from "react";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { ObjectRecordEditor } from "../components/ObjectRecordEditor";
-import { formatDateTime } from "../lib/admin-format";
+import { asArray, formatDateTime } from "../lib/admin-format";
 
 type ServerProtocol = "shadowsocks" | "vmess" | "vless" | "trojan" | "tuic" | "hysteria" | "anytls" | "v2node";
 
@@ -217,7 +217,7 @@ export function ServerManagePage() {
     setError(null);
     try {
       const envelope = await adminRequest<ServerRecord[]>("server/manage/getNodes");
-      setRecords(unwrapEnvelope(envelope));
+      setRecords(asArray(unwrapEnvelope(envelope)) as ServerRecord[]);
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "Failed to load servers");
       setRecords([]);

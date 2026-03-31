@@ -20,6 +20,7 @@ import {
 import { useEffect, useState } from "react";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
+import { asArray } from "../lib/admin-format";
 
 interface ServerGroupRecord {
   id: number;
@@ -42,7 +43,7 @@ export function ServerGroupPage() {
     setError(null);
     try {
       const envelope = await adminRequest<ServerGroupRecord[]>("server/group/fetch");
-      setRecords(unwrapEnvelope(envelope));
+      setRecords(asArray(unwrapEnvelope(envelope)) as ServerGroupRecord[]);
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "Failed to load server groups");
       setRecords([]);

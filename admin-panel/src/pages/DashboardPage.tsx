@@ -23,7 +23,7 @@ import { adminRequest, getEnvelopeError } from "../lib/api";
 import type { ApiEnvelope } from "../types";
 import { PageFrame } from "../components/PageFrame";
 import { AutoDataView } from "../components/AutoDataView";
-import { formatBytes, formatDateTime, formatMoney } from "../lib/admin-format";
+import { asArray, asRecord, formatBytes, formatDateTime, formatMoney } from "../lib/admin-format";
 
 interface DashboardState {
   loading: boolean;
@@ -73,6 +73,19 @@ function extractMetrics(stats: Record<string, ApiEnvelope>) {
   });
 
   return metrics.slice(0, 6);
+}
+
+function asRankingUsers(value: unknown): RankingUserRecord[] {
+  return asArray(value).filter(
+    (item): item is RankingUserRecord =>
+      Boolean(item) && typeof item === "object" && typeof (item as RankingUserRecord).user_id === "number"
+  );
+}
+
+function asRankingServers(value: unknown): Array<Record<string, unknown>> {
+  return asArray(value).filter(
+    (item): item is Record<string, unknown> => Boolean(item) && typeof item === "object" && !Array.isArray(item)
+  );
 }
 
 export function DashboardPage() {
@@ -128,7 +141,11 @@ export function DashboardPage() {
           pageSize: 10
         }
       });
-      setDetailRecords((envelope.data as StatUserRecord[]) || []);
+      setDetailRecords(
+        asArray(envelope.data).filter(
+          (item): item is StatUserRecord => Boolean(item) && typeof item === "object" && "record_at" in item
+        )
+      );
       setDetailTotal(Number(envelope.total || 0));
     } finally {
       setDetailLoading(false);
@@ -146,11 +163,11 @@ export function DashboardPage() {
   }, [detailOpen, detailUser?.user_id, detailPage]);
 
   const metrics = useMemo(() => extractMetrics(state.stats), [state.stats]);
-  const overrideMetrics = (state.stats.override?.data as Record<string, number> | undefined) || {};
-  const todayUsers = ((state.stats.users?.data as RankingUserRecord[]) || []).slice(0, 5);
-  const lastUsers = ((state.stats.usersLast?.data as RankingUserRecord[]) || []).slice(0, 5);
-  const todayServers = ((state.stats.servers?.data as Array<Record<string, unknown>>) || []).slice(0, 5);
-  const lastServers = ((state.stats.serversLast?.data as Array<Record<string, unknown>>) || []).slice(0, 5);
+  const overrideMetrics = asRecord(state.stats.override?.data);
+  const todayUsers = asRankingUsers(state.stats.users?.data).slice(0, 5);
+  const lastUsers = asRankingUsers(state.stats.usersLast?.data).slice(0, 5);
+  const todayServers = asRankingServers(state.stats.servers?.data).slice(0, 5);
+  const lastServers = asRankingServers(state.stats.serversLast?.data).slice(0, 5);
 
   return (
     <PageFrame
