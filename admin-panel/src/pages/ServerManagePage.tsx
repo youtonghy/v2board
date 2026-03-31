@@ -3,14 +3,10 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import {
   Button,
   Card,
-  CardBody,
+  CardContent,
   CardHeader,
   Chip,
   Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
   Spinner,
   Switch,
   Tab,
@@ -20,6 +16,7 @@ import {
   TableCell,
   TableColumn,
   TableHeader,
+  useOverlayState
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -227,6 +224,7 @@ export function ServerManagePage() {
   const [selected, setSelected] = useState<ServerRecord>(defaultServer("shadowsocks"));
   const [error, setError] = useState<string | null>(null);
   const sortableSensors = useSortableTableSensors();
+  const editorState = useOverlayState({ isOpen: editorOpen, onOpenChange: setEditorOpen });
 
   async function loadServers() {
     setLoading(true);
@@ -353,11 +351,11 @@ export function ServerManagePage() {
       <div className={adminStatsGridClassName}>
         {stats.map(item => (
           <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
-            <CardBody className={adminStatCardBodyClassName}>
+            <CardContent className={adminStatCardBodyClassName}>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
               <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
               {item.hint ? <p className="text-sm text-slate-500">{item.hint}</p> : null}
-            </CardBody>
+            </CardContent>
           </Card>
         ))}
       </div>
@@ -381,7 +379,7 @@ export function ServerManagePage() {
             Add {PROTOCOLS.find(item => item.key === activeProtocol)?.label}
           </Button>
         </CardHeader>
-        <CardBody className={`${adminSectionBodyClassName} gap-5`}>
+        <CardContent className={`${adminSectionBodyClassName} gap-5`}>
           <Tabs
             selectedKey={activeProtocol}
             onSelectionChange={key => setActiveProtocol(String(key) as ServerProtocol)}
@@ -480,31 +478,37 @@ export function ServerManagePage() {
               </SortableContext>
             </DndContext>
           )}
-        </CardBody>
+        </CardContent>
       </Card>
 
-      <Modal isOpen={editorOpen} onOpenChange={isOpen => !isOpen && setEditorOpen(false)} size="5xl" scrollBehavior="inside">
-        <ModalContent>
-          <ModalHeader>{selected.id ? "Edit node" : "Create node"}</ModalHeader>
-          <ModalBody className="gap-5">
-            <div className="rounded-2xl border border-default-200 bg-default-50 p-4 text-sm text-slate-600">
-              This editor keeps the original backend contract intact. Protocol-specific arrays and nested objects are edited as JSON where needed.
-            </div>
-            <ObjectRecordEditor
-              value={selected}
-              onChange={value => setSelected(value as ServerRecord)}
-              hiddenKeys={["created_at", "updated_at", "cache_key", "online", "last_check_at", "last_push_at", "is_online", "available"]}
-            />
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="light" onPress={() => setEditorOpen(false)}>
-              Cancel
-            </Button>
-            <Button color="primary" onPress={() => void saveServer()} isLoading={submitting}>
-              Save node
-            </Button>
-          </ModalFooter>
-        </ModalContent>
+      <Modal state={editorState}>
+        <Modal.Backdrop>
+          <Modal.Container size="5xl" scroll="inside">
+            <Modal.Dialog>
+              <Modal.Header>
+                <Modal.Heading>{selected.id ? "Edit node" : "Create node"}</Modal.Heading>
+              </Modal.Header>
+              <Modal.Body className="gap-5">
+                <div className="rounded-2xl border border-default-200 bg-default-50 p-4 text-sm text-slate-600">
+                  This editor keeps the original backend contract intact. Protocol-specific arrays and nested objects are edited as JSON where needed.
+                </div>
+                <ObjectRecordEditor
+                  value={selected}
+                  onChange={value => setSelected(value as ServerRecord)}
+                  hiddenKeys={["created_at", "updated_at", "cache_key", "online", "last_check_at", "last_push_at", "is_online", "available"]}
+                />
+              </Modal.Body>
+              <Modal.Footer>
+                <Button variant="light" onPress={editorState.close}>
+                  Cancel
+                </Button>
+                <Button color="primary" onPress={() => void saveServer()} isLoading={submitting}>
+                  Save node
+                </Button>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
     </PageFrame>
   );

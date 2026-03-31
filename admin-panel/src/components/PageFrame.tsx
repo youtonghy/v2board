@@ -1,4 +1,4 @@
-import { BreadcrumbItem, Breadcrumbs, Button, Card, CardBody } from "@heroui/react";
+import { Breadcrumbs, Button, Card, CardContent } from "@heroui/react";
 import { ArrowRotateRight } from "@gravity-ui/icons";
 import { useLocation } from "react-router-dom";
 
@@ -25,7 +25,7 @@ export function PageFrame({
   return (
     <div className="space-y-6">
       <Card shadow="none" radius="lg" className="border border-white/70 bg-white/90 shadow-panel backdrop-blur-xl">
-        <CardBody className="gap-5 px-5 py-5 md:px-7 md:py-6">
+        <CardContent className="gap-5 px-5 py-5 md:px-7 md:py-6">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-3">
               <Breadcrumbs
@@ -34,9 +34,9 @@ export function PageFrame({
                   separator: "text-slate-300"
                 }}
               >
-                <BreadcrumbItem>Admin</BreadcrumbItem>
+                <Breadcrumbs.Item>Admin</Breadcrumbs.Item>
                 {segments.map(segment => (
-                  <BreadcrumbItem key={segment}>{segment.replaceAll("-", " ")}</BreadcrumbItem>
+                  <Breadcrumbs.Item key={segment}>{segment.replaceAll("-", " ")}</Breadcrumbs.Item>
                 ))}
               </Breadcrumbs>
               <div>
@@ -64,7 +64,7 @@ export function PageFrame({
               {actions}
             </div>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {children}

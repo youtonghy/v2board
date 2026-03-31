@@ -3,16 +3,12 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import {
   Button,
   Card,
-  CardBody,
+  CardContent,
   CardHeader,
   Input,
+  ListBoxItem,
   Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
   Select,
-  SelectItem,
   Spinner,
   Switch,
   Table,
@@ -20,7 +16,8 @@ import {
   TableCell,
   TableColumn,
   TableHeader,
-  Textarea
+  TextArea,
+  useOverlayState
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
 import { SortableTableRow, adminTableActionCellClassName, sortableCollisionDetection, useSortableTableSensors } from "../components/SortableTable";
@@ -88,6 +85,7 @@ export function PlanPage() {
   const [selected, setSelected] = useState<PlanRecord | null>(null);
   const [open, setOpen] = useState(false);
   const sortableSensors = useSortableTableSensors();
+  const modalState = useOverlayState({ isOpen: open, onOpenChange: setOpen });
 
   async function loadPlans() {
     setLoading(true);
@@ -220,11 +218,11 @@ export function PlanPage() {
       <div className={adminStatsGridClassName}>
         {stats.map(item => (
           <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
-            <CardBody className={adminStatCardBodyClassName}>
+            <CardContent className={adminStatCardBodyClassName}>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
               <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
               {item.hint ? <p className="text-sm text-slate-500">{item.hint}</p> : null}
-            </CardBody>
+            </CardContent>
           </Card>
         ))}
       </div>
@@ -248,7 +246,7 @@ export function PlanPage() {
             Add plan
           </Button>
         </CardHeader>
-        <CardBody className={adminSectionBodyClassName}>
+        <CardContent className={adminSectionBodyClassName}>
           {error ? <div className="mb-4 rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">{error}</div> : null}
           {loading ? (
             <div className="flex min-h-[280px] items-center justify-center">
@@ -331,77 +329,119 @@ export function PlanPage() {
               </SortableContext>
             </DndContext>
           )}
-        </CardBody>
+        </CardContent>
       </Card>
 
-      <Modal isOpen={open} onOpenChange={isOpen => !isOpen && setOpen(false)} size="5xl" scrollBehavior="inside">
-        <ModalContent>
-          <ModalHeader>{selected?.id ? "Edit plan" : "Create plan"}</ModalHeader>
-          <ModalBody className="grid gap-5 md:grid-cols-2">
-            <Input label="Plan Name" labelPlacement="outside" value={selected?.name || ""} onValueChange={value => setSelected(current => (current ? { ...current, name: value } : current))} />
-            <Input label="Transfer (GB)" labelPlacement="outside" type="number" value={String(selected?.transfer_enable ?? "")} onValueChange={value => setSelected(current => (current ? { ...current, transfer_enable: value } : current))} />
-            <Textarea label="Description" labelPlacement="outside" minRows={6} value={selected?.content || ""} onValueChange={value => setSelected(current => (current ? { ...current, content: value } : current))} className="md:col-span-2" />
-            <Select
-              label="Permission Group"
-              labelPlacement="outside"
-              selectedKeys={selectedGroup}
-              onSelectionChange={keys => {
-                const nextGroup = Array.from(keys)[0];
-                setSelected(current => (current ? { ...current, group_id: String(nextGroup || "") } : current));
-              }}
-            >
-              {groups.map(group => (
-                <SelectItem key={String(group.id)}>{group.name}</SelectItem>
-              ))}
-            </Select>
-            <Select
-              label="Traffic Reset"
-              labelPlacement="outside"
-              selectedKeys={selectedResetMethod}
-              onSelectionChange={keys => {
-                const nextKey = String(Array.from(keys)[0] || "null");
-                const option = RESET_TRAFFIC_OPTIONS.find(item => item.key === nextKey);
-                setSelected(current => (current ? { ...current, reset_traffic_method: option?.value ?? null } : current));
-              }}
-            >
-              {RESET_TRAFFIC_OPTIONS.map(option => (
-                <SelectItem key={option.key}>{option.label}</SelectItem>
-              ))}
-            </Select>
-            <Input label="Device Limit" labelPlacement="outside" type="number" value={String(selected?.device_limit ?? "")} onValueChange={value => setSelected(current => (current ? { ...current, device_limit: value } : current))} />
-            <Input label="Capacity Limit" labelPlacement="outside" type="number" value={String(selected?.capacity_limit ?? "")} onValueChange={value => setSelected(current => (current ? { ...current, capacity_limit: value } : current))} />
-            <Input label="Speed Limit (Mbps)" labelPlacement="outside" type="number" value={String(selected?.speed_limit ?? "")} onValueChange={value => setSelected(current => (current ? { ...current, speed_limit: value } : current))} />
-            <div className="rounded-2xl border border-default-200 bg-default-50 p-4">
-              <p className="mb-3 text-sm font-semibold text-slate-900">Force Update Users</p>
-              <Switch
-                isSelected={Boolean(selected?.force_update)}
-                onValueChange={value => setSelected(current => (current ? { ...current, force_update: value } : current))}
-              >
-                Apply traffic, speed, and group changes to subscribed users
-              </Switch>
-            </div>
-            {PERIOD_OPTIONS.map(option => (
-              <Input
-                key={option.key}
-                label={`${option.label} (${currency})`}
-                labelPlacement="outside"
-                type="number"
-                value={String(selected?.[option.key] ?? "")}
-                onValueChange={value =>
-                  setSelected(current => (current ? { ...current, [option.key]: value } : current))
-                }
-              />
-            ))}
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="light" onPress={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button color="primary" onPress={() => void savePlan()} isLoading={saving}>
-              Save plan
-            </Button>
-          </ModalFooter>
-        </ModalContent>
+      <Modal state={modalState}>
+        <Modal.Backdrop>
+          <Modal.Container size="5xl" scroll="inside">
+            <Modal.Dialog>
+              <Modal.Header>
+                <Modal.Heading>{selected?.id ? "Edit plan" : "Create plan"}</Modal.Heading>
+              </Modal.Header>
+              <Modal.Body className="grid gap-5 md:grid-cols-2">
+                <Input
+                  label="Plan Name"
+                  labelPlacement="outside"
+                  value={selected?.name || ""}
+                  onValueChange={value => setSelected(current => (current ? { ...current, name: value } : current))}
+                />
+                <Input
+                  label="Transfer (GB)"
+                  labelPlacement="outside"
+                  type="number"
+                  value={String(selected?.transfer_enable ?? "")}
+                  onValueChange={value => setSelected(current => (current ? { ...current, transfer_enable: value } : current))}
+                />
+                <TextArea
+                  label="Description"
+                  labelPlacement="outside"
+                  minRows={6}
+                  value={selected?.content || ""}
+                  onValueChange={value => setSelected(current => (current ? { ...current, content: value } : current))}
+                  className="md:col-span-2"
+                />
+                <Select
+                  label="Permission Group"
+                  labelPlacement="outside"
+                  selectedKeys={selectedGroup}
+                  onSelectionChange={keys => {
+                    const nextGroup = Array.from(keys)[0];
+                    setSelected(current => (current ? { ...current, group_id: String(nextGroup || "") } : current));
+                  }}
+                >
+                  {groups.map(group => (
+                    <ListBoxItem key={String(group.id)}>{group.name}</ListBoxItem>
+                  ))}
+                </Select>
+                <Select
+                  label="Traffic Reset"
+                  labelPlacement="outside"
+                  selectedKeys={selectedResetMethod}
+                  onSelectionChange={keys => {
+                    const nextKey = String(Array.from(keys)[0] || "null");
+                    const option = RESET_TRAFFIC_OPTIONS.find(item => item.key === nextKey);
+                    setSelected(current => (current ? { ...current, reset_traffic_method: option?.value ?? null } : current));
+                  }}
+                >
+                  {RESET_TRAFFIC_OPTIONS.map(option => (
+                    <ListBoxItem key={option.key}>{option.label}</ListBoxItem>
+                  ))}
+                </Select>
+                <Input
+                  label="Device Limit"
+                  labelPlacement="outside"
+                  type="number"
+                  value={String(selected?.device_limit ?? "")}
+                  onValueChange={value => setSelected(current => (current ? { ...current, device_limit: value } : current))}
+                />
+                <Input
+                  label="Capacity Limit"
+                  labelPlacement="outside"
+                  type="number"
+                  value={String(selected?.capacity_limit ?? "")}
+                  onValueChange={value => setSelected(current => (current ? { ...current, capacity_limit: value } : current))}
+                />
+                <Input
+                  label="Speed Limit (Mbps)"
+                  labelPlacement="outside"
+                  type="number"
+                  value={String(selected?.speed_limit ?? "")}
+                  onValueChange={value => setSelected(current => (current ? { ...current, speed_limit: value } : current))}
+                />
+                <div className="rounded-2xl border border-default-200 bg-default-50 p-4">
+                  <p className="mb-3 text-sm font-semibold text-slate-900">Force Update Users</p>
+                  <Switch
+                    isSelected={Boolean(selected?.force_update)}
+                    onValueChange={value => setSelected(current => (current ? { ...current, force_update: value } : current))}
+                  >
+                    Apply traffic, speed, and group changes to subscribed users
+                  </Switch>
+                </div>
+                {PERIOD_OPTIONS.map(option => (
+                  <Input
+                    key={option.key}
+                    label={`${option.label} (${currency})`}
+                    labelPlacement="outside"
+                    type="number"
+                    value={String(selected?.[option.key] ?? "")}
+                    onValueChange={value =>
+                      setSelected(current => (current ? { ...current, [option.key]: value } : current))
+                    }
+                  />
+                ))}
+              </Modal.Body>
+              <Modal.Footer>
+                <Button variant="light" onPress={modalState.close}>
+                  Cancel
+                </Button>
+                <Button color="primary" onPress={() => void savePlan()} isLoading={saving}>
+                  Save plan
+                </Button>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
     </PageFrame>
   );

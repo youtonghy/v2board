@@ -15,8 +15,8 @@ import {
   DrawerBody,
   DrawerContent,
   DrawerHeader,
-  Listbox,
-  ListboxItem,
+  ListBox,
+  ListBoxItem,
   Tooltip
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
@@ -36,10 +36,11 @@ function NavigationList({
 }) {
   if (collapsed) {
     return (
-      <Listbox
+      <ListBox
         aria-label="Admin navigation"
         selectionMode="single"
         selectedKeys={new Set([currentPath])}
+        onAction={key => onNavigate(String(key))}
         className="px-2"
         itemClasses={{
           base: "mb-2 rounded-[1.25rem] px-0",
@@ -51,9 +52,8 @@ function NavigationList({
           group.items.map(item => {
             const Icon = item.icon;
             return (
-              <ListboxItem
+              <ListBoxItem
                 key={item.path}
-                href={item.path}
                 textValue={item.label}
                 startContent={
                   <Tooltip content={item.label} placement="right">
@@ -65,11 +65,11 @@ function NavigationList({
                 className="min-h-0 justify-center px-2 py-2 data-[selected=true]:bg-white data-[selected=true]:shadow-[0_16px_40px_rgba(15,23,32,0.08)]"
               >
                 {item.label}
-              </ListboxItem>
+              </ListBoxItem>
             );
           })
         )}
-      </Listbox>
+      </ListBox>
     );
   }
 
@@ -88,10 +88,11 @@ function NavigationList({
     >
       {navGroups.map(group => (
         <AccordionItem key={group.label} aria-label={group.label} title={group.label}>
-          <Listbox
+          <ListBox
             aria-label={group.label}
             selectionMode="single"
             selectedKeys={new Set([currentPath])}
+            onAction={key => onNavigate(String(key))}
             itemClasses={{
               base: "mb-1.5 rounded-[1.25rem] px-2 py-1 data-[hover=true]:bg-white/70 data-[selected=true]:bg-white data-[selected=true]:shadow-[0_16px_40px_rgba(15,23,32,0.08)]",
               title: "text-[14px] font-semibold text-slate-900",
@@ -101,9 +102,8 @@ function NavigationList({
             {group.items.map(item => {
               const Icon = item.icon;
               return (
-                <ListboxItem
+                <ListBoxItem
                   key={item.path}
-                  href={item.path}
                   description={item.description}
                   startContent={
                     <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/80 text-slate-600">
@@ -115,10 +115,10 @@ function NavigationList({
                   }}
                 >
                   {item.label}
-                </ListboxItem>
+                </ListBoxItem>
               );
             })}
-          </Listbox>
+          </ListBox>
         </AccordionItem>
       ))}
     </Accordion>

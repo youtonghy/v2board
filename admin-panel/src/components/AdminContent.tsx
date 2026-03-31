@@ -7,7 +7,7 @@ export const adminTableClassNames = {
 export const adminTableActionCellClassName = "text-right";
 
 export const adminSortableHandleButtonClassName =
-  "min-w-0 border border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100";
+  "min-w-0 cursor-grab border border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100 active:cursor-grabbing";
 
 export const adminCardClassName = "border border-white/70 bg-white/95 shadow-panel";
 
