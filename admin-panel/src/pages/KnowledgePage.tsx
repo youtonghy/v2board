@@ -51,6 +51,7 @@ function defaultKnowledgeRecord(category = ""): KnowledgeRecord {
 export function KnowledgePage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [sortingId, setSortingId] = useState<number | null>(null);
   const [records, setRecords] = useState<KnowledgeRecord[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [activeCategory, setActiveCategory] = useState("all");
@@ -127,6 +128,43 @@ export function KnowledgePage() {
     }
   }
 
+  async function reorderKnowledge(fromIndex: number, toIndex: number) {
+    if (toIndex < 0 || toIndex >= filtered.length) return;
+
+    const visibleRecords = [...filtered];
+    const [current] = visibleRecords.splice(fromIndex, 1);
+    visibleRecords.splice(toIndex, 0, current);
+
+    const orderedIds = visibleRecords.map(item => item.id);
+    const nextRecords = [...records];
+    let pointer = 0;
+    for (let index = 0; index < nextRecords.length; index += 1) {
+      if (activeCategory === "all" || nextRecords[index].category === activeCategory) {
+        nextRecords[index] = visibleRecords[pointer];
+        pointer += 1;
+      }
+    }
+
+    setRecords(nextRecords);
+    setSortingId(current.id);
+    try {
+      await unwrapEnvelope(
+        await adminRequest("knowledge/sort", {
+          method: "POST",
+          body: {
+            knowledge_ids: orderedIds
+          }
+        })
+      );
+      await loadKnowledge();
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : "Failed to sort knowledge");
+      await loadKnowledge();
+    } finally {
+      setSortingId(null);
+    }
+  }
+
   useEffect(() => {
     void loadKnowledge();
   }, []);
@@ -178,6 +216,7 @@ export function KnowledgePage() {
           ) : (
             <Table removeWrapper aria-label="Knowledge Articles">
               <TableHeader>
+                <TableColumn>Sort</TableColumn>
                 <TableColumn>Title</TableColumn>
                 <TableColumn>Category</TableColumn>
                 <TableColumn>Language</TableColumn>
@@ -186,8 +225,32 @@ export function KnowledgePage() {
                 <TableColumn align="end">Actions</TableColumn>
               </TableHeader>
               <TableBody items={filtered} emptyContent="No articles found">
-                {item => (
+                {item => {
+                  const index = filtered.findIndex(record => record.id === item.id);
+                  const sorting = sortingId === item.id;
+
+                  return (
                   <TableRow key={item.id}>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="flat"
+                          isDisabled={sorting || index <= 0}
+                          onPress={() => void reorderKnowledge(index, index - 1)}
+                        >
+                          Up
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="flat"
+                          isDisabled={sorting || index >= filtered.length - 1}
+                          onPress={() => void reorderKnowledge(index, index + 1)}
+                        >
+                          Down
+                        </Button>
+                      </div>
+                    </TableCell>
                     <TableCell>{item.title}</TableCell>
                     <TableCell>
                       <Chip variant="flat">{item.category}</Chip>
@@ -208,7 +271,7 @@ export function KnowledgePage() {
                       </div>
                     </TableCell>
                   </TableRow>
-                )}
+                )}}
               </TableBody>
             </Table>
           )}
