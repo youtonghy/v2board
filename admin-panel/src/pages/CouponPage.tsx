@@ -130,6 +130,18 @@ export function CouponPage() {
   }, []);
 
   const selectedType = useMemo(() => (selected?.type ? String(selected.type) : "1"), [selected]);
+  const typeOptions = useMemo(
+    () => COUPON_TYPE_OPTIONS.map(option => ({ id: option.key, label: option.label })),
+    []
+  );
+  const planOptions = useMemo(
+    () => plans.map(plan => ({ id: String(plan.id), label: plan.name })),
+    [plans]
+  );
+  const periodOptions = useMemo(
+    () => PERIOD_OPTIONS.map(option => ({ id: option.key, label: option.label })),
+    []
+  );
   const selectedPlanIds = useMemo(
     () => new Set((selected?.limit_plan_ids || []).map(item => String(item))),
     [selected]
@@ -274,12 +286,12 @@ export function CouponPage() {
                   <Input aria-label="Code" value={selected?.code || ""} onValueChange={value => setSelected(current => (current ? { ...current, code: value, generate_count: undefined } : current))} />
                 </ModalField>
                 <ModalField label="Discount Type">
-                  <Select aria-label="Discount Type" items={COUPON_TYPE_OPTIONS.map(option => ({ id: option.key, label: option.label }))} selectedKey={selectedType} onSelectionChange={key => {
+                  <Select aria-label="Discount Type" items={typeOptions} selectedKey={selectedType} onSelectionChange={key => {
                     const nextType = Number(key || 1);
                     setSelected(current => (current ? { ...current, type: nextType } : current));
                   }}>
                     <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
-                    <Select.Popover><ListBox items={COUPON_TYPE_OPTIONS}>{item => <ListBoxItem id={item.id} textValue={item.label}>{item.label}</ListBoxItem>}</ListBox></Select.Popover>
+                    <Select.Popover><ListBox items={typeOptions}>{item => <ListBoxItem id={item.id} textValue={item.label}>{item.label}</ListBoxItem>}</ListBox></Select.Popover>
                   </Select>
                 </ModalField>
                 <ModalField label="Discount Value" description={selected?.type === 2 ? "%" : "Amount"}>
@@ -298,7 +310,7 @@ export function CouponPage() {
                   <Input aria-label="Uses Per User" type="number" value={String(selected?.limit_use_with_user ?? "")} onValueChange={value => setSelected(current => (current ? { ...current, limit_use_with_user: value } : current))} />
                 </ModalField>
                 <ModalField label="Allowed Plans">
-                  <Select aria-label="Allowed Plans" items={plans.map(plan => ({ id: String(plan.id), label: plan.name }))} selectionMode="multiple" selectedKeys={selectedPlanIds} onSelectionChange={keys => {
+                  <Select aria-label="Allowed Plans" items={planOptions} selectionMode="multiple" selectedKeys={selectedPlanIds} onSelectionChange={keys => {
                     setSelected(current => current ? { ...current, limit_plan_ids: Array.from(keys).map(item => String(item)) } : current);
                   }}>
                     <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
@@ -306,9 +318,9 @@ export function CouponPage() {
                   </Select>
                 </ModalField>
                 <ModalField label="Allowed Periods">
-                  <Select aria-label="Allowed Periods" items={PERIOD_OPTIONS.map(option => ({ id: option.key, label: option.label }))} selectionMode="multiple" selectedKeys={selectedPeriods} onSelectionChange={keys => setSelected(current => current ? { ...current, limit_period: Array.from(keys).map(item => String(item)) } : current)}>
+                  <Select aria-label="Allowed Periods" items={periodOptions} selectionMode="multiple" selectedKeys={selectedPeriods} onSelectionChange={keys => setSelected(current => current ? { ...current, limit_period: Array.from(keys).map(item => String(item)) } : current)}>
                     <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
-                    <Select.Popover><ListBox items={PERIOD_OPTIONS}>{item => <ListBoxItem id={item.id} textValue={item.label}>{item.label}</ListBoxItem>}</ListBox></Select.Popover>
+                    <Select.Popover><ListBox items={periodOptions}>{item => <ListBoxItem id={item.id} textValue={item.label}>{item.label}</ListBoxItem>}</ListBox></Select.Popover>
                   </Select>
                 </ModalField>
                 {!selected?.id && !selected?.code ? (

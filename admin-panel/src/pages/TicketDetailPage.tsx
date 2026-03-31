@@ -10,6 +10,7 @@ import {
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
+import { ModalField } from "../components/ModalField";
 import { PageFrame } from "../components/PageFrame";
 import { formatDateTime } from "../lib/admin-format";
 import {
@@ -170,14 +171,15 @@ export function TicketDetailPage() {
                   </div>
                 ))}
               </div>
-              <TextArea
-                label="Reply"
-                labelPlacement="outside"
-                minRows={5}
-                value={message}
-                onValueChange={setMessage}
-                placeholder="Write a reply to the user"
-              />
+              <ModalField label="Reply">
+                <TextArea
+                  aria-label="Reply"
+                  minRows={5}
+                  value={message}
+                  onValueChange={setMessage}
+                  placeholder="Write a reply to the user"
+                />
+              </ModalField>
               <div className="flex justify-end">
                 <Button color="primary" onPress={() => void reply()} isLoading={submitting} isDisabled={!message.trim() || state.detail?.status === 1}>
                   Send reply

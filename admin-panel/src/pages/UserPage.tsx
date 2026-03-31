@@ -28,9 +28,11 @@ import {
   TableColumn,
   TableHeader,
   TableRow,
-  TextArea
+  TextArea,
+  Tooltip
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
+import { ModalField } from "../components/ModalField";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { formatBytes, formatDateTime, formatMoney } from "../lib/admin-format";
@@ -137,23 +139,6 @@ interface MailFormState {
 }
 
 const PAGE_SIZE = 10;
-
-function ModalField({
-  label,
-  children,
-  className
-}: {
-  label: string;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <div className={className}>
-      <p className="mb-2 text-sm font-medium text-slate-700">{label}</p>
-      {children}
-    </div>
-  );
-}
 
 function emptyUserForm(record?: UserRecord | null): UserFormState {
   return {
@@ -535,6 +520,21 @@ export function UserPage() {
   }, [ipGeoOpen, ipGeoUser?.id, geoProvider]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const planOptions = useMemo(
+    () => plans.map(plan => ({ id: String(plan.id), label: plan.name })),
+    [plans]
+  );
+  const statusOptions = useMemo(
+    () => [
+      { id: "0", label: "Active" },
+      { id: "1", label: "Banned" }
+    ],
+    []
+  );
+  const geoProviderOptions = useMemo(
+    () => geoProviders.map(provider => ({ id: provider.key, label: provider.name })),
+    [geoProviders]
+  );
   const selectedPlan = useMemo(() => form.plan_id || null, [form.plan_id]);
   const generatePlan = useMemo(() => generateForm.plan_id || null, [generateForm.plan_id]);
   const stats = useMemo(() => {
@@ -613,80 +613,77 @@ export function UserPage() {
               <Accordion.Panel>
                 <Accordion.Body>
                   <div className="grid gap-3 md:grid-cols-4">
-            <Input
-              label="Email"
-              labelPlacement="outside"
-              placeholder="Search by email"
-              value={searchEmail}
-              onValueChange={setSearchEmail}
-            />
-            <Select
-              label="Plan"
-              labelPlacement="outside"
-              placeholder="All plans"
-              items={plans.map(plan => ({ id: String(plan.id), label: plan.name }))}
-              selectedKey={planFilter || null}
-              onSelectionChange={key => setPlanFilter(String(key || ""))}
-            >
-              <Select.Trigger>
-                <Select.Value />
-                <Select.Indicator />
-              </Select.Trigger>
-              <Select.Popover>
-                <ListBox items={plans.map(plan => ({ id: String(plan.id), label: plan.name }))}>
-                  {item => (
-                    <ListBoxItem id={item.id} textValue={item.label}>
-                      {item.label}
-                    </ListBoxItem>
-                  )}
-                </ListBox>
-              </Select.Popover>
-            </Select>
-            <Select
-              label="Status"
-              labelPlacement="outside"
-              placeholder="All users"
-              items={[
-                { id: "0", label: "Active" },
-                { id: "1", label: "Banned" }
-              ]}
-              selectedKey={bannedFilter || null}
-              onSelectionChange={key => setBannedFilter(String(key || ""))}
-            >
-              <Select.Trigger>
-                <Select.Value />
-                <Select.Indicator />
-              </Select.Trigger>
-              <Select.Popover>
-                <ListBox items={[
-                  { id: "0", label: "Active" },
-                  { id: "1", label: "Banned" }
-                ]}>
-                  {item => (
-                    <ListBoxItem id={item.id} textValue={item.label}>
-                      {item.label}
-                    </ListBoxItem>
-                  )}
-                </ListBox>
-              </Select.Popover>
-            </Select>
-            <div className="flex items-end gap-2">
-              <Button color="primary" onPress={() => { setPage(1); void loadUsers(1); }}>
-                Apply filters
-              </Button>
-              <Button
-                variant="flat"
-                onPress={() => {
-                  setSearchEmail("");
-                  setPlanFilter("");
-                  setBannedFilter("");
-                  setPage(1);
-                  void loadUsers(1);
-                }}
-              >
-                Reset
-              </Button>
-            </div>
+                    <ModalField label="Email">
+                      <Input
+                        aria-label="Email"
+                        placeholder="Search by email"
+                        value={searchEmail}
+                        onValueChange={setSearchEmail}
+                      />
+                    </ModalField>
+                    <ModalField label="Plan">
+                      <Select
+                        aria-label="Plan"
+                        placeholder="All plans"
+                        items={planOptions}
+                        selectedKey={planFilter || null}
+                        onSelectionChange={key => setPlanFilter(String(key || ""))}
+                      >
+                        <Select.Trigger>
+                          <Select.Value />
+                          <Select.Indicator />
+                        </Select.Trigger>
+                        <Select.Popover>
+                          <ListBox items={planOptions}>
+                            {item => (
+                              <ListBoxItem id={item.id} textValue={item.label}>
+                                {item.label}
+                              </ListBoxItem>
+                            )}
+                          </ListBox>
+                        </Select.Popover>
+                      </Select>
+                    </ModalField>
+                    <ModalField label="Status">
+                      <Select
+                        aria-label="Status"
+                        placeholder="All users"
+                        items={statusOptions}
+                        selectedKey={bannedFilter || null}
+                        onSelectionChange={key => setBannedFilter(String(key || ""))}
+                      >
+                        <Select.Trigger>
+                          <Select.Value />
+                          <Select.Indicator />
+                        </Select.Trigger>
+                        <Select.Popover>
+                          <ListBox items={statusOptions}>
+                            {item => (
+                              <ListBoxItem id={item.id} textValue={item.label}>
+                                {item.label}
+                              </ListBoxItem>
+                            )}
+                          </ListBox>
+                        </Select.Popover>
+                      </Select>
+                    </ModalField>
+                    <div className="flex items-end gap-2">
+                      <Button color="primary" onPress={() => { setPage(1); void loadUsers(1); }}>
+                        Apply filters
+                      </Button>
+                      <Button
+                        variant="flat"
+                        onPress={() => {
+                          setSearchEmail("");
+                          setPlanFilter("");
+                          setBannedFilter("");
+                          setPage(1);
+                          void loadUsers(1);
+                        }}
+                      >
+                        Reset
+                      </Button>
+                    </div>
                   </div>
                 </Accordion.Body>
               </Accordion.Panel>
@@ -750,88 +747,112 @@ export function UserPage() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <Button
-                              size="sm"
-                              color="primary"
-                              variant="light"
-                              isIconOnly
-                              radius="full"
-                              aria-label={`Edit ${item.email}`}
-                              title="Edit user"
-                              onPress={() => void openEditor(item)}
-                              isLoading={submitting}
-                            >
-                              <PencilToLine width={16} height={16} aria-hidden="true" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              color="secondary"
-                              variant="light"
-                              isIconOnly
-                              radius="full"
-                              aria-label={`Reset secret for ${item.email}`}
-                              title="Reset key"
-                              onPress={() => void runRowAction("user/resetSecret", { id: item.id })}
-                              isLoading={submitting}
-                            >
-                              <Key width={16} height={16} aria-hidden="true" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              color="primary"
-                              variant="light"
-                              isIconOnly
-                              radius="full"
-                              aria-label={`View traffic for ${item.email}`}
-                              title="Traffic stats"
-                              onPress={() => void openTrafficStats(item)}
-                              isLoading={submitting}
-                            >
-                              <SquareChartBar width={16} height={16} aria-hidden="true" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              color="secondary"
-                              variant="light"
-                              isIconOnly
-                              radius="full"
-                              aria-label={`View IP geography for ${item.email}`}
-                              title="IP geo"
-                              onPress={() => void openIpGeo(item)}
-                              isLoading={submitting}
-                            >
-                              <Globe width={16} height={16} aria-hidden="true" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              color={Number(item.banned || 0) ? "success" : "warning"}
-                              variant="light"
-                              isIconOnly
-                              radius="full"
-                              aria-label={Number(item.banned || 0) ? `Unban ${item.email}` : `Ban ${item.email}`}
-                              title={Number(item.banned || 0) ? "Unban user" : "Ban user"}
-                              onPress={() => void runRowAction("user/ban", { filter: [{ key: "id", condition: "=", value: item.id }] })}
-                              isLoading={submitting}
-                            >
-                              {Number(item.banned || 0) ? (
-                                <LockOpen width={16} height={16} aria-hidden="true" />
-                              ) : (
-                                <Ban width={16} height={16} aria-hidden="true" />
-                              )}
-                            </Button>
-                            <Button
-                              size="sm"
-                              color="danger"
-                              variant="light"
-                              isIconOnly
-                              radius="full"
-                              aria-label={`Delete ${item.email}`}
-                              title="Delete user"
-                              onPress={() => void runRowAction("user/delUser", { id: item.id })}
-                              isLoading={submitting}
-                            >
-                              <TrashBin width={16} height={16} aria-hidden="true" />
-                            </Button>
+                            <Tooltip>
+                              <Tooltip.Trigger>
+                                <Button
+                                  size="sm"
+                                  color="primary"
+                                  variant="light"
+                                  isIconOnly
+                                  radius="full"
+                                  aria-label={`Edit ${item.email}`}
+                                  onPress={() => void openEditor(item)}
+                                  isLoading={submitting}
+                                >
+                                  <PencilToLine width={16} height={16} aria-hidden="true" />
+                                </Button>
+                              </Tooltip.Trigger>
+                              <Tooltip.Content>Edit user<Tooltip.Arrow /></Tooltip.Content>
+                            </Tooltip>
+                            <Tooltip>
+                              <Tooltip.Trigger>
+                                <Button
+                                  size="sm"
+                                  color="secondary"
+                                  variant="light"
+                                  isIconOnly
+                                  radius="full"
+                                  aria-label={`Reset secret for ${item.email}`}
+                                  onPress={() => void runRowAction("user/resetSecret", { id: item.id })}
+                                  isLoading={submitting}
+                                >
+                                  <Key width={16} height={16} aria-hidden="true" />
+                                </Button>
+                              </Tooltip.Trigger>
+                              <Tooltip.Content>Reset key<Tooltip.Arrow /></Tooltip.Content>
+                            </Tooltip>
+                            <Tooltip>
+                              <Tooltip.Trigger>
+                                <Button
+                                  size="sm"
+                                  color="primary"
+                                  variant="light"
+                                  isIconOnly
+                                  radius="full"
+                                  aria-label={`View traffic for ${item.email}`}
+                                  onPress={() => void openTrafficStats(item)}
+                                  isLoading={submitting}
+                                >
+                                  <SquareChartBar width={16} height={16} aria-hidden="true" />
+                                </Button>
+                              </Tooltip.Trigger>
+                              <Tooltip.Content>Traffic stats<Tooltip.Arrow /></Tooltip.Content>
+                            </Tooltip>
+                            <Tooltip>
+                              <Tooltip.Trigger>
+                                <Button
+                                  size="sm"
+                                  color="secondary"
+                                  variant="light"
+                                  isIconOnly
+                                  radius="full"
+                                  aria-label={`View IP geography for ${item.email}`}
+                                  onPress={() => void openIpGeo(item)}
+                                  isLoading={submitting}
+                                >
+                                  <Globe width={16} height={16} aria-hidden="true" />
+                                </Button>
+                              </Tooltip.Trigger>
+                              <Tooltip.Content>IP geo<Tooltip.Arrow /></Tooltip.Content>
+                            </Tooltip>
+                            <Tooltip>
+                              <Tooltip.Trigger>
+                                <Button
+                                  size="sm"
+                                  color="danger"
+                                  variant="light"
+                                  isIconOnly
+                                  radius="full"
+                                  aria-label={Number(item.banned || 0) ? `Unban ${item.email}` : `Ban ${item.email}`}
+                                  onPress={() => void runRowAction("user/ban", { filter: [{ key: "id", condition: "=", value: item.id }] })}
+                                  isLoading={submitting}
+                                >
+                                  {Number(item.banned || 0) ? (
+                                    <LockOpen width={16} height={16} aria-hidden="true" />
+                                  ) : (
+                                    <Ban width={16} height={16} aria-hidden="true" />
+                                  )}
+                                </Button>
+                              </Tooltip.Trigger>
+                              <Tooltip.Content>{Number(item.banned || 0) ? "Unban user" : "Ban user"}<Tooltip.Arrow /></Tooltip.Content>
+                            </Tooltip>
+                            <Tooltip>
+                              <Tooltip.Trigger>
+                                <Button
+                                  size="sm"
+                                  color="danger"
+                                  variant="light"
+                                  isIconOnly
+                                  radius="full"
+                                  aria-label={`Delete ${item.email}`}
+                                  onPress={() => void runRowAction("user/delUser", { id: item.id })}
+                                  isLoading={submitting}
+                                >
+                                  <TrashBin width={16} height={16} aria-hidden="true" />
+                                </Button>
+                              </Tooltip.Trigger>
+                              <Tooltip.Content>Delete user<Tooltip.Arrow /></Tooltip.Content>
+                            </Tooltip>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -865,7 +886,7 @@ export function UserPage() {
                 <ModalField label="Plan">
                   <Select
                     aria-label="Plan"
-                    items={plans.map(plan => ({ id: String(plan.id), label: plan.name }))}
+                    items={planOptions}
                     selectedKey={selectedPlan}
                     onSelectionChange={key =>
                       setForm(current => ({ ...current, plan_id: String(key || "") }))
@@ -876,7 +897,7 @@ export function UserPage() {
                       <Select.Indicator />
                     </Select.Trigger>
                     <Select.Popover>
-                      <ListBox items={plans.map(plan => ({ id: String(plan.id), label: plan.name }))}>
+                      <ListBox items={planOptions}>
                         {item => (
                           <ListBoxItem id={item.id} textValue={item.label}>
                             {item.label}
@@ -975,7 +996,7 @@ export function UserPage() {
                 <ModalField label="Plan">
                   <Select
                     aria-label="Plan"
-                    items={plans.map(plan => ({ id: String(plan.id), label: plan.name }))}
+                    items={planOptions}
                     selectedKey={generatePlan}
                     onSelectionChange={key =>
                       setGenerateForm(current => ({ ...current, plan_id: String(key || "") }))
@@ -986,7 +1007,7 @@ export function UserPage() {
                       <Select.Indicator />
                     </Select.Trigger>
                     <Select.Popover>
-                      <ListBox items={plans.map(plan => ({ id: String(plan.id), label: plan.name }))}>
+                      <ListBox items={planOptions}>
                         {item => (
                           <ListBoxItem id={item.id} textValue={item.label}>
                             {item.label}
@@ -1100,7 +1121,7 @@ export function UserPage() {
                     <Select
                       aria-label="Provider"
                       className="max-w-xs"
-                      items={geoProviders.map(provider => ({ id: provider.key, label: provider.name }))}
+                      items={geoProviderOptions}
                       selectedKey={geoProvider}
                       onSelectionChange={key => setGeoProvider(String(key || "ipinfo"))}
                     >
@@ -1109,7 +1130,7 @@ export function UserPage() {
                         <Select.Indicator />
                       </Select.Trigger>
                       <Select.Popover>
-                        <ListBox items={geoProviders.map(provider => ({ id: provider.key, label: provider.name }))}>
+                        <ListBox items={geoProviderOptions}>
                           {item => (
                             <ListBoxItem id={item.id} textValue={item.label}>
                               {item.label}
