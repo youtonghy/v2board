@@ -19,21 +19,6 @@ export interface AdminListResult<T = unknown> {
   total: number;
 }
 
-export interface ResourceSource {
-  id: string;
-  label: string;
-  endpoint: string;
-  method?: "GET" | "POST";
-  query?: Record<string, unknown>;
-}
-
-export interface ResourcePageSpec {
-  title: string;
-  description: string;
-  legacyPath: string;
-  sources: ResourceSource[];
-}
-
 declare global {
   interface Window {
     __ADMIN_V2_BOOTSTRAP__?: AdminBootstrap;

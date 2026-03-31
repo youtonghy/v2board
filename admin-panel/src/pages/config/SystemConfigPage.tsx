@@ -146,7 +146,6 @@ export function SystemConfigPage() {
     <PageFrame
       title="System Config"
       description="This page replaces the generic data snapshot with a HeroUI section editor. The current save contract stays unchanged and still posts the selected config section to the existing admin endpoint."
-      legacyPath="/config/system"
       onRefresh={() => void loadConfig()}
       loading={state.loading}
     >

@@ -205,7 +205,6 @@ export function OrderPage() {
     <PageFrame
       title="Orders"
       description="The order queue now supports search, detail inspection, manual settlement, commission-state updates, and manual assignment inside the new shell."
-      legacyPath="/order"
       onRefresh={() => void loadOrders(page)}
       loading={loading}
     >

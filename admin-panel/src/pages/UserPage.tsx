@@ -528,7 +528,6 @@ export function UserPage() {
     <PageFrame
       title="Users"
       description="The user workspace now handles search, editing, account generation, account safety actions, and account-level operational tasks in the new shell."
-      legacyPath="/user"
       onRefresh={() => void loadUsers(page)}
       loading={loading}
     >

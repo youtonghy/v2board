@@ -128,7 +128,6 @@ export function GiftCardPage() {
     <PageFrame
       title="Gift Cards"
       description="Gift cards move to a dedicated HeroUI table and modal editor while preserving the current backend payload format for create, update, and drop operations."
-      legacyPath="/giftcard"
       onRefresh={() => void loadGiftCards(page)}
       loading={loading}
     >

@@ -105,7 +105,6 @@ export function TicketPage() {
     <PageFrame
       title="Tickets"
       description="The support queue now uses a dedicated HeroUI workbench with status tabs, reply-state filtering, and a direct threaded detail page."
-      legacyPath="/ticket"
       onRefresh={() => void loadTickets(page)}
       loading={loading}
     >

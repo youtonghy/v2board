@@ -139,7 +139,6 @@ export function ServerRoutePage() {
     <PageFrame
       title="Routes"
       description="Server route rules now have a dedicated editor for action types, target values, and line-based match entries."
-      legacyPath="/server/route"
       onRefresh={() => void loadRoutes()}
       loading={loading}
     >

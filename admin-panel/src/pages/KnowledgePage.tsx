@@ -190,7 +190,6 @@ export function KnowledgePage() {
     <PageFrame
       title="Knowledge"
       description="The knowledge base now supports category filtering, direct editing, visibility toggles, and article lifecycle management inside the new shell."
-      legacyPath="/knowledge"
       onRefresh={() => void loadKnowledge()}
       loading={loading}
     >

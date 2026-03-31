@@ -1,3 +1,4 @@
+import { ArrowDownToLine, ArrowRotateRight, Bell } from "@gravity-ui/icons";
 import {
   Button,
   Card,
@@ -39,7 +40,6 @@ import { adminRequest, getEnvelopeError } from "../lib/api";
 import type { ApiEnvelope } from "../types";
 import { PageFrame } from "../components/PageFrame";
 import { asArray, asRecord, formatBytes, formatDateTime, formatMoney } from "../lib/admin-format";
-import { BellIcon, DownloadIcon, RefreshIcon } from "../components/AdminIcons";
 import { adminTableClassNames } from "../components/AdminContent";
 
 interface DashboardState {
@@ -335,7 +335,6 @@ export function DashboardPage() {
     <PageFrame
       title="Dashboard"
       description="A lightweight operations workspace built on HeroUI. It keeps the legacy metrics, but reorganises them into a cleaner control room with charts, rankings and live queue visibility."
-      legacyPath="/dashboard"
       onRefresh={() => void loadDashboard()}
       loading={state.loading}
     >
@@ -353,13 +352,29 @@ export function DashboardPage() {
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-3">
-                <Button radius="full" variant="light" className="bg-slate-100 px-4 text-slate-700" startContent={<RefreshIcon size={16} />} onPress={() => void loadDashboard()}>
+                <Button
+                  radius="full"
+                  variant="light"
+                  className="bg-slate-100 px-4 text-slate-700"
+                  startContent={<ArrowRotateRight width={16} height={16} aria-hidden="true" />}
+                  onPress={() => void loadDashboard()}
+                >
                   Sync
                 </Button>
-                <Button radius="full" variant="light" className="bg-slate-100 px-4 text-slate-700" startContent={<BellIcon size={16} />}>
+                <Button
+                  radius="full"
+                  variant="light"
+                  className="bg-slate-100 px-4 text-slate-700"
+                  startContent={<Bell width={16} height={16} aria-hidden="true" />}
+                >
                   Alerts
                 </Button>
-                <Button color="primary" radius="full" className="px-5" startContent={<DownloadIcon size={16} />}>
+                <Button
+                  color="primary"
+                  radius="full"
+                  className="px-5"
+                  startContent={<ArrowDownToLine width={16} height={16} aria-hidden="true" />}
+                >
                   Export
                 </Button>
               </div>

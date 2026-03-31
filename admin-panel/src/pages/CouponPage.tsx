@@ -150,7 +150,6 @@ export function CouponPage() {
     <PageFrame
       title="Coupons"
       description="Coupons now have a dedicated HeroUI list, pagination, toggle, and modal editor. The backend still receives the exact same payload shape as the legacy page."
-      legacyPath="/coupon"
       onRefresh={() => void loadCoupons(page)}
       loading={loading}
     >

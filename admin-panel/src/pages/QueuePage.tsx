@@ -94,7 +94,6 @@ export function QueuePage() {
     <PageFrame
       title="Queue"
       description="The runtime queue page now surfaces backlog, workload snapshots, Horizon masters, and system logs in one operational overview."
-      legacyPath="/queue"
       onRefresh={() => void loadQueue()}
       loading={state.loading}
     >

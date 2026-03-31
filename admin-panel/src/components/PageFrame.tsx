@@ -1,24 +1,23 @@
 import { BreadcrumbItem, Breadcrumbs, Button, Card, CardBody } from "@heroui/react";
+import { ArrowRotateRight } from "@gravity-ui/icons";
 import { useLocation } from "react-router-dom";
-import { openLegacyPage } from "../lib/bootstrap";
-import { ExternalLinkIcon, RefreshIcon } from "./AdminIcons";
 
 interface PageFrameProps {
   title: string;
   description: string;
-  legacyPath: string;
   children: React.ReactNode;
   onRefresh?: () => void;
   loading?: boolean;
+  actions?: React.ReactNode;
 }
 
 export function PageFrame({
   title,
   description,
-  legacyPath,
   children,
   onRefresh,
-  loading
+  loading,
+  actions
 }: PageFrameProps) {
   const location = useLocation();
   const segments = location.pathname.replace(/^\/new\/?/, "").split("/").filter(Boolean);
@@ -55,22 +54,14 @@ export function PageFrame({
                   variant="flat"
                   color="default"
                   className="px-4"
-                  startContent={<RefreshIcon size={16} />}
+                  startContent={<ArrowRotateRight width={16} height={16} aria-hidden="true" />}
                   onPress={onRefresh}
                   isLoading={loading}
                 >
                   Refresh
                 </Button>
               ) : null}
-              <Button
-                color="primary"
-                radius="full"
-                className="px-5"
-                endContent={<ExternalLinkIcon size={16} />}
-                onPress={() => openLegacyPage(legacyPath)}
-              >
-                Open legacy
-              </Button>
+              {actions}
             </div>
           </div>
         </CardBody>

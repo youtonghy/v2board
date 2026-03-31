@@ -190,7 +190,6 @@ export function PlanPage() {
     <PageFrame
       title="Plans"
       description="The plan page now uses a dedicated HeroUI table and modal editor. The current backend actions for save, toggle, renew, and drop remain unchanged."
-      legacyPath="/plan"
       onRefresh={() => void loadPlans()}
       loading={loading}
     >

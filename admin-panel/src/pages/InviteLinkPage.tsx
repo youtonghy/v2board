@@ -167,7 +167,6 @@ export function InviteLinkPage() {
     <PageFrame
       title="Invite Links"
       description="Invite links now have a dedicated workspace for search, status control, and direct generation from a selected account."
-      legacyPath="/invite-link"
       onRefresh={() => void loadLinks(page)}
       loading={loading}
     >

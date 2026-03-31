@@ -222,7 +222,6 @@ export function PaymentConfigPage() {
     <PageFrame
       title="Payment Config"
       description="Payment entries now have a dedicated HeroUI list and editor. Dynamic provider-specific fields still fall back to editable object fields so the backend contract stays untouched."
-      legacyPath="/config/payment"
       onRefresh={() => void loadPayments()}
       loading={loading}
     >

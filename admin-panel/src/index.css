@@ -4,18 +4,48 @@
 
 :root {
   color-scheme: light;
-  --admin-bg: #f4f5f7;
-  --admin-bg-soft: #eef1f4;
-  --admin-surface: rgba(255, 255, 255, 0.82);
-  --admin-surface-strong: #ffffff;
-  --admin-border: rgba(148, 163, 184, 0.18);
-  --admin-border-strong: rgba(148, 163, 184, 0.28);
-  --admin-text: #18222f;
-  --admin-text-soft: #6b7280;
-  --admin-accent: #1388ef;
-  --admin-accent-soft: rgba(19, 136, 239, 0.12);
+  --accent: oklch(62.08% 0.1398 251.12);
+  --accent-foreground: oklch(99.11% 0 0);
+  --background: oklch(97.02% 0.0196 251.12);
+  --border: oklch(90% 0.0196 251.12);
+  --danger: oklch(65.32% 0.2419 25.41);
+  --danger-foreground: oklch(99.11% 0 0);
+  --default: oklch(94% 0.0196 251.12);
+  --default-foreground: oklch(21.03% 0.0059 251.12);
+  --field-background: oklch(100% 0.0098 251.12);
+  --field-foreground: oklch(21.03% 0.0196 251.12);
+  --field-placeholder: oklch(55.17% 0.0392 251.12);
+  --focus: oklch(62.08% 0.1398 251.12);
+  --foreground: oklch(21.03% 0.0196 251.12);
+  --muted: oklch(55.17% 0.0392 251.12);
+  --overlay: oklch(100% 0.0059 251.12);
+  --overlay-foreground: oklch(21.03% 0.0196 251.12);
+  --scrollbar: oklch(87.1% 0.0196 251.12);
+  --segment: oklch(100% 0.0196 251.12);
+  --segment-foreground: oklch(21.03% 0.0196 251.12);
+  --separator: oklch(92% 0.0196 251.12);
+  --success: oklch(73.29% 0.2011 150.48);
+  --success-foreground: oklch(21.03% 0.0059 150.48);
+  --surface: oklch(100% 0.0098 251.12);
+  --surface-foreground: oklch(21.03% 0.0196 251.12);
+  --surface-secondary: oklch(95.24% 0.0157 251.12);
+  --surface-secondary-foreground: oklch(21.03% 0.0196 251.12);
+  --surface-tertiary: oklch(93.73% 0.0157 251.12);
+  --surface-tertiary-foreground: oklch(21.03% 0.0196 251.12);
+  --warning: oklch(78.19% 0.1647 72);
+  --warning-foreground: oklch(21.03% 0.0059 72);
+  --radius: 0.5rem;
+  --field-radius: 0.75rem;
+  --font-sans: "Plus Jakarta Sans", "Inter", "Segoe UI", sans-serif;
   --admin-shadow: 0 20px 60px rgba(15, 23, 32, 0.08);
   --admin-shadow-soft: 0 10px 30px rgba(15, 23, 32, 0.06);
+}
+
+.light,
+.default,
+[data-theme="light"],
+[data-theme="default"] {
+  color-scheme: light;
 }
 
 html,
@@ -26,12 +56,12 @@ body,
 
 body {
   margin: 0;
-  font-family: "Plus Jakarta Sans", "Inter", "Segoe UI", sans-serif;
+  font-family: var(--font-sans);
   background:
     radial-gradient(circle at top left, rgba(19, 136, 239, 0.08), transparent 24rem),
     radial-gradient(circle at top right, rgba(255, 255, 255, 0.9), transparent 26rem),
     linear-gradient(180deg, #f8f8fa 0%, #f0f2f5 100%);
-  color: var(--admin-text);
+  color: var(--foreground);
 }
 
 a {

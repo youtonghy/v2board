@@ -320,7 +320,6 @@ export function ServerManagePage() {
     <PageFrame
       title="Servers"
       description="Node inventory now runs in a protocol-aware HeroUI workspace with direct visibility toggles, copy and delete actions, and a structured object editor for protocol-specific fields."
-      legacyPath="/server/manage"
       onRefresh={() => void loadServers()}
       loading={loading}
     >

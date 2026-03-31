@@ -107,7 +107,6 @@ export function TicketDetailPage() {
     <PageFrame
       title={`Ticket #${ticketId || "Unknown"}`}
       description="Thread detail is readable in the new shell while reply and closure actions remain safely in the proven legacy interface during the coexistence window."
-      legacyPath={`/ticket/${ticketId || ""}`}
       onRefresh={() => void loadDetail()}
       loading={state.loading}
     >

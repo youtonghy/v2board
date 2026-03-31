@@ -95,7 +95,6 @@ export function ThemeConfigPage() {
     <PageFrame
       title="Theme Config"
       description="Fantastic-focused theme management now lives in a real HeroUI editor while the underlying save contract stays unchanged."
-      legacyPath="/config/theme"
       onRefresh={() => void loadThemes(currentTheme)}
       loading={loading}
     >

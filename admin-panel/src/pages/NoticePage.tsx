@@ -116,7 +116,6 @@ export function NoticePage() {
     <PageFrame
       title="Notices"
       description="Announcements are now managed in a dedicated HeroUI table and modal instead of the generic data snapshot. Visibility toggles and save contracts stay aligned with the current backend."
-      legacyPath="/notice"
       onRefresh={() => void loadNotices()}
       loading={loading}
     >

@@ -1,4 +1,12 @@
 import {
+  ArrowLeftToLine,
+  ArrowRightToLine,
+  Bars,
+  Bell,
+  Magnifier,
+  PersonPlus
+} from "@gravity-ui/icons";
+import {
   Accordion,
   AccordionItem,
   Avatar,
@@ -17,14 +25,6 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { navGroups } from "../config/nav";
 import { adminBootstrap } from "../lib/bootstrap";
 import { gatewayRequest } from "../lib/api";
-import {
-  BellIcon,
-  CollapseIcon,
-  ExpandIcon,
-  InviteIcon,
-  MenuIcon,
-  SearchIcon
-} from "./AdminIcons";
 
 function NavigationList({
   collapsed,
@@ -59,7 +59,7 @@ function NavigationList({
                 startContent={
                   <Tooltip content={item.label} placement="right">
                     <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/80 text-slate-600">
-                      <Icon size={18} />
+                      <Icon width={18} height={18} aria-hidden="true" />
                     </span>
                   </Tooltip>
                 }
@@ -108,7 +108,7 @@ function NavigationList({
                   description={item.description}
                   startContent={
                     <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/80 text-slate-600">
-                      <Icon size={18} />
+                      <Icon width={18} height={18} aria-hidden="true" />
                     </span>
                   }
                   classNames={{
@@ -160,7 +160,11 @@ function SidebarContent({
             className="hidden text-slate-500 md:inline-flex"
             onPress={onToggleCollapse}
           >
-            {collapsed ? <ExpandIcon size={18} /> : <CollapseIcon size={18} />}
+            {collapsed ? (
+              <ArrowRightToLine width={18} height={18} aria-hidden="true" />
+            ) : (
+              <ArrowLeftToLine width={18} height={18} aria-hidden="true" />
+            )}
           </Button>
         ) : null}
       </div>
@@ -287,7 +291,7 @@ export function AdminShell() {
                   className="h-10 w-10 min-w-10 items-center justify-center text-slate-600 md:hidden"
                   onPress={() => setMobileOpen(true)}
                 >
-                  <MenuIcon size={18} />
+                  <Bars width={18} height={18} aria-hidden="true" />
                 </Button>
                 <div className="min-w-0">
                   <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Admin Workspace</p>
@@ -297,12 +301,17 @@ export function AdminShell() {
 
               <div className="flex items-center gap-2 md:gap-3">
                 <Button isIconOnly size="sm" radius="full" variant="flat" className="h-10 w-10 min-w-10 bg-white text-slate-700">
-                  <SearchIcon size={18} />
+                  <Magnifier width={18} height={18} aria-hidden="true" />
                 </Button>
                 <Button isIconOnly size="sm" radius="full" variant="flat" className="h-10 w-10 min-w-10 bg-white text-slate-700">
-                  <BellIcon size={18} />
+                  <Bell width={18} height={18} aria-hidden="true" />
                 </Button>
-                <Button color="primary" radius="full" className="hidden md:inline-flex" startContent={<InviteIcon size={18} />}>
+                <Button
+                  color="primary"
+                  radius="full"
+                  className="hidden md:inline-flex"
+                  startContent={<PersonPlus width={18} height={18} aria-hidden="true" />}
+                >
                   Invite
                 </Button>
                 <div className="hidden items-center gap-3 rounded-full border border-white/70 bg-white px-3 py-2 shadow-sm lg:flex">

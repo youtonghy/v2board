@@ -10,12 +10,12 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        canvas: "#f4f7f9",
-        ink: "#11212d",
-        accent: "#1388ef",
-        accentSoft: "#e9f4ff",
-        panel: "#ffffff",
-        line: "#d9e3ea"
+        canvas: "var(--background)",
+        ink: "var(--foreground)",
+        accent: "var(--accent)",
+        accentSoft: "var(--surface-secondary)",
+        panel: "var(--surface)",
+        line: "var(--border)"
       },
       boxShadow: {
         panel: "0 24px 60px rgba(17, 33, 45, 0.08)"

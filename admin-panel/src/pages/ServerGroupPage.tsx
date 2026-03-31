@@ -97,7 +97,6 @@ export function ServerGroupPage() {
     <PageFrame
       title="Server Groups"
       description="Server groups now have a dedicated maintenance page with usage counters and direct create, edit, and delete actions."
-      legacyPath="/server/group"
       onRefresh={() => void loadGroups()}
       loading={loading}
     >
