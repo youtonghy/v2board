@@ -54,10 +54,35 @@ interface UserRecord {
   remarks?: string | null;
   recent_ips?: string[];
   recent_login_ips?: string[];
+  recent_ip_records?: Array<{ ip: string; last_seen_at: number }>;
+  recent_login_ip_records?: Array<{ ip: string; last_seen_at: number }>;
   alive_ip?: number;
   invite_user?: {
     email?: string;
   } | null;
+}
+
+interface IpGeoProvider {
+  key: string;
+  name: string;
+}
+
+interface IpGeoResponse {
+  status?: string;
+  message?: string;
+  provider?: string;
+  country?: string;
+  city?: string;
+  isp?: string;
+  organization?: string;
+}
+
+interface UserStatRecord {
+  id?: number;
+  record_at: number;
+  u: number;
+  d: number;
+  server_rate: number;
 }
 
 interface UserFormState {
@@ -154,12 +179,23 @@ export function UserPage() {
   const [planFilter, setPlanFilter] = useState("");
   const [bannedFilter, setBannedFilter] = useState("");
   const [selected, setSelected] = useState<UserRecord | null>(null);
+  const [statsUser, setStatsUser] = useState<UserRecord | null>(null);
+  const [ipGeoUser, setIpGeoUser] = useState<UserRecord | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [generateOpen, setGenerateOpen] = useState(false);
   const [mailOpen, setMailOpen] = useState(false);
+  const [statsOpen, setStatsOpen] = useState(false);
+  const [ipGeoOpen, setIpGeoOpen] = useState(false);
   const [form, setForm] = useState<UserFormState>(emptyUserForm());
   const [generateForm, setGenerateForm] = useState<GenerateFormState>(defaultGenerateForm());
   const [mailForm, setMailForm] = useState<MailFormState>({ subject: "", content: "" });
+  const [statsPage, setStatsPage] = useState(1);
+  const [statsTotal, setStatsTotal] = useState(0);
+  const [statsRecords, setStatsRecords] = useState<UserStatRecord[]>([]);
+  const [geoProviders, setGeoProviders] = useState<IpGeoProvider[]>([]);
+  const [geoProvider, setGeoProvider] = useState("ipinfo");
+  const [geoLoading, setGeoLoading] = useState<Record<string, boolean>>({});
+  const [geoRecords, setGeoRecords] = useState<Record<string, IpGeoResponse>>({});
   const [error, setError] = useState<string | null>(null);
 
   async function loadUsers(nextPage = page) {
@@ -301,9 +337,168 @@ export function UserPage() {
     }
   }
 
+  async function loadIpGeoProviders() {
+    try {
+      const envelope = await adminRequest<{ providers: IpGeoProvider[]; default?: string }>("user/ipGeoProviders");
+      const payload = unwrapEnvelope(envelope);
+      setGeoProviders(payload.providers || []);
+      setGeoProvider(payload.default || payload.providers?.[0]?.key || "ipinfo");
+    } catch (nextError) {
+      setGeoProviders([]);
+    }
+  }
+
+  async function fetchGeo(ip: string) {
+    if (!ip || geoLoading[ip]) return;
+    setGeoLoading(current => ({ ...current, [ip]: true }));
+    try {
+      const envelope = await adminRequest<IpGeoResponse>("user/ipGeo", {
+        method: "POST",
+        body: {
+          ip,
+          provider: geoProvider
+        }
+      });
+      const payload = unwrapEnvelope(envelope);
+      setGeoRecords(current => ({
+        ...current,
+        [ip]:
+          payload && payload.status === "success"
+            ? payload
+            : {
+                status: "failed",
+                message: payload?.message || "Fetch failed",
+                provider: geoProvider
+              }
+      }));
+    } catch (nextError) {
+      setGeoRecords(current => ({
+        ...current,
+        [ip]: {
+          status: "failed",
+          message: nextError instanceof Error ? nextError.message : "Fetch failed",
+          provider: geoProvider
+        }
+      }));
+    } finally {
+      setGeoLoading(current => ({ ...current, [ip]: false }));
+    }
+  }
+
+  async function fetchAllGeo() {
+    const ipRecords = [
+      ...(ipGeoUser?.recent_ip_records || []),
+      ...(ipGeoUser?.recent_login_ip_records || [])
+    ];
+    const uniqueIps = Array.from(new Set(ipRecords.map(item => item.ip).filter(Boolean)));
+    for (const ip of uniqueIps) {
+      // eslint-disable-next-line no-await-in-loop
+      await fetchGeo(ip);
+    }
+  }
+
+  async function openTrafficStats(record: UserRecord) {
+    setStatsUser(record);
+    setStatsPage(1);
+    setStatsOpen(true);
+  }
+
+  async function loadTrafficStats(currentPage = statsPage, user = statsUser) {
+    if (!user?.id) return;
+    setSubmitting(true);
+    try {
+      const envelope = await adminRequest<UserStatRecord[]>("stat/getStatUser", {
+        query: {
+          user_id: user.id,
+          current: currentPage,
+          pageSize: PAGE_SIZE
+        }
+      });
+      const payload = unwrapEnvelope(envelope);
+      setStatsRecords(payload || []);
+      setStatsTotal(Number(envelope.total || 0));
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : "Failed to load traffic stats");
+      setStatsRecords([]);
+      setStatsTotal(0);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function openIpGeo(record: UserRecord) {
+    setIpGeoUser(record);
+    setIpGeoOpen(true);
+  }
+
+  async function dumpCsv() {
+    setSubmitting(true);
+    try {
+      const envelope = await adminRequest<string>("user/dumpCSV", {
+        method: "POST",
+        body: {
+          ...(buildUserFilter(searchEmail, planFilter, bannedFilter).length
+            ? { filter: buildUserFilter(searchEmail, planFilter, bannedFilter) }
+            : {})
+        }
+      });
+      const content = envelope.data || "";
+      const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "users.csv";
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : "Failed to export users");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function bulkDelete() {
+    if (!window.confirm("Delete all users in the current filter scope?")) return;
+    setSubmitting(true);
+    try {
+      await unwrapEnvelope(
+        await adminRequest("user/allDel", {
+          method: "POST",
+          body: {
+            ...(buildUserFilter(searchEmail, planFilter, bannedFilter).length
+              ? { filter: buildUserFilter(searchEmail, planFilter, bannedFilter) }
+              : {})
+          }
+        })
+      );
+      setPage(1);
+      await loadUsers(1);
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : "Failed to delete users");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   useEffect(() => {
     void loadUsers(page);
   }, [page]);
+
+  useEffect(() => {
+    void loadIpGeoProviders();
+  }, []);
+
+  useEffect(() => {
+    if (statsOpen && statsUser?.id) {
+      void loadTrafficStats(statsPage, statsUser);
+    }
+  }, [statsOpen, statsPage, statsUser?.id]);
+
+  useEffect(() => {
+    if (ipGeoOpen && ipGeoUser) {
+      void fetchAllGeo();
+    }
+  }, [ipGeoOpen, ipGeoUser?.id, geoProvider]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const selectedPlan = useMemo(
@@ -330,8 +525,14 @@ export function UserPage() {
             <p className="text-sm text-slate-500">Search active accounts, review balance and plan state, and open actions from one place.</p>
           </div>
           <div className="flex flex-wrap gap-2">
+            <Button variant="flat" onPress={() => void dumpCsv()} isLoading={submitting}>
+              Export CSV
+            </Button>
             <Button variant="flat" onPress={() => setMailOpen(true)}>
               Mass mail
+            </Button>
+            <Button color="danger" variant="flat" onPress={() => void bulkDelete()} isLoading={submitting}>
+              Bulk delete
             </Button>
             <Button color="primary" onPress={() => setGenerateOpen(true)}>
               Generate users
@@ -458,6 +659,22 @@ export function UserPage() {
                             isLoading={submitting}
                           >
                             Reset key
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="flat"
+                            onPress={() => void openTrafficStats(item)}
+                            isLoading={submitting}
+                          >
+                            Traffic
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="flat"
+                            onPress={() => void openIpGeo(item)}
+                            isLoading={submitting}
+                          >
+                            IP geo
                           </Button>
                           <Button
                             size="sm"
@@ -596,6 +813,108 @@ export function UserPage() {
             </Button>
             <Button color="primary" onPress={() => void sendMail()} isLoading={submitting}>
               Queue email
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <Modal isOpen={statsOpen} onOpenChange={isOpen => !isOpen && setStatsOpen(false)} size="5xl" scrollBehavior="inside">
+        <ModalContent>
+          <ModalHeader>Traffic logs for {statsUser?.email || "user"}</ModalHeader>
+          <ModalBody className="gap-4">
+            <Table removeWrapper aria-label="User traffic logs">
+              <TableHeader>
+                <TableColumn>Date</TableColumn>
+                <TableColumn>Upload</TableColumn>
+                <TableColumn>Download</TableColumn>
+                <TableColumn>Rate</TableColumn>
+              </TableHeader>
+              <TableBody items={statsRecords} emptyContent="No traffic records found">
+                {item => (
+                  <TableRow key={`${item.record_at}-${item.id || 0}`}>
+                    <TableCell>{formatDateTime(item.record_at)}</TableCell>
+                    <TableCell>{formatBytes(item.u || 0)}</TableCell>
+                    <TableCell>{formatBytes(item.d || 0)}</TableCell>
+                    <TableCell>{item.server_rate || 1}</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+            <div className="flex justify-center">
+              <Pagination
+                page={statsPage}
+                total={Math.max(1, Math.ceil(statsTotal / PAGE_SIZE))}
+                onChange={setStatsPage}
+              />
+            </div>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="light" onPress={() => setStatsOpen(false)}>
+              Close
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <Modal isOpen={ipGeoOpen} onOpenChange={isOpen => !isOpen && setIpGeoOpen(false)} size="5xl" scrollBehavior="inside">
+        <ModalContent>
+          <ModalHeader>IP geography for {ipGeoUser?.email || "user"}</ModalHeader>
+          <ModalBody className="gap-4">
+            <div className="flex flex-wrap items-end gap-3">
+              <Select
+                className="max-w-xs"
+                label="Provider"
+                labelPlacement="outside"
+                selectedKeys={new Set([geoProvider])}
+                onSelectionChange={keys => setGeoProvider(String(Array.from(keys)[0] || "ipinfo"))}
+              >
+                {geoProviders.map(provider => (
+                  <SelectItem key={provider.key}>{provider.name}</SelectItem>
+                ))}
+              </Select>
+              <Button variant="flat" onPress={() => void fetchAllGeo()}>
+                Refresh geo
+              </Button>
+            </div>
+
+            <Table removeWrapper aria-label="IP geo records">
+              <TableHeader>
+                <TableColumn>IP</TableColumn>
+                <TableColumn>Last Seen</TableColumn>
+                <TableColumn>Country</TableColumn>
+                <TableColumn>City</TableColumn>
+                <TableColumn>ISP</TableColumn>
+                <TableColumn>Organization</TableColumn>
+              </TableHeader>
+              <TableBody
+                items={[
+                  ...(ipGeoUser?.recent_ip_records || []),
+                  ...(ipGeoUser?.recent_login_ip_records || [])
+                ]}
+                emptyContent="No IP records found"
+              >
+                {item => {
+                  const geo = geoRecords[item.ip];
+                  const loadingState = geoLoading[item.ip];
+                  const failed = geo?.status === "failed";
+
+                  return (
+                    <TableRow key={`${item.ip}-${item.last_seen_at}`}>
+                      <TableCell>{item.ip}</TableCell>
+                      <TableCell>{formatDateTime(item.last_seen_at)}</TableCell>
+                      <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.country || "—"}</TableCell>
+                      <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.city || "—"}</TableCell>
+                      <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.isp || "—"}</TableCell>
+                      <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.organization || "—"}</TableCell>
+                    </TableRow>
+                  );
+                }}
+              </TableBody>
+            </Table>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="light" onPress={() => setIpGeoOpen(false)}>
+              Close
             </Button>
           </ModalFooter>
         </ModalContent>
