@@ -15,8 +15,6 @@ import {
   DrawerBody,
   DrawerContent,
   DrawerHeader,
-  ListBox,
-  ListBoxItem,
   Tooltip
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
@@ -36,41 +34,35 @@ function NavigationList({
 }) {
   if (collapsed) {
     return (
-      <ListBox
-        aria-label="Admin navigation"
-        selectionMode="single"
-        selectedKeys={new Set([currentPath])}
-        onAction={key => onNavigate(String(key))}
-        className="px-2"
-        itemClasses={{
-          base: "mb-2 rounded-[1.25rem] px-0",
-          title: "hidden",
-          selectedIcon: "hidden"
-        }}
-      >
+      <div className="space-y-2 px-2">
         {navGroups.flatMap(group =>
           group.items.map(item => {
             const Icon = item.icon;
+            const selected = item.path === currentPath;
             return (
-              <ListBoxItem
-                id={item.path}
+              <Button
                 key={item.path}
-                textValue={item.label}
-                startContent={
-                  <Tooltip content={item.label} placement="right">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/80 text-slate-600">
-                      <Icon width={18} height={18} aria-hidden="true" />
-                    </span>
-                  </Tooltip>
-                }
-                className="min-h-0 justify-center px-2 py-2 data-[selected=true]:bg-white data-[selected=true]:shadow-[0_16px_40px_rgba(15,23,32,0.08)]"
+                isIconOnly
+                variant="light"
+                aria-label={item.label}
+                onPress={() => onNavigate(item.path)}
+                className={[
+                  "h-auto min-h-0 w-full rounded-[1.25rem] px-2 py-2",
+                  selected
+                    ? "bg-white shadow-[0_16px_40px_rgba(15,23,32,0.08)]"
+                    : "hover:bg-white/70"
+                ].join(" ")}
               >
-                {item.label}
-              </ListBoxItem>
+                <Tooltip content={item.label} placement="right">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/80 text-slate-600">
+                    <Icon width={18} height={18} aria-hidden="true" />
+                  </span>
+                </Tooltip>
+              </Button>
             );
           })
         )}
-      </ListBox>
+      </div>
     );
   }
 
@@ -89,38 +81,33 @@ function NavigationList({
     >
       {navGroups.map(group => (
         <AccordionItem key={group.label} aria-label={group.label} title={group.label}>
-          <ListBox
-            aria-label={group.label}
-            selectionMode="single"
-            selectedKeys={new Set([currentPath])}
-            onAction={key => onNavigate(String(key))}
-            itemClasses={{
-              base: "mb-1.5 rounded-[1.25rem] px-2 py-1 data-[hover=true]:bg-white/70 data-[selected=true]:bg-white data-[selected=true]:shadow-[0_16px_40px_rgba(15,23,32,0.08)]",
-              title: "text-[14px] font-semibold text-slate-900",
-              selectedIcon: "hidden"
-            }}
-          >
+          <div className="space-y-1.5">
             {group.items.map(item => {
               const Icon = item.icon;
+              const selected = item.path === currentPath;
               return (
-                <ListBoxItem
-                  id={item.path}
+                <Button
                   key={item.path}
-                  description={item.description}
-                  startContent={
-                    <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/80 text-slate-600">
-                      <Icon width={18} height={18} aria-hidden="true" />
-                    </span>
-                  }
-                  classNames={{
-                    description: "text-xs text-slate-400"
-                  }}
+                  variant="light"
+                  onPress={() => onNavigate(item.path)}
+                  className={[
+                    "mb-1.5 h-auto w-full justify-start rounded-[1.25rem] px-2 py-1 text-left",
+                    selected
+                      ? "bg-white shadow-[0_16px_40px_rgba(15,23,32,0.08)]"
+                      : "hover:bg-white/70"
+                  ].join(" ")}
                 >
-                  {item.label}
-                </ListBoxItem>
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/80 text-slate-600">
+                    <Icon width={18} height={18} aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-[14px] font-semibold text-slate-900">{item.label}</span>
+                    <span className="block text-xs text-slate-400">{item.description}</span>
+                  </span>
+                </Button>
               );
             })}
-          </ListBox>
+          </div>
         </AccordionItem>
       ))}
     </Accordion>
@@ -310,10 +297,24 @@ export function AdminShell() {
               </div>
 
               <div className="flex items-center gap-2 md:gap-3">
-                <Button isIconOnly size="sm" radius="full" variant="flat" className="h-10 w-10 min-w-10 bg-white text-slate-700">
+                <Button
+                  isIconOnly
+                  size="sm"
+                  radius="full"
+                  variant="flat"
+                  className="h-10 w-10 min-w-10 bg-white text-slate-700"
+                  onPress={() => handleNavigate("/new/user")}
+                >
                   <Magnifier width={18} height={18} aria-hidden="true" />
                 </Button>
-                <Button isIconOnly size="sm" radius="full" variant="flat" className="h-10 w-10 min-w-10 bg-white text-slate-700">
+                <Button
+                  isIconOnly
+                  size="sm"
+                  radius="full"
+                  variant="flat"
+                  className="h-10 w-10 min-w-10 bg-white text-slate-700"
+                  onPress={() => handleNavigate("/new/notice")}
+                >
                   <Bell width={18} height={18} aria-hidden="true" />
                 </Button>
                 <Button
@@ -321,6 +322,7 @@ export function AdminShell() {
                   radius="full"
                   className="hidden md:inline-flex"
                   startContent={<PersonPlus width={18} height={18} aria-hidden="true" />}
+                  onPress={() => handleNavigate("/new/invite-link")}
                 >
                   Invite
                 </Button>
