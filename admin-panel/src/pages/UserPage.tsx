@@ -1077,27 +1077,25 @@ export function UserPage() {
                 <Modal.Heading>Traffic logs for {statsUser?.email || "user"}</Modal.Heading>
               </Modal.Header>
               <Modal.Body className="gap-4">
-                <Table classNames={adminTableClassNames}>
-                  <Table.ScrollContainer>
-                    <Table.Content aria-label="User traffic logs">
-                      <Table.Header>
-                        <Table.Column id="date">Date</Table.Column>
-                        <Table.Column id="upload">Upload</Table.Column>
-                        <Table.Column id="download">Download</Table.Column>
-                        <Table.Column id="rate">Rate</Table.Column>
-                      </Table.Header>
-                      <Table.Body items={statsRecords} renderEmptyState={() => "No traffic records found"}>
-                        {item => (
-                          <Table.Row id={`${item.record_at}-${item.id || 0}`}>
-                            <Table.Cell>{formatDateTime(item.record_at)}</Table.Cell>
-                            <Table.Cell>{formatBytes(item.u || 0)}</Table.Cell>
-                            <Table.Cell>{formatBytes(item.d || 0)}</Table.Cell>
-                            <Table.Cell>{item.server_rate || 1}</Table.Cell>
-                          </Table.Row>
-                        )}
-                      </Table.Body>
-                    </Table.Content>
-                  </Table.ScrollContainer>
+                <Table aria-label="User traffic logs" classNames={adminTableClassNames}>
+                  <Table.Content>
+                    <TableHeader>
+                      <TableColumn>Date</TableColumn>
+                      <TableColumn>Upload</TableColumn>
+                      <TableColumn>Download</TableColumn>
+                      <TableColumn>Rate</TableColumn>
+                    </TableHeader>
+                    <TableBody items={statsRecords} emptyContent="No traffic records found">
+                      {item => (
+                        <TableRow key={`${item.record_at}-${item.id || 0}`}>
+                          <TableCell>{formatDateTime(item.record_at)}</TableCell>
+                          <TableCell>{formatBytes(item.u || 0)}</TableCell>
+                          <TableCell>{formatBytes(item.d || 0)}</TableCell>
+                          <TableCell>{item.server_rate || 1}</TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table.Content>
                 </Table>
                 <div className="flex justify-center">
                   <Pagination
@@ -1154,43 +1152,41 @@ export function UserPage() {
                   </Button>
                 </div>
 
-                <Table classNames={adminTableClassNames}>
-                  <Table.ScrollContainer>
-                    <Table.Content aria-label="IP geo records">
-                      <Table.Header>
-                        <Table.Column id="ip">IP</Table.Column>
-                        <Table.Column id="lastSeen">Last Seen</Table.Column>
-                        <Table.Column id="status">Status</Table.Column>
-                        <Table.Column id="country">Country</Table.Column>
-                        <Table.Column id="city">City</Table.Column>
-                        <Table.Column id="isp">ISP</Table.Column>
-                        <Table.Column id="organization">Organization</Table.Column>
-                      </Table.Header>
-                      <Table.Body items={ipGeoRows} renderEmptyState={() => "No IP records found"}>
-                        {item => {
-                          const geo = geoRecords[item.ip];
-                          const loadingState = geoLoading[item.ip];
-                          const failed = geo?.status === "failed";
+                <Table aria-label="IP geo records" classNames={adminTableClassNames}>
+                  <Table.Content>
+                    <TableHeader>
+                      <TableColumn>IP</TableColumn>
+                      <TableColumn>Last Seen</TableColumn>
+                      <TableColumn>Status</TableColumn>
+                      <TableColumn>Country</TableColumn>
+                      <TableColumn>City</TableColumn>
+                      <TableColumn>ISP</TableColumn>
+                      <TableColumn>Organization</TableColumn>
+                    </TableHeader>
+                    <TableBody items={ipGeoRows} emptyContent="No IP records found">
+                      {item => {
+                        const geo = geoRecords[item.ip];
+                        const loadingState = geoLoading[item.ip];
+                        const failed = geo?.status === "failed";
 
-                          return (
-                            <Table.Row id={`${item.ip}-${item.last_seen_at}`}>
-                              <Table.Cell>{item.ip}</Table.Cell>
-                              <Table.Cell>{formatDateTime(item.last_seen_at)}</Table.Cell>
-                              <Table.Cell>
-                                <Chip variant="flat" color={loadingState ? "secondary" : failed ? "danger" : "success"}>
-                                  {loadingState ? "Loading" : failed ? "Failed" : "Resolved"}
-                                </Chip>
-                              </Table.Cell>
-                              <Table.Cell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.country || "—"}</Table.Cell>
-                              <Table.Cell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.city || "—"}</Table.Cell>
-                              <Table.Cell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.isp || "—"}</Table.Cell>
-                              <Table.Cell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.organization || "—"}</Table.Cell>
-                            </Table.Row>
-                          );
-                        }}
-                      </Table.Body>
-                    </Table.Content>
-                  </Table.ScrollContainer>
+                        return (
+                          <TableRow key={`${item.ip}-${item.last_seen_at}`}>
+                            <TableCell>{item.ip}</TableCell>
+                            <TableCell>{formatDateTime(item.last_seen_at)}</TableCell>
+                            <TableCell>
+                              <Chip variant="flat" color={loadingState ? "secondary" : failed ? "danger" : "success"}>
+                                {loadingState ? "Loading" : failed ? "Failed" : "Resolved"}
+                              </Chip>
+                            </TableCell>
+                            <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.country || "—"}</TableCell>
+                            <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.city || "—"}</TableCell>
+                            <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.isp || "—"}</TableCell>
+                            <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.organization || "—"}</TableCell>
+                          </TableRow>
+                        );
+                      }}
+                    </TableBody>
+                  </Table.Content>
                 </Table>
               </Modal.Body>
               <Modal.Footer>
