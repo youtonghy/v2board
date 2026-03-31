@@ -7,7 +7,7 @@ import {
   Spinner
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
-import { adminRequest, unwrapEnvelope } from "../lib/api";
+import { adminRequest, getEnvelopeError, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { asArray, asRecord } from "../lib/admin-format";
 
@@ -25,27 +25,45 @@ export function QueuePage() {
 
   async function loadQueue() {
     setState(current => ({ ...current, loading: true, error: undefined }));
-    try {
-      const [statsEnvelope, workloadEnvelope, mastersEnvelope, logEnvelope] = await Promise.all([
-        adminRequest<Record<string, unknown>>("system/getQueueStats"),
-        adminRequest<Record<string, unknown>>("system/getQueueWorkload"),
-        adminRequest<unknown[]>("system/getQueueMasters"),
-        adminRequest("system/getSystemLog")
-      ]);
+    const [statsResult, workloadResult, mastersResult, logResult] = await Promise.allSettled([
+      adminRequest<Record<string, unknown>>("system/getQueueStats"),
+      adminRequest<Record<string, unknown>>("system/getQueueWorkload"),
+      adminRequest<unknown[]>("system/getQueueMasters"),
+      adminRequest("system/getSystemLog")
+    ]);
 
-      setState({
-        loading: false,
-        stats: unwrapEnvelope(statsEnvelope),
-        workload: unwrapEnvelope(workloadEnvelope),
-        masters: asArray(unwrapEnvelope(mastersEnvelope)),
-        log: unwrapEnvelope(logEnvelope)
-      });
-    } catch (error) {
-      setState({
-        loading: false,
-        error: error instanceof Error ? error.message : "Failed to load queue data"
-      });
-    }
+    const statsEnvelope =
+      statsResult.status === "fulfilled"
+        ? statsResult.value
+        : ({ code: 500, message: statsResult.reason instanceof Error ? statsResult.reason.message : "Queue stats failed" });
+    const workloadEnvelope =
+      workloadResult.status === "fulfilled"
+        ? workloadResult.value
+        : ({ code: 500, message: workloadResult.reason instanceof Error ? workloadResult.reason.message : "Queue workload failed" });
+    const mastersEnvelope =
+      mastersResult.status === "fulfilled"
+        ? mastersResult.value
+        : ({ code: 500, message: mastersResult.reason instanceof Error ? mastersResult.reason.message : "Queue masters failed" });
+    const logEnvelope =
+      logResult.status === "fulfilled"
+        ? logResult.value
+        : ({ code: 500, message: logResult.reason instanceof Error ? logResult.reason.message : "System log failed" });
+
+    const errors = [
+      getEnvelopeError(statsEnvelope),
+      getEnvelopeError(workloadEnvelope),
+      getEnvelopeError(mastersEnvelope),
+      getEnvelopeError(logEnvelope)
+    ].filter(Boolean);
+
+    setState({
+      loading: false,
+      error: errors.length ? `Some queue widgets failed: ${errors.slice(0, 2).join("; ")}` : undefined,
+      stats: getEnvelopeError(statsEnvelope) ? { error: getEnvelopeError(statsEnvelope) } : unwrapEnvelope(statsEnvelope),
+      workload: getEnvelopeError(workloadEnvelope) ? { error: getEnvelopeError(workloadEnvelope) } : unwrapEnvelope(workloadEnvelope),
+      masters: getEnvelopeError(mastersEnvelope) ? [{ error: getEnvelopeError(mastersEnvelope) }] : asArray(unwrapEnvelope(mastersEnvelope)),
+      log: getEnvelopeError(logEnvelope) ? { error: getEnvelopeError(logEnvelope) } : unwrapEnvelope(logEnvelope)
+    });
   }
 
   useEffect(() => {

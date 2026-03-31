@@ -1,6 +1,6 @@
 import { Button, Card, CardBody, CardHeader, Chip, Spinner } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
-import { adminRequest } from "../lib/api";
+import { adminRequest, getEnvelopeError } from "../lib/api";
 import type { ApiEnvelope } from "../types";
 import { PageFrame } from "../components/PageFrame";
 import { AutoDataView } from "../components/AutoDataView";
@@ -47,23 +47,35 @@ export function DashboardPage() {
 
   async function loadDashboard() {
     setState(current => ({ ...current, loading: true, error: undefined }));
-    try {
-      const results = await Promise.all(
-        dashboardSources.map(source => adminRequest(source.endpoint))
-      );
+    const results = await Promise.allSettled(
+      dashboardSources.map(source => adminRequest(source.endpoint))
+    );
 
-      const stats = Object.fromEntries(
-        dashboardSources.map((source, index) => [source.key, results[index]])
-      );
+    const stats = Object.fromEntries(
+      dashboardSources.map((source, index) => {
+        const result = results[index];
+        if (result.status === "fulfilled") {
+          return [source.key, result.value];
+        }
+        return [
+          source.key,
+          {
+            code: 500,
+            message: result.reason instanceof Error ? result.reason.message : "Request failed"
+          } as ApiEnvelope
+        ];
+      })
+    );
 
-      setState({ loading: false, stats });
-    } catch (error) {
-      setState({
-        loading: false,
-        stats: {},
-        error: error instanceof Error ? error.message : "Dashboard request failed"
-      });
-    }
+    const failed = Object.values(stats)
+      .map(envelope => getEnvelopeError(envelope))
+      .filter(Boolean);
+
+    setState({
+      loading: false,
+      stats,
+      error: failed.length ? `Some dashboard widgets failed: ${failed.slice(0, 2).join("; ")}` : undefined
+    });
   }
 
   useEffect(() => {
@@ -117,7 +129,11 @@ export function DashboardPage() {
             <AutoDataView
               key={source.key}
               title={source.label}
-              payload={state.stats[source.key]?.data ?? state.stats[source.key]}
+              payload={
+                getEnvelopeError(state.stats[source.key])
+                  ? { error: getEnvelopeError(state.stats[source.key]) }
+                  : state.stats[source.key]?.data ?? state.stats[source.key]
+              }
             />
           ))}
         </div>
