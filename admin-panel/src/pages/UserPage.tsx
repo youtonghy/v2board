@@ -956,48 +956,59 @@ export function UserPage() {
         <Modal.Backdrop>
           <Modal.Container>
             <Modal.Dialog>
-          <Modal.Header>
-              <Modal.Heading>Generate users</Modal.Heading>
-            </Modal.Header>
-          <Modal.Body className="grid gap-4 md:grid-cols-2">
-            <Input label="Email Prefix" labelPlacement="outside" value={generateForm.email_prefix} onValueChange={value => setGenerateForm(current => ({ ...current, email_prefix: value }))} />
-            <Input label="Email Suffix" labelPlacement="outside" value={generateForm.email_suffix} onValueChange={value => setGenerateForm(current => ({ ...current, email_suffix: value }))} />
-            <Input label="Password" labelPlacement="outside" type="password" value={generateForm.password} onValueChange={value => setGenerateForm(current => ({ ...current, password: value }))} />
-            <Input label="Generate Count" labelPlacement="outside" type="number" value={generateForm.generate_count} onValueChange={value => setGenerateForm(current => ({ ...current, generate_count: value }))} />
-            <Select
-              label="Plan"
-              labelPlacement="outside"
-              items={plans.map(plan => ({ id: String(plan.id), label: plan.name }))}
-              selectedKey={generatePlan}
-              onSelectionChange={key =>
-                setGenerateForm(current => ({ ...current, plan_id: String(key || "") }))
-              }
-            >
-              <Select.Trigger>
-                <Select.Value />
-                <Select.Indicator />
-              </Select.Trigger>
-              <Select.Popover>
-                <ListBox items={plans.map(plan => ({ id: String(plan.id), label: plan.name }))}>
-                  {item => (
-                    <ListBoxItem id={item.id} textValue={item.label}>
-                      {item.label}
-                    </ListBoxItem>
-                  )}
-                </ListBox>
-              </Select.Popover>
-            </Select>
-            <Input label="Expire Timestamp" labelPlacement="outside" value={generateForm.expired_at} onValueChange={value => setGenerateForm(current => ({ ...current, expired_at: value }))} />
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="light" onPress={() => setGenerateOpen(false)}>
-              Cancel
-            </Button>
-            <Button color="primary" onPress={() => void submitGenerate()} isLoading={submitting}>
-              Generate
-            </Button>
-          </Modal.Footer>
-        </Modal.Dialog>
+              <Modal.Header>
+                <Modal.Heading>Generate users</Modal.Heading>
+              </Modal.Header>
+              <Modal.Body className="grid gap-4 md:grid-cols-2">
+                <ModalField label="Email Prefix">
+                  <Input aria-label="Email Prefix" value={generateForm.email_prefix} onValueChange={value => setGenerateForm(current => ({ ...current, email_prefix: value }))} />
+                </ModalField>
+                <ModalField label="Email Suffix">
+                  <Input aria-label="Email Suffix" value={generateForm.email_suffix} onValueChange={value => setGenerateForm(current => ({ ...current, email_suffix: value }))} />
+                </ModalField>
+                <ModalField label="Password">
+                  <Input aria-label="Password" type="password" value={generateForm.password} onValueChange={value => setGenerateForm(current => ({ ...current, password: value }))} />
+                </ModalField>
+                <ModalField label="Generate Count">
+                  <Input aria-label="Generate Count" type="number" value={generateForm.generate_count} onValueChange={value => setGenerateForm(current => ({ ...current, generate_count: value }))} />
+                </ModalField>
+                <ModalField label="Plan">
+                  <Select
+                    aria-label="Plan"
+                    items={plans.map(plan => ({ id: String(plan.id), label: plan.name }))}
+                    selectedKey={generatePlan}
+                    onSelectionChange={key =>
+                      setGenerateForm(current => ({ ...current, plan_id: String(key || "") }))
+                    }
+                  >
+                    <Select.Trigger>
+                      <Select.Value />
+                      <Select.Indicator />
+                    </Select.Trigger>
+                    <Select.Popover>
+                      <ListBox items={plans.map(plan => ({ id: String(plan.id), label: plan.name }))}>
+                        {item => (
+                          <ListBoxItem id={item.id} textValue={item.label}>
+                            {item.label}
+                          </ListBoxItem>
+                        )}
+                      </ListBox>
+                    </Select.Popover>
+                  </Select>
+                </ModalField>
+                <ModalField label="Expire Timestamp">
+                  <Input aria-label="Expire Timestamp" value={generateForm.expired_at} onValueChange={value => setGenerateForm(current => ({ ...current, expired_at: value }))} />
+                </ModalField>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button variant="light" onPress={() => setGenerateOpen(false)}>
+                  Cancel
+                </Button>
+                <Button color="primary" onPress={() => void submitGenerate()} isLoading={submitting}>
+                  Generate
+                </Button>
+              </Modal.Footer>
+            </Modal.Dialog>
           </Modal.Container>
         </Modal.Backdrop>
       </Modal>
@@ -1006,22 +1017,26 @@ export function UserPage() {
         <Modal.Backdrop>
           <Modal.Container>
             <Modal.Dialog>
-          <Modal.Header>
-              <Modal.Heading>Mass mail</Modal.Heading>
-            </Modal.Header>
-          <Modal.Body className="gap-4">
-            <Input label="Subject" labelPlacement="outside" value={mailForm.subject} onValueChange={value => setMailForm(current => ({ ...current, subject: value }))} />
-            <TextArea label="Content" labelPlacement="outside" minRows={8} value={mailForm.content} onValueChange={value => setMailForm(current => ({ ...current, content: value }))} />
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="light" onPress={() => setMailOpen(false)}>
-              Cancel
-            </Button>
-            <Button color="primary" onPress={() => void sendMail()} isLoading={submitting}>
-              Queue email
-            </Button>
-          </Modal.Footer>
-        </Modal.Dialog>
+              <Modal.Header>
+                <Modal.Heading>Mass mail</Modal.Heading>
+              </Modal.Header>
+              <Modal.Body className="gap-4">
+                <ModalField label="Subject">
+                  <Input aria-label="Subject" value={mailForm.subject} onValueChange={value => setMailForm(current => ({ ...current, subject: value }))} />
+                </ModalField>
+                <ModalField label="Content">
+                  <TextArea aria-label="Content" minRows={8} value={mailForm.content} onValueChange={value => setMailForm(current => ({ ...current, content: value }))} />
+                </ModalField>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button variant="light" onPress={() => setMailOpen(false)}>
+                  Cancel
+                </Button>
+                <Button color="primary" onPress={() => void sendMail()} isLoading={submitting}>
+                  Queue email
+                </Button>
+              </Modal.Footer>
+            </Modal.Dialog>
           </Modal.Container>
         </Modal.Backdrop>
       </Modal>
@@ -1076,81 +1091,82 @@ export function UserPage() {
         <Modal.Backdrop>
           <Modal.Container>
             <Modal.Dialog>
-          <Modal.Header>
-              <Modal.Heading>IP geography for {ipGeoUser?.email || "user"}</Modal.Heading>
-            </Modal.Header>
-          <Modal.Body className="gap-4">
-            <div className="flex flex-wrap items-end gap-3">
-              <Select
-                className="max-w-xs"
-                label="Provider"
-                labelPlacement="outside"
-                items={geoProviders.map(provider => ({ id: provider.key, label: provider.name }))}
-                selectedKey={geoProvider}
-                onSelectionChange={key => setGeoProvider(String(key || "ipinfo"))}
-              >
-                <Select.Trigger>
-                  <Select.Value />
-                  <Select.Indicator />
-                </Select.Trigger>
-                <Select.Popover>
-                  <ListBox items={geoProviders.map(provider => ({ id: provider.key, label: provider.name }))}>
-                    {item => (
-                      <ListBoxItem id={item.id} textValue={item.label}>
-                        {item.label}
-                      </ListBoxItem>
-                    )}
-                  </ListBox>
-                </Select.Popover>
-              </Select>
-              <Button color="primary" variant="light" onPress={() => void fetchAllGeo()}>
-                Refresh geo
-              </Button>
-            </div>
+              <Modal.Header>
+                <Modal.Heading>IP geography for {ipGeoUser?.email || "user"}</Modal.Heading>
+              </Modal.Header>
+              <Modal.Body className="gap-4">
+                <div className="flex flex-wrap items-end gap-3">
+                  <ModalField label="Provider" className="w-full max-w-xs">
+                    <Select
+                      aria-label="Provider"
+                      className="max-w-xs"
+                      items={geoProviders.map(provider => ({ id: provider.key, label: provider.name }))}
+                      selectedKey={geoProvider}
+                      onSelectionChange={key => setGeoProvider(String(key || "ipinfo"))}
+                    >
+                      <Select.Trigger>
+                        <Select.Value />
+                        <Select.Indicator />
+                      </Select.Trigger>
+                      <Select.Popover>
+                        <ListBox items={geoProviders.map(provider => ({ id: provider.key, label: provider.name }))}>
+                          {item => (
+                            <ListBoxItem id={item.id} textValue={item.label}>
+                              {item.label}
+                            </ListBoxItem>
+                          )}
+                        </ListBox>
+                      </Select.Popover>
+                    </Select>
+                  </ModalField>
+                  <Button color="primary" variant="light" onPress={() => void fetchAllGeo()}>
+                    Refresh geo
+                  </Button>
+                </div>
 
-            <Table aria-label="IP geo records" classNames={adminTableClassNames}>
-              <Table.Content>
-                <TableHeader>
-                  <TableColumn>IP</TableColumn>
-                  <TableColumn>Last Seen</TableColumn>
-                  <TableColumn>Country</TableColumn>
-                  <TableColumn>City</TableColumn>
-                  <TableColumn>ISP</TableColumn>
-                  <TableColumn>Organization</TableColumn>
-                </TableHeader>
-                <TableBody
-                  items={[
-                    ...(ipGeoUser?.recent_ip_records || []),
-                    ...(ipGeoUser?.recent_login_ip_records || [])
-                  ]}
-                  emptyContent="No IP records found"
-                >
-                  {item => {
-                    const geo = geoRecords[item.ip];
-                    const loadingState = geoLoading[item.ip];
-                    const failed = geo?.status === "failed";
+                <Table aria-label="IP geo records" classNames={adminTableClassNames}>
+                  <Table.Content>
+                    <TableHeader>
+                      <TableColumn>IP</TableColumn>
+                      <TableColumn>Last Seen</TableColumn>
+                      <TableColumn>Country</TableColumn>
+                      <TableColumn>City</TableColumn>
+                      <TableColumn>ISP</TableColumn>
+                      <TableColumn>Organization</TableColumn>
+                    </TableHeader>
+                    <TableBody
+                      items={[
+                        ...(ipGeoUser?.recent_ip_records || []),
+                        ...(ipGeoUser?.recent_login_ip_records || [])
+                      ]}
+                      emptyContent="No IP records found"
+                    >
+                      {item => {
+                        const geo = geoRecords[item.ip];
+                        const loadingState = geoLoading[item.ip];
+                        const failed = geo?.status === "failed";
 
-                    return (
-                      <TableRow key={`${item.ip}-${item.last_seen_at}`}>
-                        <TableCell>{item.ip}</TableCell>
-                        <TableCell>{formatDateTime(item.last_seen_at)}</TableCell>
-                        <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.country || "—"}</TableCell>
-                        <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.city || "—"}</TableCell>
-                        <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.isp || "—"}</TableCell>
-                        <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.organization || "—"}</TableCell>
-                      </TableRow>
-                    );
-                  }}
-                </TableBody>
-              </Table.Content>
-            </Table>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="light" onPress={() => setIpGeoOpen(false)}>
-              Close
-            </Button>
-          </Modal.Footer>
-        </Modal.Dialog>
+                        return (
+                          <TableRow key={`${item.ip}-${item.last_seen_at}`}>
+                            <TableCell>{item.ip}</TableCell>
+                            <TableCell>{formatDateTime(item.last_seen_at)}</TableCell>
+                            <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.country || "—"}</TableCell>
+                            <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.city || "—"}</TableCell>
+                            <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.isp || "—"}</TableCell>
+                            <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.organization || "—"}</TableCell>
+                          </TableRow>
+                        );
+                      }}
+                    </TableBody>
+                  </Table.Content>
+                </Table>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button variant="light" onPress={() => setIpGeoOpen(false)}>
+                  Close
+                </Button>
+              </Modal.Footer>
+            </Modal.Dialog>
           </Modal.Container>
         </Modal.Backdrop>
       </Modal>

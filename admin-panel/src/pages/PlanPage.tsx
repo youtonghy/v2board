@@ -66,6 +66,23 @@ interface PlanRecord {
   reset_price?: number | string | null;
 }
 
+function ModalField({
+  label,
+  children,
+  className
+}: {
+  label: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={className}>
+      <p className="mb-2 text-sm font-medium text-slate-700">{label}</p>
+      {children}
+    </div>
+  );
+}
+
 function normalizePlan(record?: PlanRecord | null): PlanRecord {
   return {
     show: 1,
@@ -186,6 +203,14 @@ export function PlanPage() {
   }
 
   const selectedGroup = useMemo(() => (selected?.group_id ? String(selected.group_id) : null), [selected]);
+  const groupOptions = useMemo(
+    () => groups.map(group => ({ id: String(group.id), label: group.name })),
+    [groups]
+  );
+  const resetMethodOptions = useMemo(
+    () => RESET_TRAFFIC_OPTIONS.map(option => ({ id: option.key, label: option.label })),
+    []
+  );
   const selectedResetMethod = useMemo(() => {
     const matched = RESET_TRAFFIC_OPTIONS.find(option => option.value === (selected?.reset_traffic_method ?? null));
     return matched?.key || "null";
@@ -340,96 +365,103 @@ export function PlanPage() {
                 <Modal.Heading>{selected?.id ? "Edit plan" : "Create plan"}</Modal.Heading>
               </Modal.Header>
               <Modal.Body className="grid gap-5 md:grid-cols-2">
-                <Input
-                  label="Plan Name"
-                  labelPlacement="outside"
-                  value={selected?.name || ""}
-                  onValueChange={value => setSelected(current => (current ? { ...current, name: value } : current))}
-                />
-                <Input
-                  label="Transfer (GB)"
-                  labelPlacement="outside"
-                  type="number"
-                  value={String(selected?.transfer_enable ?? "")}
-                  onValueChange={value => setSelected(current => (current ? { ...current, transfer_enable: value } : current))}
-                />
-                <TextArea
-                  label="Description"
-                  labelPlacement="outside"
-                  minRows={6}
-                  value={selected?.content || ""}
-                  onValueChange={value => setSelected(current => (current ? { ...current, content: value } : current))}
-                  className="md:col-span-2"
-                />
-                <Select
-                  label="Permission Group"
-                  labelPlacement="outside"
-                  items={groups.map(group => ({ id: String(group.id), label: group.name }))}
-                  selectedKey={selectedGroup}
-                  onSelectionChange={key => {
-                    setSelected(current => (current ? { ...current, group_id: String(key || "") } : current));
-                  }}
-                >
-                  <Select.Trigger>
-                    <Select.Value />
-                    <Select.Indicator />
-                  </Select.Trigger>
-                  <Select.Popover>
-                    <ListBox items={groupOptions}>
-                      {item => (
-                        <ListBoxItem id={item.id} textValue={item.label}>
-                          {item.label}
-                        </ListBoxItem>
-                      )}
-                    </ListBox>
-                  </Select.Popover>
-                </Select>
-                <Select
-                  label="Traffic Reset"
-                  labelPlacement="outside"
-                  items={RESET_TRAFFIC_OPTIONS.map(option => ({ id: option.key, label: option.label }))}
-                  selectedKey={selectedResetMethod}
-                  onSelectionChange={key => {
-                    const nextKey = String(key || "null");
-                    const option = RESET_TRAFFIC_OPTIONS.find(item => item.key === nextKey);
-                    setSelected(current => (current ? { ...current, reset_traffic_method: option?.value ?? null } : current));
-                  }}
-                >
-                  <Select.Trigger>
-                    <Select.Value />
-                    <Select.Indicator />
-                  </Select.Trigger>
-                  <Select.Popover>
-                    <ListBox items={RESET_METHOD_OPTIONS}>
-                      {item => (
-                        <ListBoxItem id={item.id} textValue={item.label}>
-                          {item.label}
-                        </ListBoxItem>
-                      )}
-                    </ListBox>
-                  </Select.Popover>
-                </Select>
-                <Input
-                  label="Device Limit"
-                  labelPlacement="outside"
-                  type="number"
-                  value={String(selected?.device_limit ?? "")}
-                  onValueChange={value => setSelected(current => (current ? { ...current, device_limit: value } : current))}
-                />
-                <Input
-                  label="Capacity Limit"
-                  labelPlacement="outside"
-                  type="number"
-                  value={String(selected?.capacity_limit ?? "")}
-                  onValueChange={value => setSelected(current => (current ? { ...current, capacity_limit: value } : current))}
-                />
-                <Input
-                  label="Speed Limit (Mbps)"
-                  labelPlacement="outside"
-                  type="number"
-                  value={String(selected?.speed_limit ?? "")}
-                  onValueChange={value => setSelected(current => (current ? { ...current, speed_limit: value } : current))}
-                />
+                <ModalField label="Plan Name">
+                  <Input
+                    aria-label="Plan Name"
+                    value={selected?.name || ""}
+                    onValueChange={value => setSelected(current => (current ? { ...current, name: value } : current))}
+                  />
+                </ModalField>
+                <ModalField label="Transfer (GB)">
+                  <Input
+                    aria-label="Transfer (GB)"
+                    type="number"
+                    value={String(selected?.transfer_enable ?? "")}
+                    onValueChange={value => setSelected(current => (current ? { ...current, transfer_enable: value } : current))}
+                  />
+                </ModalField>
+                <ModalField label="Description" className="md:col-span-2">
+                  <TextArea
+                    aria-label="Description"
+                    minRows={6}
+                    value={selected?.content || ""}
+                    onValueChange={value => setSelected(current => (current ? { ...current, content: value } : current))}
+                  />
+                </ModalField>
+                <ModalField label="Permission Group">
+                  <Select
+                    aria-label="Permission Group"
+                    items={groupOptions}
+                    selectedKey={selectedGroup}
+                    onSelectionChange={key => {
+                      setSelected(current => (current ? { ...current, group_id: String(key || "") } : current));
+                    }}
+                  >
+                    <Select.Trigger>
+                      <Select.Value />
+                      <Select.Indicator />
+                    </Select.Trigger>
+                    <Select.Popover>
+                      <ListBox items={groupOptions}>
+                        {item => (
+                          <ListBoxItem id={item.id} textValue={item.label}>
+                            {item.label}
+                          </ListBoxItem>
+                        )}
+                      </ListBox>
+                    </Select.Popover>
+                  </Select>
+                </ModalField>
+                <ModalField label="Traffic Reset">
+                  <Select
+                    aria-label="Traffic Reset"
+                    items={resetMethodOptions}
+                    selectedKey={selectedResetMethod}
+                    onSelectionChange={key => {
+                      const nextKey = String(key || "null");
+                      const option = RESET_TRAFFIC_OPTIONS.find(item => item.key === nextKey);
+                      setSelected(current => (current ? { ...current, reset_traffic_method: option?.value ?? null } : current));
+                    }}
+                  >
+                    <Select.Trigger>
+                      <Select.Value />
+                      <Select.Indicator />
+                    </Select.Trigger>
+                    <Select.Popover>
+                      <ListBox items={resetMethodOptions}>
+                        {item => (
+                          <ListBoxItem id={item.id} textValue={item.label}>
+                            {item.label}
+                          </ListBoxItem>
+                        )}
+                      </ListBox>
+                    </Select.Popover>
+                  </Select>
+                </ModalField>
+                <ModalField label="Device Limit">
+                  <Input
+                    aria-label="Device Limit"
+                    type="number"
+                    value={String(selected?.device_limit ?? "")}
+                    onValueChange={value => setSelected(current => (current ? { ...current, device_limit: value } : current))}
+                  />
+                </ModalField>
+                <ModalField label="Capacity Limit">
+                  <Input
+                    aria-label="Capacity Limit"
+                    type="number"
+                    value={String(selected?.capacity_limit ?? "")}
+                    onValueChange={value => setSelected(current => (current ? { ...current, capacity_limit: value } : current))}
+                  />
+                </ModalField>
+                <ModalField label="Speed Limit (Mbps)">
+                  <Input
+                    aria-label="Speed Limit (Mbps)"
+                    type="number"
+                    value={String(selected?.speed_limit ?? "")}
+                    onValueChange={value => setSelected(current => (current ? { ...current, speed_limit: value } : current))}
+                  />
+                </ModalField>
                 <div className="rounded-2xl border border-default-200 bg-default-50 p-4">
                   <p className="mb-3 text-sm font-semibold text-slate-900">Force Update Users</p>
                   <Switch
@@ -440,16 +472,16 @@ export function PlanPage() {
                   </Switch>
                 </div>
                 {PERIOD_OPTIONS.map(option => (
-                  <Input
-                    key={option.key}
-                    label={`${option.label} (${currency})`}
-                    labelPlacement="outside"
-                    type="number"
-                    value={String(selected?.[option.key] ?? "")}
-                    onValueChange={value =>
-                      setSelected(current => (current ? { ...current, [option.key]: value } : current))
-                    }
-                  />
+                  <ModalField key={option.key} label={`${option.label} (${currency})`}>
+                    <Input
+                      aria-label={`${option.label} (${currency})`}
+                      type="number"
+                      value={String(selected?.[option.key] ?? "")}
+                      onValueChange={value =>
+                        setSelected(current => (current ? { ...current, [option.key]: value } : current))
+                      }
+                    />
+                  </ModalField>
                 ))}
               </Modal.Body>
               <Modal.Footer>
