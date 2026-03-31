@@ -205,6 +205,7 @@ function sanitizeServerPayload(record: ServerRecord): Record<string, unknown> {
 export function ServerManagePage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [sortingId, setSortingId] = useState<number | null>(null);
   const [records, setRecords] = useState<ServerRecord[]>([]);
   const [activeProtocol, setActiveProtocol] = useState<ServerProtocol>("shadowsocks");
   const [editorOpen, setEditorOpen] = useState(false);
@@ -248,6 +249,48 @@ export function ServerManagePage() {
       await loadServers();
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function reorderServer(fromIndex: number, toIndex: number) {
+    if (toIndex < 0 || toIndex >= filtered.length) return;
+
+    const currentProtocolRecords = [...filtered];
+    const [current] = currentProtocolRecords.splice(fromIndex, 1);
+    currentProtocolRecords.splice(toIndex, 0, current);
+
+    const nextRecords = [...records];
+    let pointer = 0;
+    for (let index = 0; index < nextRecords.length; index += 1) {
+      if (nextRecords[index].type === activeProtocol) {
+        nextRecords[index] = currentProtocolRecords[pointer];
+        pointer += 1;
+      }
+    }
+
+    setRecords(nextRecords);
+    setSortingId(current.id);
+    try {
+      const payload = nextRecords.reduce<Record<string, Record<number, number>>>((accumulator, record, index) => {
+        if (!accumulator[record.type]) {
+          accumulator[record.type] = {};
+        }
+        accumulator[record.type][record.id] = index;
+        return accumulator;
+      }, {});
+
+      await unwrapEnvelope(
+        await adminRequest("server/manage/sort", {
+          method: "POST",
+          body: payload
+        })
+      );
+      await loadServers();
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : "Failed to sort servers");
+      await loadServers();
+    } finally {
+      setSortingId(null);
     }
   }
 
@@ -305,6 +348,7 @@ export function ServerManagePage() {
           ) : (
             <Table removeWrapper aria-label="Servers">
               <TableHeader>
+                <TableColumn>Sort</TableColumn>
                 <TableColumn>Name</TableColumn>
                 <TableColumn>Host</TableColumn>
                 <TableColumn>Group</TableColumn>
@@ -315,8 +359,32 @@ export function ServerManagePage() {
                 <TableColumn align="end">Actions</TableColumn>
               </TableHeader>
               <TableBody items={filtered} emptyContent="No nodes found">
-                {item => (
+                {item => {
+                  const index = filtered.findIndex(record => record.id === item.id);
+                  const sorting = sortingId === item.id;
+
+                  return (
                   <TableRow key={`${item.type}-${item.id}`}>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="flat"
+                          isDisabled={sorting || index <= 0}
+                          onPress={() => void reorderServer(index, index - 1)}
+                        >
+                          Up
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="flat"
+                          isDisabled={sorting || index >= filtered.length - 1}
+                          onPress={() => void reorderServer(index, index + 1)}
+                        >
+                          Down
+                        </Button>
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <div>
                         <p className="font-medium text-slate-900">{String(item.name || "Unnamed Node")}</p>
@@ -357,7 +425,7 @@ export function ServerManagePage() {
                       </div>
                     </TableCell>
                   </TableRow>
-                )}
+                )}}
               </TableBody>
             </Table>
           )}
