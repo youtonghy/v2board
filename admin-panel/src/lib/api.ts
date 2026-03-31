@@ -9,13 +9,40 @@ function getAuthToken(): string | null {
   }
 }
 
-function buildUrl(endpoint: string, query?: Record<string, string | number>): string {
+function appendQueryValue(
+  params: URLSearchParams,
+  key: string,
+  value: unknown
+): void {
+  if (value === undefined) {
+    return;
+  }
+  if (value === null) {
+    params.append(key, "");
+    return;
+  }
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => {
+      appendQueryValue(params, `${key}[${index}]`, item);
+    });
+    return;
+  }
+  if (typeof value === "object") {
+    Object.entries(value as Record<string, unknown>).forEach(([childKey, childValue]) => {
+      appendQueryValue(params, `${key}[${childKey}]`, childValue);
+    });
+    return;
+  }
+  params.append(key, String(value));
+}
+
+function buildUrl(endpoint: string, query?: Record<string, unknown>): string {
   const securePath = adminBootstrap.securePath;
   const normalized = endpoint.replace(/^\/+/, "");
   const url = new URL(`/${securePath}/${normalized}`, window.location.origin);
   if (query) {
     Object.entries(query).forEach(([key, value]) => {
-      url.searchParams.set(key, String(value));
+      appendQueryValue(url.searchParams, key, value);
     });
   }
   return url.toString();
@@ -36,7 +63,7 @@ export async function adminRequest<T>(
   endpoint: string,
   options?: {
     method?: "GET" | "POST";
-    query?: Record<string, string | number>;
+    query?: Record<string, unknown>;
     body?: Record<string, unknown>;
   }
 ): Promise<ApiEnvelope<T>> {
@@ -94,4 +121,38 @@ export async function gatewayRequest<T>(
   });
 
   return parseResponse<T>(response);
+}
+
+export function getEnvelopeError(envelope?: ApiEnvelope | null): string | null {
+  if (!envelope) {
+    return "Empty response";
+  }
+
+  if (typeof envelope.code === "number" && envelope.code >= 400) {
+    if (typeof envelope.message === "string" && envelope.message.trim()) {
+      return envelope.message;
+    }
+    if (typeof envelope.data === "string" && envelope.data.trim()) {
+      return envelope.data;
+    }
+    return `Request failed (${envelope.code})`;
+  }
+
+  if (
+    typeof envelope.message === "string" &&
+    envelope.message.trim() &&
+    envelope.code !== 200
+  ) {
+    return envelope.message;
+  }
+
+  return null;
+}
+
+export function unwrapEnvelope<T>(envelope?: ApiEnvelope<T> | null): T {
+  const error = getEnvelopeError(envelope);
+  if (error) {
+    throw new Error(error);
+  }
+  return (envelope?.data ?? null) as T;
 }

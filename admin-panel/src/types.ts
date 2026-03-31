@@ -14,12 +14,17 @@ export interface ApiEnvelope<T = unknown> {
   [key: string]: unknown;
 }
 
+export interface AdminListResult<T = unknown> {
+  data: T[];
+  total: number;
+}
+
 export interface ResourceSource {
   id: string;
   label: string;
   endpoint: string;
   method?: "GET" | "POST";
-  query?: Record<string, string | number>;
+  query?: Record<string, unknown>;
 }
 
 export interface ResourcePageSpec {

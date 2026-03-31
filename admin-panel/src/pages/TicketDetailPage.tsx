@@ -1,30 +1,90 @@
-import { Card, CardBody, Spinner } from "@heroui/react";
+import {
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+  Spinner,
+  Textarea
+} from "@heroui/react";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { adminRequest } from "../lib/api";
-import { AutoDataView } from "../components/AutoDataView";
+import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
-import type { ApiEnvelope } from "../types";
+import { formatDateTime } from "../lib/admin-format";
+
+interface TicketMessageRecord {
+  id: number;
+  message: string;
+  created_at?: string;
+  is_me?: boolean;
+}
+
+interface TicketDetailRecord {
+  id: number;
+  user_id: number;
+  subject?: string;
+  level?: number;
+  status: number;
+  reply_status?: number;
+  updated_at?: string;
+  created_at?: string;
+  message?: TicketMessageRecord[];
+}
 
 export function TicketDetailPage() {
   const { ticketId } = useParams();
-  const [state, setState] = useState<{ loading: boolean; envelope?: ApiEnvelope; error?: string }>({
+  const [state, setState] = useState<{ loading: boolean; detail?: TicketDetailRecord; error?: string }>({
     loading: true
   });
+  const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   async function loadDetail() {
     if (!ticketId) return;
     setState({ loading: true });
     try {
-      const envelope = await adminRequest("ticket/fetch", {
+      const envelope = await adminRequest<TicketDetailRecord>("ticket/fetch", {
         query: { id: ticketId }
       });
-      setState({ loading: false, envelope });
+      setState({ loading: false, detail: unwrapEnvelope(envelope) });
     } catch (error) {
       setState({
         loading: false,
         error: error instanceof Error ? error.message : "Ticket detail request failed"
       });
+    }
+  }
+
+  async function reply() {
+    if (!ticketId || !message.trim()) return;
+    setSubmitting(true);
+    try {
+      await unwrapEnvelope(
+        await adminRequest("ticket/reply", {
+          method: "POST",
+          body: { id: Number(ticketId), message: message.trim() }
+        })
+      );
+      setMessage("");
+      await loadDetail();
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function closeTicket() {
+    if (!ticketId) return;
+    setSubmitting(true);
+    try {
+      await unwrapEnvelope(
+        await adminRequest("ticket/close", {
+          method: "POST",
+          body: { id: Number(ticketId) }
+        })
+      );
+      await loadDetail();
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -46,8 +106,69 @@ export function TicketDetailPage() {
             <Spinner color="warning" label="Loading ticket detail" />
           </CardBody>
         </Card>
+      ) : state.error ? (
+        <Card className="border border-danger-200 bg-danger-50 shadow-none">
+          <CardBody className="p-6 text-sm text-danger-700">{state.error}</CardBody>
+        </Card>
       ) : (
-        <AutoDataView title="Ticket Detail" payload={state.envelope?.data ?? state.envelope ?? state.error} />
+        <div className="grid gap-6 xl:grid-cols-[1.7fr_1fr]">
+          <Card className="border border-white/60 bg-white/90 shadow-panel">
+            <CardHeader className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-lg font-semibold text-slate-900">{state.detail?.subject || `Ticket #${ticketId}`}</p>
+                <p className="text-sm text-slate-500">Reply directly from the new admin thread view.</p>
+              </div>
+              <Button color="warning" variant="flat" onPress={() => void closeTicket()} isLoading={submitting} isDisabled={state.detail?.status === 1}>
+                Close ticket
+              </Button>
+            </CardHeader>
+            <CardBody className="gap-4">
+              <div className="space-y-4">
+                {(state.detail?.message || []).map(item => (
+                  <div
+                    key={item.id}
+                    className={`rounded-3xl p-4 ${
+                      item.is_me
+                        ? "ml-8 bg-amber-50 text-slate-800"
+                        : "mr-8 bg-slate-100 text-slate-800"
+                    }`}
+                  >
+                    <p className="text-sm leading-7">{item.message}</p>
+                    <p className="mt-3 text-xs text-slate-500">{formatDateTime(item.created_at || null)}</p>
+                  </div>
+                ))}
+              </div>
+              <Textarea
+                label="Reply"
+                labelPlacement="outside"
+                minRows={5}
+                value={message}
+                onValueChange={setMessage}
+                placeholder="Write a reply to the user"
+              />
+              <div className="flex justify-end">
+                <Button color="primary" onPress={() => void reply()} isLoading={submitting} isDisabled={!message.trim() || state.detail?.status === 1}>
+                  Send reply
+                </Button>
+              </div>
+            </CardBody>
+          </Card>
+
+          <Card className="border border-white/60 bg-white/90 shadow-panel">
+            <CardBody className="gap-4 p-6 text-sm text-slate-600">
+              <div>
+                <p className="font-semibold text-slate-900">Ticket Meta</p>
+              </div>
+              <p>ID: #{state.detail?.id}</p>
+              <p>User ID: {state.detail?.user_id}</p>
+              <p>Status: {state.detail?.status === 1 ? "Closed" : "Open"}</p>
+              <p>Reply Status: {state.detail?.reply_status ?? 0}</p>
+              <p>Priority: {state.detail?.level ?? 0}</p>
+              <p>Created: {formatDateTime(state.detail?.created_at || null)}</p>
+              <p>Updated: {formatDateTime(state.detail?.updated_at || null)}</p>
+            </CardBody>
+          </Card>
+        </div>
       )}
     </PageFrame>
   );

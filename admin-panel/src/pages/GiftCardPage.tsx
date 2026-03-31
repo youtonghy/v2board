@@ -1,0 +1,278 @@
+import {
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+  Chip,
+  Input,
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  Pagination,
+  Select,
+  SelectItem,
+  Spinner,
+  Table,
+  TableBody,
+  TableCell,
+  TableColumn,
+  TableHeader,
+  TableRow
+} from "@heroui/react";
+import { useEffect, useMemo, useState } from "react";
+import { adminRequest } from "../lib/api";
+import { GIFTCARD_TYPE_OPTIONS, fromDatetimeInput, toDatetimeInput } from "../lib/admin-constants";
+import { PageFrame } from "../components/PageFrame";
+
+interface PlanOption {
+  id: number;
+  name: string;
+}
+
+interface GiftCardRecord {
+  id?: number;
+  name?: string;
+  code?: string;
+  type?: number;
+  value?: number | string | null;
+  plan_id?: number | string | null;
+  limit_use?: number | string | null;
+  started_at?: number | null;
+  ended_at?: number | null;
+  generate_count?: number | string | null;
+}
+
+function normalizeGiftCard(record?: GiftCardRecord | null): GiftCardRecord {
+  return {
+    type: 1,
+    ...record
+  };
+}
+
+export function GiftCardPage() {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [records, setRecords] = useState<GiftCardRecord[]>([]);
+  const [plans, setPlans] = useState<PlanOption[]>([]);
+  const [selected, setSelected] = useState<GiftCardRecord | null>(null);
+  const [open, setOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(20);
+  const [total, setTotal] = useState(0);
+
+  async function loadGiftCards(nextPage = page) {
+    setLoading(true);
+    const [giftcardResponse, planResponse] = await Promise.all([
+      adminRequest<GiftCardRecord[]>("giftcard/fetch", {
+        query: { current: nextPage, pageSize }
+      }),
+      adminRequest<PlanOption[]>("plan/fetch")
+    ]);
+
+    setRecords(giftcardResponse.data || []);
+    setTotal(Number(giftcardResponse.total || (giftcardResponse.data || []).length));
+    setPlans(planResponse.data || []);
+    setPage(nextPage);
+    setLoading(false);
+  }
+
+  async function saveGiftCard() {
+    if (!selected) return;
+    setSaving(true);
+    try {
+      await adminRequest("giftcard/generate", {
+        method: "POST",
+        body: selected
+      });
+      setOpen(false);
+      await loadGiftCards(page);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function dropGiftCard(record: GiftCardRecord) {
+    await adminRequest("giftcard/drop", {
+      method: "POST",
+      body: { id: record.id }
+    });
+    await loadGiftCards(page);
+  }
+
+  useEffect(() => {
+    void loadGiftCards(1);
+  }, []);
+
+  const selectedType = useMemo(
+    () => new Set(selected?.type ? [String(selected.type)] : ["1"]),
+    [selected]
+  );
+  const selectedPlan = useMemo(
+    () => (selected?.plan_id ? new Set([String(selected.plan_id)]) : new Set<string>()),
+    [selected]
+  );
+
+  return (
+    <PageFrame
+      title="Gift Cards"
+      description="Gift cards move to a dedicated HeroUI table and modal editor while preserving the current backend payload format for create, update, and drop operations."
+      legacyPath="/giftcard"
+      onRefresh={() => void loadGiftCards(page)}
+      loading={loading}
+    >
+      <Card className="border border-white/60 bg-white/90 shadow-panel">
+        <CardHeader className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-lg font-semibold text-slate-900">Gift Card Inventory</p>
+            <p className="text-sm text-slate-500">Create or edit gift card batches without dropping back to the generic data explorer.</p>
+          </div>
+          <Button
+            color="primary"
+            onPress={() => {
+              setSelected(normalizeGiftCard());
+              setOpen(true);
+            }}
+          >
+            Add gift card
+          </Button>
+        </CardHeader>
+        <CardBody className="gap-4">
+          {loading ? (
+            <div className="flex min-h-[280px] items-center justify-center">
+              <Spinner color="warning" label="Loading gift cards" />
+            </div>
+          ) : (
+            <>
+              <Table removeWrapper aria-label="Gift cards">
+                <TableHeader>
+                  <TableColumn>ID</TableColumn>
+                  <TableColumn>Name</TableColumn>
+                  <TableColumn>Type</TableColumn>
+                  <TableColumn>Value</TableColumn>
+                  <TableColumn>Code</TableColumn>
+                  <TableColumn align="end">Actions</TableColumn>
+                </TableHeader>
+                <TableBody items={records} emptyContent="No gift cards found">
+                  {item => (
+                    <TableRow key={String(item.id || Math.random())}>
+                      <TableCell>{item.id ?? "—"}</TableCell>
+                      <TableCell>{item.name || "Untitled"}</TableCell>
+                      <TableCell>{GIFTCARD_TYPE_OPTIONS.find(option => option.value === Number(item.type))?.label || "Unknown"}</TableCell>
+                      <TableCell>{item.value ?? "—"}</TableCell>
+                      <TableCell>{item.code ? <Chip size="sm" variant="flat">{item.code}</Chip> : "Auto"}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            size="sm"
+                            variant="flat"
+                            onPress={() => {
+                              setSelected(normalizeGiftCard(item));
+                              setOpen(true);
+                            }}
+                          >
+                            Edit
+                          </Button>
+                          <Button size="sm" color="danger" variant="flat" onPress={() => void dropGiftCard(item)}>
+                            Delete
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+              <div className="flex justify-end">
+                <Pagination
+                  page={page}
+                  total={Math.max(1, Math.ceil(total / pageSize))}
+                  onChange={nextPage => void loadGiftCards(nextPage)}
+                  showControls
+                />
+              </div>
+            </>
+          )}
+        </CardBody>
+      </Card>
+
+      <Modal isOpen={open} onOpenChange={isOpen => !isOpen && setOpen(false)} size="5xl" scrollBehavior="inside">
+        <ModalContent>
+          <ModalHeader>{selected?.id ? "Edit gift card" : "Create gift card"}</ModalHeader>
+          <ModalBody className="grid gap-5 md:grid-cols-2">
+            <Input label="Name" labelPlacement="outside" value={selected?.name || ""} onValueChange={value => setSelected(current => (current ? { ...current, name: value } : current))} />
+            <Input label="Code" labelPlacement="outside" value={selected?.code || ""} onValueChange={value => setSelected(current => (current ? { ...current, code: value, generate_count: undefined } : current))} />
+            <Select
+              label="Type"
+              labelPlacement="outside"
+              selectedKeys={selectedType}
+              onSelectionChange={keys => {
+                const nextType = Number(Array.from(keys)[0] || 1);
+                setSelected(current => (current ? { ...current, type: nextType, value: nextType === 4 ? 0 : current.value } : current));
+              }}
+            >
+              {GIFTCARD_TYPE_OPTIONS.map(option => (
+                <SelectItem key={option.key}>{option.label}</SelectItem>
+              ))}
+            </Select>
+            <Input
+              label="Value"
+              labelPlacement="outside"
+              type="number"
+              isDisabled={selected?.type === 4}
+              value={String(selected?.type === 4 ? 0 : selected?.value ?? "")}
+              onValueChange={value => setSelected(current => (current ? { ...current, value } : current))}
+            />
+            {selected?.type === 5 ? (
+              <Select
+                label="Plan"
+                labelPlacement="outside"
+                selectedKeys={selectedPlan}
+                onSelectionChange={keys => {
+                  const nextPlan = Array.from(keys)[0];
+                  setSelected(current => (current ? { ...current, plan_id: String(nextPlan || "") } : current));
+                }}
+              >
+                {plans.map(plan => (
+                  <SelectItem key={String(plan.id)}>{plan.name}</SelectItem>
+                ))}
+              </Select>
+            ) : null}
+            <Input
+              label="Start Time"
+              labelPlacement="outside"
+              type="datetime-local"
+              value={toDatetimeInput(selected?.started_at)}
+              onValueChange={value => setSelected(current => (current ? { ...current, started_at: fromDatetimeInput(value) } : current))}
+            />
+            <Input
+              label="End Time"
+              labelPlacement="outside"
+              type="datetime-local"
+              value={toDatetimeInput(selected?.ended_at)}
+              onValueChange={value => setSelected(current => (current ? { ...current, ended_at: fromDatetimeInput(value) } : current))}
+            />
+            <Input label="Max Uses" labelPlacement="outside" type="number" value={String(selected?.limit_use ?? "")} onValueChange={value => setSelected(current => (current ? { ...current, limit_use: value } : current))} />
+            {!selected?.id && !selected?.code ? (
+              <Input
+                label="Generate Count"
+                labelPlacement="outside"
+                type="number"
+                value={String(selected?.generate_count ?? "")}
+                onValueChange={value => setSelected(current => (current ? { ...current, generate_count: value } : current))}
+              />
+            ) : null}
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="light" onPress={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button color="primary" onPress={() => void saveGiftCard()} isLoading={saving}>
+              Save gift card
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+    </PageFrame>
+  );
+}
