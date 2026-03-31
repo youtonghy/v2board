@@ -1077,37 +1077,28 @@ export function UserPage() {
                 <Modal.Heading>Traffic logs for {statsUser?.email || "user"}</Modal.Heading>
               </Modal.Header>
               <Modal.Body className="gap-4">
-                {statsRecords.length ? (
-                  <div className="grid gap-3">
-                    {statsRecords.map(item => (
-                      <div
-                        key={`${item.record_at}-${item.id || 0}`}
-                        className="grid gap-3 rounded-2xl border border-default-200 bg-default-50 p-4 md:grid-cols-4"
-                      >
-                        <div>
-                          <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-400">Date</p>
-                          <p className="mt-2 text-sm text-slate-900">{formatDateTime(item.record_at)}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-400">Upload</p>
-                          <p className="mt-2 text-sm text-slate-900">{formatBytes(item.u || 0)}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-400">Download</p>
-                          <p className="mt-2 text-sm text-slate-900">{formatBytes(item.d || 0)}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-400">Rate</p>
-                          <p className="mt-2 text-sm text-slate-900">{item.server_rate || 1}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="rounded-2xl border border-default-200 bg-default-50 p-6 text-sm text-slate-500">
-                    No traffic records found
-                  </div>
-                )}
+                <Table classNames={adminTableClassNames}>
+                  <Table.ScrollContainer>
+                    <Table.Content aria-label="User traffic logs">
+                      <Table.Header>
+                        <Table.Column id="date">Date</Table.Column>
+                        <Table.Column id="upload">Upload</Table.Column>
+                        <Table.Column id="download">Download</Table.Column>
+                        <Table.Column id="rate">Rate</Table.Column>
+                      </Table.Header>
+                      <Table.Body items={statsRecords} renderEmptyState={() => "No traffic records found"}>
+                        {item => (
+                          <Table.Row id={`${item.record_at}-${item.id || 0}`}>
+                            <Table.Cell>{formatDateTime(item.record_at)}</Table.Cell>
+                            <Table.Cell>{formatBytes(item.u || 0)}</Table.Cell>
+                            <Table.Cell>{formatBytes(item.d || 0)}</Table.Cell>
+                            <Table.Cell>{item.server_rate || 1}</Table.Cell>
+                          </Table.Row>
+                        )}
+                      </Table.Body>
+                    </Table.Content>
+                  </Table.ScrollContainer>
+                </Table>
                 <div className="flex justify-center">
                   <Pagination
                     page={statsPage}
@@ -1163,54 +1154,44 @@ export function UserPage() {
                   </Button>
                 </div>
 
-                {ipGeoRows.length ? (
-                  <div className="grid gap-3">
-                    {ipGeoRows.map(item => {
-                      const geo = geoRecords[item.ip];
-                      const loadingState = geoLoading[item.ip];
-                      const failed = geo?.status === "failed";
+                <Table classNames={adminTableClassNames}>
+                  <Table.ScrollContainer>
+                    <Table.Content aria-label="IP geo records">
+                      <Table.Header>
+                        <Table.Column id="ip">IP</Table.Column>
+                        <Table.Column id="lastSeen">Last Seen</Table.Column>
+                        <Table.Column id="status">Status</Table.Column>
+                        <Table.Column id="country">Country</Table.Column>
+                        <Table.Column id="city">City</Table.Column>
+                        <Table.Column id="isp">ISP</Table.Column>
+                        <Table.Column id="organization">Organization</Table.Column>
+                      </Table.Header>
+                      <Table.Body items={ipGeoRows} renderEmptyState={() => "No IP records found"}>
+                        {item => {
+                          const geo = geoRecords[item.ip];
+                          const loadingState = geoLoading[item.ip];
+                          const failed = geo?.status === "failed";
 
-                      return (
-                        <div
-                          key={`${item.ip}-${item.last_seen_at}`}
-                          className="rounded-2xl border border-default-200 bg-default-50 p-4"
-                        >
-                          <div className="flex flex-wrap items-start justify-between gap-3">
-                            <div>
-                              <p className="text-sm font-semibold text-slate-900">{item.ip}</p>
-                              <p className="mt-1 text-xs text-slate-500">Last seen {formatDateTime(item.last_seen_at)}</p>
-                            </div>
-                            <Chip variant="flat" color={loadingState ? "secondary" : failed ? "danger" : "success"}>
-                              {loadingState ? "Loading" : failed ? "Failed" : "Resolved"}
-                            </Chip>
-                          </div>
-                          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                            <div>
-                              <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-400">Country</p>
-                              <p className="mt-2 text-sm text-slate-900">{loadingState ? "Loading..." : failed ? "Failed" : geo?.country || "—"}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-400">City</p>
-                              <p className="mt-2 text-sm text-slate-900">{loadingState ? "Loading..." : failed ? "Failed" : geo?.city || "—"}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-400">ISP</p>
-                              <p className="mt-2 text-sm text-slate-900">{loadingState ? "Loading..." : failed ? "Failed" : geo?.isp || "—"}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-400">Organization</p>
-                              <p className="mt-2 text-sm text-slate-900">{loadingState ? "Loading..." : failed ? "Failed" : geo?.organization || "—"}</p>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="rounded-2xl border border-default-200 bg-default-50 p-6 text-sm text-slate-500">
-                    No IP records found
-                  </div>
-                )}
+                          return (
+                            <Table.Row id={`${item.ip}-${item.last_seen_at}`}>
+                              <Table.Cell>{item.ip}</Table.Cell>
+                              <Table.Cell>{formatDateTime(item.last_seen_at)}</Table.Cell>
+                              <Table.Cell>
+                                <Chip variant="flat" color={loadingState ? "secondary" : failed ? "danger" : "success"}>
+                                  {loadingState ? "Loading" : failed ? "Failed" : "Resolved"}
+                                </Chip>
+                              </Table.Cell>
+                              <Table.Cell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.country || "—"}</Table.Cell>
+                              <Table.Cell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.city || "—"}</Table.Cell>
+                              <Table.Cell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.isp || "—"}</Table.Cell>
+                              <Table.Cell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.organization || "—"}</Table.Cell>
+                            </Table.Row>
+                          );
+                        }}
+                      </Table.Body>
+                    </Table.Content>
+                  </Table.ScrollContainer>
+                </Table>
               </Modal.Body>
               <Modal.Footer>
                 <Button variant="light" onPress={() => setIpGeoOpen(false)}>
