@@ -98,7 +98,7 @@ const COPY_ENDPOINTS: Record<ServerProtocol, string> = {
 };
 
 function defaultServer(protocol: ServerProtocol): ServerRecord {
-  return {
+  const base: ServerRecord = {
     id: 0,
     type: protocol,
     name: "",
@@ -110,6 +110,96 @@ function defaultServer(protocol: ServerProtocol): ServerRecord {
     server_port: "",
     rate: 1
   };
+
+  switch (protocol) {
+    case "shadowsocks":
+      return { ...base, cipher: "aes-128-gcm" };
+    case "vmess":
+      return {
+        ...base,
+        tls: 0,
+        network: "tcp",
+        networkSettings: {},
+        ruleSettings: {},
+        tlsSettings: {},
+        dnsSettings: {}
+      };
+    case "vless":
+      return {
+        ...base,
+        tls: 0,
+        network: "tcp",
+        tls_settings: {},
+        network_settings: {},
+        encryption_settings: {}
+      };
+    case "trojan":
+      return {
+        ...base,
+        network: "tcp",
+        allow_insecure: 0
+      };
+    case "tuic":
+      return {
+        ...base,
+        insecure: 0,
+        disable_sni: 0,
+        zero_rtt_handshake: 0
+      };
+    case "hysteria":
+      return {
+        ...base,
+        version: 2,
+        insecure: 0,
+        up_mbps: 0,
+        down_mbps: 0
+      };
+    case "anytls":
+      return {
+        ...base,
+        insecure: 0
+      };
+    case "v2node":
+      return {
+        ...base,
+        protocol: "vmess",
+        tls: 0,
+        network: "tcp",
+        listen_ip: "0.0.0.0",
+        disable_sni: 0,
+        zero_rtt_handshake: 0,
+        tls_settings: {},
+        network_settings: {},
+        encryption_settings: {}
+      };
+    default:
+      return base;
+  }
+}
+
+function sanitizeServerPayload(record: ServerRecord): Record<string, unknown> {
+  const payload = { ...record } as Record<string, unknown>;
+  [
+    "type",
+    "online",
+    "last_check_at",
+    "last_push_at",
+    "cache_key",
+    "available",
+    "is_online",
+    "created_at",
+    "updated_at"
+  ].forEach(key => {
+    delete payload[key];
+  });
+
+  Object.keys(payload).forEach(key => {
+    if (payload[key] === "") {
+      payload[key] = null;
+    }
+  });
+
+  return payload;
 }
 
 export function ServerManagePage() {
@@ -141,7 +231,7 @@ export function ServerManagePage() {
       await unwrapEnvelope(
         await adminRequest(SAVE_ENDPOINTS[selected.type], {
           method: "POST",
-          body: selected
+          body: sanitizeServerPayload(selected)
         })
       );
       setEditorOpen(false);

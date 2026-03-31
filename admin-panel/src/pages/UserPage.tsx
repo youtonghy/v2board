@@ -38,6 +38,8 @@ interface UserRecord {
   email: string;
   balance?: number;
   commission_balance?: number;
+  commission_rate?: number | null;
+  discount?: number | null;
   plan_id?: number | null;
   plan_name?: string;
   transfer_enable?: number;
@@ -47,11 +49,15 @@ interface UserRecord {
   banned?: number;
   is_admin?: number;
   is_staff?: number;
+  speed_limit?: number | null;
   subscribe_url?: string;
   remarks?: string | null;
   recent_ips?: string[];
   recent_login_ips?: string[];
   alive_ip?: number;
+  invite_user?: {
+    email?: string;
+  } | null;
 }
 
 interface UserFormState {
@@ -97,15 +103,15 @@ function emptyUserForm(record?: UserRecord | null): UserFormState {
     password: "",
     plan_id: record?.plan_id ? String(record.plan_id) : "",
     transfer_enable: record?.transfer_enable ? String(Math.round(record.transfer_enable / 1073741824)) : "",
-    device_limit: "",
+    device_limit: record?.device_limit != null ? String(record.device_limit) : "",
     expired_at: record?.expired_at ? String(record.expired_at) : "",
     balance: record?.balance ? String(record.balance) : "0",
     commission_balance: record?.commission_balance ? String(record.commission_balance) : "0",
-    commission_rate: "",
-    discount: "",
-    speed_limit: "",
+    commission_rate: record?.commission_rate != null ? String(record.commission_rate) : "",
+    discount: record?.discount != null ? String(record.discount) : "",
+    speed_limit: record?.speed_limit != null ? String(record.speed_limit) : "",
     remarks: record?.remarks || "",
-    invite_user_email: "",
+    invite_user_email: record?.invite_user?.email || "",
     banned: Boolean(Number(record?.banned || 0)),
     is_admin: Boolean(Number(record?.is_admin || 0)),
     is_staff: Boolean(Number(record?.is_staff || 0))
@@ -216,6 +222,25 @@ export function UserPage() {
       );
       setEditorOpen(false);
       await loadUsers();
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : "Failed to save user");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function openEditor(record: UserRecord) {
+    setSubmitting(true);
+    try {
+      const envelope = await adminRequest<UserRecord>("user/getUserInfoById", {
+        query: { id: record.id }
+      });
+      const detail = unwrapEnvelope(envelope);
+      setSelected(detail);
+      setForm(emptyUserForm(detail));
+      setEditorOpen(true);
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : "Failed to load user detail");
     } finally {
       setSubmitting(false);
     }
@@ -421,11 +446,8 @@ export function UserPage() {
                           <Button
                             size="sm"
                             variant="flat"
-                            onPress={() => {
-                              setSelected(item);
-                              setForm(emptyUserForm(item));
-                              setEditorOpen(true);
-                            }}
+                            onPress={() => void openEditor(item)}
+                            isLoading={submitting}
                           >
                             Edit
                           </Button>
