@@ -9,9 +9,10 @@ import {
   CardHeader,
   Chip,
   Input,
-  Modal,
-          Select,
+  ListBox,
   ListBoxItem,
+  Modal,
+  Select,
   Spinner,
   Switch,
   Table,
@@ -245,13 +246,26 @@ export function KnowledgePage() {
               className="min-w-[220px]"
               label="Category"
               labelPlacement="outside"
-              selectedKeys={new Set([activeCategory])}
-              onSelectionChange={keys => setActiveCategory(String(Array.from(keys)[0] || "all"))}
+              items={[
+                { id: "all", label: "All Categories" },
+                ...categories.map(category => ({ id: category, label: category }))
+              ]}
+              selectedKey={activeCategory}
+              onSelectionChange={key => setActiveCategory(String(key || "all"))}
             >
-              <ListBoxItem key="all">All Categories</ListBoxItem>
-              {categories.map(category => (
-                <ListBoxItem key={category}>{category}</ListBoxItem>
-              ))}
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {item => (
+                    <ListBoxItem id={item.id} textValue={item.label}>
+                      {item.label}
+                    </ListBoxItem>
+                  )}
+                </ListBox>
+              </Select.Popover>
             </Select>
             <Button color="primary" radius="full" onPress={() => void openEditor()}>
               Add article

@@ -7,10 +7,11 @@ import {
   CardHeader,
   Chip,
   Input,
-  Modal,
-          Pagination,
-  Select,
+  ListBox,
   ListBoxItem,
+  Modal,
+  Pagination,
+  Select,
   Spinner,
   Switch,
   Table,
@@ -509,14 +510,8 @@ export function UserPage() {
   }, [ipGeoOpen, ipGeoUser?.id, geoProvider]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const selectedPlan = useMemo(
-    () => (form.plan_id ? new Set([form.plan_id]) : new Set<string>()),
-    [form.plan_id]
-  );
-  const generatePlan = useMemo(
-    () => (generateForm.plan_id ? new Set([generateForm.plan_id]) : new Set<string>()),
-    [generateForm.plan_id]
-  );
+  const selectedPlan = useMemo(() => form.plan_id || null, [form.plan_id]);
+  const generatePlan = useMemo(() => generateForm.plan_id || null, [generateForm.plan_id]);
   const stats = useMemo(() => {
     const activeUsers = records.filter(record => !Number(record.banned || 0)).length;
     const adminUsers = records.filter(record => Number(record.is_admin || 0)).length;
@@ -593,22 +588,48 @@ export function UserPage() {
               label="Plan"
               labelPlacement="outside"
               placeholder="All plans"
-              selectedKeys={planFilter ? new Set([planFilter]) : new Set<string>()}
-              onSelectionChange={keys => setPlanFilter(String(Array.from(keys)[0] || ""))}
+              items={plans.map(plan => ({ id: String(plan.id), label: plan.name }))}
+              selectedKey={planFilter || null}
+              onSelectionChange={key => setPlanFilter(String(key || ""))}
             >
-              {plans.map(plan => (
-                <ListBoxItem key={String(plan.id)}>{plan.name}</ListBoxItem>
-              ))}
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {item => (
+                    <ListBoxItem id={item.id} textValue={item.label}>
+                      {item.label}
+                    </ListBoxItem>
+                  )}
+                </ListBox>
+              </Select.Popover>
             </Select>
             <Select
               label="Status"
               labelPlacement="outside"
               placeholder="All users"
-              selectedKeys={bannedFilter ? new Set([bannedFilter]) : new Set<string>()}
-              onSelectionChange={keys => setBannedFilter(String(Array.from(keys)[0] || ""))}
+              items={[
+                { id: "0", label: "Active" },
+                { id: "1", label: "Banned" }
+              ]}
+              selectedKey={bannedFilter || null}
+              onSelectionChange={key => setBannedFilter(String(key || ""))}
             >
-              <ListBoxItem key="0">Active</ListBoxItem>
-              <ListBoxItem key="1">Banned</ListBoxItem>
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {item => (
+                    <ListBoxItem id={item.id} textValue={item.label}>
+                      {item.label}
+                    </ListBoxItem>
+                  )}
+                </ListBox>
+              </Select.Popover>
             </Select>
             <div className="flex items-end gap-2">
               <Button color="primary" onPress={() => { setPage(1); void loadUsers(1); }}>
@@ -769,12 +790,25 @@ export function UserPage() {
             <Select
               label="Plan"
               labelPlacement="outside"
-              selectedKeys={selectedPlan}
-              onSelectionChange={keys => setForm(current => ({ ...current, plan_id: String(Array.from(keys)[0] || "") }))}
+              items={plans.map(plan => ({ id: String(plan.id), label: plan.name }))}
+              selectedKey={selectedPlan}
+              onSelectionChange={key =>
+                setForm(current => ({ ...current, plan_id: String(key || "") }))
+              }
             >
-              {plans.map(plan => (
-                <ListBoxItem key={String(plan.id)}>{plan.name}</ListBoxItem>
-              ))}
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {item => (
+                    <ListBoxItem id={item.id} textValue={item.label}>
+                      {item.label}
+                    </ListBoxItem>
+                  )}
+                </ListBox>
+              </Select.Popover>
             </Select>
             <Input label="Transfer (GB)" labelPlacement="outside" type="number" value={form.transfer_enable} onValueChange={value => setForm(current => ({ ...current, transfer_enable: value }))} />
             <Input label="Device Limit" labelPlacement="outside" type="number" value={form.device_limit} onValueChange={value => setForm(current => ({ ...current, device_limit: value }))} />
@@ -837,12 +871,25 @@ export function UserPage() {
             <Select
               label="Plan"
               labelPlacement="outside"
-              selectedKeys={generatePlan}
-              onSelectionChange={keys => setGenerateForm(current => ({ ...current, plan_id: String(Array.from(keys)[0] || "") }))}
+              items={plans.map(plan => ({ id: String(plan.id), label: plan.name }))}
+              selectedKey={generatePlan}
+              onSelectionChange={key =>
+                setGenerateForm(current => ({ ...current, plan_id: String(key || "") }))
+              }
             >
-              {plans.map(plan => (
-                <ListBoxItem key={String(plan.id)}>{plan.name}</ListBoxItem>
-              ))}
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {item => (
+                    <ListBoxItem id={item.id} textValue={item.label}>
+                      {item.label}
+                    </ListBoxItem>
+                  )}
+                </ListBox>
+              </Select.Popover>
             </Select>
             <Input label="Expire Timestamp" labelPlacement="outside" value={generateForm.expired_at} onValueChange={value => setGenerateForm(current => ({ ...current, expired_at: value }))} />
           </Modal.Body>
@@ -940,12 +987,23 @@ export function UserPage() {
                 className="max-w-xs"
                 label="Provider"
                 labelPlacement="outside"
-                selectedKeys={new Set([geoProvider])}
-                onSelectionChange={keys => setGeoProvider(String(Array.from(keys)[0] || "ipinfo"))}
+                items={geoProviders.map(provider => ({ id: provider.key, label: provider.name }))}
+                selectedKey={geoProvider}
+                onSelectionChange={key => setGeoProvider(String(key || "ipinfo"))}
               >
-                {geoProviders.map(provider => (
-                  <ListBoxItem key={provider.key}>{provider.name}</ListBoxItem>
-                ))}
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox>
+                    {item => (
+                      <ListBoxItem id={item.id} textValue={item.label}>
+                        {item.label}
+                      </ListBoxItem>
+                    )}
+                  </ListBox>
+                </Select.Popover>
               </Select>
               <Button color="primary" variant="light" onPress={() => void fetchAllGeo()}>
                 Refresh geo

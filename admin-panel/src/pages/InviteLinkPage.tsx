@@ -7,10 +7,11 @@ import {
   CardHeader,
   Chip,
   Input,
-  Modal,
-          Pagination,
-  Select,
+  ListBox,
   ListBoxItem,
+  Modal,
+  Pagination,
+  Select,
   Spinner,
   Table,
   TableBody,
@@ -155,10 +156,7 @@ export function InviteLinkPage() {
   }, [page]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const selectedUser = useMemo(
-    () => (generateUserId ? new Set([generateUserId]) : new Set<string>()),
-    [generateUserId]
-  );
+  const selectedUser = useMemo(() => generateUserId || null, [generateUserId]);
   const stats = useMemo(() => {
     const active = records.filter(record => record.status === 0).length;
     const disabled = records.filter(record => record.status === 3).length;
@@ -219,13 +217,28 @@ export function InviteLinkPage() {
               label="Status"
               labelPlacement="outside"
               placeholder="All statuses"
-              selectedKeys={status ? new Set([status]) : new Set<string>()}
-              onSelectionChange={keys => setStatus(String(Array.from(keys)[0] || ""))}
+              items={[
+                { id: "0", label: "Active" },
+                { id: "1", label: "Used Up" },
+                { id: "2", label: "Expired" },
+                { id: "3", label: "Disabled" }
+              ]}
+              selectedKey={status || null}
+              onSelectionChange={key => setStatus(String(key || ""))}
             >
-              <ListBoxItem key="0">Active</ListBoxItem>
-              <ListBoxItem key="1">Used Up</ListBoxItem>
-              <ListBoxItem key="2">Expired</ListBoxItem>
-              <ListBoxItem key="3">Disabled</ListBoxItem>
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {item => (
+                    <ListBoxItem id={item.id} textValue={item.label}>
+                      {item.label}
+                    </ListBoxItem>
+                  )}
+                </ListBox>
+              </Select.Popover>
             </Select>
             <div className="flex items-end gap-2">
               <Button color="primary" onPress={() => { setPage(1); void loadLinks(1); }}>
@@ -327,12 +340,23 @@ export function InviteLinkPage() {
             <Select
               label="Owner"
               labelPlacement="outside"
-              selectedKeys={selectedUser}
-              onSelectionChange={keys => setGenerateUserId(String(Array.from(keys)[0] || ""))}
+              items={userOptions.map(user => ({ id: String(user.id), label: user.email }))}
+              selectedKey={selectedUser}
+              onSelectionChange={key => setGenerateUserId(String(key || ""))}
             >
-              {userOptions.map(user => (
-                <ListBoxItem key={String(user.id)}>{user.email}</ListBoxItem>
-              ))}
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {item => (
+                    <ListBoxItem id={item.id} textValue={item.label}>
+                      {item.label}
+                    </ListBoxItem>
+                  )}
+                </ListBox>
+              </Select.Popover>
             </Select>
             <Input label="Invitee Name" labelPlacement="outside" value={inviteeName} onValueChange={setInviteeName} />
             <Input label="Max Use" labelPlacement="outside" type="number" value={maxUse} onValueChange={setMaxUse} />

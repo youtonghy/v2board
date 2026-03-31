@@ -5,10 +5,11 @@ import {
   CardHeader,
   Chip,
   Input,
-  Modal,
-          Pagination,
-  Select,
+  ListBox,
   ListBoxItem,
+  Modal,
+  Pagination,
+  Select,
   Spinner,
   Table,
   TableBody,
@@ -109,14 +110,8 @@ export function GiftCardPage() {
     void loadGiftCards(1);
   }, []);
 
-  const selectedType = useMemo(
-    () => new Set(selected?.type ? [String(selected.type)] : ["1"]),
-    [selected]
-  );
-  const selectedPlan = useMemo(
-    () => (selected?.plan_id ? new Set([String(selected.plan_id)]) : new Set<string>()),
-    [selected]
-  );
+  const selectedType = useMemo(() => (selected?.type ? String(selected.type) : "1"), [selected]);
+  const selectedPlan = useMemo(() => (selected?.plan_id ? String(selected.plan_id) : null), [selected]);
   const stats = useMemo(() => {
     const exchangeCards = records.filter(record => Number(record.type) === 5).length;
     const resetCards = records.filter(record => Number(record.type) === 4).length;
@@ -240,15 +235,26 @@ export function GiftCardPage() {
             <Select
               label="Type"
               labelPlacement="outside"
-              selectedKeys={selectedType}
-              onSelectionChange={keys => {
-                const nextType = Number(Array.from(keys)[0] || 1);
+              items={GIFTCARD_TYPE_OPTIONS.map(option => ({ id: option.key, label: option.label }))}
+              selectedKey={selectedType}
+              onSelectionChange={key => {
+                const nextType = Number(key || 1);
                 setSelected(current => (current ? { ...current, type: nextType, value: nextType === 4 ? 0 : current.value } : current));
               }}
             >
-              {GIFTCARD_TYPE_OPTIONS.map(option => (
-                <ListBoxItem key={option.key}>{option.label}</ListBoxItem>
-              ))}
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {item => (
+                    <ListBoxItem id={item.id} textValue={item.label}>
+                      {item.label}
+                    </ListBoxItem>
+                  )}
+                </ListBox>
+              </Select.Popover>
             </Select>
             <Input
               label="Value"
@@ -262,15 +268,25 @@ export function GiftCardPage() {
               <Select
                 label="Plan"
                 labelPlacement="outside"
-                selectedKeys={selectedPlan}
-                onSelectionChange={keys => {
-                  const nextPlan = Array.from(keys)[0];
-                  setSelected(current => (current ? { ...current, plan_id: String(nextPlan || "") } : current));
+                items={plans.map(plan => ({ id: String(plan.id), label: plan.name }))}
+                selectedKey={selectedPlan}
+                onSelectionChange={key => {
+                  setSelected(current => (current ? { ...current, plan_id: String(key || "") } : current));
                 }}
               >
-                {plans.map(plan => (
-                  <ListBoxItem key={String(plan.id)}>{plan.name}</ListBoxItem>
-                ))}
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox>
+                    {item => (
+                      <ListBoxItem id={item.id} textValue={item.label}>
+                        {item.label}
+                      </ListBoxItem>
+                    )}
+                  </ListBox>
+                </Select.Popover>
               </Select>
             ) : null}
             <Input

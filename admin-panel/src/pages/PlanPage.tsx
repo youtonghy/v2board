@@ -6,6 +6,7 @@ import {
   CardContent,
   CardHeader,
   Input,
+  ListBox,
   ListBoxItem,
   Modal,
   Select,
@@ -184,13 +185,10 @@ export function PlanPage() {
     void reorderPlans(fromIndex, toIndex);
   }
 
-  const selectedGroup = useMemo(
-    () => (selected?.group_id ? new Set([String(selected.group_id)]) : new Set<string>()),
-    [selected]
-  );
+  const selectedGroup = useMemo(() => (selected?.group_id ? String(selected.group_id) : null), [selected]);
   const selectedResetMethod = useMemo(() => {
     const matched = RESET_TRAFFIC_OPTIONS.find(option => option.value === (selected?.reset_traffic_method ?? null));
-    return matched ? new Set([matched.key]) : new Set(["null"]);
+    return matched?.key || "null";
   }, [selected]);
   const stats = useMemo(() => {
     const enabled = records.filter(record => Boolean(Number(record.show ?? 0))).length;
@@ -364,29 +362,50 @@ export function PlanPage() {
                 <Select
                   label="Permission Group"
                   labelPlacement="outside"
-                  selectedKeys={selectedGroup}
-                  onSelectionChange={keys => {
-                    const nextGroup = Array.from(keys)[0];
-                    setSelected(current => (current ? { ...current, group_id: String(nextGroup || "") } : current));
+                  items={groups.map(group => ({ id: String(group.id), label: group.name }))}
+                  selectedKey={selectedGroup}
+                  onSelectionChange={key => {
+                    setSelected(current => (current ? { ...current, group_id: String(key || "") } : current));
                   }}
                 >
-                  {groups.map(group => (
-                    <ListBoxItem key={String(group.id)}>{group.name}</ListBoxItem>
-                  ))}
+                  <Select.Trigger>
+                    <Select.Value />
+                    <Select.Indicator />
+                  </Select.Trigger>
+                  <Select.Popover>
+                    <ListBox>
+                      {item => (
+                        <ListBoxItem id={item.id} textValue={item.label}>
+                          {item.label}
+                        </ListBoxItem>
+                      )}
+                    </ListBox>
+                  </Select.Popover>
                 </Select>
                 <Select
                   label="Traffic Reset"
                   labelPlacement="outside"
-                  selectedKeys={selectedResetMethod}
-                  onSelectionChange={keys => {
-                    const nextKey = String(Array.from(keys)[0] || "null");
+                  items={RESET_TRAFFIC_OPTIONS.map(option => ({ id: option.key, label: option.label }))}
+                  selectedKey={selectedResetMethod}
+                  onSelectionChange={key => {
+                    const nextKey = String(key || "null");
                     const option = RESET_TRAFFIC_OPTIONS.find(item => item.key === nextKey);
                     setSelected(current => (current ? { ...current, reset_traffic_method: option?.value ?? null } : current));
                   }}
                 >
-                  {RESET_TRAFFIC_OPTIONS.map(option => (
-                    <ListBoxItem key={option.key}>{option.label}</ListBoxItem>
-                  ))}
+                  <Select.Trigger>
+                    <Select.Value />
+                    <Select.Indicator />
+                  </Select.Trigger>
+                  <Select.Popover>
+                    <ListBox>
+                      {item => (
+                        <ListBoxItem id={item.id} textValue={item.label}>
+                          {item.label}
+                        </ListBoxItem>
+                      )}
+                    </ListBox>
+                  </Select.Popover>
                 </Select>
                 <Input
                   label="Device Limit"

@@ -7,10 +7,11 @@ import {
   CardHeader,
   Chip,
   Input,
-  Modal,
-          Pagination,
-  Select,
+  ListBox,
   ListBoxItem,
+  Modal,
+  Pagination,
+  Select,
   Spinner,
   Table,
   TableBody,
@@ -187,14 +188,8 @@ export function OrderPage() {
   }, [page]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const selectedPlan = useMemo(
-    () => (assignPlanId ? new Set([assignPlanId]) : new Set<string>()),
-    [assignPlanId]
-  );
-  const selectedPeriod = useMemo(
-    () => (assignPeriod ? new Set([assignPeriod]) : new Set<string>()),
-    [assignPeriod]
-  );
+  const selectedPlan = useMemo(() => assignPlanId || null, [assignPlanId]);
+  const selectedPeriod = useMemo(() => assignPeriod || "month_price", [assignPeriod]);
   const stats = useMemo(() => {
     const paid = records.filter(record => record.status === 1).length;
     const pending = records.filter(record => record.status === 0).length;
@@ -254,12 +249,26 @@ export function OrderPage() {
               label="Status"
               labelPlacement="outside"
               placeholder="All statuses"
-              selectedKeys={status ? new Set([status]) : new Set<string>()}
-              onSelectionChange={keys => setStatus(String(Array.from(keys)[0] || ""))}
+              items={Object.entries(ORDER_STATUS).map(([key, value]) => ({
+                id: key,
+                label: value.label
+              }))}
+              selectedKey={status || null}
+              onSelectionChange={key => setStatus(String(key || ""))}
             >
-              {Object.entries(ORDER_STATUS).map(([key, value]) => (
-                <ListBoxItem key={key}>{value.label}</ListBoxItem>
-              ))}
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {item => (
+                    <ListBoxItem id={item.id} textValue={item.label}>
+                      {item.label}
+                    </ListBoxItem>
+                  )}
+                </ListBox>
+              </Select.Popover>
             </Select>
             <div className="flex items-end gap-2">
               <Button color="primary" onPress={() => { setPage(1); void loadOrders(1); }}>
@@ -418,22 +427,44 @@ export function OrderPage() {
             <Select
               label="Plan"
               labelPlacement="outside"
-              selectedKeys={selectedPlan}
-              onSelectionChange={keys => setAssignPlanId(String(Array.from(keys)[0] || ""))}
+              items={plans.map(plan => ({ id: String(plan.id), label: plan.name }))}
+              selectedKey={selectedPlan}
+              onSelectionChange={key => setAssignPlanId(String(key || ""))}
             >
-              {plans.map(plan => (
-                <ListBoxItem key={String(plan.id)}>{plan.name}</ListBoxItem>
-              ))}
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {item => (
+                    <ListBoxItem id={item.id} textValue={item.label}>
+                      {item.label}
+                    </ListBoxItem>
+                  )}
+                </ListBox>
+              </Select.Popover>
             </Select>
             <Select
               label="Period"
               labelPlacement="outside"
-              selectedKeys={selectedPeriod}
-              onSelectionChange={keys => setAssignPeriod(String(Array.from(keys)[0] || "month_price"))}
+              items={PERIOD_OPTIONS.map(option => ({ id: option.key, label: option.label }))}
+              selectedKey={selectedPeriod}
+              onSelectionChange={key => setAssignPeriod(String(key || "month_price"))}
             >
-              {PERIOD_OPTIONS.map(option => (
-                <ListBoxItem key={option.key}>{option.label}</ListBoxItem>
-              ))}
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {item => (
+                    <ListBoxItem id={item.id} textValue={item.label}>
+                      {item.label}
+                    </ListBoxItem>
+                  )}
+                </ListBox>
+              </Select.Popover>
             </Select>
           </Modal.Body>
           <Modal.Footer>

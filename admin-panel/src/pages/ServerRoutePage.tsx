@@ -4,9 +4,10 @@ import {
   CardContent,
   CardHeader,
   Input,
-  Modal,
-          Select,
+  ListBox,
   ListBoxItem,
+  Modal,
+  Select,
   Spinner,
   Table,
   TableBody,
@@ -122,10 +123,7 @@ export function ServerRoutePage() {
     void loadRoutes();
   }, []);
 
-  const selectedAction = useMemo(
-    () => (selected.action ? new Set([selected.action]) : new Set<string>()),
-    [selected.action]
-  );
+  const selectedAction = useMemo(() => selected.action || "block", [selected.action]);
   const stats = useMemo(() => {
     const defaultOut = records.filter(record => record.action === "default_out").length;
     const withMatch = records.filter(record => Array.isArray(record.match) ? record.match.length > 0 : Boolean(record.match)).length;
@@ -232,12 +230,25 @@ export function ServerRoutePage() {
             <Select
               label="Action"
               labelPlacement="outside"
-              selectedKeys={selectedAction}
-              onSelectionChange={keys => setSelected(current => ({ ...current, action: String(Array.from(keys)[0] || "block") }))}
+              items={ACTION_OPTIONS.map(action => ({ id: action, label: action }))}
+              selectedKey={selectedAction}
+              onSelectionChange={key =>
+                setSelected(current => ({ ...current, action: String(key || "block") }))
+              }
             >
-              {ACTION_OPTIONS.map(action => (
-                <ListBoxItem key={action}>{action}</ListBoxItem>
-              ))}
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {item => (
+                    <ListBoxItem id={item.id} textValue={item.label}>
+                      {item.label}
+                    </ListBoxItem>
+                  )}
+                </ListBox>
+              </Select.Popover>
             </Select>
             <Input className="md:col-span-2" label="Action Value" labelPlacement="outside" value={selected.action_value || ""} onValueChange={value => setSelected(current => ({ ...current, action_value: value }))} />
             {selected.action !== "default_out" ? (

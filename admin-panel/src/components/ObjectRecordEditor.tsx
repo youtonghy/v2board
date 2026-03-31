@@ -1,4 +1,4 @@
-import { Accordion, AccordionItem, Input, ListBoxItem, Select, Switch, TextArea } from "@heroui/react";
+import { Accordion, AccordionItem, Input, ListBox, ListBoxItem, Select, Switch, TextArea } from "@heroui/react";
 
 function humanizeKey(key: string): string {
   return key
@@ -127,6 +127,7 @@ export function ObjectRecordEditor({
               key={key}
               label={label}
               labelPlacement="outside"
+              items={selectValues.map(item => ({ id: item, label: item }))}
               selectedKeys={new Set(selectValues)}
               selectionMode="multiple"
               onSelectionChange={keys =>
@@ -137,9 +138,19 @@ export function ObjectRecordEditor({
               }
               description={key}
             >
-              {selectValues.map(item => (
-                <ListBoxItem key={item}>{item}</ListBoxItem>
-              ))}
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {item => (
+                    <ListBoxItem id={item.id} textValue={item.label}>
+                      {item.label}
+                    </ListBoxItem>
+                  )}
+                </ListBox>
+              </Select.Popover>
             </Select>
           );
         }

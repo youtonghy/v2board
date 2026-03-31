@@ -7,9 +7,10 @@ import {
   CardHeader,
   Chip,
   Input,
+  ListBox,
+  ListBoxItem,
   Pagination,
   Select,
-  ListBoxItem,
   Spinner,
   Tab,
   Tabs,
@@ -95,10 +96,7 @@ export function TicketPage() {
   }, [page, status]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const selectedReplyStatus = useMemo(
-    () => (replyStatus ? new Set([replyStatus]) : new Set<string>()),
-    [replyStatus]
-  );
+  const selectedReplyStatus = useMemo(() => replyStatus || null, [replyStatus]);
   const stats = useMemo(() => {
     const open = records.filter(record => record.status === 0).length;
     const pendingAdmin = records.filter(record => record.reply_status === 0).length;
@@ -168,12 +166,27 @@ export function TicketPage() {
               label="Reply Status"
               labelPlacement="outside"
               placeholder="All replies"
-              selectedKeys={selectedReplyStatus}
-              onSelectionChange={keys => setReplyStatus(String(Array.from(keys)[0] || ""))}
+              items={[
+                { id: "0", label: "Pending Admin Reply" },
+                { id: "1", label: "Waiting User Reply" },
+                { id: "2", label: "Resolved" }
+              ]}
+              selectedKey={selectedReplyStatus}
+              onSelectionChange={key => setReplyStatus(String(key || ""))}
             >
-              <ListBoxItem key="0">Pending Admin Reply</ListBoxItem>
-              <ListBoxItem key="1">Waiting User Reply</ListBoxItem>
-              <ListBoxItem key="2">Resolved</ListBoxItem>
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {item => (
+                    <ListBoxItem id={item.id} textValue={item.label}>
+                      {item.label}
+                    </ListBoxItem>
+                  )}
+                </ListBox>
+              </Select.Popover>
             </Select>
             <div className="flex items-end gap-2 md:col-span-2">
               <Button color="primary" onPress={() => { setPage(1); void loadTickets(1); }}>

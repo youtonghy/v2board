@@ -5,6 +5,7 @@ import {
   CardHeader,
   Chip,
   Input,
+  ListBox,
   ListBoxItem,
   Modal,
   Pagination,
@@ -127,10 +128,7 @@ export function CouponPage() {
     void loadCoupons(1);
   }, []);
 
-  const selectedType = useMemo(
-    () => new Set(selected?.type ? [String(selected.type)] : ["1"]),
-    [selected]
-  );
+  const selectedType = useMemo(() => (selected?.type ? String(selected.type) : "1"), [selected]);
   const selectedPlanIds = useMemo(
     () => new Set((selected?.limit_plan_ids || []).map(item => String(item))),
     [selected]
@@ -271,15 +269,26 @@ export function CouponPage() {
             <Select
               label="Discount Type"
               labelPlacement="outside"
-              selectedKeys={selectedType}
-              onSelectionChange={keys => {
-                const nextType = Number(Array.from(keys)[0] || 1);
+              items={COUPON_TYPE_OPTIONS.map(option => ({ id: option.key, label: option.label }))}
+              selectedKey={selectedType}
+              onSelectionChange={key => {
+                const nextType = Number(key || 1);
                 setSelected(current => (current ? { ...current, type: nextType } : current));
               }}
             >
-              {COUPON_TYPE_OPTIONS.map(option => (
-                <ListBoxItem key={option.key}>{option.label}</ListBoxItem>
-              ))}
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {item => (
+                    <ListBoxItem id={item.id} textValue={item.label}>
+                      {item.label}
+                    </ListBoxItem>
+                  )}
+                </ListBox>
+              </Select.Popover>
             </Select>
             <Input
               label="Discount Value"
@@ -308,6 +317,7 @@ export function CouponPage() {
             <Select
               label="Allowed Plans"
               labelPlacement="outside"
+              items={plans.map(plan => ({ id: String(plan.id), label: plan.name }))}
               selectionMode="multiple"
               selectedKeys={selectedPlanIds}
               onSelectionChange={keys => {
@@ -321,13 +331,24 @@ export function CouponPage() {
                 );
               }}
             >
-              {plans.map(plan => (
-                <ListBoxItem key={String(plan.id)}>{plan.name}</ListBoxItem>
-              ))}
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {item => (
+                    <ListBoxItem id={item.id} textValue={item.label}>
+                      {item.label}
+                    </ListBoxItem>
+                  )}
+                </ListBox>
+              </Select.Popover>
             </Select>
             <Select
               label="Allowed Periods"
               labelPlacement="outside"
+              items={PERIOD_OPTIONS.map(option => ({ id: option.key, label: option.label }))}
               selectionMode="multiple"
               selectedKeys={selectedPeriods}
               onSelectionChange={keys =>
@@ -341,9 +362,19 @@ export function CouponPage() {
                 )
               }
             >
-              {PERIOD_OPTIONS.map(option => (
-                <ListBoxItem key={option.key}>{option.label}</ListBoxItem>
-              ))}
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {item => (
+                    <ListBoxItem id={item.id} textValue={item.label}>
+                      {item.label}
+                    </ListBoxItem>
+                  )}
+                </ListBox>
+              </Select.Popover>
             </Select>
             {!selected?.id && !selected?.code ? (
               <Input

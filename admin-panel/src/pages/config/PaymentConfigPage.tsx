@@ -6,9 +6,10 @@ import {
   CardContent,
   CardHeader,
   Input,
-  Modal,
-          Select,
+  ListBox,
   ListBoxItem,
+  Modal,
+  Select,
   Spinner,
   Switch,
   Table,
@@ -225,9 +226,10 @@ export function PaymentConfigPage() {
     void reorderPayments(fromIndex, toIndex);
   }
 
-  const selectedPaymentMethod = useMemo(() => {
-    return selected?.payment ? new Set([String(selected.payment)]) : new Set<string>();
-  }, [selected]);
+  const selectedPaymentMethod = useMemo(
+    () => (selected?.payment ? String(selected.payment) : null),
+    [selected]
+  );
   const stats = useMemo(() => {
     const enabled = payments.filter(payment => Boolean(Number(payment.enable ?? 0))).length;
     const configured = payments.filter(payment => Object.keys(normalizeConfigValue(payment.config)).length > 0).length;
@@ -379,16 +381,27 @@ export function PaymentConfigPage() {
             <Select
               label="Provider"
               labelPlacement="outside"
-              selectedKeys={selectedPaymentMethod}
+              items={methods.map(method => ({ id: method, label: method }))}
+              selectedKey={selectedPaymentMethod}
               onSelectionChange={keys => {
-                const nextPayment = String(Array.from(keys)[0] || "");
+                const nextPayment = String(keys || "");
                 setSelected(current => (current ? { ...current, payment: nextPayment, config: normalizeConfigValue(current.config) } : current));
                 void loadPaymentForm(nextPayment, Number(selected?.id || 0) || undefined);
               }}
             >
-              {methods.map(method => (
-                <ListBoxItem key={method}>{method}</ListBoxItem>
-              ))}
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {item => (
+                    <ListBoxItem id={item.id} textValue={item.label}>
+                      {item.label}
+                    </ListBoxItem>
+                  )}
+                </ListBox>
+              </Select.Popover>
             </Select>
             <div className="grid gap-5 md:grid-cols-2">
               <Input
