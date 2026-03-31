@@ -53,6 +53,7 @@ function NavigationList({
             const Icon = item.icon;
             return (
               <ListBoxItem
+                id={item.path}
                 key={item.path}
                 textValue={item.label}
                 startContent={
@@ -103,6 +104,7 @@ function NavigationList({
               const Icon = item.icon;
               return (
                 <ListBoxItem
+                  id={item.path}
                   key={item.path}
                   description={item.description}
                   startContent={

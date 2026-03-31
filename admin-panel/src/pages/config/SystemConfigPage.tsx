@@ -194,11 +194,15 @@ export function SystemConfigPage() {
                   onSelectionChange={key => setState(current => ({ ...current, activeKey: String(key) }))}
                   variant="underlined"
                   color="primary"
-                  classNames={{ tabList: "overflow-x-auto" }}
                 >
-                  {sectionKeys.map(key => (
-                    <Tab key={key} title={key} />
-                  ))}
+                  <Tabs.List className="overflow-x-auto">
+                    {sectionKeys.map(key => (
+                      <Tabs.Tab id={key} key={key}>
+                        {key}
+                        <Tabs.Indicator />
+                      </Tabs.Tab>
+                    ))}
+                  </Tabs.List>
                 </Tabs>
               ) : null}
               <ObjectRecordEditor

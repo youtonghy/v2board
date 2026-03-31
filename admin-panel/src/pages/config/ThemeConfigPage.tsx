@@ -141,9 +141,14 @@ export function ThemeConfigPage() {
                 variant="underlined"
                 color="primary"
               >
-                {themes.map(theme => (
-                  <Tab key={theme} title={theme} />
-                ))}
+                <Tabs.List>
+                  {themes.map(theme => (
+                    <Tabs.Tab id={theme} key={theme}>
+                      {theme}
+                      <Tabs.Indicator />
+                    </Tabs.Tab>
+                  ))}
+                </Tabs.List>
               </Tabs>
               {currentTheme && themeMeta[currentTheme] ? (
                 <div className="rounded-2xl border border-default-200 bg-default-50 p-4 text-sm text-slate-600">

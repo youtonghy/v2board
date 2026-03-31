@@ -148,9 +148,14 @@ export function TicketPage() {
             color="primary"
             variant="underlined"
           >
-            {STATUS_TABS.map(tab => (
-              <Tab key={tab.key} title={tab.label} />
-            ))}
+            <Tabs.List>
+              {STATUS_TABS.map(tab => (
+                <Tabs.Tab id={tab.key} key={tab.key}>
+                  {tab.label}
+                  <Tabs.Indicator />
+                </Tabs.Tab>
+              ))}
+            </Tabs.List>
           </Tabs>
 
           <Accordion

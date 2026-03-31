@@ -380,16 +380,21 @@ export function DashboardPage() {
               selectedKey={mode}
               onSelectionChange={key => setMode(String(key) as DashboardMode)}
               variant="light"
-              classNames={{
-                tabList: "rounded-full bg-slate-100 p-1",
-                tab: "px-5",
-                cursor: "rounded-full bg-white shadow-sm",
-                tabContent: "font-medium text-slate-500 group-data-[selected=true]:text-slate-900"
-              }}
             >
-              <Tab key="overview" title="Overview" />
-              <Tab key="sales" title="Sales" />
-              <Tab key="traffic" title="Traffic" />
+              <Tabs.List className="rounded-full bg-slate-100 p-1">
+                <Tabs.Tab id="overview" className="px-5 font-medium text-slate-500 data-[selected=true]:text-slate-900">
+                  Overview
+                  <Tabs.Indicator className="rounded-full bg-white shadow-sm" />
+                </Tabs.Tab>
+                <Tabs.Tab id="sales" className="px-5 font-medium text-slate-500 data-[selected=true]:text-slate-900">
+                  Sales
+                  <Tabs.Indicator className="rounded-full bg-white shadow-sm" />
+                </Tabs.Tab>
+                <Tabs.Tab id="traffic" className="px-5 font-medium text-slate-500 data-[selected=true]:text-slate-900">
+                  Traffic
+                  <Tabs.Indicator className="rounded-full bg-white shadow-sm" />
+                </Tabs.Tab>
+              </Tabs.List>
             </Tabs>
           </CardContent>
         </Card>

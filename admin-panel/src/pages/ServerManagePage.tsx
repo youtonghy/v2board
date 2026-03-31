@@ -386,9 +386,14 @@ export function ServerManagePage() {
             color="primary"
             variant="underlined"
           >
-            {PROTOCOLS.map(protocol => (
-              <Tab key={protocol.key} title={protocol.label} />
-            ))}
+            <Tabs.List>
+              {PROTOCOLS.map(protocol => (
+                <Tabs.Tab id={protocol.key} key={protocol.key}>
+                  {protocol.label}
+                  <Tabs.Indicator />
+                </Tabs.Tab>
+              ))}
+            </Tabs.List>
           </Tabs>
 
           {error ? <div className="rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">{error}</div> : null}
