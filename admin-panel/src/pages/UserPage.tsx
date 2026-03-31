@@ -668,108 +668,110 @@ export function UserPage() {
           ) : (
             <>
               <Table aria-label="Users" classNames={adminTableClassNames}>
-                <TableHeader>
-                  <TableColumn>Email</TableColumn>
-                  <TableColumn>Plan</TableColumn>
-                  <TableColumn>Balance</TableColumn>
-                  <TableColumn>Usage</TableColumn>
-                  <TableColumn>Expires</TableColumn>
-                  <TableColumn>Status</TableColumn>
-                  <TableColumn align="end">Actions</TableColumn>
-                </TableHeader>
-                <TableBody items={records} emptyContent="No users found">
-                  {item => (
-                    <TableRow key={item.id}>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium text-slate-900">{item.email}</p>
-                          <p className="text-xs text-slate-500">ID {item.id}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>{item.plan_name || "No plan"}</TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <p>{formatMoney((item.balance || 0) / 100)}</p>
-                          <p className="text-xs text-slate-500">Commission {formatMoney((item.commission_balance || 0) / 100)}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <p>{formatBytes(item.total_used || 0)} used</p>
-                          <p className="text-xs text-slate-500">Cap {formatBytes(item.transfer_enable || 0)}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>{formatDateTime(item.expired_at)}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Chip color={Number(item.banned || 0) ? "danger" : "success"} variant="flat">
-                            {Number(item.banned || 0) ? "Banned" : "Active"}
-                          </Chip>
-                          {Number(item.is_admin || 0) ? <Chip variant="flat">Admin</Chip> : null}
-                          {Number(item.is_staff || 0) ? <Chip variant="flat">Staff</Chip> : null}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            size="sm"
-                            color="primary"
-                            variant="light"
-                            onPress={() => void openEditor(item)}
-                            isLoading={submitting}
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            size="sm"
-                            color="secondary"
-                            variant="light"
-                            onPress={() => void runRowAction("user/resetSecret", { id: item.id })}
-                            isLoading={submitting}
-                          >
-                            Reset key
-                          </Button>
-                          <Button
-                            size="sm"
-                            color="primary"
-                            variant="light"
-                            onPress={() => void openTrafficStats(item)}
-                            isLoading={submitting}
-                          >
-                            Traffic
-                          </Button>
-                          <Button
-                            size="sm"
-                            color="secondary"
-                            variant="light"
-                            onPress={() => void openIpGeo(item)}
-                            isLoading={submitting}
-                          >
-                            IP geo
-                          </Button>
-                          <Button
-                            size="sm"
-                            color={Number(item.banned || 0) ? "success" : "warning"}
-                            variant="light"
-                            onPress={() => void runRowAction("user/ban", { filter: [{ key: "id", condition: "=", value: item.id }] })}
-                            isLoading={submitting}
-                          >
-                            {Number(item.banned || 0) ? "Ban selected" : "Ban"}
-                          </Button>
-                          <Button
-                            size="sm"
-                            color="danger"
-                            variant="light"
-                            onPress={() => void runRowAction("user/delUser", { id: item.id })}
-                            isLoading={submitting}
-                          >
-                            Delete
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
+                <Table.Content>
+                  <TableHeader>
+                    <TableColumn>Email</TableColumn>
+                    <TableColumn>Plan</TableColumn>
+                    <TableColumn>Balance</TableColumn>
+                    <TableColumn>Usage</TableColumn>
+                    <TableColumn>Expires</TableColumn>
+                    <TableColumn>Status</TableColumn>
+                    <TableColumn align="end">Actions</TableColumn>
+                  </TableHeader>
+                  <TableBody items={records} emptyContent="No users found">
+                    {item => (
+                      <TableRow key={item.id}>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium text-slate-900">{item.email}</p>
+                            <p className="text-xs text-slate-500">ID {item.id}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>{item.plan_name || "No plan"}</TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <p>{formatMoney((item.balance || 0) / 100)}</p>
+                            <p className="text-xs text-slate-500">Commission {formatMoney((item.commission_balance || 0) / 100)}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <p>{formatBytes(item.total_used || 0)} used</p>
+                            <p className="text-xs text-slate-500">Cap {formatBytes(item.transfer_enable || 0)}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>{formatDateTime(item.expired_at)}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Chip color={Number(item.banned || 0) ? "danger" : "success"} variant="flat">
+                              {Number(item.banned || 0) ? "Banned" : "Active"}
+                            </Chip>
+                            {Number(item.is_admin || 0) ? <Chip variant="flat">Admin</Chip> : null}
+                            {Number(item.is_staff || 0) ? <Chip variant="flat">Staff</Chip> : null}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              size="sm"
+                              color="primary"
+                              variant="light"
+                              onPress={() => void openEditor(item)}
+                              isLoading={submitting}
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              size="sm"
+                              color="secondary"
+                              variant="light"
+                              onPress={() => void runRowAction("user/resetSecret", { id: item.id })}
+                              isLoading={submitting}
+                            >
+                              Reset key
+                            </Button>
+                            <Button
+                              size="sm"
+                              color="primary"
+                              variant="light"
+                              onPress={() => void openTrafficStats(item)}
+                              isLoading={submitting}
+                            >
+                              Traffic
+                            </Button>
+                            <Button
+                              size="sm"
+                              color="secondary"
+                              variant="light"
+                              onPress={() => void openIpGeo(item)}
+                              isLoading={submitting}
+                            >
+                              IP geo
+                            </Button>
+                            <Button
+                              size="sm"
+                              color={Number(item.banned || 0) ? "success" : "warning"}
+                              variant="light"
+                              onPress={() => void runRowAction("user/ban", { filter: [{ key: "id", condition: "=", value: item.id }] })}
+                              isLoading={submitting}
+                            >
+                              {Number(item.banned || 0) ? "Ban selected" : "Ban"}
+                            </Button>
+                            <Button
+                              size="sm"
+                              color="danger"
+                              variant="light"
+                              onPress={() => void runRowAction("user/delUser", { id: item.id })}
+                              isLoading={submitting}
+                            >
+                              Delete
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table.Content>
               </Table>
 
               <div className="flex justify-center">
@@ -942,22 +944,24 @@ export function UserPage() {
             </Modal.Header>
           <Modal.Body className="gap-4">
             <Table aria-label="User traffic logs" classNames={adminTableClassNames}>
-              <TableHeader>
-                <TableColumn>Date</TableColumn>
-                <TableColumn>Upload</TableColumn>
-                <TableColumn>Download</TableColumn>
-                <TableColumn>Rate</TableColumn>
-              </TableHeader>
-              <TableBody items={statsRecords} emptyContent="No traffic records found">
-                {item => (
-                  <TableRow key={`${item.record_at}-${item.id || 0}`}>
-                    <TableCell>{formatDateTime(item.record_at)}</TableCell>
-                    <TableCell>{formatBytes(item.u || 0)}</TableCell>
-                    <TableCell>{formatBytes(item.d || 0)}</TableCell>
-                    <TableCell>{item.server_rate || 1}</TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
+              <Table.Content>
+                <TableHeader>
+                  <TableColumn>Date</TableColumn>
+                  <TableColumn>Upload</TableColumn>
+                  <TableColumn>Download</TableColumn>
+                  <TableColumn>Rate</TableColumn>
+                </TableHeader>
+                <TableBody items={statsRecords} emptyContent="No traffic records found">
+                  {item => (
+                    <TableRow key={`${item.record_at}-${item.id || 0}`}>
+                      <TableCell>{formatDateTime(item.record_at)}</TableCell>
+                      <TableCell>{formatBytes(item.u || 0)}</TableCell>
+                      <TableCell>{formatBytes(item.d || 0)}</TableCell>
+                      <TableCell>{item.server_rate || 1}</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table.Content>
             </Table>
             <div className="flex justify-center">
               <Pagination
@@ -1014,38 +1018,40 @@ export function UserPage() {
             </div>
 
             <Table aria-label="IP geo records" classNames={adminTableClassNames}>
-              <TableHeader>
-                <TableColumn>IP</TableColumn>
-                <TableColumn>Last Seen</TableColumn>
-                <TableColumn>Country</TableColumn>
-                <TableColumn>City</TableColumn>
-                <TableColumn>ISP</TableColumn>
-                <TableColumn>Organization</TableColumn>
-              </TableHeader>
-              <TableBody
-                items={[
-                  ...(ipGeoUser?.recent_ip_records || []),
-                  ...(ipGeoUser?.recent_login_ip_records || [])
-                ]}
-                emptyContent="No IP records found"
-              >
-                {item => {
-                  const geo = geoRecords[item.ip];
-                  const loadingState = geoLoading[item.ip];
-                  const failed = geo?.status === "failed";
+              <Table.Content>
+                <TableHeader>
+                  <TableColumn>IP</TableColumn>
+                  <TableColumn>Last Seen</TableColumn>
+                  <TableColumn>Country</TableColumn>
+                  <TableColumn>City</TableColumn>
+                  <TableColumn>ISP</TableColumn>
+                  <TableColumn>Organization</TableColumn>
+                </TableHeader>
+                <TableBody
+                  items={[
+                    ...(ipGeoUser?.recent_ip_records || []),
+                    ...(ipGeoUser?.recent_login_ip_records || [])
+                  ]}
+                  emptyContent="No IP records found"
+                >
+                  {item => {
+                    const geo = geoRecords[item.ip];
+                    const loadingState = geoLoading[item.ip];
+                    const failed = geo?.status === "failed";
 
-                  return (
-                    <TableRow key={`${item.ip}-${item.last_seen_at}`}>
-                      <TableCell>{item.ip}</TableCell>
-                      <TableCell>{formatDateTime(item.last_seen_at)}</TableCell>
-                      <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.country || "—"}</TableCell>
-                      <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.city || "—"}</TableCell>
-                      <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.isp || "—"}</TableCell>
-                      <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.organization || "—"}</TableCell>
-                    </TableRow>
-                  );
-                }}
-              </TableBody>
+                    return (
+                      <TableRow key={`${item.ip}-${item.last_seen_at}`}>
+                        <TableCell>{item.ip}</TableCell>
+                        <TableCell>{formatDateTime(item.last_seen_at)}</TableCell>
+                        <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.country || "—"}</TableCell>
+                        <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.city || "—"}</TableCell>
+                        <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.isp || "—"}</TableCell>
+                        <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.organization || "—"}</TableCell>
+                      </TableRow>
+                    );
+                  }}
+                </TableBody>
+              </Table.Content>
             </Table>
           </Modal.Body>
           <Modal.Footer>
