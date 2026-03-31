@@ -20,7 +20,7 @@ import {
   TableRow
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
-import { adminRequest } from "../../lib/api";
+import { adminRequest, unwrapEnvelope } from "../../lib/api";
 import { PageFrame } from "../../components/PageFrame";
 import { ObjectRecordEditor } from "../../components/ObjectRecordEditor";
 
@@ -28,11 +28,12 @@ type PaymentRecord = Record<string, unknown> & {
   id?: number;
   name?: string;
   payment?: string;
-  show?: number | boolean;
+  enable?: number | boolean;
+  config?: Record<string, unknown> | string;
 };
 
 function normalizePaymentRecord(record?: PaymentRecord | null): PaymentRecord {
-  return record ? { ...record } : { payment: "", name: "", show: 1 };
+  return record ? { ...record } : { payment: "", name: "", enable: 1, config: {} };
 }
 
 export function PaymentConfigPage() {
@@ -42,16 +43,25 @@ export function PaymentConfigPage() {
   const [methods, setMethods] = useState<string[]>([]);
   const [selected, setSelected] = useState<PaymentRecord | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
+  const [error, setError] = useState<string>();
 
   async function loadPayments() {
     setLoading(true);
-    const [paymentsResponse, methodsResponse] = await Promise.all([
-      adminRequest<PaymentRecord[]>("payment/fetch"),
-      adminRequest<string[]>("payment/getPaymentMethods")
-    ]);
-    setPayments(paymentsResponse.data || []);
-    setMethods((methodsResponse.data || []).map(item => String(item)));
-    setLoading(false);
+    setError(undefined);
+    try {
+      const [paymentsResponse, methodsResponse] = await Promise.all([
+        adminRequest<PaymentRecord[]>("payment/fetch"),
+        adminRequest<string[]>("payment/getPaymentMethods")
+      ]);
+      setPayments(unwrapEnvelope(paymentsResponse) || []);
+      setMethods((unwrapEnvelope(methodsResponse) || []).map(item => String(item)));
+    } catch (nextError) {
+      setPayments([]);
+      setMethods([]);
+      setError(nextError instanceof Error ? nextError.message : "Failed to load payments");
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function togglePayment(record: PaymentRecord) {
@@ -74,10 +84,12 @@ export function PaymentConfigPage() {
     if (!selected) return;
     setSaving(true);
     try {
-      await adminRequest("payment/save", {
-        method: "POST",
-        body: selected
-      });
+      await unwrapEnvelope(
+        await adminRequest("payment/save", {
+          method: "POST",
+          body: selected
+        })
+      );
       setEditorOpen(false);
       setSelected(null);
       await loadPayments();
@@ -119,6 +131,7 @@ export function PaymentConfigPage() {
           </Button>
         </CardHeader>
         <CardBody>
+          {error ? <div className="mb-4 rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">{error}</div> : null}
           {loading ? (
             <div className="flex min-h-[280px] items-center justify-center">
               <Spinner color="warning" label="Loading payments" />
@@ -140,7 +153,7 @@ export function PaymentConfigPage() {
                     <TableCell>{String(item.payment || "Unknown")}</TableCell>
                     <TableCell>
                       <Switch
-                        isSelected={Boolean(Number(item.show ?? 0))}
+                        isSelected={Boolean(Number(item.enable ?? 0))}
                         onValueChange={() => void togglePayment(item)}
                       />
                     </TableCell>
@@ -179,7 +192,7 @@ export function PaymentConfigPage() {
               selectedKeys={selectedPaymentMethod}
               onSelectionChange={keys => {
                 const nextPayment = Array.from(keys)[0];
-                setSelected(current => (current ? { ...current, payment: String(nextPayment || "") } : current));
+                setSelected(current => (current ? { ...current, payment: String(nextPayment || ""), config: current.config || {} } : current));
               }}
             >
               {methods.map(method => (

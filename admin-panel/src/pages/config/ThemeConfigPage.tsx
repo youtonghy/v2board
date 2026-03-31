@@ -1,11 +1,11 @@
 import { Button, Card, CardBody, CardHeader, Divider, Spinner, Tab, Tabs } from "@heroui/react";
 import { useEffect, useState } from "react";
-import { adminRequest } from "../../lib/api";
+import { adminRequest, unwrapEnvelope } from "../../lib/api";
 import { PageFrame } from "../../components/PageFrame";
 import { ObjectRecordEditor } from "../../components/ObjectRecordEditor";
 
 interface ThemeSummaryResponse {
-  themes?: string[];
+  themes?: Record<string, Record<string, unknown>>;
   active?: string;
 }
 
@@ -13,47 +13,63 @@ export function ThemeConfigPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [themes, setThemes] = useState<string[]>([]);
+  const [themeMeta, setThemeMeta] = useState<Record<string, Record<string, unknown>>>({});
   const [active, setActive] = useState<string>("");
   const [currentTheme, setCurrentTheme] = useState<string>("");
   const [config, setConfig] = useState<Record<string, unknown>>({});
   const [template, setTemplate] = useState<unknown>(null);
+  const [error, setError] = useState<string>();
 
   async function loadThemes(selectedTheme?: string) {
     setLoading(true);
-    const [summaryResponse, templateResponse] = await Promise.all([
-      adminRequest<ThemeSummaryResponse>("theme/getThemes"),
-      adminRequest("config/getThemeTemplate")
-    ]);
+    setError(undefined);
+    try {
+      const [summaryResponse, templateResponse] = await Promise.all([
+        adminRequest<ThemeSummaryResponse>("theme/getThemes"),
+        adminRequest("config/getThemeTemplate")
+      ]);
 
-    const nextThemes = summaryResponse.data?.themes || [];
-    const activeTheme = summaryResponse.data?.active || nextThemes[0] || "";
-    const resolvedTheme = selectedTheme || currentTheme || activeTheme;
-    const configResponse = resolvedTheme
-      ? await adminRequest<Record<string, unknown>>("theme/getThemeConfig", {
-          method: "POST",
-          body: { name: resolvedTheme }
-        })
-      : { data: {} };
+      const summary = unwrapEnvelope(summaryResponse);
+      const nextThemeMeta = summary?.themes || {};
+      const nextThemes = Object.keys(nextThemeMeta);
+      const activeTheme = summary?.active || nextThemes[0] || "";
+      const resolvedTheme = selectedTheme || currentTheme || activeTheme;
+      const configResponse = resolvedTheme
+        ? await adminRequest<Record<string, unknown>>("theme/getThemeConfig", {
+            method: "POST",
+            body: { name: resolvedTheme }
+          })
+        : { code: 200, data: {} };
 
-    setThemes(nextThemes);
-    setActive(activeTheme);
-    setCurrentTheme(resolvedTheme);
-    setConfig(configResponse.data || {});
-    setTemplate(templateResponse.data);
-    setLoading(false);
+      setThemeMeta(nextThemeMeta);
+      setThemes(nextThemes);
+      setActive(activeTheme);
+      setCurrentTheme(resolvedTheme);
+      setConfig(unwrapEnvelope(configResponse) || {});
+      setTemplate(unwrapEnvelope(templateResponse));
+    } catch (nextError) {
+      setThemes([]);
+      setThemeMeta({});
+      setConfig({});
+      setError(nextError instanceof Error ? nextError.message : "Failed to load theme config");
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function saveTheme() {
     if (!currentTheme) return;
     setSaving(true);
     try {
-      await adminRequest("theme/saveThemeConfig", {
-        method: "POST",
-        body: {
-          name: currentTheme,
-          config
-        }
-      });
+      await unwrapEnvelope(
+        await adminRequest("theme/saveThemeConfig", {
+          method: "POST",
+          body: {
+            name: currentTheme,
+            config: btoa(unescape(encodeURIComponent(JSON.stringify(config))))
+          }
+        })
+      );
       await loadThemes(currentTheme);
     } finally {
       setSaving(false);
@@ -101,6 +117,13 @@ export function ThemeConfigPage() {
                   <Tab key={theme} title={theme} />
                 ))}
               </Tabs>
+              {currentTheme && themeMeta[currentTheme] ? (
+                <div className="rounded-2xl border border-default-200 bg-default-50 p-4 text-sm text-slate-600">
+                  <pre className="overflow-x-auto whitespace-pre-wrap text-xs">
+                    {JSON.stringify(themeMeta[currentTheme], null, 2)}
+                  </pre>
+                </div>
+              ) : null}
               <ObjectRecordEditor value={config} onChange={setConfig} />
             </CardBody>
           </Card>
@@ -121,6 +144,7 @@ export function ThemeConfigPage() {
           </Card>
         </div>
       )}
+      {error ? <p className="text-sm text-danger">{error}</p> : null}
     </PageFrame>
   );
 }
