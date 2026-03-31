@@ -10,7 +10,13 @@ import { useEffect, useMemo, useState } from "react";
 import { adminRequest, getEnvelopeError, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { asArray, asRecord } from "../lib/admin-format";
-import { SectionCard, StatGrid } from "../components/AdminContent";
+import {
+  adminCardClassName,
+  adminSectionBodyClassName,
+  adminSectionHeaderClassName,
+  adminStatCardBodyClassName,
+  adminStatsGridClassName
+} from "../components/AdminContent";
 
 interface QueueState {
   loading: boolean;
@@ -103,7 +109,17 @@ export function QueuePage() {
         </Card>
       ) : null}
 
-      <StatGrid items={statCards} />
+      <div className={adminStatsGridClassName}>
+        {statCards.map(item => (
+          <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
+            <CardBody className={adminStatCardBodyClassName}>
+              <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
+              <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
+              {item.hint ? <p className="text-sm text-slate-500">{item.hint}</p> : null}
+            </CardBody>
+          </Card>
+        ))}
+      </div>
 
       {state.loading ? (
         <Card className="border border-default-200 shadow-none">
@@ -113,33 +129,64 @@ export function QueuePage() {
         </Card>
       ) : (
         <div className="grid gap-6 xl:grid-cols-2">
-          <SectionCard title="Queue Stats" description="Live counters and queue-level backlog information.">
+          <Card shadow="none" radius="lg" className={adminCardClassName}>
+            <CardHeader className={adminSectionHeaderClassName}>
+              <div>
+                <p className="text-[1.1rem] font-semibold tracking-[-0.03em] text-slate-950">Queue Stats</p>
+                <p className="mt-1 text-sm leading-6 text-slate-500">Live counters and queue-level backlog information.</p>
+              </div>
+            </CardHeader>
+            <CardBody className={adminSectionBodyClassName}>
               <pre className="overflow-x-auto whitespace-pre-wrap text-xs text-slate-600">
                 {JSON.stringify(state.stats, null, 2)}
               </pre>
-          </SectionCard>
+            </CardBody>
+          </Card>
 
-          <SectionCard title="Queue Workload" description="Worker and runtime pressure details returned by the backend.">
+          <Card shadow="none" radius="lg" className={adminCardClassName}>
+            <CardHeader className={adminSectionHeaderClassName}>
+              <div>
+                <p className="text-[1.1rem] font-semibold tracking-[-0.03em] text-slate-950">Queue Workload</p>
+                <p className="mt-1 text-sm leading-6 text-slate-500">Worker and runtime pressure details returned by the backend.</p>
+              </div>
+            </CardHeader>
+            <CardBody className={adminSectionBodyClassName}>
               <pre className="overflow-x-auto whitespace-pre-wrap text-xs text-slate-600">
                 {JSON.stringify(state.workload, null, 2)}
               </pre>
-          </SectionCard>
+            </CardBody>
+          </Card>
 
-          <SectionCard title="Master Supervisors" description="Horizon master supervisor payload.">
+          <Card shadow="none" radius="lg" className={adminCardClassName}>
+            <CardHeader className={adminSectionHeaderClassName}>
+              <div>
+                <p className="text-[1.1rem] font-semibold tracking-[-0.03em] text-slate-950">Master Supervisors</p>
+                <p className="mt-1 text-sm leading-6 text-slate-500">Horizon master supervisor payload.</p>
+              </div>
+            </CardHeader>
+            <CardBody className={adminSectionBodyClassName}>
               <pre className="overflow-x-auto whitespace-pre-wrap text-xs text-slate-600">
                 {JSON.stringify(state.masters, null, 2)}
               </pre>
-          </SectionCard>
+            </CardBody>
+          </Card>
 
-          <SectionCard
-            title="System Log"
-            description="Current backend runtime output for quick inspection."
-            action={<Button size="sm" color="primary" variant="light" onPress={() => void loadQueue()}>Reload log</Button>}
-          >
+          <Card shadow="none" radius="lg" className={adminCardClassName}>
+            <CardHeader className={adminSectionHeaderClassName}>
+              <div>
+                <p className="text-[1.1rem] font-semibold tracking-[-0.03em] text-slate-950">System Log</p>
+                <p className="mt-1 text-sm leading-6 text-slate-500">Current backend runtime output for quick inspection.</p>
+              </div>
+              <Button size="sm" color="primary" variant="light" onPress={() => void loadQueue()}>
+                Reload log
+              </Button>
+            </CardHeader>
+            <CardBody className={adminSectionBodyClassName}>
               <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap text-xs text-slate-600">
                 {typeof state.log === "string" ? state.log : JSON.stringify(state.log, null, 2)}
               </pre>
-          </SectionCard>
+            </CardBody>
+          </Card>
         </div>
       )}
     </PageFrame>

@@ -1,5 +1,8 @@
 import {
   Button,
+  Card,
+  CardBody,
+  CardHeader,
   Input,
   Modal,
   ModalBody,
@@ -22,7 +25,14 @@ import { useEffect, useMemo, useState } from "react";
 import { adminRequest } from "../lib/api";
 import { PERIOD_OPTIONS, RESET_TRAFFIC_OPTIONS } from "../lib/admin-constants";
 import { PageFrame } from "../components/PageFrame";
-import { adminTableClassNames, SectionCard, StatGrid } from "../components/AdminContent";
+import {
+  adminCardClassName,
+  adminSectionBodyClassName,
+  adminSectionHeaderClassName,
+  adminStatCardBodyClassName,
+  adminStatsGridClassName,
+  adminTableClassNames
+} from "../components/AdminContent";
 
 interface ServerGroup {
   id: number;
@@ -193,12 +203,26 @@ export function PlanPage() {
       onRefresh={() => void loadPlans()}
       loading={loading}
     >
-      <StatGrid items={stats} />
+      <div className={adminStatsGridClassName}>
+        {stats.map(item => (
+          <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
+            <CardBody className={adminStatCardBodyClassName}>
+              <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
+              <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
+              {item.hint ? <p className="text-sm text-slate-500">{item.hint}</p> : null}
+            </CardBody>
+          </Card>
+        ))}
+      </div>
 
-      <SectionCard
-        title="Plan Catalog"
-        description="Create and maintain subscription plans without staying in the legacy table."
-        action={
+      <Card shadow="none" radius="lg" className={adminCardClassName}>
+        <CardHeader className={adminSectionHeaderClassName}>
+          <div>
+            <p className="text-[1.1rem] font-semibold tracking-[-0.03em] text-slate-950">Plan Catalog</p>
+            <p className="mt-1 text-sm leading-6 text-slate-500">
+              Create and maintain subscription plans without staying in the legacy table.
+            </p>
+          </div>
           <Button
             color="primary"
             radius="full"
@@ -209,8 +233,8 @@ export function PlanPage() {
           >
             Add plan
           </Button>
-        }
-      >
+        </CardHeader>
+        <CardBody className={adminSectionBodyClassName}>
           {error ? <div className="mb-4 rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">{error}</div> : null}
           {loading ? (
             <div className="flex min-h-[280px] items-center justify-center">
@@ -292,7 +316,8 @@ export function PlanPage() {
               </TableBody>
             </Table>
           )}
-      </SectionCard>
+        </CardBody>
+      </Card>
 
       <Modal isOpen={open} onOpenChange={isOpen => !isOpen && setOpen(false)} size="5xl" scrollBehavior="inside">
         <ModalContent>

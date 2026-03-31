@@ -1,4 +1,6 @@
 import {
+  Accordion,
+  AccordionItem,
   Button,
   Card,
   CardBody,
@@ -27,7 +29,16 @@ import { useEffect, useMemo, useState } from "react";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { formatBytes, formatDateTime, formatMoney } from "../lib/admin-format";
-import { adminTableClassNames, FilterPanel, SectionCard, StatGrid } from "../components/AdminContent";
+import {
+  adminCardClassName,
+  adminFilterAccordionClassName,
+  adminFilterAccordionItemClasses,
+  adminSectionBodyClassName,
+  adminSectionHeaderClassName,
+  adminStatCardBodyClassName,
+  adminStatsGridClassName,
+  adminTableClassNames
+} from "../components/AdminContent";
 
 interface PlanRecord {
   id: number;
@@ -531,12 +542,27 @@ export function UserPage() {
       onRefresh={() => void loadUsers(page)}
       loading={loading}
     >
-      <StatGrid items={stats} />
+      <div className={adminStatsGridClassName}>
+        {stats.map(item => (
+          <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
+            <CardBody className={adminStatCardBodyClassName}>
+              <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
+              <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
+              {item.hint ? <p className="text-sm text-slate-500">{item.hint}</p> : null}
+            </CardBody>
+          </Card>
+        ))}
+      </div>
 
-      <SectionCard
-        title="User Directory"
-        description="Search active accounts, review balance and plan state, and open actions from one place."
-        action={<div className="flex flex-wrap gap-2">
+      <Card shadow="none" radius="lg" className={adminCardClassName}>
+        <CardHeader className={adminSectionHeaderClassName}>
+          <div>
+            <p className="text-[1.1rem] font-semibold tracking-[-0.03em] text-slate-950">User Directory</p>
+            <p className="mt-1 text-sm leading-6 text-slate-500">
+              Search active accounts, review balance and plan state, and open actions from one place.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
             <Button color="default" variant="light" onPress={() => void dumpCsv()} isLoading={submitting}>
               Export CSV
             </Button>
@@ -549,10 +575,17 @@ export function UserPage() {
             <Button color="primary" onPress={() => setGenerateOpen(true)}>
               Generate users
             </Button>
-          </div>}
-        bodyClassName="gap-5"
-      >
-          <FilterPanel>
+          </div>
+        </CardHeader>
+        <CardBody className={`${adminSectionBodyClassName} gap-5`}>
+          <Accordion
+            variant="splitted"
+            showDivider={false}
+            itemClasses={adminFilterAccordionItemClasses}
+            className={adminFilterAccordionClassName}
+          >
+            <AccordionItem key="filters" aria-label="Filters" title="Filters" subtitle="Refine the current dataset quickly.">
+              <div className="grid gap-3 md:grid-cols-4">
             <Input
               label="Email"
               labelPlacement="outside"
@@ -598,7 +631,9 @@ export function UserPage() {
                 Reset
               </Button>
             </div>
-          </FilterPanel>
+              </div>
+            </AccordionItem>
+          </Accordion>
 
           {error ? (
             <div className="rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">
@@ -722,7 +757,8 @@ export function UserPage() {
               </div>
             </>
           )}
-      </SectionCard>
+        </CardBody>
+      </Card>
 
       <Modal isOpen={editorOpen} onOpenChange={isOpen => !isOpen && setEditorOpen(false)} size="5xl" scrollBehavior="inside">
         <ModalContent>

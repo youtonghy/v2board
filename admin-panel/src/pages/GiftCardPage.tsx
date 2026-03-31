@@ -1,5 +1,8 @@
 import {
   Button,
+  Card,
+  CardBody,
+  CardHeader,
   Chip,
   Input,
   Modal,
@@ -22,7 +25,14 @@ import { useEffect, useMemo, useState } from "react";
 import { adminRequest } from "../lib/api";
 import { GIFTCARD_TYPE_OPTIONS, fromDatetimeInput, toDatetimeInput } from "../lib/admin-constants";
 import { PageFrame } from "../components/PageFrame";
-import { adminTableClassNames, SectionCard, StatGrid } from "../components/AdminContent";
+import {
+  adminCardClassName,
+  adminSectionBodyClassName,
+  adminSectionHeaderClassName,
+  adminStatCardBodyClassName,
+  adminStatsGridClassName,
+  adminTableClassNames
+} from "../components/AdminContent";
 
 interface PlanOption {
   id: number;
@@ -131,12 +141,26 @@ export function GiftCardPage() {
       onRefresh={() => void loadGiftCards(page)}
       loading={loading}
     >
-      <StatGrid items={stats} />
+      <div className={adminStatsGridClassName}>
+        {stats.map(item => (
+          <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
+            <CardBody className={adminStatCardBodyClassName}>
+              <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
+              <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
+              {item.hint ? <p className="text-sm text-slate-500">{item.hint}</p> : null}
+            </CardBody>
+          </Card>
+        ))}
+      </div>
 
-      <SectionCard
-        title="Gift Card Inventory"
-        description="Create or edit gift card batches without dropping back to the generic data explorer."
-        action={
+      <Card shadow="none" radius="lg" className={adminCardClassName}>
+        <CardHeader className={adminSectionHeaderClassName}>
+          <div>
+            <p className="text-[1.1rem] font-semibold tracking-[-0.03em] text-slate-950">Gift Card Inventory</p>
+            <p className="mt-1 text-sm leading-6 text-slate-500">
+              Create or edit gift card batches without dropping back to the generic data explorer.
+            </p>
+          </div>
           <Button
             color="primary"
             radius="full"
@@ -147,9 +171,8 @@ export function GiftCardPage() {
           >
             Add gift card
           </Button>
-        }
-        bodyClassName="gap-4"
-      >
+        </CardHeader>
+        <CardBody className={`${adminSectionBodyClassName} gap-4`}>
           {loading ? (
             <div className="flex min-h-[280px] items-center justify-center">
               <Spinner color="primary" label="Loading gift cards" />
@@ -205,7 +228,8 @@ export function GiftCardPage() {
               </div>
             </>
           )}
-      </SectionCard>
+        </CardBody>
+      </Card>
 
       <Modal isOpen={open} onOpenChange={isOpen => !isOpen && setOpen(false)} size="5xl" scrollBehavior="inside">
         <ModalContent>

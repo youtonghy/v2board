@@ -17,7 +17,6 @@ import {
   DrawerHeader,
   Listbox,
   ListboxItem,
-  ScrollShadow,
   Tooltip
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
@@ -47,7 +46,6 @@ function NavigationList({
           title: "hidden",
           selectedIcon: "hidden"
         }}
-        onAction={key => onNavigate(String(key))}
       >
         {navGroups.flatMap(group =>
           group.items.map(item => {
@@ -55,6 +53,7 @@ function NavigationList({
             return (
               <ListboxItem
                 key={item.path}
+                href={item.path}
                 textValue={item.label}
                 startContent={
                   <Tooltip content={item.label} placement="right">
@@ -98,13 +97,13 @@ function NavigationList({
               title: "text-[14px] font-semibold text-slate-900",
               selectedIcon: "hidden"
             }}
-            onAction={key => onNavigate(String(key))}
           >
             {group.items.map(item => {
               const Icon = item.icon;
               return (
                 <ListboxItem
                   key={item.path}
+                  href={item.path}
                   description={item.description}
                   startContent={
                     <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/80 text-slate-600">
@@ -169,9 +168,9 @@ function SidebarContent({
         ) : null}
       </div>
 
-      <ScrollShadow className="flex-1 pb-6">
+      <div className="flex-1 overflow-y-auto pb-6">
         <NavigationList collapsed={collapsed} currentPath={currentPath} onNavigate={onNavigate} />
-      </ScrollShadow>
+      </div>
 
       <div className="border-t border-white/70 px-3 py-4">
         <div

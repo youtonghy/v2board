@@ -25,7 +25,14 @@ import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { ObjectRecordEditor } from "../components/ObjectRecordEditor";
 import { asArray, formatDateTime } from "../lib/admin-format";
-import { adminTableClassNames, SectionCard, StatGrid } from "../components/AdminContent";
+import {
+  adminCardClassName,
+  adminSectionBodyClassName,
+  adminSectionHeaderClassName,
+  adminStatCardBodyClassName,
+  adminStatsGridClassName,
+  adminTableClassNames
+} from "../components/AdminContent";
 
 type ServerProtocol = "shadowsocks" | "vmess" | "vless" | "trojan" | "tuic" | "hysteria" | "anytls" | "v2node";
 
@@ -323,13 +330,26 @@ export function ServerManagePage() {
       onRefresh={() => void loadServers()}
       loading={loading}
     >
-      <StatGrid items={stats} />
+      <div className={adminStatsGridClassName}>
+        {stats.map(item => (
+          <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
+            <CardBody className={adminStatCardBodyClassName}>
+              <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
+              <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
+              {item.hint ? <p className="text-sm text-slate-500">{item.hint}</p> : null}
+            </CardBody>
+          </Card>
+        ))}
+      </div>
 
-      <SectionCard
-        title="Node Inventory"
-        description="Browse each protocol independently, keep visibility under control, and edit raw settings without falling back to the old UI."
-        bodyClassName="gap-5"
-        action={
+      <Card shadow="none" radius="lg" className={adminCardClassName}>
+        <CardHeader className={adminSectionHeaderClassName}>
+          <div>
+            <p className="text-[1.1rem] font-semibold tracking-[-0.03em] text-slate-950">Node Inventory</p>
+            <p className="mt-1 text-sm leading-6 text-slate-500">
+              Browse each protocol independently, keep visibility under control, and edit raw settings without falling back to the old UI.
+            </p>
+          </div>
           <Button
             color="primary"
             radius="full"
@@ -340,8 +360,8 @@ export function ServerManagePage() {
           >
             Add {PROTOCOLS.find(item => item.key === activeProtocol)?.label}
           </Button>
-        }
-      >
+        </CardHeader>
+        <CardBody className={`${adminSectionBodyClassName} gap-5`}>
           <Tabs
             selectedKey={activeProtocol}
             onSelectionChange={key => setActiveProtocol(String(key) as ServerProtocol)}
@@ -445,7 +465,8 @@ export function ServerManagePage() {
               </TableBody>
             </Table>
           )}
-      </SectionCard>
+        </CardBody>
+      </Card>
 
       <Modal isOpen={editorOpen} onOpenChange={isOpen => !isOpen && setEditorOpen(false)} size="5xl" scrollBehavior="inside">
         <ModalContent>

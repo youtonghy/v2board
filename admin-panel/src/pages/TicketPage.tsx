@@ -1,4 +1,6 @@
 import {
+  Accordion,
+  AccordionItem,
   Button,
   Card,
   CardBody,
@@ -23,7 +25,16 @@ import { useNavigate } from "react-router-dom";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { asArray, formatDateTime } from "../lib/admin-format";
-import { adminTableClassNames, FilterPanel, SectionCard, StatGrid } from "../components/AdminContent";
+import {
+  adminCardClassName,
+  adminFilterAccordionClassName,
+  adminFilterAccordionItemClasses,
+  adminSectionBodyClassName,
+  adminSectionHeaderClassName,
+  adminStatCardBodyClassName,
+  adminStatsGridClassName,
+  adminTableClassNames
+} from "../components/AdminContent";
 
 interface TicketRecord {
   id: number;
@@ -108,13 +119,28 @@ export function TicketPage() {
       onRefresh={() => void loadTickets(page)}
       loading={loading}
     >
-      <StatGrid items={stats} />
+      <div className={adminStatsGridClassName}>
+        {stats.map(item => (
+          <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
+            <CardBody className={adminStatCardBodyClassName}>
+              <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
+              <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
+              {item.hint ? <p className="text-sm text-slate-500">{item.hint}</p> : null}
+            </CardBody>
+          </Card>
+        ))}
+      </div>
 
-      <SectionCard
-        title="Support Queue"
-        description="Filter open tickets, sort by recency, and jump directly into the threaded detail workflow."
-        bodyClassName="gap-5"
-      >
+      <Card shadow="none" radius="lg" className={adminCardClassName}>
+        <CardHeader className={adminSectionHeaderClassName}>
+          <div>
+            <p className="text-[1.1rem] font-semibold tracking-[-0.03em] text-slate-950">Support Queue</p>
+            <p className="mt-1 text-sm leading-6 text-slate-500">
+              Filter open tickets, sort by recency, and jump directly into the threaded detail workflow.
+            </p>
+          </div>
+        </CardHeader>
+        <CardBody className={`${adminSectionBodyClassName} gap-5`}>
           <Tabs
             selectedKey={status}
             onSelectionChange={key => {
@@ -129,7 +155,14 @@ export function TicketPage() {
             ))}
           </Tabs>
 
-          <FilterPanel>
+          <Accordion
+            variant="splitted"
+            showDivider={false}
+            itemClasses={adminFilterAccordionItemClasses}
+            className={adminFilterAccordionClassName}
+          >
+            <AccordionItem key="filters" aria-label="Filters" title="Filters" subtitle="Refine the current dataset quickly.">
+              <div className="grid gap-3 md:grid-cols-4">
             <Input label="User Email" labelPlacement="outside" value={email} onValueChange={setEmail} />
             <Select
               label="Reply Status"
@@ -159,7 +192,9 @@ export function TicketPage() {
                 Reset
               </Button>
             </div>
-          </FilterPanel>
+              </div>
+            </AccordionItem>
+          </Accordion>
 
           {error ? <div className="rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">{error}</div> : null}
 
@@ -215,7 +250,8 @@ export function TicketPage() {
               </div>
             </>
           )}
-      </SectionCard>
+        </CardBody>
+      </Card>
     </PageFrame>
   );
 }

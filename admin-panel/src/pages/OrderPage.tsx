@@ -1,4 +1,6 @@
 import {
+  Accordion,
+  AccordionItem,
   Button,
   Card,
   CardBody,
@@ -26,7 +28,16 @@ import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { formatDateTime, formatMoney, asArray } from "../lib/admin-format";
 import { PERIOD_OPTIONS } from "../lib/admin-constants";
-import { adminTableClassNames, FilterPanel, SectionCard, StatGrid } from "../components/AdminContent";
+import {
+  adminCardClassName,
+  adminFilterAccordionClassName,
+  adminFilterAccordionItemClasses,
+  adminSectionBodyClassName,
+  adminSectionHeaderClassName,
+  adminStatCardBodyClassName,
+  adminStatsGridClassName,
+  adminTableClassNames
+} from "../components/AdminContent";
 
 interface OrderRecord {
   id: number;
@@ -208,15 +219,39 @@ export function OrderPage() {
       onRefresh={() => void loadOrders(page)}
       loading={loading}
     >
-      <StatGrid items={stats} />
+      <div className={adminStatsGridClassName}>
+        {stats.map(item => (
+          <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
+            <CardBody className={adminStatCardBodyClassName}>
+              <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
+              <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
+              {item.hint ? <p className="text-sm text-slate-500">{item.hint}</p> : null}
+            </CardBody>
+          </Card>
+        ))}
+      </div>
 
-      <SectionCard
-        title="Order Operations"
-        description="Review payment state, inspect order details, and manually assign or settle orders without switching back to the old page."
-        action={<Button color="primary" radius="full" onPress={() => setAssignOpen(true)}>Assign order</Button>}
-        bodyClassName="gap-5"
-      >
-          <FilterPanel>
+      <Card shadow="none" radius="lg" className={adminCardClassName}>
+        <CardHeader className={adminSectionHeaderClassName}>
+          <div>
+            <p className="text-[1.1rem] font-semibold tracking-[-0.03em] text-slate-950">Order Operations</p>
+            <p className="mt-1 text-sm leading-6 text-slate-500">
+              Review payment state, inspect order details, and manually assign or settle orders without switching back to the old page.
+            </p>
+          </div>
+          <Button color="primary" radius="full" onPress={() => setAssignOpen(true)}>
+            Assign order
+          </Button>
+        </CardHeader>
+        <CardBody className={`${adminSectionBodyClassName} gap-5`}>
+          <Accordion
+            variant="splitted"
+            showDivider={false}
+            itemClasses={adminFilterAccordionItemClasses}
+            className={adminFilterAccordionClassName}
+          >
+            <AccordionItem key="filters" aria-label="Filters" title="Filters" subtitle="Refine the current dataset quickly.">
+              <div className="grid gap-3 md:grid-cols-4">
             <Input label="User Email" labelPlacement="outside" value={email} onValueChange={setEmail} />
             <Input label="Trade No" labelPlacement="outside" value={tradeNo} onValueChange={setTradeNo} />
             <Select
@@ -247,7 +282,9 @@ export function OrderPage() {
                 Reset
               </Button>
             </div>
-          </FilterPanel>
+              </div>
+            </AccordionItem>
+          </Accordion>
 
           {error ? <div className="rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">{error}</div> : null}
 
@@ -318,7 +355,8 @@ export function OrderPage() {
               </div>
             </>
           )}
-      </SectionCard>
+        </CardBody>
+      </Card>
 
       <Modal isOpen={detailOpen} onOpenChange={isOpen => !isOpen && setDetailOpen(false)} size="5xl" scrollBehavior="inside">
         <ModalContent>

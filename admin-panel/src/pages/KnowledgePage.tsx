@@ -1,4 +1,6 @@
 import {
+  Accordion,
+  AccordionItem,
   Button,
   Card,
   CardBody,
@@ -26,7 +28,16 @@ import { useEffect, useMemo, useState } from "react";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { asArray, formatDateTime } from "../lib/admin-format";
-import { adminTableClassNames, FilterPanel, SectionCard, StatGrid } from "../components/AdminContent";
+import {
+  adminCardClassName,
+  adminFilterAccordionClassName,
+  adminFilterAccordionItemClasses,
+  adminSectionBodyClassName,
+  adminSectionHeaderClassName,
+  adminStatCardBodyClassName,
+  adminStatsGridClassName,
+  adminTableClassNames
+} from "../components/AdminContent";
 
 interface KnowledgeRecord {
   id: number;
@@ -193,12 +204,27 @@ export function KnowledgePage() {
       onRefresh={() => void loadKnowledge()}
       loading={loading}
     >
-      <StatGrid items={stats} />
+      <div className={adminStatsGridClassName}>
+        {stats.map(item => (
+          <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
+            <CardBody className={adminStatCardBodyClassName}>
+              <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
+              <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
+              {item.hint ? <p className="text-sm text-slate-500">{item.hint}</p> : null}
+            </CardBody>
+          </Card>
+        ))}
+      </div>
 
-      <SectionCard
-        title="Knowledge Base"
-        description="Keep categories organized and maintain article visibility without relying on the old editor page."
-        action={<div className="flex gap-2">
+      <Card shadow="none" radius="lg" className={adminCardClassName}>
+        <CardHeader className={adminSectionHeaderClassName}>
+          <div>
+            <p className="text-[1.1rem] font-semibold tracking-[-0.03em] text-slate-950">Knowledge Base</p>
+            <p className="mt-1 text-sm leading-6 text-slate-500">
+              Keep categories organized and maintain article visibility without relying on the old editor page.
+            </p>
+          </div>
+          <div className="flex gap-2">
             <Select
               className="min-w-[220px]"
               label="Category"
@@ -214,9 +240,29 @@ export function KnowledgePage() {
             <Button color="primary" radius="full" onPress={() => void openEditor()}>
               Add article
             </Button>
-          </div>}
-        bodyClassName="gap-5"
-      >
+          </div>
+        </CardHeader>
+        <CardBody className={`${adminSectionBodyClassName} gap-5`}>
+          <Accordion
+            variant="splitted"
+            showDivider={false}
+            itemClasses={adminFilterAccordionItemClasses}
+            className={adminFilterAccordionClassName}
+          >
+            <AccordionItem key="filters" aria-label="Filters" title="Filters" subtitle="Refine the current dataset quickly.">
+              <div className="grid gap-3 md:grid-cols-4">
+                <Input
+                  label="Category Filter"
+                  labelPlacement="outside"
+                  value={activeCategory === "all" ? "" : activeCategory}
+                  isReadOnly
+                />
+                <div className="md:col-span-3 text-sm text-slate-500 flex items-end">
+                  Active category selection is managed from the section header to keep category switching visible at all times.
+                </div>
+              </div>
+            </AccordionItem>
+          </Accordion>
           {error ? <div className="rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">{error}</div> : null}
 
           {loading ? (
@@ -285,7 +331,8 @@ export function KnowledgePage() {
               </TableBody>
             </Table>
           )}
-      </SectionCard>
+        </CardBody>
+      </Card>
 
       <Modal isOpen={editorOpen} onOpenChange={isOpen => !isOpen && setEditorOpen(false)} size="5xl" scrollBehavior="inside">
         <ModalContent>
