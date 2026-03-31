@@ -261,7 +261,10 @@ export function OrderPage() {
                 <Select.Indicator />
               </Select.Trigger>
               <Select.Popover>
-                <ListBox>
+                <ListBox items={Object.entries(ORDER_STATUS).map(([key, value]) => ({
+                  id: key,
+                  label: value.label
+                }))}>
                   {item => (
                     <ListBoxItem id={item.id} textValue={item.label}>
                       {item.label}
@@ -436,7 +439,7 @@ export function OrderPage() {
                 <Select.Indicator />
               </Select.Trigger>
               <Select.Popover>
-                <ListBox>
+                <ListBox items={plans.map(plan => ({ id: String(plan.id), label: plan.name }))}>
                   {item => (
                     <ListBoxItem id={item.id} textValue={item.label}>
                       {item.label}
@@ -457,7 +460,7 @@ export function OrderPage() {
                 <Select.Indicator />
               </Select.Trigger>
               <Select.Popover>
-                <ListBox>
+                <ListBox items={PERIOD_OPTIONS.map(option => ({ id: option.key, label: option.label }))}>
                   {item => (
                     <ListBoxItem id={item.id} textValue={item.label}>
                       {item.label}

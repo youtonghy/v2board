@@ -597,7 +597,7 @@ export function UserPage() {
                 <Select.Indicator />
               </Select.Trigger>
               <Select.Popover>
-                <ListBox>
+                <ListBox items={plans.map(plan => ({ id: String(plan.id), label: plan.name }))}>
                   {item => (
                     <ListBoxItem id={item.id} textValue={item.label}>
                       {item.label}
@@ -622,7 +622,10 @@ export function UserPage() {
                 <Select.Indicator />
               </Select.Trigger>
               <Select.Popover>
-                <ListBox>
+                <ListBox items={[
+                  { id: "0", label: "Active" },
+                  { id: "1", label: "Banned" }
+                ]}>
                   {item => (
                     <ListBoxItem id={item.id} textValue={item.label}>
                       {item.label}
@@ -801,7 +804,7 @@ export function UserPage() {
                 <Select.Indicator />
               </Select.Trigger>
               <Select.Popover>
-                <ListBox>
+                <ListBox items={plans.map(plan => ({ id: String(plan.id), label: plan.name }))}>
                   {item => (
                     <ListBoxItem id={item.id} textValue={item.label}>
                       {item.label}
@@ -882,7 +885,7 @@ export function UserPage() {
                 <Select.Indicator />
               </Select.Trigger>
               <Select.Popover>
-                <ListBox>
+                <ListBox items={plans.map(plan => ({ id: String(plan.id), label: plan.name }))}>
                   {item => (
                     <ListBoxItem id={item.id} textValue={item.label}>
                       {item.label}
@@ -996,7 +999,7 @@ export function UserPage() {
                   <Select.Indicator />
                 </Select.Trigger>
                 <Select.Popover>
-                  <ListBox>
+                  <ListBox items={geoProviders.map(provider => ({ id: provider.key, label: provider.name }))}>
                     {item => (
                       <ListBoxItem id={item.id} textValue={item.label}>
                         {item.label}

@@ -231,7 +231,12 @@ export function InviteLinkPage() {
                 <Select.Indicator />
               </Select.Trigger>
               <Select.Popover>
-                <ListBox>
+                <ListBox items={[
+                  { id: "0", label: "Active" },
+                  { id: "1", label: "Used Up" },
+                  { id: "2", label: "Expired" },
+                  { id: "3", label: "Disabled" }
+                ]}>
                   {item => (
                     <ListBoxItem id={item.id} textValue={item.label}>
                       {item.label}
@@ -349,7 +354,7 @@ export function InviteLinkPage() {
                 <Select.Indicator />
               </Select.Trigger>
               <Select.Popover>
-                <ListBox>
+                <ListBox items={userOptions.map(user => ({ id: String(user.id), label: user.email }))}>
                   {item => (
                     <ListBoxItem id={item.id} textValue={item.label}>
                       {item.label}

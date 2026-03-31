@@ -258,7 +258,10 @@ export function KnowledgePage() {
                 <Select.Indicator />
               </Select.Trigger>
               <Select.Popover>
-                <ListBox>
+                <ListBox items={[
+                  { id: "all", label: "All Categories" },
+                  ...categories.map(category => ({ id: category, label: category }))
+                ]}>
                   {item => (
                     <ListBoxItem id={item.id} textValue={item.label}>
                       {item.label}

@@ -373,7 +373,7 @@ export function PlanPage() {
                     <Select.Indicator />
                   </Select.Trigger>
                   <Select.Popover>
-                    <ListBox>
+                    <ListBox items={groupOptions}>
                       {item => (
                         <ListBoxItem id={item.id} textValue={item.label}>
                           {item.label}
@@ -398,7 +398,7 @@ export function PlanPage() {
                     <Select.Indicator />
                   </Select.Trigger>
                   <Select.Popover>
-                    <ListBox>
+                    <ListBox items={RESET_METHOD_OPTIONS}>
                       {item => (
                         <ListBoxItem id={item.id} textValue={item.label}>
                           {item.label}

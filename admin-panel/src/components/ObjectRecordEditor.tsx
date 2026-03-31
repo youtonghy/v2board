@@ -154,7 +154,7 @@ export function ObjectRecordEditor({
                 <Select.Indicator />
               </Select.Trigger>
               <Select.Popover>
-                <ListBox>
+                <ListBox items={selectValues.map(item => ({ id: item, label: item }))}>
                   {item => (
                     <ListBoxItem id={item.id} textValue={item.label}>
                       {item.label}

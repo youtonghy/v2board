@@ -241,7 +241,7 @@ export function ServerRoutePage() {
                 <Select.Indicator />
               </Select.Trigger>
               <Select.Popover>
-                <ListBox>
+                <ListBox items={ACTION_OPTIONS.map(action => ({ id: action, label: action }))}>
                   {item => (
                     <ListBoxItem id={item.id} textValue={item.label}>
                       {item.label}

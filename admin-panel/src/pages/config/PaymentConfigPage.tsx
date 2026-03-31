@@ -394,7 +394,7 @@ export function PaymentConfigPage() {
                 <Select.Indicator />
               </Select.Trigger>
               <Select.Popover>
-                <ListBox>
+                <ListBox items={methods.map(method => ({ id: method, label: method }))}>
                   {item => (
                     <ListBoxItem id={item.id} textValue={item.label}>
                       {item.label}

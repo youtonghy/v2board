@@ -247,7 +247,7 @@ export function GiftCardPage() {
                 <Select.Indicator />
               </Select.Trigger>
               <Select.Popover>
-                <ListBox>
+                <ListBox items={GIFT_CARD_TYPE_OPTIONS}>
                   {item => (
                     <ListBoxItem id={item.id} textValue={item.label}>
                       {item.label}
@@ -279,7 +279,7 @@ export function GiftCardPage() {
                   <Select.Indicator />
                 </Select.Trigger>
                 <Select.Popover>
-                  <ListBox>
+                  <ListBox items={planOptions}>
                     {item => (
                       <ListBoxItem id={item.id} textValue={item.label}>
                         {item.label}

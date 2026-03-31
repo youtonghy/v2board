@@ -184,7 +184,11 @@ export function TicketPage() {
                 <Select.Indicator />
               </Select.Trigger>
               <Select.Popover>
-                <ListBox>
+                <ListBox items={[
+                  { id: "0", label: "Pending Admin Reply" },
+                  { id: "1", label: "Waiting User Reply" },
+                  { id: "2", label: "Resolved" }
+                ]}>
                   {item => (
                     <ListBoxItem id={item.id} textValue={item.label}>
                       {item.label}

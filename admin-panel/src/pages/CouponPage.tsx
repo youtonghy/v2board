@@ -281,7 +281,7 @@ export function CouponPage() {
                 <Select.Indicator />
               </Select.Trigger>
               <Select.Popover>
-                <ListBox>
+                <ListBox items={COUPON_TYPE_OPTIONS}>
                   {item => (
                     <ListBoxItem id={item.id} textValue={item.label}>
                       {item.label}
@@ -336,7 +336,7 @@ export function CouponPage() {
                 <Select.Indicator />
               </Select.Trigger>
               <Select.Popover>
-                <ListBox>
+                <ListBox items={planOptions}>
                   {item => (
                     <ListBoxItem id={item.id} textValue={item.label}>
                       {item.label}
@@ -367,7 +367,7 @@ export function CouponPage() {
                 <Select.Indicator />
               </Select.Trigger>
               <Select.Popover>
-                <ListBox>
+                <ListBox items={PERIOD_OPTIONS}>
                   {item => (
                     <ListBoxItem id={item.id} textValue={item.label}>
                       {item.label}
