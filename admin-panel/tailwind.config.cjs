@@ -12,8 +12,8 @@ module.exports = {
       colors: {
         canvas: "#f4f7f9",
         ink: "#11212d",
-        accent: "#ff7a18",
-        accentSoft: "#fff0e5",
+        accent: "#1388ef",
+        accentSoft: "#e9f4ff",
         panel: "#ffffff",
         line: "#d9e3ea"
       },
@@ -34,17 +34,17 @@ module.exports = {
             background: "#f4f7f9",
             foreground: "#11212d",
             primary: {
-              50: "#fff5ed",
-              100: "#ffe7d3",
-              200: "#ffd0a7",
-              300: "#ffb577",
-              400: "#ff963f",
-              500: "#ff7a18",
-              600: "#f05c00",
-              700: "#c74600",
-              800: "#9e3907",
-              900: "#7f310b",
-              DEFAULT: "#ff7a18",
+              50: "#eef8ff",
+              100: "#d8edff",
+              200: "#bae0ff",
+              300: "#8bcbff",
+              400: "#54aeff",
+              500: "#2b93f6",
+              600: "#1388ef",
+              700: "#0b6fc9",
+              800: "#0e5aa3",
+              900: "#124c85",
+              DEFAULT: "#1388ef",
               foreground: "#ffffff"
             }
           }

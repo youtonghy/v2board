@@ -1,6 +1,7 @@
-import { Button, Card, CardBody, Chip } from "@heroui/react";
-import { ArrowUpRight, RefreshCw } from "lucide-react";
+import { BreadcrumbItem, Breadcrumbs, Button } from "@heroui/react";
+import { useLocation } from "react-router-dom";
 import { openLegacyPage } from "../lib/bootstrap";
+import { ExternalLinkIcon, RefreshIcon } from "./AdminIcons";
 
 interface PageFrameProps {
   title: string;
@@ -19,45 +20,59 @@ export function PageFrame({
   onRefresh,
   loading
 }: PageFrameProps) {
+  const location = useLocation();
+  const segments = location.pathname.replace(/^\/new\/?/, "").split("/").filter(Boolean);
+
   return (
     <div className="space-y-6">
-      <Card className="overflow-visible border border-white/40 bg-white/85 shadow-panel backdrop-blur">
-        <CardBody className="gap-5 p-6 md:p-8">
-          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-            <div className="space-y-3">
-              <Chip className="border-none bg-accentSoft text-accent" radius="full" variant="flat">
-                New Admin Preview
-              </Chip>
-              <div>
-                <h1 className="text-3xl font-semibold tracking-tight text-ink">{title}</h1>
-                <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-600">{description}</p>
-              </div>
+      <section className="rounded-[2rem] bg-white/80 px-5 py-5 shadow-[0_24px_80px_rgba(15,23,32,0.06)] backdrop-blur-xl md:px-7 md:py-6">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="space-y-3">
+            <Breadcrumbs
+              itemClasses={{
+                item: "text-slate-400",
+                separator: "text-slate-300"
+              }}
+            >
+              <BreadcrumbItem>Admin</BreadcrumbItem>
+              {segments.map(segment => (
+                <BreadcrumbItem key={segment}>{segment.replaceAll("-", " ")}</BreadcrumbItem>
+              ))}
+            </Breadcrumbs>
+            <div>
+              <h1 className="text-[clamp(2rem,3vw,3.25rem)] font-semibold tracking-[-0.04em] text-slate-950">
+                {title}
+              </h1>
+              <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-500">{description}</p>
             </div>
-            <div className="flex flex-wrap gap-3">
-              {onRefresh ? (
-                <Button
-                  variant="flat"
-                  startContent={<RefreshCw size={16} />}
-                  onPress={onRefresh}
-                  isLoading={loading}
-                >
-                  Refresh
-                </Button>
-              ) : null}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            {onRefresh ? (
               <Button
-                color="primary"
-                endContent={<ArrowUpRight size={16} />}
-                onPress={() => openLegacyPage(legacyPath)}
+                radius="full"
+                variant="light"
+                className="bg-slate-100 px-4 text-slate-700"
+                startContent={<RefreshIcon size={16} />}
+                onPress={onRefresh}
+                isLoading={loading}
               >
-                Open legacy page
+                Refresh
               </Button>
-            </div>
+            ) : null}
+            <Button
+              color="primary"
+              radius="full"
+              className="px-5"
+              endContent={<ExternalLinkIcon size={16} />}
+              onPress={() => openLegacyPage(legacyPath)}
+            >
+              Open legacy
+            </Button>
           </div>
-          <div className="rounded-[1.25rem] border border-dashed border-orange-200 bg-orange-50/70 p-4 text-sm leading-7 text-orange-900">
-            This page already runs in the new shell. Editing-heavy flows still fall back to the legacy panel so the team can migrate behavior safely without breaking existing operations.
-          </div>
-        </CardBody>
-      </Card>
+        </div>
+      </section>
+
       {children}
     </div>
   );
