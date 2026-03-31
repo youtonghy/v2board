@@ -1,3 +1,5 @@
+import { DndContext, type DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import {
   Button,
   Card,
@@ -18,9 +20,14 @@ import {
   TableCell,
   TableColumn,
   TableHeader,
-  TableRow
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
+import {
+  SortableTableRow,
+  adminTableActionCellClassName,
+  sortableCollisionDetection,
+  useSortableTableSensors
+} from "../components/SortableTable";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { ObjectRecordEditor } from "../components/ObjectRecordEditor";
@@ -219,6 +226,7 @@ export function ServerManagePage() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [selected, setSelected] = useState<ServerRecord>(defaultServer("shadowsocks"));
   const [error, setError] = useState<string | null>(null);
+  const sortableSensors = useSortableTableSensors();
 
   async function loadServers() {
     setLoading(true);
@@ -310,6 +318,18 @@ export function ServerManagePage() {
     () => records.filter(record => record.type === activeProtocol),
     [records, activeProtocol]
   );
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id || sortingId !== null) return;
+
+    const fromIndex = filtered.findIndex(record => String(record.id) === String(active.id));
+    const toIndex = filtered.findIndex(record => String(record.id) === String(over.id));
+    if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) return;
+
+    void reorderServer(fromIndex, toIndex);
+  }
+
   const stats = useMemo(() => {
     const visible = filtered.filter(record => Boolean(Number(record.show || 0))).length;
     const online = filtered.reduce((sum, record) => sum + Number(record.online || 0), 0);
@@ -379,91 +399,86 @@ export function ServerManagePage() {
               <Spinner color="primary" label="Loading servers" />
             </div>
           ) : (
-            <Table aria-label="Servers" classNames={adminTableClassNames}>
-              <TableHeader>
-                <TableColumn>Sort</TableColumn>
-                <TableColumn>Name</TableColumn>
-                <TableColumn>Host</TableColumn>
-                <TableColumn>Group</TableColumn>
-                <TableColumn>Rate</TableColumn>
-                <TableColumn>Online</TableColumn>
-                <TableColumn>Check</TableColumn>
-                <TableColumn>Visible</TableColumn>
-                <TableColumn align="end">Actions</TableColumn>
-              </TableHeader>
-              <TableBody items={filtered} emptyContent="No nodes found">
-                {item => {
-                  const index = filtered.findIndex(record => record.id === item.id);
-                  const sorting = sortingId === item.id;
+            <DndContext
+              sensors={sortableSensors}
+              collisionDetection={sortableCollisionDetection}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={filtered.map(record => String(record.id))}
+                strategy={verticalListSortingStrategy}
+              >
+                <Table aria-label="Servers" classNames={adminTableClassNames}>
+                  <TableHeader>
+                    <TableColumn>Sort</TableColumn>
+                    <TableColumn>Name</TableColumn>
+                    <TableColumn>Host</TableColumn>
+                    <TableColumn>Group</TableColumn>
+                    <TableColumn>Rate</TableColumn>
+                    <TableColumn>Online</TableColumn>
+                    <TableColumn>Check</TableColumn>
+                    <TableColumn>Visible</TableColumn>
+                    <TableColumn align="end">Actions</TableColumn>
+                  </TableHeader>
+                  <TableBody emptyContent="No nodes found">
+                    {filtered.map(item => {
+                      const sorting = sortingId === item.id;
 
-                  return (
-                  <TableRow key={`${item.type}-${item.id}`}>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          color="default"
-                          variant="light"
-                          isDisabled={sorting || index <= 0}
-                          onPress={() => void reorderServer(index, index - 1)}
+                      return (
+                        <SortableTableRow
+                          key={`${item.type}-${item.id}`}
+                          id={String(item.id)}
+                          dragLabel={`Reorder node ${String(item.name || item.id)}`}
+                          isDisabled={sortingId !== null}
                         >
-                          Up
-                        </Button>
-                        <Button
-                          size="sm"
-                          color="default"
-                          variant="light"
-                          isDisabled={sorting || index >= filtered.length - 1}
-                          onPress={() => void reorderServer(index, index + 1)}
-                        >
-                          Down
-                        </Button>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium text-slate-900">{String(item.name || "Unnamed Node")}</p>
-                        <p className="text-xs text-slate-500">{item.type}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>{String(item.host || "—")}:{String(item.port || "—")}</TableCell>
-                    <TableCell>
-                      <Chip variant="flat" className="bg-sky-50 text-sky-700">{Array.isArray(item.group_id) ? item.group_id.join(", ") : String(item.group_id || "—")}</Chip>
-                    </TableCell>
-                    <TableCell>{String(item.rate || "1")}</TableCell>
-                    <TableCell>{Number(item.online || 0)}</TableCell>
-                    <TableCell>{formatDateTime((item.last_check_at as number) || null)}</TableCell>
-                    <TableCell>
-                      <Switch
-                        isSelected={Boolean(Number(item.show || 0))}
-                        onValueChange={value => void runAction(UPDATE_ENDPOINTS[item.type], { id: item.id, show: value ? 1 : 0 })}
-                      />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          size="sm"
-                          color="primary"
-                          variant="light"
-                          onPress={() => {
-                            setSelected({ ...item });
-                            setEditorOpen(true);
-                          }}
-                        >
-                          Edit
-                        </Button>
-                        <Button size="sm" color="secondary" variant="light" onPress={() => void runAction(COPY_ENDPOINTS[item.type], { id: item.id })} isLoading={submitting}>
-                          Copy
-                        </Button>
-                        <Button size="sm" color="danger" variant="light" onPress={() => void runAction(DROP_ENDPOINTS[item.type], { id: item.id })} isLoading={submitting}>
-                          Delete
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )}}
-              </TableBody>
-            </Table>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium text-slate-900">{String(item.name || "Unnamed Node")}</p>
+                              <p className="text-xs text-slate-500">{item.type}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell>{String(item.host || "—")}:{String(item.port || "—")}</TableCell>
+                          <TableCell>
+                            <Chip variant="flat" className="bg-sky-50 text-sky-700">{Array.isArray(item.group_id) ? item.group_id.join(", ") : String(item.group_id || "—")}</Chip>
+                          </TableCell>
+                          <TableCell>{String(item.rate || "1")}</TableCell>
+                          <TableCell>{Number(item.online || 0)}</TableCell>
+                          <TableCell>{formatDateTime((item.last_check_at as number) || null)}</TableCell>
+                          <TableCell>
+                            <Switch
+                              isSelected={Boolean(Number(item.show || 0))}
+                              onValueChange={value => void runAction(UPDATE_ENDPOINTS[item.type], { id: item.id, show: value ? 1 : 0 })}
+                            />
+                          </TableCell>
+                          <TableCell className={adminTableActionCellClassName}>
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                size="sm"
+                                color="primary"
+                                variant="light"
+                                onPress={() => {
+                                  setSelected({ ...item });
+                                  setEditorOpen(true);
+                                }}
+                                isDisabled={sorting}
+                              >
+                                Edit
+                              </Button>
+                              <Button size="sm" color="secondary" variant="light" onPress={() => void runAction(COPY_ENDPOINTS[item.type], { id: item.id })} isDisabled={sorting}>
+                                Copy
+                              </Button>
+                              <Button size="sm" color="danger" variant="light" onPress={() => void runAction(DROP_ENDPOINTS[item.type], { id: item.id })} isDisabled={sorting}>
+                                Delete
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </SortableTableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </SortableContext>
+            </DndContext>
           )}
         </CardBody>
       </Card>

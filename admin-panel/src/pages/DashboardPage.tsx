@@ -533,15 +533,15 @@ export function DashboardPage() {
           <div className="space-y-3">
             {todayUsers.length ? (
               todayUsers.map((user, index) => (
-                <button
+                <Button
                   key={`today-user-${user.user_id}`}
-                  className="flex w-full items-center justify-between rounded-[1.5rem] border border-slate-100 bg-slate-50/80 px-4 py-4 text-left transition hover:border-sky-100 hover:bg-sky-50/60"
-                  onClick={() => {
+                  variant="light"
+                  className="flex h-auto w-full items-center justify-between rounded-[1.5rem] border border-slate-100 bg-slate-50/80 px-4 py-4 text-left transition hover:border-sky-100 hover:bg-sky-50/60"
+                  onPress={() => {
                     setDetailUser(user);
                     setDetailPage(1);
                     setDetailOpen(true);
                   }}
-                  type="button"
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold text-slate-900">{user.email || `User #${user.user_id}`}</p>
@@ -551,7 +551,7 @@ export function DashboardPage() {
                     <p className="text-lg font-semibold tracking-[-0.03em] text-slate-950">{Number(user.total || 0).toFixed(2)} GB</p>
                     <p className="text-xs text-slate-400">today</p>
                   </div>
-                </button>
+                </Button>
               ))
             ) : (
               <div className="rounded-[1.5rem] border border-dashed border-slate-200 bg-slate-50/70 px-4 py-8 text-center text-sm text-slate-500">

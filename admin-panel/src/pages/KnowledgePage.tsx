@@ -1,3 +1,5 @@
+import { DndContext, type DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import {
   Accordion,
   AccordionItem,
@@ -21,10 +23,15 @@ import {
   TableCell,
   TableColumn,
   TableHeader,
-  TableRow,
   Textarea
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
+import {
+  SortableTableRow,
+  adminTableActionCellClassName,
+  sortableCollisionDetection,
+  useSortableTableSensors
+} from "../components/SortableTable";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { asArray, formatDateTime } from "../lib/admin-format";
@@ -70,6 +77,7 @@ export function KnowledgePage() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [selected, setSelected] = useState<KnowledgeRecord>(defaultKnowledgeRecord());
   const [error, setError] = useState<string | null>(null);
+  const sortableSensors = useSortableTableSensors();
 
   async function loadKnowledge() {
     setLoading(true);
@@ -185,6 +193,18 @@ export function KnowledgePage() {
     () => records.filter(record => activeCategory === "all" || record.category === activeCategory),
     [records, activeCategory]
   );
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id || sortingId !== null) return;
+
+    const fromIndex = filtered.findIndex(record => String(record.id) === String(active.id));
+    const toIndex = filtered.findIndex(record => String(record.id) === String(over.id));
+    if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) return;
+
+    void reorderKnowledge(fromIndex, toIndex);
+  }
+
   const stats = useMemo(() => {
     const visible = filtered.filter(record => Boolean(Number(record.show ?? 0))).length;
     const localized = filtered.filter(record => Boolean(record.language)).length;
@@ -270,66 +290,60 @@ export function KnowledgePage() {
               <Spinner color="primary" label="Loading knowledge articles" />
             </div>
           ) : (
-            <Table aria-label="Knowledge Articles" classNames={adminTableClassNames}>
-              <TableHeader>
-                <TableColumn>Sort</TableColumn>
-                <TableColumn>Title</TableColumn>
-                <TableColumn>Category</TableColumn>
-                <TableColumn>Language</TableColumn>
-                <TableColumn>Updated</TableColumn>
-                <TableColumn>Visible</TableColumn>
-                <TableColumn align="end">Actions</TableColumn>
-              </TableHeader>
-              <TableBody items={filtered} emptyContent="No articles found">
-                {item => {
-                  const index = filtered.findIndex(record => record.id === item.id);
-                  const sorting = sortingId === item.id;
+            <DndContext
+              sensors={sortableSensors}
+              collisionDetection={sortableCollisionDetection}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={filtered.map(record => String(record.id))}
+                strategy={verticalListSortingStrategy}
+              >
+                <Table aria-label="Knowledge Articles" classNames={adminTableClassNames}>
+                  <TableHeader>
+                    <TableColumn>Sort</TableColumn>
+                    <TableColumn>Title</TableColumn>
+                    <TableColumn>Category</TableColumn>
+                    <TableColumn>Language</TableColumn>
+                    <TableColumn>Updated</TableColumn>
+                    <TableColumn>Visible</TableColumn>
+                    <TableColumn align="end">Actions</TableColumn>
+                  </TableHeader>
+                  <TableBody emptyContent="No articles found">
+                    {filtered.map(item => {
+                      const sorting = sortingId === item.id;
 
-                  return (
-                  <TableRow key={item.id}>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          color="default"
-                          variant="light"
-                          isDisabled={sorting || index <= 0}
-                          onPress={() => void reorderKnowledge(index, index - 1)}
+                      return (
+                        <SortableTableRow
+                          key={item.id}
+                          id={String(item.id)}
+                          dragLabel={`Reorder article ${item.title}`}
+                          isDisabled={sortingId !== null}
                         >
-                          Up
-                        </Button>
-                        <Button
-                          size="sm"
-                          color="default"
-                          variant="light"
-                          isDisabled={sorting || index >= filtered.length - 1}
-                          onPress={() => void reorderKnowledge(index, index + 1)}
-                        >
-                          Down
-                        </Button>
-                      </div>
-                    </TableCell>
-                    <TableCell>{item.title}</TableCell>
-                    <TableCell><Chip variant="flat" className="bg-sky-50 text-sky-700">{item.category}</Chip></TableCell>
-                    <TableCell>{item.language || "en-US"}</TableCell>
-                    <TableCell>{formatDateTime(item.updated_at || null)}</TableCell>
-                    <TableCell>
-                      <Switch isSelected={Boolean(Number(item.show || 0))} onValueChange={() => void runAction("knowledge/show", { id: item.id })} />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button size="sm" color="primary" variant="light" onPress={() => void openEditor(item)} isLoading={submitting}>
-                          Edit
-                        </Button>
-                        <Button size="sm" color="danger" variant="light" onPress={() => void runAction("knowledge/drop", { id: item.id })} isLoading={submitting}>
-                          Delete
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )}}
-              </TableBody>
-            </Table>
+                          <TableCell>{item.title}</TableCell>
+                          <TableCell><Chip variant="flat" className="bg-sky-50 text-sky-700">{item.category}</Chip></TableCell>
+                          <TableCell>{item.language || "en-US"}</TableCell>
+                          <TableCell>{formatDateTime(item.updated_at || null)}</TableCell>
+                          <TableCell>
+                            <Switch isSelected={Boolean(Number(item.show || 0))} onValueChange={() => void runAction("knowledge/show", { id: item.id })} />
+                          </TableCell>
+                          <TableCell className={adminTableActionCellClassName}>
+                            <div className="flex justify-end gap-2">
+                              <Button size="sm" color="primary" variant="light" onPress={() => void openEditor(item)} isLoading={submitting || sorting}>
+                                Edit
+                              </Button>
+                              <Button size="sm" color="danger" variant="light" onPress={() => void runAction("knowledge/drop", { id: item.id })} isDisabled={sorting}>
+                                Delete
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </SortableTableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </SortableContext>
+            </DndContext>
           )}
         </CardBody>
       </Card>

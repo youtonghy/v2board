@@ -1,3 +1,5 @@
+import { DndContext, type DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import {
   Button,
   Card,
@@ -18,9 +20,14 @@ import {
   TableCell,
   TableColumn,
   TableHeader,
-  TableRow
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
+import {
+  SortableTableRow,
+  adminTableActionCellClassName,
+  sortableCollisionDetection,
+  useSortableTableSensors
+} from "../../components/SortableTable";
 import { adminRequest, unwrapEnvelope } from "../../lib/api";
 import { PageFrame } from "../../components/PageFrame";
 import {
@@ -91,6 +98,7 @@ export function PaymentConfigPage() {
   const [dynamicForm, setDynamicForm] = useState<PaymentFormSchema>({});
   const [editorOpen, setEditorOpen] = useState(false);
   const [error, setError] = useState<string>();
+  const sortableSensors = useSortableTableSensors();
 
   async function loadPayments() {
     setLoading(true);
@@ -210,6 +218,17 @@ export function PaymentConfigPage() {
     void loadPayments();
   }, []);
 
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id || sortingId !== null) return;
+
+    const fromIndex = payments.findIndex(payment => String(payment.id) === String(active.id));
+    const toIndex = payments.findIndex(payment => String(payment.id) === String(over.id));
+    if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) return;
+
+    void reorderPayments(fromIndex, toIndex);
+  }
+
   const selectedPaymentMethod = useMemo(() => {
     return selected?.payment ? new Set([String(selected.payment)]) : new Set<string>();
   }, [selected]);
@@ -271,77 +290,78 @@ export function PaymentConfigPage() {
               <Spinner color="primary" label="Loading payments" />
             </div>
           ) : (
-            <Table aria-label="Payments" classNames={adminTableClassNames}>
-              <TableHeader>
-                <TableColumn>Sort</TableColumn>
-                <TableColumn>ID</TableColumn>
-                <TableColumn>Name</TableColumn>
-                <TableColumn>Method</TableColumn>
-                <TableColumn>Enabled</TableColumn>
-                <TableColumn align="end">Actions</TableColumn>
-              </TableHeader>
-              <TableBody items={payments}>
-                {(item) => {
-                  const index = payments.findIndex(payment => payment.id === item.id);
-                  const sorting = sortingId === Number(item.id || 0);
+            <DndContext
+              sensors={sortableSensors}
+              collisionDetection={sortableCollisionDetection}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={payments.map(payment => String(payment.id))}
+                strategy={verticalListSortingStrategy}
+              >
+                <Table aria-label="Payments" classNames={adminTableClassNames}>
+                  <TableHeader>
+                    <TableColumn>Sort</TableColumn>
+                    <TableColumn>ID</TableColumn>
+                    <TableColumn>Name</TableColumn>
+                    <TableColumn>Method</TableColumn>
+                    <TableColumn>Enabled</TableColumn>
+                    <TableColumn align="end">Actions</TableColumn>
+                  </TableHeader>
+                  <TableBody emptyContent="No payments found">
+                    {payments.map(item => {
+                      const sorting = sortingId === Number(item.id || 0);
 
-                  return (
-                  <TableRow key={String(item.id || item.name || Math.random())}>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          color="default"
-                          variant="light"
-                          isDisabled={sorting || index <= 0}
-                          onPress={() => void reorderPayments(index, index - 1)}
+                      return (
+                        <SortableTableRow
+                          key={String(item.id)}
+                          id={String(item.id)}
+                          dragLabel={`Reorder payment ${String(item.name || item.id || "")}`}
+                          isDisabled={sortingId !== null}
                         >
-                          Up
-                        </Button>
-                        <Button
-                          size="sm"
-                          color="default"
-                          variant="light"
-                          isDisabled={sorting || index === -1 || index >= payments.length - 1}
-                          onPress={() => void reorderPayments(index, index + 1)}
-                        >
-                          Down
-                        </Button>
-                      </div>
-                    </TableCell>
-                    <TableCell>{item.id ?? "—"}</TableCell>
-                    <TableCell>{String(item.name || "Unnamed")}</TableCell>
-                    <TableCell>{String(item.payment || "Unknown")}</TableCell>
-                    <TableCell>
-                      <Switch
-                        isSelected={Boolean(Number(item.enable ?? 0))}
-                        onValueChange={() => void togglePayment(item)}
-                      />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          size="sm"
-                          color="primary"
-                          variant="light"
-                          onPress={() => {
-                            setSelected(normalizePaymentRecord(item));
-                            setDynamicForm({});
-                            void loadPaymentForm(String(item.payment || ""), Number(item.id || 0) || undefined);
-                            setEditorOpen(true);
-                          }}
-                        >
-                          Edit
-                        </Button>
-                        <Button size="sm" color="danger" variant="light" onPress={() => void dropPayment(item)}>
-                          Delete
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )}}
-              </TableBody>
-            </Table>
+                          <TableCell>{item.id ?? "—"}</TableCell>
+                          <TableCell>{String(item.name || "Unnamed")}</TableCell>
+                          <TableCell>{String(item.payment || "Unknown")}</TableCell>
+                          <TableCell>
+                            <Switch
+                              isSelected={Boolean(Number(item.enable ?? 0))}
+                              onValueChange={() => void togglePayment(item)}
+                            />
+                          </TableCell>
+                          <TableCell className={adminTableActionCellClassName}>
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                size="sm"
+                                color="primary"
+                                variant="light"
+                                onPress={() => {
+                                  setSelected(normalizePaymentRecord(item));
+                                  setDynamicForm({});
+                                  void loadPaymentForm(String(item.payment || ""), Number(item.id || 0) || undefined);
+                                  setEditorOpen(true);
+                                }}
+                                isDisabled={sorting}
+                              >
+                                Edit
+                              </Button>
+                              <Button
+                                size="sm"
+                                color="danger"
+                                variant="light"
+                                onPress={() => void dropPayment(item)}
+                                isDisabled={sorting}
+                              >
+                                Delete
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </SortableTableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </SortableContext>
+            </DndContext>
           )}
         </CardBody>
       </Card>

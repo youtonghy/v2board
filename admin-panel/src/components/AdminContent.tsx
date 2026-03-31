@@ -4,6 +4,11 @@ export const adminTableClassNames = {
   td: "py-4"
 };
 
+export const adminTableActionCellClassName = "text-right";
+
+export const adminSortableHandleButtonClassName =
+  "min-w-0 border border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100";
+
 export const adminCardClassName = "border border-white/70 bg-white/95 shadow-panel";
 
 export const adminSectionHeaderClassName =

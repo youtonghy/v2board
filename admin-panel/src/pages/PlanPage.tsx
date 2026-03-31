@@ -1,3 +1,5 @@
+import { DndContext, type DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import {
   Button,
   Card,
@@ -18,10 +20,10 @@ import {
   TableCell,
   TableColumn,
   TableHeader,
-  TableRow,
   Textarea
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
+import { SortableTableRow, adminTableActionCellClassName, sortableCollisionDetection, useSortableTableSensors } from "../components/SortableTable";
 import { adminRequest } from "../lib/api";
 import { PERIOD_OPTIONS, RESET_TRAFFIC_OPTIONS } from "../lib/admin-constants";
 import { PageFrame } from "../components/PageFrame";
@@ -85,6 +87,7 @@ export function PlanPage() {
   const [currency, setCurrency] = useState("¥");
   const [selected, setSelected] = useState<PlanRecord | null>(null);
   const [open, setOpen] = useState(false);
+  const sortableSensors = useSortableTableSensors();
 
   async function loadPlans() {
     setLoading(true);
@@ -172,6 +175,17 @@ export function PlanPage() {
     void loadPlans();
   }, []);
 
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id || sortingId !== null) return;
+
+    const fromIndex = records.findIndex(record => String(record.id) === String(active.id));
+    const toIndex = records.findIndex(record => String(record.id) === String(over.id));
+    if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) return;
+
+    void reorderPlans(fromIndex, toIndex);
+  }
+
   const selectedGroup = useMemo(
     () => (selected?.group_id ? new Set([String(selected.group_id)]) : new Set<string>()),
     [selected]
@@ -241,80 +255,81 @@ export function PlanPage() {
               <Spinner color="primary" label="Loading plans" />
             </div>
           ) : (
-            <Table aria-label="Plans" classNames={adminTableClassNames}>
-              <TableHeader>
-                <TableColumn>Sort</TableColumn>
-                <TableColumn>Enabled</TableColumn>
-                <TableColumn>Renew</TableColumn>
-                <TableColumn>Name</TableColumn>
-                <TableColumn>Transfer</TableColumn>
-                <TableColumn>Group</TableColumn>
-                <TableColumn>Monthly</TableColumn>
-                <TableColumn>One Time</TableColumn>
-                <TableColumn align="end">Actions</TableColumn>
-              </TableHeader>
-              <TableBody items={records} emptyContent="No plans found">
-                {(item) => {
-                  const index = records.findIndex(record => record.id === item.id);
-                  const sorting = sortingId === Number(item.id || 0);
+            <DndContext
+              sensors={sortableSensors}
+              collisionDetection={sortableCollisionDetection}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={records.map(record => String(record.id))}
+                strategy={verticalListSortingStrategy}
+              >
+                <Table aria-label="Plans" classNames={adminTableClassNames}>
+                  <TableHeader>
+                    <TableColumn>Sort</TableColumn>
+                    <TableColumn>Enabled</TableColumn>
+                    <TableColumn>Renew</TableColumn>
+                    <TableColumn>Name</TableColumn>
+                    <TableColumn>Transfer</TableColumn>
+                    <TableColumn>Group</TableColumn>
+                    <TableColumn>Monthly</TableColumn>
+                    <TableColumn>One Time</TableColumn>
+                    <TableColumn align="end">Actions</TableColumn>
+                  </TableHeader>
+                  <TableBody emptyContent="No plans found">
+                    {records.map(item => {
+                      const sorting = sortingId === Number(item.id || 0);
 
-                  return (
-                  <TableRow key={String(item.id || Math.random())}>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          color="default"
-                          variant="light"
-                          isDisabled={sorting || index <= 0}
-                          onPress={() => void reorderPlans(index, index - 1)}
+                      return (
+                        <SortableTableRow
+                          key={String(item.id)}
+                          id={String(item.id)}
+                          dragLabel={`Reorder plan ${item.name || item.id || ""}`}
+                          isDisabled={sortingId !== null}
                         >
-                          Up
-                        </Button>
-                        <Button
-                          size="sm"
-                          color="default"
-                          variant="light"
-                          isDisabled={sorting || index === -1 || index >= records.length - 1}
-                          onPress={() => void reorderPlans(index, index + 1)}
-                        >
-                          Down
-                        </Button>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Switch isSelected={Boolean(Number(item.show ?? 0))} onValueChange={value => void updateField(item, "show", value ? 1 : 0)} />
-                    </TableCell>
-                    <TableCell>
-                      <Switch isSelected={Boolean(Number(item.renew ?? 0))} onValueChange={value => void updateField(item, "renew", value ? 1 : 0)} />
-                    </TableCell>
-                    <TableCell>{item.name || "Untitled"}</TableCell>
-                    <TableCell>{item.transfer_enable ? `${item.transfer_enable} GB` : "—"}</TableCell>
-                    <TableCell>{groups.find(group => String(group.id) === String(item.group_id))?.name || "System"}</TableCell>
-                    <TableCell>{item.month_price ?? "—"}</TableCell>
-                    <TableCell>{item.onetime_price ?? "—"}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          size="sm"
-                          color="primary"
-                          variant="light"
-                          onPress={() => {
-                            setSelected(normalizePlan(item));
-                            setOpen(true);
-                          }}
-                        >
-                          Edit
-                        </Button>
-                        <Button size="sm" color="danger" variant="light" onPress={() => void dropPlan(item)}>
-                          Delete
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )}}
-              </TableBody>
-            </Table>
+                          <TableCell>
+                            <Switch isSelected={Boolean(Number(item.show ?? 0))} onValueChange={value => void updateField(item, "show", value ? 1 : 0)} />
+                          </TableCell>
+                          <TableCell>
+                            <Switch isSelected={Boolean(Number(item.renew ?? 0))} onValueChange={value => void updateField(item, "renew", value ? 1 : 0)} />
+                          </TableCell>
+                          <TableCell>{item.name || "Untitled"}</TableCell>
+                          <TableCell>{item.transfer_enable ? `${item.transfer_enable} GB` : "—"}</TableCell>
+                          <TableCell>{groups.find(group => String(group.id) === String(item.group_id))?.name || "System"}</TableCell>
+                          <TableCell>{item.month_price ?? "—"}</TableCell>
+                          <TableCell>{item.onetime_price ?? "—"}</TableCell>
+                          <TableCell className={adminTableActionCellClassName}>
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                size="sm"
+                                color="primary"
+                                variant="light"
+                                onPress={() => {
+                                  setSelected(normalizePlan(item));
+                                  setOpen(true);
+                                }}
+                                isDisabled={sorting}
+                              >
+                                Edit
+                              </Button>
+                              <Button
+                                size="sm"
+                                color="danger"
+                                variant="light"
+                                onPress={() => void dropPlan(item)}
+                                isDisabled={sorting}
+                              >
+                                Delete
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </SortableTableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </SortableContext>
+            </DndContext>
           )}
         </CardBody>
       </Card>
