@@ -60,12 +60,26 @@ a {
   box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.55);
 }
 
-.admin-topbar,
-.admin-toolbar {
+.admin-topbar {
   background: rgba(255, 255, 255, 0.76);
   border: 1px solid rgba(255, 255, 255, 0.75);
   box-shadow: var(--admin-shadow-soft);
   backdrop-filter: blur(18px);
+}
+
+.shadow-panel {
+  border-radius: 2rem !important;
+  overflow: hidden;
+}
+
+.shadow-panel > div {
+  border-radius: inherit;
+}
+
+.admin-topbar button svg,
+.admin-sidebar button svg {
+  display: block;
+  flex-shrink: 0;
 }
 
 .admin-orb {
