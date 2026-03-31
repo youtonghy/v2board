@@ -39,7 +39,8 @@ function appendQueryValue(
 function buildUrl(endpoint: string, query?: Record<string, unknown>): string {
   const securePath = adminBootstrap.securePath;
   const normalized = endpoint.replace(/^\/+/, "");
-  const url = new URL(`/${securePath}/${normalized}`, window.location.origin);
+  const baseHost = adminBootstrap.apiHost || window.location.origin;
+  const url = new URL(`/api/v1/${securePath}/${normalized}`, baseHost);
   if (query) {
     Object.entries(query).forEach(([key, value]) => {
       appendQueryValue(url.searchParams, key, value);
