@@ -160,61 +160,63 @@ export function NoticePage() {
           </div>
         ) : (
           <Table aria-label="Notices" classNames={adminTableClassNames}>
-            <TableHeader>
-              <TableColumn>ID</TableColumn>
-              <TableColumn>Visible</TableColumn>
-              <TableColumn>Title</TableColumn>
-              <TableColumn>Tags</TableColumn>
-              <TableColumn>Created</TableColumn>
-              <TableColumn align="end">Actions</TableColumn>
-            </TableHeader>
-            <TableBody items={records} emptyContent="No notices found">
-              {item => (
-                <TableRow key={String(item.id || Math.random())}>
-                  <TableCell>{item.id ?? "—"}</TableCell>
-                  <TableCell>
-                    <Switch
-                      isSelected={Boolean(Number(item.show ?? 0))}
-                      onValueChange={() => void toggleNotice(item)}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <p className="font-medium text-slate-900">{item.title || "Untitled"}</p>
-                      <p className="mt-1 text-xs text-slate-500 line-clamp-1">{item.content || "No content preview"}</p>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-2">
-                      {(item.tags || []).map(tag => (
-                        <Chip key={tag} size="sm" variant="flat" className="bg-sky-50 text-sky-700">
-                          {tag}
-                        </Chip>
-                      ))}
-                    </div>
-                  </TableCell>
-                  <TableCell>{formatDateTime(item.created_at)}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        size="sm"
-                        color="primary"
-                        variant="light"
-                        onPress={() => {
-                          setSelected(normalizeNotice(item));
-                          setOpen(true);
-                        }}
-                      >
-                        Edit
-                      </Button>
-                      <Button size="sm" color="danger" variant="light" onPress={() => void dropNotice(item)}>
-                        Delete
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
+            <Table.Content>
+              <TableHeader>
+                <TableColumn>ID</TableColumn>
+                <TableColumn>Visible</TableColumn>
+                <TableColumn>Title</TableColumn>
+                <TableColumn>Tags</TableColumn>
+                <TableColumn>Created</TableColumn>
+                <TableColumn align="end">Actions</TableColumn>
+              </TableHeader>
+              <TableBody items={records} emptyContent="No notices found">
+                {item => (
+                  <TableRow key={String(item.id || Math.random())}>
+                    <TableCell>{item.id ?? "—"}</TableCell>
+                    <TableCell>
+                      <Switch
+                        isSelected={Boolean(Number(item.show ?? 0))}
+                        onValueChange={() => void toggleNotice(item)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium text-slate-900">{item.title || "Untitled"}</p>
+                        <p className="mt-1 text-xs text-slate-500 line-clamp-1">{item.content || "No content preview"}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-2">
+                        {(item.tags || []).map(tag => (
+                          <Chip key={tag} size="sm" variant="flat" className="bg-sky-50 text-sky-700">
+                            {tag}
+                          </Chip>
+                        ))}
+                      </div>
+                    </TableCell>
+                    <TableCell>{formatDateTime(item.created_at)}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          size="sm"
+                          color="primary"
+                          variant="light"
+                          onPress={() => {
+                            setSelected(normalizeNotice(item));
+                            setOpen(true);
+                          }}
+                        >
+                          Edit
+                        </Button>
+                        <Button size="sm" color="danger" variant="light" onPress={() => void dropNotice(item)}>
+                          Delete
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table.Content>
           </Table>
         )}
         </CardContent>

@@ -412,18 +412,19 @@ export function ServerManagePage() {
                 strategy={verticalListSortingStrategy}
               >
                 <Table aria-label="Servers" classNames={adminTableClassNames}>
-                  <TableHeader>
-                    <TableColumn>Sort</TableColumn>
-                    <TableColumn>Name</TableColumn>
-                    <TableColumn>Host</TableColumn>
-                    <TableColumn>Group</TableColumn>
-                    <TableColumn>Rate</TableColumn>
-                    <TableColumn>Online</TableColumn>
-                    <TableColumn>Check</TableColumn>
-                    <TableColumn>Visible</TableColumn>
-                    <TableColumn align="end">Actions</TableColumn>
-                  </TableHeader>
-                  <TableBody emptyContent="No nodes found">
+                  <Table.Content>
+                    <TableHeader>
+                      <TableColumn>Sort</TableColumn>
+                      <TableColumn>Name</TableColumn>
+                      <TableColumn>Host</TableColumn>
+                      <TableColumn>Group</TableColumn>
+                      <TableColumn>Rate</TableColumn>
+                      <TableColumn>Online</TableColumn>
+                      <TableColumn>Check</TableColumn>
+                      <TableColumn>Visible</TableColumn>
+                      <TableColumn align="end">Actions</TableColumn>
+                    </TableHeader>
+                    <TableBody emptyContent="No nodes found">
                     {filtered.map(item => {
                       const sorting = sortingId === item.id;
 
@@ -478,7 +479,8 @@ export function ServerManagePage() {
                         </SortableTableRow>
                       );
                     })}
-                  </TableBody>
+                    </TableBody>
+                  </Table.Content>
                 </Table>
               </SortableContext>
             </DndContext>

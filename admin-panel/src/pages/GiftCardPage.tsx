@@ -171,43 +171,45 @@ export function GiftCardPage() {
           ) : (
             <>
               <Table aria-label="Gift cards" classNames={adminTableClassNames}>
-                <TableHeader>
-                  <TableColumn>ID</TableColumn>
-                  <TableColumn>Name</TableColumn>
-                  <TableColumn>Type</TableColumn>
-                  <TableColumn>Value</TableColumn>
-                  <TableColumn>Code</TableColumn>
-                  <TableColumn align="end">Actions</TableColumn>
-                </TableHeader>
-                <TableBody items={records} emptyContent="No gift cards found">
-                  {item => (
-                    <TableRow key={String(item.id || Math.random())}>
-                      <TableCell>{item.id ?? "—"}</TableCell>
-                      <TableCell>{item.name || "Untitled"}</TableCell>
-                      <TableCell>{GIFTCARD_TYPE_OPTIONS.find(option => option.value === Number(item.type))?.label || "Unknown"}</TableCell>
-                      <TableCell>{item.value ?? "—"}</TableCell>
-                      <TableCell>{item.code ? <Chip size="sm" variant="flat" className="bg-sky-50 text-sky-700">{item.code}</Chip> : "Auto"}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            size="sm"
-                            color="primary"
-                            variant="light"
-                            onPress={() => {
-                              setSelected(normalizeGiftCard(item));
-                              setOpen(true);
-                            }}
-                          >
-                            Edit
-                          </Button>
-                          <Button size="sm" color="danger" variant="light" onPress={() => void dropGiftCard(item)}>
-                            Delete
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
+                <Table.Content>
+                  <TableHeader>
+                    <TableColumn>ID</TableColumn>
+                    <TableColumn>Name</TableColumn>
+                    <TableColumn>Type</TableColumn>
+                    <TableColumn>Value</TableColumn>
+                    <TableColumn>Code</TableColumn>
+                    <TableColumn align="end">Actions</TableColumn>
+                  </TableHeader>
+                  <TableBody items={records} emptyContent="No gift cards found">
+                    {item => (
+                      <TableRow key={String(item.id || Math.random())}>
+                        <TableCell>{item.id ?? "—"}</TableCell>
+                        <TableCell>{item.name || "Untitled"}</TableCell>
+                        <TableCell>{GIFTCARD_TYPE_OPTIONS.find(option => option.value === Number(item.type))?.label || "Unknown"}</TableCell>
+                        <TableCell>{item.value ?? "—"}</TableCell>
+                        <TableCell>{item.code ? <Chip size="sm" variant="flat" className="bg-sky-50 text-sky-700">{item.code}</Chip> : "Auto"}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              size="sm"
+                              color="primary"
+                              variant="light"
+                              onPress={() => {
+                                setSelected(normalizeGiftCard(item));
+                                setOpen(true);
+                              }}
+                            >
+                              Edit
+                            </Button>
+                            <Button size="sm" color="danger" variant="light" onPress={() => void dropGiftCard(item)}>
+                              Delete
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table.Content>
               </Table>
               <div className="flex justify-end">
                 <Pagination

@@ -298,15 +298,16 @@ export function PaymentConfigPage() {
                 strategy={verticalListSortingStrategy}
               >
                 <Table aria-label="Payments" classNames={adminTableClassNames}>
-                  <TableHeader>
-                    <TableColumn>Sort</TableColumn>
-                    <TableColumn>ID</TableColumn>
-                    <TableColumn>Name</TableColumn>
-                    <TableColumn>Method</TableColumn>
-                    <TableColumn>Enabled</TableColumn>
-                    <TableColumn align="end">Actions</TableColumn>
-                  </TableHeader>
-                  <TableBody emptyContent="No payments found">
+                  <Table.Content>
+                    <TableHeader>
+                      <TableColumn>Sort</TableColumn>
+                      <TableColumn>ID</TableColumn>
+                      <TableColumn>Name</TableColumn>
+                      <TableColumn>Method</TableColumn>
+                      <TableColumn>Enabled</TableColumn>
+                      <TableColumn align="end">Actions</TableColumn>
+                    </TableHeader>
+                    <TableBody emptyContent="No payments found">
                     {payments.map(item => {
                       const sorting = sortingId === Number(item.id || 0);
 
@@ -356,7 +357,8 @@ export function PaymentConfigPage() {
                         </SortableTableRow>
                       );
                     })}
-                  </TableBody>
+                    </TableBody>
+                  </Table.Content>
                 </Table>
               </SortableContext>
             </DndContext>

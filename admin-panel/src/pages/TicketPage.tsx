@@ -227,44 +227,46 @@ export function TicketPage() {
           ) : (
             <>
               <Table aria-label="Tickets" classNames={adminTableClassNames}>
-                <TableHeader>
-                  <TableColumn>ID</TableColumn>
-                  <TableColumn>Subject</TableColumn>
-                  <TableColumn>Priority</TableColumn>
-                  <TableColumn>Status</TableColumn>
-                  <TableColumn>Updated</TableColumn>
-                  <TableColumn align="end">Actions</TableColumn>
-                </TableHeader>
-                <TableBody items={records} emptyContent="No tickets found">
-                  {item => (
-                    <TableRow key={item.id}>
-                      <TableCell>#{item.id}</TableCell>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium text-slate-900">{item.subject || "Untitled Ticket"}</p>
-                          <p className="text-xs text-slate-500">User #{item.user_id}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Chip variant="flat">{item.level ?? 0}</Chip>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Chip color={item.status === 1 ? "default" : "success"} variant="flat">
-                            {item.status === 1 ? "Closed" : "Open"}
-                          </Chip>
-                          <Chip variant="flat">Reply {item.reply_status ?? 0}</Chip>
-                        </div>
-                      </TableCell>
-                      <TableCell>{formatDateTime(item.updated_at || item.created_at || null)}</TableCell>
-                      <TableCell className="text-right">
-                        <Button size="sm" color="primary" variant="light" onPress={() => navigate(`/new/ticket/${item.id}`)}>
-                          Open thread
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
+                <Table.Content>
+                  <TableHeader>
+                    <TableColumn>ID</TableColumn>
+                    <TableColumn>Subject</TableColumn>
+                    <TableColumn>Priority</TableColumn>
+                    <TableColumn>Status</TableColumn>
+                    <TableColumn>Updated</TableColumn>
+                    <TableColumn align="end">Actions</TableColumn>
+                  </TableHeader>
+                  <TableBody items={records} emptyContent="No tickets found">
+                    {item => (
+                      <TableRow key={item.id}>
+                        <TableCell>#{item.id}</TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium text-slate-900">{item.subject || "Untitled Ticket"}</p>
+                            <p className="text-xs text-slate-500">User #{item.user_id}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Chip variant="flat">{item.level ?? 0}</Chip>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Chip color={item.status === 1 ? "default" : "success"} variant="flat">
+                              {item.status === 1 ? "Closed" : "Open"}
+                            </Chip>
+                            <Chip variant="flat">Reply {item.reply_status ?? 0}</Chip>
+                          </div>
+                        </TableCell>
+                        <TableCell>{formatDateTime(item.updated_at || item.created_at || null)}</TableCell>
+                        <TableCell className="text-right">
+                          <Button size="sm" color="primary" variant="light" onPress={() => navigate(`/new/ticket/${item.id}`)}>
+                            Open thread
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table.Content>
               </Table>
 
               <div className="flex justify-center">

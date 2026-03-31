@@ -303,59 +303,61 @@ export function OrderPage() {
           ) : (
             <>
               <Table aria-label="Orders" classNames={adminTableClassNames}>
-                <TableHeader>
-                  <TableColumn>Trade</TableColumn>
-                  <TableColumn>Plan</TableColumn>
-                  <TableColumn>Total</TableColumn>
-                  <TableColumn>Status</TableColumn>
-                  <TableColumn>Commission</TableColumn>
-                  <TableColumn>Created</TableColumn>
-                  <TableColumn align="end">Actions</TableColumn>
-                </TableHeader>
-                <TableBody items={records} emptyContent="No orders found">
-                  {item => (
-                    <TableRow key={item.id}>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium text-slate-900">{item.trade_no}</p>
-                          <p className="text-xs text-slate-500">User #{item.user_id || "—"}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <p>{item.plan_name || "Unknown Plan"}</p>
-                        <p className="text-xs text-slate-500">{item.period || "—"}</p>
-                      </TableCell>
-                      <TableCell>{formatMoney((item.total_amount || 0) / 100)}</TableCell>
-                      <TableCell>
-                        <Chip color={ORDER_STATUS[item.status]?.color || "default"} variant="flat">
-                          {ORDER_STATUS[item.status]?.label || item.status}
-                        </Chip>
-                      </TableCell>
-                      <TableCell>
-                        <p>{COMMISSION_STATUS[item.commission_status || 0] || "Pending"}</p>
-                        <p className="text-xs text-slate-500">{formatMoney((item.commission_balance || 0) / 100)}</p>
-                      </TableCell>
-                      <TableCell>{formatDateTime(item.created_at || null)}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button size="sm" color="primary" variant="light" onPress={() => void openDetail(item)} isLoading={submitting}>
-                            Details
-                          </Button>
-                          {item.status === 0 ? (
-                            <>
-                              <Button size="sm" color="success" variant="light" onPress={() => void runAction("order/paid", { trade_no: item.trade_no })} isLoading={submitting}>
-                                Mark paid
-                              </Button>
-                              <Button size="sm" color="warning" variant="light" onPress={() => void runAction("order/cancel", { trade_no: item.trade_no })} isLoading={submitting}>
-                                Cancel
-                              </Button>
-                            </>
-                          ) : null}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
+                <Table.Content>
+                  <TableHeader>
+                    <TableColumn>Trade</TableColumn>
+                    <TableColumn>Plan</TableColumn>
+                    <TableColumn>Total</TableColumn>
+                    <TableColumn>Status</TableColumn>
+                    <TableColumn>Commission</TableColumn>
+                    <TableColumn>Created</TableColumn>
+                    <TableColumn align="end">Actions</TableColumn>
+                  </TableHeader>
+                  <TableBody items={records} emptyContent="No orders found">
+                    {item => (
+                      <TableRow key={item.id}>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium text-slate-900">{item.trade_no}</p>
+                            <p className="text-xs text-slate-500">User #{item.user_id || "—"}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <p>{item.plan_name || "Unknown Plan"}</p>
+                          <p className="text-xs text-slate-500">{item.period || "—"}</p>
+                        </TableCell>
+                        <TableCell>{formatMoney((item.total_amount || 0) / 100)}</TableCell>
+                        <TableCell>
+                          <Chip color={ORDER_STATUS[item.status]?.color || "default"} variant="flat">
+                            {ORDER_STATUS[item.status]?.label || item.status}
+                          </Chip>
+                        </TableCell>
+                        <TableCell>
+                          <p>{COMMISSION_STATUS[item.commission_status || 0] || "Pending"}</p>
+                          <p className="text-xs text-slate-500">{formatMoney((item.commission_balance || 0) / 100)}</p>
+                        </TableCell>
+                        <TableCell>{formatDateTime(item.created_at || null)}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button size="sm" color="primary" variant="light" onPress={() => void openDetail(item)} isLoading={submitting}>
+                              Details
+                            </Button>
+                            {item.status === 0 ? (
+                              <>
+                                <Button size="sm" color="success" variant="light" onPress={() => void runAction("order/paid", { trade_no: item.trade_no })} isLoading={submitting}>
+                                  Mark paid
+                                </Button>
+                                <Button size="sm" color="warning" variant="light" onPress={() => void runAction("order/cancel", { trade_no: item.trade_no })} isLoading={submitting}>
+                                  Cancel
+                                </Button>
+                              </>
+                            ) : null}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table.Content>
               </Table>
 
               <div className="flex justify-center">

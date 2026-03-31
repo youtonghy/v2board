@@ -182,37 +182,39 @@ export function ServerRoutePage() {
             </div>
           ) : (
             <Table aria-label="Server Routes" classNames={adminTableClassNames}>
-              <TableHeader>
-                <TableColumn>Remarks</TableColumn>
-                <TableColumn>Action</TableColumn>
-                <TableColumn>Action Value</TableColumn>
-                <TableColumn>Match</TableColumn>
-                <TableColumn align="end">Actions</TableColumn>
-              </TableHeader>
-              <TableBody items={records} emptyContent="No routes found">
-                {item => (
-                  <TableRow key={item.id}>
-                    <TableCell>{item.remarks}</TableCell>
-                    <TableCell>{item.action}</TableCell>
-                    <TableCell>{item.action_value || "—"}</TableCell>
-                    <TableCell className="max-w-[420px]">
-                      <p className="line-clamp-2 text-sm text-slate-600">
-                        {Array.isArray(item.match) ? item.match.join(", ") : item.match || "—"}
-                      </p>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button size="sm" color="primary" variant="light" onPress={() => { setSelected(item); setEditorOpen(true); }}>
-                          Edit
-                        </Button>
-                        <Button size="sm" color="danger" variant="light" onPress={() => void deleteRoute(item.id)} isLoading={submitting}>
-                          Delete
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
+              <Table.Content>
+                <TableHeader>
+                  <TableColumn>Remarks</TableColumn>
+                  <TableColumn>Action</TableColumn>
+                  <TableColumn>Action Value</TableColumn>
+                  <TableColumn>Match</TableColumn>
+                  <TableColumn align="end">Actions</TableColumn>
+                </TableHeader>
+                <TableBody items={records} emptyContent="No routes found">
+                  {item => (
+                    <TableRow key={item.id}>
+                      <TableCell>{item.remarks}</TableCell>
+                      <TableCell>{item.action}</TableCell>
+                      <TableCell>{item.action_value || "—"}</TableCell>
+                      <TableCell className="max-w-[420px]">
+                        <p className="line-clamp-2 text-sm text-slate-600">
+                          {Array.isArray(item.match) ? item.match.join(", ") : item.match || "—"}
+                        </p>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button size="sm" color="primary" variant="light" onPress={() => { setSelected(item); setEditorOpen(true); }}>
+                            Edit
+                          </Button>
+                          <Button size="sm" color="danger" variant="light" onPress={() => void deleteRoute(item.id)} isLoading={submitting}>
+                            Delete
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table.Content>
             </Table>
           )}
         </CardContent>

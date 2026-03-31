@@ -261,18 +261,19 @@ export function PlanPage() {
                 strategy={verticalListSortingStrategy}
               >
                 <Table aria-label="Plans" classNames={adminTableClassNames}>
-                  <TableHeader>
-                    <TableColumn>Sort</TableColumn>
-                    <TableColumn>Enabled</TableColumn>
-                    <TableColumn>Renew</TableColumn>
-                    <TableColumn>Name</TableColumn>
-                    <TableColumn>Transfer</TableColumn>
-                    <TableColumn>Group</TableColumn>
-                    <TableColumn>Monthly</TableColumn>
-                    <TableColumn>One Time</TableColumn>
-                    <TableColumn align="end">Actions</TableColumn>
-                  </TableHeader>
-                  <TableBody emptyContent="No plans found">
+                  <Table.Content>
+                    <TableHeader>
+                      <TableColumn>Sort</TableColumn>
+                      <TableColumn>Enabled</TableColumn>
+                      <TableColumn>Renew</TableColumn>
+                      <TableColumn>Name</TableColumn>
+                      <TableColumn>Transfer</TableColumn>
+                      <TableColumn>Group</TableColumn>
+                      <TableColumn>Monthly</TableColumn>
+                      <TableColumn>One Time</TableColumn>
+                      <TableColumn align="end">Actions</TableColumn>
+                    </TableHeader>
+                    <TableBody emptyContent="No plans found">
                     {records.map(item => {
                       const sorting = sortingId === Number(item.id || 0);
 
@@ -322,7 +323,8 @@ export function PlanPage() {
                         </SortableTableRow>
                       );
                     })}
-                  </TableBody>
+                    </TableBody>
+                  </Table.Content>
                 </Table>
               </SortableContext>
             </DndContext>

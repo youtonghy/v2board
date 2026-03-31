@@ -196,52 +196,54 @@ export function CouponPage() {
           ) : (
             <>
               <Table aria-label="Coupons" classNames={adminTableClassNames}>
-                <TableHeader>
-                  <TableColumn>ID</TableColumn>
-                  <TableColumn>Enabled</TableColumn>
-                  <TableColumn>Name</TableColumn>
-                  <TableColumn>Type</TableColumn>
-                  <TableColumn>Code</TableColumn>
-                  <TableColumn>Limit</TableColumn>
-                  <TableColumn align="end">Actions</TableColumn>
-                </TableHeader>
-                <TableBody items={records} emptyContent="No coupons found">
-                  {item => (
-                    <TableRow key={String(item.id || Math.random())}>
-                      <TableCell>{item.id ?? "—"}</TableCell>
-                      <TableCell>
-                        <Switch
-                          isSelected={Boolean(Number(item.show ?? 0))}
-                          onValueChange={() => void toggleCoupon(item)}
-                        />
-                      </TableCell>
-                      <TableCell>{item.name || "Untitled"}</TableCell>
-                      <TableCell>{item.type === 2 ? "Percentage" : "Amount"}</TableCell>
-                      <TableCell>
-                        {item.code ? <Chip size="sm" variant="flat" className="bg-sky-50 text-sky-700">{item.code}</Chip> : "Auto"}
-                      </TableCell>
-                      <TableCell>{item.limit_use ?? "Unlimited"}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            size="sm"
-                            color="primary"
-                            variant="light"
-                            onPress={() => {
-                              setSelected(normalizeCoupon(item));
-                              setOpen(true);
-                            }}
-                          >
-                            Edit
-                          </Button>
-                          <Button size="sm" color="danger" variant="light" onPress={() => void dropCoupon(item)}>
-                            Delete
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
+                <Table.Content>
+                  <TableHeader>
+                    <TableColumn>ID</TableColumn>
+                    <TableColumn>Enabled</TableColumn>
+                    <TableColumn>Name</TableColumn>
+                    <TableColumn>Type</TableColumn>
+                    <TableColumn>Code</TableColumn>
+                    <TableColumn>Limit</TableColumn>
+                    <TableColumn align="end">Actions</TableColumn>
+                  </TableHeader>
+                  <TableBody items={records} emptyContent="No coupons found">
+                    {item => (
+                      <TableRow key={String(item.id || Math.random())}>
+                        <TableCell>{item.id ?? "—"}</TableCell>
+                        <TableCell>
+                          <Switch
+                            isSelected={Boolean(Number(item.show ?? 0))}
+                            onValueChange={() => void toggleCoupon(item)}
+                          />
+                        </TableCell>
+                        <TableCell>{item.name || "Untitled"}</TableCell>
+                        <TableCell>{item.type === 2 ? "Percentage" : "Amount"}</TableCell>
+                        <TableCell>
+                          {item.code ? <Chip size="sm" variant="flat" className="bg-sky-50 text-sky-700">{item.code}</Chip> : "Auto"}
+                        </TableCell>
+                        <TableCell>{item.limit_use ?? "Unlimited"}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              size="sm"
+                              color="primary"
+                              variant="light"
+                              onPress={() => {
+                                setSelected(normalizeCoupon(item));
+                                setOpen(true);
+                              }}
+                            >
+                              Edit
+                            </Button>
+                            <Button size="sm" color="danger" variant="light" onPress={() => void dropCoupon(item)}>
+                              Delete
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table.Content>
               </Table>
               <div className="flex justify-end">
                 <Pagination

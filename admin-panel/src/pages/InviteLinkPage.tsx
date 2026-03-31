@@ -275,55 +275,57 @@ export function InviteLinkPage() {
           ) : (
             <>
               <Table aria-label="Invite Links" classNames={adminTableClassNames}>
-                <TableHeader>
-                  <TableColumn>Owner</TableColumn>
-                  <TableColumn>Invitee</TableColumn>
-                  <TableColumn>Usage</TableColumn>
-                  <TableColumn>Expires</TableColumn>
-                  <TableColumn>Status</TableColumn>
-                  <TableColumn align="end">Actions</TableColumn>
-                </TableHeader>
-                <TableBody items={records} emptyContent="No invite links found">
-                  {item => (
-                    <TableRow key={item.id}>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium text-slate-900">{item.user_email || `User #${item.user_id}`}</p>
-                          <p className="max-w-[320px] truncate text-xs text-slate-500">{item.link_url}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <p>{item.invitee_name || "Unnamed"}</p>
-                        <p className="text-xs text-slate-500">{item.content || "No note"}</p>
-                      </TableCell>
-                      <TableCell>{item.use_count} / {item.max_use} used</TableCell>
-                      <TableCell>
-                        <div>
-                          <p>{formatDateTime(item.expired_at)}</p>
-                          <p className="text-xs text-slate-500">{item.visit_count} visits</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Chip color={item.status === 0 ? "success" : item.status === 3 ? "warning" : "default"} variant="flat" className="font-medium">
-                          {item.status_text}
-                        </Chip>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          {item.status === 3 ? (
-                            <Button size="sm" color="success" variant="light" onPress={() => void updateStatus(item, 0)} isLoading={submitting}>
-                              Enable
-                            </Button>
-                          ) : (
-                            <Button size="sm" color="warning" variant="light" onPress={() => void updateStatus(item, 3)} isLoading={submitting}>
-                              Disable
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
+                <Table.Content>
+                  <TableHeader>
+                    <TableColumn>Owner</TableColumn>
+                    <TableColumn>Invitee</TableColumn>
+                    <TableColumn>Usage</TableColumn>
+                    <TableColumn>Expires</TableColumn>
+                    <TableColumn>Status</TableColumn>
+                    <TableColumn align="end">Actions</TableColumn>
+                  </TableHeader>
+                  <TableBody items={records} emptyContent="No invite links found">
+                    {item => (
+                      <TableRow key={item.id}>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium text-slate-900">{item.user_email || `User #${item.user_id}`}</p>
+                            <p className="max-w-[320px] truncate text-xs text-slate-500">{item.link_url}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <p>{item.invitee_name || "Unnamed"}</p>
+                          <p className="text-xs text-slate-500">{item.content || "No note"}</p>
+                        </TableCell>
+                        <TableCell>{item.use_count} / {item.max_use} used</TableCell>
+                        <TableCell>
+                          <div>
+                            <p>{formatDateTime(item.expired_at)}</p>
+                            <p className="text-xs text-slate-500">{item.visit_count} visits</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Chip color={item.status === 0 ? "success" : item.status === 3 ? "warning" : "default"} variant="flat" className="font-medium">
+                            {item.status_text}
+                          </Chip>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            {item.status === 3 ? (
+                              <Button size="sm" color="success" variant="light" onPress={() => void updateStatus(item, 0)} isLoading={submitting}>
+                                Enable
+                              </Button>
+                            ) : (
+                              <Button size="sm" color="warning" variant="light" onPress={() => void updateStatus(item, 3)} isLoading={submitting}>
+                                Disable
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table.Content>
               </Table>
 
               <div className="flex justify-center">

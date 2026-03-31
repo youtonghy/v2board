@@ -143,42 +143,44 @@ export function ServerGroupPage() {
             </div>
           ) : (
             <Table aria-label="Server Groups" classNames={adminTableClassNames}>
-              <TableHeader>
-                <TableColumn>ID</TableColumn>
-                <TableColumn>Name</TableColumn>
-                <TableColumn>Users</TableColumn>
-                <TableColumn>Servers</TableColumn>
-                <TableColumn align="end">Actions</TableColumn>
-              </TableHeader>
-              <TableBody items={records} emptyContent="No groups found">
-                {item => (
-                  <TableRow key={item.id}>
-                    <TableCell>{item.id}</TableCell>
-                    <TableCell>{item.name}</TableCell>
-                    <TableCell>{item.user_count || 0}</TableCell>
-                    <TableCell>{item.server_count || 0}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          size="sm"
-                          color="primary"
-                          variant="light"
-                          onPress={() => {
-                            setSelected(item);
-                            setName(item.name);
-                            setEditorOpen(true);
-                          }}
-                        >
-                          Edit
-                        </Button>
-                        <Button size="sm" color="danger" variant="light" onPress={() => void deleteGroup(item.id)} isLoading={submitting}>
-                          Delete
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
+              <Table.Content>
+                <TableHeader>
+                  <TableColumn>ID</TableColumn>
+                  <TableColumn>Name</TableColumn>
+                  <TableColumn>Users</TableColumn>
+                  <TableColumn>Servers</TableColumn>
+                  <TableColumn align="end">Actions</TableColumn>
+                </TableHeader>
+                <TableBody items={records} emptyContent="No groups found">
+                  {item => (
+                    <TableRow key={item.id}>
+                      <TableCell>{item.id}</TableCell>
+                      <TableCell>{item.name}</TableCell>
+                      <TableCell>{item.user_count || 0}</TableCell>
+                      <TableCell>{item.server_count || 0}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            size="sm"
+                            color="primary"
+                            variant="light"
+                            onPress={() => {
+                              setSelected(item);
+                              setName(item.name);
+                              setEditorOpen(true);
+                            }}
+                          >
+                            Edit
+                          </Button>
+                          <Button size="sm" color="danger" variant="light" onPress={() => void deleteGroup(item.id)} isLoading={submitting}>
+                            Delete
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table.Content>
             </Table>
           )}
         </CardContent>

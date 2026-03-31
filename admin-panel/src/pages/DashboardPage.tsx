@@ -633,22 +633,24 @@ export function DashboardPage() {
             ) : (
               <>
                 <Table aria-label="Traffic detail" classNames={adminTableClassNames}>
-                  <TableHeader>
-                    <TableColumn>Date</TableColumn>
-                    <TableColumn>Upload</TableColumn>
-                    <TableColumn>Download</TableColumn>
-                    <TableColumn>Rate</TableColumn>
-                  </TableHeader>
-                  <TableBody items={detailRecords} emptyContent="No traffic records found">
-                    {item => (
-                      <TableRow key={`${item.record_at}-${item.id || 0}`}>
-                        <TableCell>{formatDateTime(item.record_at)}</TableCell>
-                        <TableCell>{formatBytes(item.u || 0)}</TableCell>
-                        <TableCell>{formatBytes(item.d || 0)}</TableCell>
-                        <TableCell>{item.server_rate || 1}</TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
+                  <Table.Content>
+                    <TableHeader>
+                      <TableColumn>Date</TableColumn>
+                      <TableColumn>Upload</TableColumn>
+                      <TableColumn>Download</TableColumn>
+                      <TableColumn>Rate</TableColumn>
+                    </TableHeader>
+                    <TableBody items={detailRecords} emptyContent="No traffic records found">
+                      {item => (
+                        <TableRow key={`${item.record_at}-${item.id || 0}`}>
+                          <TableCell>{formatDateTime(item.record_at)}</TableCell>
+                          <TableCell>{formatBytes(item.u || 0)}</TableCell>
+                          <TableCell>{formatBytes(item.d || 0)}</TableCell>
+                          <TableCell>{item.server_rate || 1}</TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table.Content>
                 </Table>
                 <div className="flex justify-center">
                   <Pagination page={detailPage} total={Math.max(1, Math.ceil(detailTotal / 10))} onChange={setDetailPage} />

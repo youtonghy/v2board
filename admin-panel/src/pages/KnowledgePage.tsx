@@ -313,16 +313,17 @@ export function KnowledgePage() {
                 strategy={verticalListSortingStrategy}
               >
                 <Table aria-label="Knowledge Articles" classNames={adminTableClassNames}>
-                  <TableHeader>
-                    <TableColumn>Sort</TableColumn>
-                    <TableColumn>Title</TableColumn>
-                    <TableColumn>Category</TableColumn>
-                    <TableColumn>Language</TableColumn>
-                    <TableColumn>Updated</TableColumn>
-                    <TableColumn>Visible</TableColumn>
-                    <TableColumn align="end">Actions</TableColumn>
-                  </TableHeader>
-                  <TableBody emptyContent="No articles found">
+                  <Table.Content>
+                    <TableHeader>
+                      <TableColumn>Sort</TableColumn>
+                      <TableColumn>Title</TableColumn>
+                      <TableColumn>Category</TableColumn>
+                      <TableColumn>Language</TableColumn>
+                      <TableColumn>Updated</TableColumn>
+                      <TableColumn>Visible</TableColumn>
+                      <TableColumn align="end">Actions</TableColumn>
+                    </TableHeader>
+                    <TableBody emptyContent="No articles found">
                     {filtered.map(item => {
                       const sorting = sortingId === item.id;
 
@@ -353,7 +354,8 @@ export function KnowledgePage() {
                         </SortableTableRow>
                       );
                     })}
-                  </TableBody>
+                    </TableBody>
+                  </Table.Content>
                 </Table>
               </SortableContext>
             </DndContext>
