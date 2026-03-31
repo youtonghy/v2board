@@ -3,18 +3,14 @@ import {
   AccordionItem,
   Button,
   Card,
-  CardBody,
+  CardContent,
   CardHeader,
   Chip,
   Input,
   Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  Pagination,
+          Pagination,
   Select,
-  SelectItem,
+  ListBoxItem,
   Spinner,
   Table,
   TableBody,
@@ -222,11 +218,11 @@ export function OrderPage() {
       <div className={adminStatsGridClassName}>
         {stats.map(item => (
           <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
-            <CardBody className={adminStatCardBodyClassName}>
+            <CardContent className={adminStatCardBodyClassName}>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
               <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
               {item.hint ? <p className="text-sm text-slate-500">{item.hint}</p> : null}
-            </CardBody>
+            </CardContent>
           </Card>
         ))}
       </div>
@@ -243,7 +239,7 @@ export function OrderPage() {
             Assign order
           </Button>
         </CardHeader>
-        <CardBody className={`${adminSectionBodyClassName} gap-5`}>
+        <CardContent className={`${adminSectionBodyClassName} gap-5`}>
           <Accordion
             variant="splitted"
             showDivider={false}
@@ -262,7 +258,7 @@ export function OrderPage() {
               onSelectionChange={keys => setStatus(String(Array.from(keys)[0] || ""))}
             >
               {Object.entries(ORDER_STATUS).map(([key, value]) => (
-                <SelectItem key={key}>{value.label}</SelectItem>
+                <ListBoxItem key={key}>{value.label}</ListBoxItem>
               ))}
             </Select>
             <div className="flex items-end gap-2">
@@ -355,13 +351,17 @@ export function OrderPage() {
               </div>
             </>
           )}
-        </CardBody>
+        </CardContent>
       </Card>
 
       <Modal isOpen={detailOpen} onOpenChange={isOpen => !isOpen && setDetailOpen(false)} size="5xl" scrollBehavior="inside">
-        <ModalContent>
-          <ModalHeader>Order detail</ModalHeader>
-          <ModalBody className="grid gap-5 md:grid-cols-2">
+        <Modal.Backdrop>
+          <Modal.Container>
+            <Modal.Dialog>
+          <Modal.Header>
+              <Modal.Heading>Order detail</Modal.Heading>
+            </Modal.Header>
+          <Modal.Body className="grid gap-5 md:grid-cols-2">
             <div className="space-y-3 rounded-2xl border border-default-200 bg-default-50 p-4">
               <p className="text-sm font-semibold text-slate-900">Overview</p>
               <p>Trade No: {selected?.trade_no || "—"}</p>
@@ -394,19 +394,25 @@ export function OrderPage() {
                 {JSON.stringify(asArray(selected?.surplus_orders), null, 2)}
               </pre>
             </div>
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Button variant="light" onPress={() => setDetailOpen(false)}>
               Close
             </Button>
-          </ModalFooter>
-        </ModalContent>
+          </Modal.Footer>
+        </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
 
       <Modal isOpen={assignOpen} onOpenChange={isOpen => !isOpen && setAssignOpen(false)} size="3xl">
-        <ModalContent>
-          <ModalHeader>Assign order</ModalHeader>
-          <ModalBody className="grid gap-4 md:grid-cols-2">
+        <Modal.Backdrop>
+          <Modal.Container>
+            <Modal.Dialog>
+          <Modal.Header>
+              <Modal.Heading>Assign order</Modal.Heading>
+            </Modal.Header>
+          <Modal.Body className="grid gap-4 md:grid-cols-2">
             <Input label="User Email" labelPlacement="outside" value={assignEmail} onValueChange={setAssignEmail} />
             <Input label="Total Amount (cents)" labelPlacement="outside" type="number" value={assignAmount} onValueChange={setAssignAmount} />
             <Select
@@ -416,7 +422,7 @@ export function OrderPage() {
               onSelectionChange={keys => setAssignPlanId(String(Array.from(keys)[0] || ""))}
             >
               {plans.map(plan => (
-                <SelectItem key={String(plan.id)}>{plan.name}</SelectItem>
+                <ListBoxItem key={String(plan.id)}>{plan.name}</ListBoxItem>
               ))}
             </Select>
             <Select
@@ -426,19 +432,21 @@ export function OrderPage() {
               onSelectionChange={keys => setAssignPeriod(String(Array.from(keys)[0] || "month_price"))}
             >
               {PERIOD_OPTIONS.map(option => (
-                <SelectItem key={option.key}>{option.label}</SelectItem>
+                <ListBoxItem key={option.key}>{option.label}</ListBoxItem>
               ))}
             </Select>
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Button variant="light" onPress={() => setAssignOpen(false)}>
               Cancel
             </Button>
             <Button color="primary" onPress={() => void assignOrder()} isLoading={submitting}>
               Create order
             </Button>
-          </ModalFooter>
-        </ModalContent>
+          </Modal.Footer>
+        </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
     </PageFrame>
   );

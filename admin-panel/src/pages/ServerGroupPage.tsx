@@ -1,15 +1,11 @@
 import {
   Button,
   Card,
-  CardBody,
+  CardContent,
   CardHeader,
   Input,
   Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  Spinner,
+          Spinner,
   Table,
   TableBody,
   TableCell,
@@ -110,11 +106,11 @@ export function ServerGroupPage() {
       <div className={adminStatsGridClassName}>
         {stats.map(item => (
           <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
-            <CardBody className={adminStatCardBodyClassName}>
+            <CardContent className={adminStatCardBodyClassName}>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
               <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
               {item.hint ? <p className="text-sm text-slate-500">{item.hint}</p> : null}
-            </CardBody>
+            </CardContent>
           </Card>
         ))}
       </div>
@@ -139,7 +135,7 @@ export function ServerGroupPage() {
             Add group
           </Button>
         </CardHeader>
-        <CardBody className={adminSectionBodyClassName}>
+        <CardContent className={adminSectionBodyClassName}>
           {error ? <div className="rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">{error}</div> : null}
           {loading ? (
             <div className="flex min-h-[300px] items-center justify-center">
@@ -185,24 +181,30 @@ export function ServerGroupPage() {
               </TableBody>
             </Table>
           )}
-        </CardBody>
+        </CardContent>
       </Card>
 
       <Modal isOpen={editorOpen} onOpenChange={isOpen => !isOpen && setEditorOpen(false)}>
-        <ModalContent>
-          <ModalHeader>{selected ? "Edit group" : "Create group"}</ModalHeader>
-          <ModalBody>
+        <Modal.Backdrop>
+          <Modal.Container>
+            <Modal.Dialog>
+          <Modal.Header>
+              <Modal.Heading>{selected ? "Edit group" : "Create group"}</Modal.Heading>
+            </Modal.Header>
+          <Modal.Body>
             <Input label="Group Name" labelPlacement="outside" value={name} onValueChange={setName} />
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Button variant="light" onPress={() => setEditorOpen(false)}>
               Cancel
             </Button>
             <Button color="primary" onPress={() => void saveGroup()} isLoading={submitting}>
               Save group
             </Button>
-          </ModalFooter>
-        </ModalContent>
+          </Modal.Footer>
+        </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
     </PageFrame>
   );

@@ -3,18 +3,14 @@ import {
   AccordionItem,
   Button,
   Card,
-  CardBody,
+  CardContent,
   CardHeader,
   Chip,
   Input,
   Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  Pagination,
+          Pagination,
   Select,
-  SelectItem,
+  ListBoxItem,
   Spinner,
   Switch,
   Table,
@@ -23,7 +19,7 @@ import {
   TableColumn,
   TableHeader,
   TableRow,
-  Textarea
+  TextArea
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
@@ -545,11 +541,11 @@ export function UserPage() {
       <div className={adminStatsGridClassName}>
         {stats.map(item => (
           <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
-            <CardBody className={adminStatCardBodyClassName}>
+            <CardContent className={adminStatCardBodyClassName}>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
               <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
               {item.hint ? <p className="text-sm text-slate-500">{item.hint}</p> : null}
-            </CardBody>
+            </CardContent>
           </Card>
         ))}
       </div>
@@ -577,7 +573,7 @@ export function UserPage() {
             </Button>
           </div>
         </CardHeader>
-        <CardBody className={`${adminSectionBodyClassName} gap-5`}>
+        <CardContent className={`${adminSectionBodyClassName} gap-5`}>
           <Accordion
             variant="splitted"
             showDivider={false}
@@ -601,7 +597,7 @@ export function UserPage() {
               onSelectionChange={keys => setPlanFilter(String(Array.from(keys)[0] || ""))}
             >
               {plans.map(plan => (
-                <SelectItem key={String(plan.id)}>{plan.name}</SelectItem>
+                <ListBoxItem key={String(plan.id)}>{plan.name}</ListBoxItem>
               ))}
             </Select>
             <Select
@@ -611,8 +607,8 @@ export function UserPage() {
               selectedKeys={bannedFilter ? new Set([bannedFilter]) : new Set<string>()}
               onSelectionChange={keys => setBannedFilter(String(Array.from(keys)[0] || ""))}
             >
-              <SelectItem key="0">Active</SelectItem>
-              <SelectItem key="1">Banned</SelectItem>
+              <ListBoxItem key="0">Active</ListBoxItem>
+              <ListBoxItem key="1">Banned</ListBoxItem>
             </Select>
             <div className="flex items-end gap-2">
               <Button color="primary" onPress={() => { setPage(1); void loadUsers(1); }}>
@@ -757,13 +753,17 @@ export function UserPage() {
               </div>
             </>
           )}
-        </CardBody>
+        </CardContent>
       </Card>
 
       <Modal isOpen={editorOpen} onOpenChange={isOpen => !isOpen && setEditorOpen(false)} size="5xl" scrollBehavior="inside">
-        <ModalContent>
-          <ModalHeader>Edit user</ModalHeader>
-          <ModalBody className="grid gap-4 md:grid-cols-2">
+        <Modal.Backdrop>
+          <Modal.Container>
+            <Modal.Dialog>
+          <Modal.Header>
+              <Modal.Heading>Edit user</Modal.Heading>
+            </Modal.Header>
+          <Modal.Body className="grid gap-4 md:grid-cols-2">
             <Input label="Email" labelPlacement="outside" value={form.email} onValueChange={value => setForm(current => ({ ...current, email: value }))} />
             <Input label="New Password" labelPlacement="outside" type="password" value={form.password} onValueChange={value => setForm(current => ({ ...current, password: value }))} />
             <Select
@@ -773,7 +773,7 @@ export function UserPage() {
               onSelectionChange={keys => setForm(current => ({ ...current, plan_id: String(Array.from(keys)[0] || "") }))}
             >
               {plans.map(plan => (
-                <SelectItem key={String(plan.id)}>{plan.name}</SelectItem>
+                <ListBoxItem key={String(plan.id)}>{plan.name}</ListBoxItem>
               ))}
             </Select>
             <Input label="Transfer (GB)" labelPlacement="outside" type="number" value={form.transfer_enable} onValueChange={value => setForm(current => ({ ...current, transfer_enable: value }))} />
@@ -785,7 +785,7 @@ export function UserPage() {
             <Input label="Discount" labelPlacement="outside" type="number" value={form.discount} onValueChange={value => setForm(current => ({ ...current, discount: value }))} />
             <Input label="Speed Limit" labelPlacement="outside" type="number" value={form.speed_limit} onValueChange={value => setForm(current => ({ ...current, speed_limit: value }))} />
             <Input label="Invite User Email" labelPlacement="outside" value={form.invite_user_email} onValueChange={value => setForm(current => ({ ...current, invite_user_email: value }))} />
-            <Textarea className="md:col-span-2" label="Remarks" labelPlacement="outside" minRows={4} value={form.remarks} onValueChange={value => setForm(current => ({ ...current, remarks: value }))} />
+            <TextArea className="md:col-span-2" label="Remarks" labelPlacement="outside" minRows={4} value={form.remarks} onValueChange={value => setForm(current => ({ ...current, remarks: value }))} />
             <div className="md:col-span-2 grid gap-3 md:grid-cols-3">
               <div className="rounded-2xl border border-default-200 bg-default-50 p-4">
                 <p className="mb-3 text-sm font-semibold">Banned</p>
@@ -808,22 +808,28 @@ export function UserPage() {
                 <p className="mt-2">Recent login IPs: {(selected.recent_login_ips || []).join(", ") || "—"}</p>
               </div>
             ) : null}
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Button variant="light" onPress={() => setEditorOpen(false)}>
               Cancel
             </Button>
             <Button color="primary" onPress={() => void submitUserUpdate()} isLoading={submitting}>
               Save user
             </Button>
-          </ModalFooter>
-        </ModalContent>
+          </Modal.Footer>
+        </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
 
       <Modal isOpen={generateOpen} onOpenChange={isOpen => !isOpen && setGenerateOpen(false)} size="3xl">
-        <ModalContent>
-          <ModalHeader>Generate users</ModalHeader>
-          <ModalBody className="grid gap-4 md:grid-cols-2">
+        <Modal.Backdrop>
+          <Modal.Container>
+            <Modal.Dialog>
+          <Modal.Header>
+              <Modal.Heading>Generate users</Modal.Heading>
+            </Modal.Header>
+          <Modal.Body className="grid gap-4 md:grid-cols-2">
             <Input label="Email Prefix" labelPlacement="outside" value={generateForm.email_prefix} onValueChange={value => setGenerateForm(current => ({ ...current, email_prefix: value }))} />
             <Input label="Email Suffix" labelPlacement="outside" value={generateForm.email_suffix} onValueChange={value => setGenerateForm(current => ({ ...current, email_suffix: value }))} />
             <Input label="Password" labelPlacement="outside" type="password" value={generateForm.password} onValueChange={value => setGenerateForm(current => ({ ...current, password: value }))} />
@@ -835,44 +841,56 @@ export function UserPage() {
               onSelectionChange={keys => setGenerateForm(current => ({ ...current, plan_id: String(Array.from(keys)[0] || "") }))}
             >
               {plans.map(plan => (
-                <SelectItem key={String(plan.id)}>{plan.name}</SelectItem>
+                <ListBoxItem key={String(plan.id)}>{plan.name}</ListBoxItem>
               ))}
             </Select>
             <Input label="Expire Timestamp" labelPlacement="outside" value={generateForm.expired_at} onValueChange={value => setGenerateForm(current => ({ ...current, expired_at: value }))} />
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Button variant="light" onPress={() => setGenerateOpen(false)}>
               Cancel
             </Button>
             <Button color="primary" onPress={() => void submitGenerate()} isLoading={submitting}>
               Generate
             </Button>
-          </ModalFooter>
-        </ModalContent>
+          </Modal.Footer>
+        </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
 
       <Modal isOpen={mailOpen} onOpenChange={isOpen => !isOpen && setMailOpen(false)} size="3xl">
-        <ModalContent>
-          <ModalHeader>Mass mail</ModalHeader>
-          <ModalBody className="gap-4">
+        <Modal.Backdrop>
+          <Modal.Container>
+            <Modal.Dialog>
+          <Modal.Header>
+              <Modal.Heading>Mass mail</Modal.Heading>
+            </Modal.Header>
+          <Modal.Body className="gap-4">
             <Input label="Subject" labelPlacement="outside" value={mailForm.subject} onValueChange={value => setMailForm(current => ({ ...current, subject: value }))} />
-            <Textarea label="Content" labelPlacement="outside" minRows={8} value={mailForm.content} onValueChange={value => setMailForm(current => ({ ...current, content: value }))} />
-          </ModalBody>
-          <ModalFooter>
+            <TextArea label="Content" labelPlacement="outside" minRows={8} value={mailForm.content} onValueChange={value => setMailForm(current => ({ ...current, content: value }))} />
+          </Modal.Body>
+          <Modal.Footer>
             <Button variant="light" onPress={() => setMailOpen(false)}>
               Cancel
             </Button>
             <Button color="primary" onPress={() => void sendMail()} isLoading={submitting}>
               Queue email
             </Button>
-          </ModalFooter>
-        </ModalContent>
+          </Modal.Footer>
+        </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
 
       <Modal isOpen={statsOpen} onOpenChange={isOpen => !isOpen && setStatsOpen(false)} size="5xl" scrollBehavior="inside">
-        <ModalContent>
-          <ModalHeader>Traffic logs for {statsUser?.email || "user"}</ModalHeader>
-          <ModalBody className="gap-4">
+        <Modal.Backdrop>
+          <Modal.Container>
+            <Modal.Dialog>
+          <Modal.Header>
+              <Modal.Heading>Traffic logs for {statsUser?.email || "user"}</Modal.Heading>
+            </Modal.Header>
+          <Modal.Body className="gap-4">
             <Table aria-label="User traffic logs" classNames={adminTableClassNames}>
               <TableHeader>
                 <TableColumn>Date</TableColumn>
@@ -898,19 +916,25 @@ export function UserPage() {
                 onChange={setStatsPage}
               />
             </div>
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Button variant="light" onPress={() => setStatsOpen(false)}>
               Close
             </Button>
-          </ModalFooter>
-        </ModalContent>
+          </Modal.Footer>
+        </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
 
       <Modal isOpen={ipGeoOpen} onOpenChange={isOpen => !isOpen && setIpGeoOpen(false)} size="5xl" scrollBehavior="inside">
-        <ModalContent>
-          <ModalHeader>IP geography for {ipGeoUser?.email || "user"}</ModalHeader>
-          <ModalBody className="gap-4">
+        <Modal.Backdrop>
+          <Modal.Container>
+            <Modal.Dialog>
+          <Modal.Header>
+              <Modal.Heading>IP geography for {ipGeoUser?.email || "user"}</Modal.Heading>
+            </Modal.Header>
+          <Modal.Body className="gap-4">
             <div className="flex flex-wrap items-end gap-3">
               <Select
                 className="max-w-xs"
@@ -920,7 +944,7 @@ export function UserPage() {
                 onSelectionChange={keys => setGeoProvider(String(Array.from(keys)[0] || "ipinfo"))}
               >
                 {geoProviders.map(provider => (
-                  <SelectItem key={provider.key}>{provider.name}</SelectItem>
+                  <ListBoxItem key={provider.key}>{provider.name}</ListBoxItem>
                 ))}
               </Select>
               <Button color="primary" variant="light" onPress={() => void fetchAllGeo()}>
@@ -962,13 +986,15 @@ export function UserPage() {
                 }}
               </TableBody>
             </Table>
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Button variant="light" onPress={() => setIpGeoOpen(false)}>
               Close
             </Button>
-          </ModalFooter>
-        </ModalContent>
+          </Modal.Footer>
+        </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
     </PageFrame>
   );

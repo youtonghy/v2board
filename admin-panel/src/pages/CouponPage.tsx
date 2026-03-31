@@ -1,18 +1,14 @@
 import {
   Button,
   Card,
-  CardBody,
+  CardContent,
   CardHeader,
   Chip,
   Input,
+  ListBoxItem,
   Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
   Pagination,
   Select,
-  SelectItem,
   Spinner,
   Switch,
   Table,
@@ -166,11 +162,11 @@ export function CouponPage() {
       <div className={adminStatsGridClassName}>
         {stats.map(item => (
           <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
-            <CardBody className={adminStatCardBodyClassName}>
+            <CardContent className={adminStatCardBodyClassName}>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
               <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
               {item.hint ? <p className="text-sm text-slate-500">{item.hint}</p> : null}
-            </CardBody>
+            </CardContent>
           </Card>
         ))}
       </div>
@@ -194,7 +190,7 @@ export function CouponPage() {
             Add coupon
           </Button>
         </CardHeader>
-        <CardBody className={`${adminSectionBodyClassName} gap-4`}>
+        <CardContent className={`${adminSectionBodyClassName} gap-4`}>
           {loading ? (
             <div className="flex min-h-[280px] items-center justify-center">
               <Spinner color="primary" label="Loading coupons" />
@@ -259,13 +255,17 @@ export function CouponPage() {
               </div>
             </>
           )}
-        </CardBody>
+        </CardContent>
       </Card>
 
-      <Modal isOpen={open} onOpenChange={isOpen => !isOpen && setOpen(false)} size="5xl" scrollBehavior="inside">
-        <ModalContent>
-          <ModalHeader>{selected?.id ? "Edit coupon" : "Create coupon"}</ModalHeader>
-          <ModalBody className="grid gap-5 md:grid-cols-2">
+      <Modal isOpen={open} onOpenChange={isOpen => !isOpen && setOpen(false)}>
+        <Modal.Backdrop>
+          <Modal.Container size="5xl" scroll="inside">
+            <Modal.Dialog>
+          <Modal.Header>
+              <Modal.Heading>{selected?.id ? "Edit coupon" : "Create coupon"}</Modal.Heading>
+            </Modal.Header>
+          <Modal.Body className="grid gap-5 md:grid-cols-2">
             <Input label="Name" labelPlacement="outside" value={selected?.name || ""} onValueChange={value => setSelected(current => (current ? { ...current, name: value } : current))} />
             <Input label="Code" labelPlacement="outside" value={selected?.code || ""} onValueChange={value => setSelected(current => (current ? { ...current, code: value, generate_count: undefined } : current))} />
             <Select
@@ -278,7 +278,7 @@ export function CouponPage() {
               }}
             >
               {COUPON_TYPE_OPTIONS.map(option => (
-                <SelectItem key={option.key}>{option.label}</SelectItem>
+                <ListBoxItem key={option.key}>{option.label}</ListBoxItem>
               ))}
             </Select>
             <Input
@@ -322,7 +322,7 @@ export function CouponPage() {
               }}
             >
               {plans.map(plan => (
-                <SelectItem key={String(plan.id)}>{plan.name}</SelectItem>
+                <ListBoxItem key={String(plan.id)}>{plan.name}</ListBoxItem>
               ))}
             </Select>
             <Select
@@ -342,7 +342,7 @@ export function CouponPage() {
               }
             >
               {PERIOD_OPTIONS.map(option => (
-                <SelectItem key={option.key}>{option.label}</SelectItem>
+                <ListBoxItem key={option.key}>{option.label}</ListBoxItem>
               ))}
             </Select>
             {!selected?.id && !selected?.code ? (
@@ -354,16 +354,18 @@ export function CouponPage() {
                 onValueChange={value => setSelected(current => (current ? { ...current, generate_count: value } : current))}
               />
             ) : null}
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Button variant="light" onPress={() => setOpen(false)}>
               Cancel
             </Button>
             <Button color="primary" onPress={() => void saveCoupon()} isLoading={saving}>
               Save coupon
             </Button>
-          </ModalFooter>
-        </ModalContent>
+          </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
     </PageFrame>
   );

@@ -3,13 +3,13 @@ import {
   AccordionItem,
   Button,
   Card,
-  CardBody,
+  CardContent,
   CardHeader,
   Chip,
   Input,
   Pagination,
   Select,
-  SelectItem,
+  ListBoxItem,
   Spinner,
   Tab,
   Tabs,
@@ -122,11 +122,11 @@ export function TicketPage() {
       <div className={adminStatsGridClassName}>
         {stats.map(item => (
           <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
-            <CardBody className={adminStatCardBodyClassName}>
+            <CardContent className={adminStatCardBodyClassName}>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
               <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
               {item.hint ? <p className="text-sm text-slate-500">{item.hint}</p> : null}
-            </CardBody>
+            </CardContent>
           </Card>
         ))}
       </div>
@@ -140,7 +140,7 @@ export function TicketPage() {
             </p>
           </div>
         </CardHeader>
-        <CardBody className={`${adminSectionBodyClassName} gap-5`}>
+        <CardContent className={`${adminSectionBodyClassName} gap-5`}>
           <Tabs
             selectedKey={status}
             onSelectionChange={key => {
@@ -171,9 +171,9 @@ export function TicketPage() {
               selectedKeys={selectedReplyStatus}
               onSelectionChange={keys => setReplyStatus(String(Array.from(keys)[0] || ""))}
             >
-              <SelectItem key="0">Pending Admin Reply</SelectItem>
-              <SelectItem key="1">Waiting User Reply</SelectItem>
-              <SelectItem key="2">Resolved</SelectItem>
+              <ListBoxItem key="0">Pending Admin Reply</ListBoxItem>
+              <ListBoxItem key="1">Waiting User Reply</ListBoxItem>
+              <ListBoxItem key="2">Resolved</ListBoxItem>
             </Select>
             <div className="flex items-end gap-2 md:col-span-2">
               <Button color="primary" onPress={() => { setPage(1); void loadTickets(1); }}>
@@ -250,7 +250,7 @@ export function TicketPage() {
               </div>
             </>
           )}
-        </CardBody>
+        </CardContent>
       </Card>
     </PageFrame>
   );

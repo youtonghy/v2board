@@ -1,16 +1,12 @@
 import {
   Button,
   Card,
-  CardBody,
+  CardContent,
   CardHeader,
   Chip,
   Input,
   Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  Spinner,
+          Spinner,
   Switch,
   Table,
   TableBody,
@@ -18,7 +14,7 @@ import {
   TableColumn,
   TableHeader,
   TableRow,
-  Textarea
+  TextArea
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
 import { adminRequest } from "../lib/api";
@@ -129,11 +125,11 @@ export function NoticePage() {
       <div className={adminStatsGridClassName}>
         {stats.map(item => (
           <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
-            <CardBody className={adminStatCardBodyClassName}>
+            <CardContent className={adminStatCardBodyClassName}>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
               <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
               {item.hint ? <p className="text-sm text-slate-500">{item.hint}</p> : null}
-            </CardBody>
+            </CardContent>
           </Card>
         ))}
       </div>
@@ -157,7 +153,7 @@ export function NoticePage() {
             Add notice
           </Button>
         </CardHeader>
-        <CardBody className={adminSectionBodyClassName}>
+        <CardContent className={adminSectionBodyClassName}>
         {loading ? (
           <div className="flex min-h-[280px] items-center justify-center">
             <Spinner color="primary" label="Loading notices" />
@@ -221,20 +217,24 @@ export function NoticePage() {
             </TableBody>
           </Table>
         )}
-        </CardBody>
+        </CardContent>
       </Card>
 
       <Modal isOpen={open} onOpenChange={isOpen => !isOpen && setOpen(false)} size="4xl" scrollBehavior="inside">
-        <ModalContent>
-          <ModalHeader>{selected?.id ? "Edit notice" : "Create notice"}</ModalHeader>
-          <ModalBody className="gap-5">
+        <Modal.Backdrop>
+          <Modal.Container>
+            <Modal.Dialog>
+          <Modal.Header>
+              <Modal.Heading>{selected?.id ? "Edit notice" : "Create notice"}</Modal.Heading>
+            </Modal.Header>
+          <Modal.Body className="gap-5">
             <Input
               label="Title"
               labelPlacement="outside"
               value={selected?.title || ""}
               onValueChange={value => setSelected(current => (current ? { ...current, title: value } : current))}
             />
-            <Textarea
+            <TextArea
               label="Content"
               labelPlacement="outside"
               minRows={10}
@@ -266,16 +266,18 @@ export function NoticePage() {
                 )
               }
             />
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Button variant="light" onPress={() => setOpen(false)}>
               Cancel
             </Button>
             <Button color="primary" onPress={() => void saveNotice()} isLoading={saving}>
               Save notice
             </Button>
-          </ModalFooter>
-        </ModalContent>
+          </Modal.Footer>
+        </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
     </PageFrame>
   );

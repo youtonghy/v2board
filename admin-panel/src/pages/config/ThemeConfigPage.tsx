@@ -1,4 +1,4 @@
-import { Button, Card, CardBody, CardHeader, Divider, Spinner, Tab, Tabs } from "@heroui/react";
+import { Button, Card, CardContent, CardHeader, Separator, Spinner, Tab, Tabs } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
 import { adminRequest, unwrapEnvelope } from "../../lib/api";
 import { PageFrame } from "../../components/PageFrame";
@@ -107,20 +107,20 @@ export function ThemeConfigPage() {
       <div className={adminStatsGridClassName}>
         {stats.map(item => (
           <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
-            <CardBody className={adminStatCardBodyClassName}>
+            <CardContent className={adminStatCardBodyClassName}>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
               <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
               {item.hint ? <p className="text-sm text-slate-500">{item.hint}</p> : null}
-            </CardBody>
+            </CardContent>
           </Card>
         ))}
       </div>
 
       {loading ? (
         <Card className="border border-default-200 shadow-none">
-          <CardBody className="flex min-h-[320px] items-center justify-center">
+          <CardContent className="flex min-h-[320px] items-center justify-center">
             <Spinner color="primary" label="Loading themes" />
-          </CardBody>
+          </CardContent>
         </Card>
       ) : (
         <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
@@ -134,7 +134,7 @@ export function ThemeConfigPage() {
                 Save theme config
               </Button>
             </CardHeader>
-            <CardBody className={`${adminSectionBodyClassName} gap-6`}>
+            <CardContent className={`${adminSectionBodyClassName} gap-6`}>
               <Tabs
                 selectedKey={currentTheme}
                 onSelectionChange={key => void loadThemes(String(key))}
@@ -153,7 +153,7 @@ export function ThemeConfigPage() {
                 </div>
               ) : null}
               <ObjectRecordEditor value={config} onChange={setConfig} />
-            </CardBody>
+            </CardContent>
           </Card>
 
           <Card className="border border-default-200 bg-white/90 shadow-panel">
@@ -163,12 +163,12 @@ export function ThemeConfigPage() {
                 <p className="text-sm text-slate-500">Reference snapshot from the existing backend template loader.</p>
               </div>
             </CardHeader>
-            <Divider />
-            <CardBody>
+            <Separator />
+            <CardContent>
               <pre className="max-h-[560px] overflow-auto rounded-2xl bg-slate-950 p-4 text-xs leading-6 text-white">
                 {JSON.stringify(template, null, 2)}
               </pre>
-            </CardBody>
+            </CardContent>
           </Card>
         </div>
       )}

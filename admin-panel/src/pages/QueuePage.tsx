@@ -1,7 +1,7 @@
 import {
   Button,
   Card,
-  CardBody,
+  CardContent,
   CardHeader,
   Chip,
   Spinner
@@ -105,27 +105,27 @@ export function QueuePage() {
     >
       {state.error ? (
         <Card className="border border-danger-200 bg-danger-50 shadow-none">
-          <CardBody className="p-6 text-sm text-danger-700">{state.error}</CardBody>
+          <CardContent className="p-6 text-sm text-danger-700">{state.error}</CardContent>
         </Card>
       ) : null}
 
       <div className={adminStatsGridClassName}>
         {statCards.map(item => (
           <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
-            <CardBody className={adminStatCardBodyClassName}>
+            <CardContent className={adminStatCardBodyClassName}>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
               <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
               {item.hint ? <p className="text-sm text-slate-500">{item.hint}</p> : null}
-            </CardBody>
+            </CardContent>
           </Card>
         ))}
       </div>
 
       {state.loading ? (
         <Card className="border border-default-200 shadow-none">
-          <CardBody className="flex min-h-[320px] items-center justify-center">
+          <CardContent className="flex min-h-[320px] items-center justify-center">
             <Spinner color="primary" label="Loading queue" />
-          </CardBody>
+          </CardContent>
         </Card>
       ) : (
         <div className="grid gap-6 xl:grid-cols-2">
@@ -136,11 +136,11 @@ export function QueuePage() {
                 <p className="mt-1 text-sm leading-6 text-slate-500">Live counters and queue-level backlog information.</p>
               </div>
             </CardHeader>
-            <CardBody className={adminSectionBodyClassName}>
+            <CardContent className={adminSectionBodyClassName}>
               <pre className="overflow-x-auto whitespace-pre-wrap text-xs text-slate-600">
                 {JSON.stringify(state.stats, null, 2)}
               </pre>
-            </CardBody>
+            </CardContent>
           </Card>
 
           <Card shadow="none" radius="lg" className={adminCardClassName}>
@@ -150,11 +150,11 @@ export function QueuePage() {
                 <p className="mt-1 text-sm leading-6 text-slate-500">Worker and runtime pressure details returned by the backend.</p>
               </div>
             </CardHeader>
-            <CardBody className={adminSectionBodyClassName}>
+            <CardContent className={adminSectionBodyClassName}>
               <pre className="overflow-x-auto whitespace-pre-wrap text-xs text-slate-600">
                 {JSON.stringify(state.workload, null, 2)}
               </pre>
-            </CardBody>
+            </CardContent>
           </Card>
 
           <Card shadow="none" radius="lg" className={adminCardClassName}>
@@ -164,11 +164,11 @@ export function QueuePage() {
                 <p className="mt-1 text-sm leading-6 text-slate-500">Horizon master supervisor payload.</p>
               </div>
             </CardHeader>
-            <CardBody className={adminSectionBodyClassName}>
+            <CardContent className={adminSectionBodyClassName}>
               <pre className="overflow-x-auto whitespace-pre-wrap text-xs text-slate-600">
                 {JSON.stringify(state.masters, null, 2)}
               </pre>
-            </CardBody>
+            </CardContent>
           </Card>
 
           <Card shadow="none" radius="lg" className={adminCardClassName}>
@@ -181,11 +181,11 @@ export function QueuePage() {
                 Reload log
               </Button>
             </CardHeader>
-            <CardBody className={adminSectionBodyClassName}>
+            <CardContent className={adminSectionBodyClassName}>
               <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap text-xs text-slate-600">
                 {typeof state.log === "string" ? state.log : JSON.stringify(state.log, null, 2)}
               </pre>
-            </CardBody>
+            </CardContent>
           </Card>
         </div>
       )}

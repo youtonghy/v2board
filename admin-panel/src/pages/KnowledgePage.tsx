@@ -5,17 +5,13 @@ import {
   AccordionItem,
   Button,
   Card,
-  CardBody,
+  CardContent,
   CardHeader,
   Chip,
   Input,
   Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  Select,
-  SelectItem,
+          Select,
+  ListBoxItem,
   Spinner,
   Switch,
   Table,
@@ -23,7 +19,7 @@ import {
   TableCell,
   TableColumn,
   TableHeader,
-  Textarea
+  TextArea
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -227,11 +223,11 @@ export function KnowledgePage() {
       <div className={adminStatsGridClassName}>
         {stats.map(item => (
           <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
-            <CardBody className={adminStatCardBodyClassName}>
+            <CardContent className={adminStatCardBodyClassName}>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
               <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
               {item.hint ? <p className="text-sm text-slate-500">{item.hint}</p> : null}
-            </CardBody>
+            </CardContent>
           </Card>
         ))}
       </div>
@@ -252,9 +248,9 @@ export function KnowledgePage() {
               selectedKeys={new Set([activeCategory])}
               onSelectionChange={keys => setActiveCategory(String(Array.from(keys)[0] || "all"))}
             >
-              <SelectItem key="all">All Categories</SelectItem>
+              <ListBoxItem key="all">All Categories</ListBoxItem>
               {categories.map(category => (
-                <SelectItem key={category}>{category}</SelectItem>
+                <ListBoxItem key={category}>{category}</ListBoxItem>
               ))}
             </Select>
             <Button color="primary" radius="full" onPress={() => void openEditor()}>
@@ -262,7 +258,7 @@ export function KnowledgePage() {
             </Button>
           </div>
         </CardHeader>
-        <CardBody className={`${adminSectionBodyClassName} gap-5`}>
+        <CardContent className={`${adminSectionBodyClassName} gap-5`}>
           <Accordion
             variant="splitted"
             showDivider={false}
@@ -345,27 +341,33 @@ export function KnowledgePage() {
               </SortableContext>
             </DndContext>
           )}
-        </CardBody>
+        </CardContent>
       </Card>
 
       <Modal isOpen={editorOpen} onOpenChange={isOpen => !isOpen && setEditorOpen(false)} size="5xl" scrollBehavior="inside">
-        <ModalContent>
-          <ModalHeader>{selected.id ? "Edit article" : "Create article"}</ModalHeader>
-          <ModalBody className="grid gap-4 md:grid-cols-2">
+        <Modal.Backdrop>
+          <Modal.Container>
+            <Modal.Dialog>
+          <Modal.Header>
+              <Modal.Heading>{selected.id ? "Edit article" : "Create article"}</Modal.Heading>
+            </Modal.Header>
+          <Modal.Body className="grid gap-4 md:grid-cols-2">
             <Input label="Title" labelPlacement="outside" value={selected.title} onValueChange={value => setSelected(current => ({ ...current, title: value }))} />
             <Input label="Language" labelPlacement="outside" value={selected.language || "en-US"} onValueChange={value => setSelected(current => ({ ...current, language: value }))} />
             <Input className="md:col-span-2" label="Category" labelPlacement="outside" value={selected.category} onValueChange={value => setSelected(current => ({ ...current, category: value }))} />
-            <Textarea className="md:col-span-2" label="Body" labelPlacement="outside" minRows={16} value={selected.body || ""} onValueChange={value => setSelected(current => ({ ...current, body: value }))} />
-          </ModalBody>
-          <ModalFooter>
+            <TextArea className="md:col-span-2" label="Body" labelPlacement="outside" minRows={16} value={selected.body || ""} onValueChange={value => setSelected(current => ({ ...current, body: value }))} />
+          </Modal.Body>
+          <Modal.Footer>
             <Button variant="light" onPress={() => setEditorOpen(false)}>
               Cancel
             </Button>
             <Button color="primary" onPress={() => void saveKnowledge()} isLoading={submitting}>
               Save article
             </Button>
-          </ModalFooter>
-        </ModalContent>
+          </Modal.Footer>
+        </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
     </PageFrame>
   );

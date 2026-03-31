@@ -3,16 +3,12 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import {
   Button,
   Card,
-  CardBody,
+  CardContent,
   CardHeader,
   Input,
   Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  Select,
-  SelectItem,
+          Select,
+  ListBoxItem,
   Spinner,
   Switch,
   Table,
@@ -254,11 +250,11 @@ export function PaymentConfigPage() {
       <div className={adminStatsGridClassName}>
         {stats.map(item => (
           <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
-            <CardBody className={adminStatCardBodyClassName}>
+            <CardContent className={adminStatCardBodyClassName}>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
               <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
               {item.hint ? <p className="text-sm text-slate-500">{item.hint}</p> : null}
-            </CardBody>
+            </CardContent>
           </Card>
         ))}
       </div>
@@ -283,7 +279,7 @@ export function PaymentConfigPage() {
             Add payment
           </Button>
         </CardHeader>
-        <CardBody className={adminSectionBodyClassName}>
+        <CardContent className={adminSectionBodyClassName}>
           {error ? <div className="mb-4 rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">{error}</div> : null}
           {loading ? (
             <div className="flex min-h-[280px] items-center justify-center">
@@ -363,13 +359,17 @@ export function PaymentConfigPage() {
               </SortableContext>
             </DndContext>
           )}
-        </CardBody>
+        </CardContent>
       </Card>
 
       <Modal isOpen={editorOpen} onOpenChange={open => !open && setEditorOpen(false)} size="5xl" scrollBehavior="inside">
-        <ModalContent>
-          <ModalHeader>{selected?.id ? "Edit payment" : "Create payment"}</ModalHeader>
-          <ModalBody className="gap-5">
+        <Modal.Backdrop>
+          <Modal.Container>
+            <Modal.Dialog>
+          <Modal.Header>
+              <Modal.Heading>{selected?.id ? "Edit payment" : "Create payment"}</Modal.Heading>
+            </Modal.Header>
+          <Modal.Body className="gap-5">
             <Input
               label="Display Name"
               labelPlacement="outside"
@@ -387,7 +387,7 @@ export function PaymentConfigPage() {
               }}
             >
               {methods.map(method => (
-                <SelectItem key={method}>{method}</SelectItem>
+                <ListBoxItem key={method}>{method}</ListBoxItem>
               ))}
             </Select>
             <div className="grid gap-5 md:grid-cols-2">
@@ -469,16 +469,18 @@ export function PaymentConfigPage() {
                 </div>
               </div>
             ) : null}
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Button variant="light" onPress={() => setEditorOpen(false)}>
               Cancel
             </Button>
             <Button color="primary" onPress={() => void savePayment()} isLoading={saving}>
               Save payment
             </Button>
-          </ModalFooter>
-        </ModalContent>
+          </Modal.Footer>
+        </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
     </PageFrame>
   );

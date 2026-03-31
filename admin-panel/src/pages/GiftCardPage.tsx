@@ -1,18 +1,14 @@
 import {
   Button,
   Card,
-  CardBody,
+  CardContent,
   CardHeader,
   Chip,
   Input,
   Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  Pagination,
+          Pagination,
   Select,
-  SelectItem,
+  ListBoxItem,
   Spinner,
   Table,
   TableBody,
@@ -144,11 +140,11 @@ export function GiftCardPage() {
       <div className={adminStatsGridClassName}>
         {stats.map(item => (
           <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
-            <CardBody className={adminStatCardBodyClassName}>
+            <CardContent className={adminStatCardBodyClassName}>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
               <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
               {item.hint ? <p className="text-sm text-slate-500">{item.hint}</p> : null}
-            </CardBody>
+            </CardContent>
           </Card>
         ))}
       </div>
@@ -172,7 +168,7 @@ export function GiftCardPage() {
             Add gift card
           </Button>
         </CardHeader>
-        <CardBody className={`${adminSectionBodyClassName} gap-4`}>
+        <CardContent className={`${adminSectionBodyClassName} gap-4`}>
           {loading ? (
             <div className="flex min-h-[280px] items-center justify-center">
               <Spinner color="primary" label="Loading gift cards" />
@@ -228,13 +224,17 @@ export function GiftCardPage() {
               </div>
             </>
           )}
-        </CardBody>
+        </CardContent>
       </Card>
 
       <Modal isOpen={open} onOpenChange={isOpen => !isOpen && setOpen(false)} size="5xl" scrollBehavior="inside">
-        <ModalContent>
-          <ModalHeader>{selected?.id ? "Edit gift card" : "Create gift card"}</ModalHeader>
-          <ModalBody className="grid gap-5 md:grid-cols-2">
+        <Modal.Backdrop>
+          <Modal.Container>
+            <Modal.Dialog>
+          <Modal.Header>
+              <Modal.Heading>{selected?.id ? "Edit gift card" : "Create gift card"}</Modal.Heading>
+            </Modal.Header>
+          <Modal.Body className="grid gap-5 md:grid-cols-2">
             <Input label="Name" labelPlacement="outside" value={selected?.name || ""} onValueChange={value => setSelected(current => (current ? { ...current, name: value } : current))} />
             <Input label="Code" labelPlacement="outside" value={selected?.code || ""} onValueChange={value => setSelected(current => (current ? { ...current, code: value, generate_count: undefined } : current))} />
             <Select
@@ -247,7 +247,7 @@ export function GiftCardPage() {
               }}
             >
               {GIFTCARD_TYPE_OPTIONS.map(option => (
-                <SelectItem key={option.key}>{option.label}</SelectItem>
+                <ListBoxItem key={option.key}>{option.label}</ListBoxItem>
               ))}
             </Select>
             <Input
@@ -269,7 +269,7 @@ export function GiftCardPage() {
                 }}
               >
                 {plans.map(plan => (
-                  <SelectItem key={String(plan.id)}>{plan.name}</SelectItem>
+                  <ListBoxItem key={String(plan.id)}>{plan.name}</ListBoxItem>
                 ))}
               </Select>
             ) : null}
@@ -297,16 +297,18 @@ export function GiftCardPage() {
                 onValueChange={value => setSelected(current => (current ? { ...current, generate_count: value } : current))}
               />
             ) : null}
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Button variant="light" onPress={() => setOpen(false)}>
               Cancel
             </Button>
             <Button color="primary" onPress={() => void saveGiftCard()} isLoading={saving}>
               Save gift card
             </Button>
-          </ModalFooter>
-        </ModalContent>
+          </Modal.Footer>
+        </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
     </PageFrame>
   );

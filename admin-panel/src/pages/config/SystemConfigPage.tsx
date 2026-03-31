@@ -1,4 +1,4 @@
-import { Button, Card, CardBody, CardHeader, Divider, Input, Spinner, Tab, Tabs } from "@heroui/react";
+import { Button, Card, CardContent, CardHeader, Input, Separator, Spinner, Tab, Tabs } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
 import { adminRequest } from "../../lib/api";
 import { PageFrame } from "../../components/PageFrame";
@@ -158,20 +158,20 @@ export function SystemConfigPage() {
       <div className={adminStatsGridClassName}>
         {stats.map(item => (
           <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
-            <CardBody className={adminStatCardBodyClassName}>
+            <CardContent className={adminStatCardBodyClassName}>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
               <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
               {item.hint ? <p className="text-sm text-slate-500">{item.hint}</p> : null}
-            </CardBody>
+            </CardContent>
           </Card>
         ))}
       </div>
 
       {state.loading ? (
         <Card className="border border-default-200 shadow-none">
-          <CardBody className="flex min-h-[320px] items-center justify-center">
+          <CardContent className="flex min-h-[320px] items-center justify-center">
             <Spinner color="primary" label="Loading system config" />
-          </CardBody>
+          </CardContent>
         </Card>
       ) : (
         <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
@@ -187,7 +187,7 @@ export function SystemConfigPage() {
                 Save section
               </Button>
             </CardHeader>
-            <CardBody className={`${adminSectionBodyClassName} gap-6`}>
+            <CardContent className={`${adminSectionBodyClassName} gap-6`}>
               {sectionKeys.length ? (
                 <Tabs
                   selectedKey={state.activeKey}
@@ -213,7 +213,7 @@ export function SystemConfigPage() {
                     }))
                   }
                 />
-            </CardBody>
+            </CardContent>
           </Card>
 
           <Card className="border border-default-200 bg-white/90 shadow-panel">
@@ -223,12 +223,12 @@ export function SystemConfigPage() {
                 <p className="text-sm text-slate-500">Read-only context to keep configuration changes grounded in the current template set.</p>
               </div>
             </CardHeader>
-            <Divider />
-            <CardBody>
+            <Separator />
+            <CardContent>
               <pre className="max-h-[560px] overflow-auto rounded-2xl bg-slate-950 p-4 text-xs leading-6 text-white">
                 {JSON.stringify(state.emailTemplate, null, 2)}
               </pre>
-            </CardBody>
+            </CardContent>
           </Card>
 
           <Card shadow="none" radius="lg" className={`${adminCardClassName} xl:col-span-2`}>
@@ -240,7 +240,7 @@ export function SystemConfigPage() {
                 </p>
               </div>
             </CardHeader>
-            <CardBody className={`${adminSectionBodyClassName} grid gap-6 md:grid-cols-2`}>
+            <CardContent className={`${adminSectionBodyClassName} grid gap-6 md:grid-cols-2`}>
               <div className="rounded-2xl border border-default-200 bg-default-50 p-4">
                 <p className="text-sm font-semibold text-slate-900">Test Mail Delivery</p>
                 <p className="mt-1 text-sm text-slate-500">Send a test message to the current admin account using the active SMTP settings.</p>
@@ -280,7 +280,7 @@ export function SystemConfigPage() {
                   <p className="mt-3 text-sm text-slate-600">{state.webhookResult}</p>
                 ) : null}
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
         </div>
       )}

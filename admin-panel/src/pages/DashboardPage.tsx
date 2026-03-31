@@ -2,16 +2,12 @@ import { ArrowDownToLine, ArrowRotateRight, Bell } from "@gravity-ui/icons";
 import {
   Button,
   Card,
-  CardBody,
+  CardContent,
   CardHeader,
   Chip,
-  Divider,
+  Separator,
   Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  Pagination,
+          Pagination,
   Spinner,
   Tab,
   Tabs,
@@ -160,7 +156,7 @@ function MetricTile({
 
   return (
     <Card className="border border-white/70 bg-white/95 shadow-panel">
-      <CardBody className="gap-4 p-6">
+      <CardContent className="gap-4 p-6">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-sm font-medium text-slate-500">{title}</p>
@@ -180,7 +176,7 @@ function MetricTile({
             {deltaPositive ? "↑" : "↓"} {formatGrowth(delta)}
           </Chip>
         </div>
-      </CardBody>
+      </CardContent>
     </Card>
   );
 }
@@ -205,7 +201,7 @@ function PanelShell({
         </div>
         {action}
       </CardHeader>
-      <CardBody className="px-6 pb-6 pt-4">{children}</CardBody>
+      <CardContent className="px-6 pb-6 pt-4">{children}</CardContent>
     </Card>
   );
 }
@@ -340,7 +336,7 @@ export function DashboardPage() {
     >
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.85fr)]">
         <Card className="border border-white/70 bg-white/95 shadow-panel">
-          <CardBody className="gap-6 p-6 md:p-8">
+          <CardContent className="gap-6 p-6 md:p-8">
             <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
               <div>
                 <p className="text-[11px] uppercase tracking-[0.26em] text-slate-400">Overview</p>
@@ -395,11 +391,11 @@ export function DashboardPage() {
               <Tab key="sales" title="Sales" />
               <Tab key="traffic" title="Traffic" />
             </Tabs>
-          </CardBody>
+          </CardContent>
         </Card>
 
         <Card className="border border-white/70 bg-white/95 shadow-panel">
-          <CardBody className="grid h-full gap-4 p-6">
+          <CardContent className="grid h-full gap-4 p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold text-slate-900">Operational Notes</p>
@@ -422,18 +418,18 @@ export function DashboardPage() {
                 </div>
               ))}
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       </section>
 
       {state.error ? (
         <Card className="border border-danger-200 bg-danger-50 shadow-none">
-          <CardBody className="gap-4 p-6">
+          <CardContent className="gap-4 p-6">
             <p className="text-sm text-danger-700">{state.error}</p>
             <Button color="danger" variant="light" onPress={() => void loadDashboard()}>
               Retry dashboard
             </Button>
-          </CardBody>
+          </CardContent>
         </Card>
       ) : null}
 
@@ -587,7 +583,7 @@ export function DashboardPage() {
               </ResponsiveContainer>
             </div>
 
-            <Divider />
+            <Separator />
 
             <div className="grid gap-3">
               {todayServers.slice(0, 3).map((server, index) => (
@@ -618,9 +614,13 @@ export function DashboardPage() {
       </section>
 
       <Modal isOpen={detailOpen} onOpenChange={isOpen => !isOpen && setDetailOpen(false)} size="5xl" scrollBehavior="inside">
-        <ModalContent>
-          <ModalHeader>Traffic records for {detailUser?.email || `User #${detailUser?.user_id || ""}`}</ModalHeader>
-          <ModalBody className="gap-4">
+        <Modal.Backdrop>
+          <Modal.Container>
+            <Modal.Dialog>
+          <Modal.Header>
+              <Modal.Heading>Traffic records for {detailUser?.email || `User #${detailUser?.user_id || ""}`}</Modal.Heading>
+            </Modal.Header>
+          <Modal.Body className="gap-4">
             {detailLoading ? (
               <div className="flex min-h-[240px] items-center justify-center">
                 <Spinner color="warning" label="Loading traffic records" />
@@ -650,13 +650,15 @@ export function DashboardPage() {
                 </div>
               </>
             )}
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Button variant="light" onPress={() => setDetailOpen(false)}>
               Close
             </Button>
-          </ModalFooter>
-        </ModalContent>
+          </Modal.Footer>
+        </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
     </PageFrame>
   );

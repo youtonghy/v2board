@@ -3,18 +3,14 @@ import {
   AccordionItem,
   Button,
   Card,
-  CardBody,
+  CardContent,
   CardHeader,
   Chip,
   Input,
   Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  Pagination,
+          Pagination,
   Select,
-  SelectItem,
+  ListBoxItem,
   Spinner,
   Table,
   TableBody,
@@ -22,7 +18,7 @@ import {
   TableColumn,
   TableHeader,
   TableRow,
-  Textarea
+  TextArea
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
@@ -187,11 +183,11 @@ export function InviteLinkPage() {
       <div className={adminStatsGridClassName}>
         {stats.map(item => (
           <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
-            <CardBody className={adminStatCardBodyClassName}>
+            <CardContent className={adminStatCardBodyClassName}>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
               <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
               {item.hint ? <p className="text-sm text-slate-500">{item.hint}</p> : null}
-            </CardBody>
+            </CardContent>
           </Card>
         ))}
       </div>
@@ -208,7 +204,7 @@ export function InviteLinkPage() {
             Generate invite link
           </Button>
         </CardHeader>
-        <CardBody className={`${adminSectionBodyClassName} gap-5`}>
+        <CardContent className={`${adminSectionBodyClassName} gap-5`}>
           <Accordion
             variant="splitted"
             showDivider={false}
@@ -226,10 +222,10 @@ export function InviteLinkPage() {
               selectedKeys={status ? new Set([status]) : new Set<string>()}
               onSelectionChange={keys => setStatus(String(Array.from(keys)[0] || ""))}
             >
-              <SelectItem key="0">Active</SelectItem>
-              <SelectItem key="1">Used Up</SelectItem>
-              <SelectItem key="2">Expired</SelectItem>
-              <SelectItem key="3">Disabled</SelectItem>
+              <ListBoxItem key="0">Active</ListBoxItem>
+              <ListBoxItem key="1">Used Up</ListBoxItem>
+              <ListBoxItem key="2">Expired</ListBoxItem>
+              <ListBoxItem key="3">Disabled</ListBoxItem>
             </Select>
             <div className="flex items-end gap-2">
               <Button color="primary" onPress={() => { setPage(1); void loadLinks(1); }}>
@@ -317,13 +313,17 @@ export function InviteLinkPage() {
               </div>
             </>
           )}
-        </CardBody>
+        </CardContent>
       </Card>
 
       <Modal isOpen={generateOpen} onOpenChange={isOpen => !isOpen && setGenerateOpen(false)} size="3xl">
-        <ModalContent>
-          <ModalHeader>Generate invite link</ModalHeader>
-          <ModalBody className="grid gap-4 md:grid-cols-2">
+        <Modal.Backdrop>
+          <Modal.Container>
+            <Modal.Dialog>
+          <Modal.Header>
+              <Modal.Heading>Generate invite link</Modal.Heading>
+            </Modal.Header>
+          <Modal.Body className="grid gap-4 md:grid-cols-2">
             <Select
               label="Owner"
               labelPlacement="outside"
@@ -331,23 +331,25 @@ export function InviteLinkPage() {
               onSelectionChange={keys => setGenerateUserId(String(Array.from(keys)[0] || ""))}
             >
               {userOptions.map(user => (
-                <SelectItem key={String(user.id)}>{user.email}</SelectItem>
+                <ListBoxItem key={String(user.id)}>{user.email}</ListBoxItem>
               ))}
             </Select>
             <Input label="Invitee Name" labelPlacement="outside" value={inviteeName} onValueChange={setInviteeName} />
             <Input label="Max Use" labelPlacement="outside" type="number" value={maxUse} onValueChange={setMaxUse} />
             <Input label="Expire Hours" labelPlacement="outside" type="number" value={expireHours} onValueChange={setExpireHours} />
-            <Textarea className="md:col-span-2" label="Content" labelPlacement="outside" minRows={4} value={content} onValueChange={setContent} />
-          </ModalBody>
-          <ModalFooter>
+            <TextArea className="md:col-span-2" label="Content" labelPlacement="outside" minRows={4} value={content} onValueChange={setContent} />
+          </Modal.Body>
+          <Modal.Footer>
             <Button variant="light" onPress={() => setGenerateOpen(false)}>
               Cancel
             </Button>
             <Button color="primary" onPress={() => void generateInviteLink()} isLoading={submitting}>
               Generate
             </Button>
-          </ModalFooter>
-        </ModalContent>
+          </Modal.Footer>
+        </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
     </PageFrame>
   );

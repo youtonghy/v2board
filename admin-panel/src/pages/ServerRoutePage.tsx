@@ -1,16 +1,12 @@
 import {
   Button,
   Card,
-  CardBody,
+  CardContent,
   CardHeader,
   Input,
   Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  Select,
-  SelectItem,
+          Select,
+  ListBoxItem,
   Spinner,
   Table,
   TableBody,
@@ -18,7 +14,7 @@ import {
   TableColumn,
   TableHeader,
   TableRow,
-  Textarea
+  TextArea
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
@@ -152,11 +148,11 @@ export function ServerRoutePage() {
       <div className={adminStatsGridClassName}>
         {stats.map(item => (
           <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
-            <CardBody className={adminStatCardBodyClassName}>
+            <CardContent className={adminStatCardBodyClassName}>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
               <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
               {item.hint ? <p className="text-sm text-slate-500">{item.hint}</p> : null}
-            </CardBody>
+            </CardContent>
           </Card>
         ))}
       </div>
@@ -180,7 +176,7 @@ export function ServerRoutePage() {
             Add route
           </Button>
         </CardHeader>
-        <CardBody className={adminSectionBodyClassName}>
+        <CardContent className={adminSectionBodyClassName}>
           {error ? <div className="rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">{error}</div> : null}
           {loading ? (
             <div className="flex min-h-[300px] items-center justify-center">
@@ -221,13 +217,17 @@ export function ServerRoutePage() {
               </TableBody>
             </Table>
           )}
-        </CardBody>
+        </CardContent>
       </Card>
 
       <Modal isOpen={editorOpen} onOpenChange={isOpen => !isOpen && setEditorOpen(false)} size="4xl" scrollBehavior="inside">
-        <ModalContent>
-          <ModalHeader>{selected.id ? "Edit route" : "Create route"}</ModalHeader>
-          <ModalBody className="grid gap-4 md:grid-cols-2">
+        <Modal.Backdrop>
+          <Modal.Container>
+            <Modal.Dialog>
+          <Modal.Header>
+              <Modal.Heading>{selected.id ? "Edit route" : "Create route"}</Modal.Heading>
+            </Modal.Header>
+          <Modal.Body className="grid gap-4 md:grid-cols-2">
             <Input label="Remarks" labelPlacement="outside" value={selected.remarks} onValueChange={value => setSelected(current => ({ ...current, remarks: value }))} />
             <Select
               label="Action"
@@ -236,12 +236,12 @@ export function ServerRoutePage() {
               onSelectionChange={keys => setSelected(current => ({ ...current, action: String(Array.from(keys)[0] || "block") }))}
             >
               {ACTION_OPTIONS.map(action => (
-                <SelectItem key={action}>{action}</SelectItem>
+                <ListBoxItem key={action}>{action}</ListBoxItem>
               ))}
             </Select>
             <Input className="md:col-span-2" label="Action Value" labelPlacement="outside" value={selected.action_value || ""} onValueChange={value => setSelected(current => ({ ...current, action_value: value }))} />
             {selected.action !== "default_out" ? (
-              <Textarea
+              <TextArea
                 className="md:col-span-2"
                 label="Match Rules"
                 labelPlacement="outside"
@@ -255,16 +255,18 @@ export function ServerRoutePage() {
                 Default out rules do not require explicit match values.
               </div>
             )}
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Button variant="light" onPress={() => setEditorOpen(false)}>
               Cancel
             </Button>
             <Button color="primary" onPress={() => void saveRoute()} isLoading={submitting}>
               Save route
             </Button>
-          </ModalFooter>
-        </ModalContent>
+          </Modal.Footer>
+        </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
     </PageFrame>
   );

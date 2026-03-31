@@ -1,11 +1,11 @@
 import {
   Button,
   Card,
-  CardBody,
+  CardContent,
   CardHeader,
   Chip,
   Spinner,
-  Textarea
+  TextArea
 } from "@heroui/react";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -120,11 +120,11 @@ export function TicketDetailPage() {
         <div className={adminStatsGridClassName}>
           {stats.map(item => (
             <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
-              <CardBody className={adminStatCardBodyClassName}>
+              <CardContent className={adminStatCardBodyClassName}>
                 <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
                 <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
                 {item.hint ? <p className="text-sm text-slate-500">{item.hint}</p> : null}
-              </CardBody>
+              </CardContent>
             </Card>
           ))}
         </div>
@@ -132,13 +132,13 @@ export function TicketDetailPage() {
 
       {state.loading ? (
         <Card className="border border-default-200 shadow-none">
-          <CardBody className="flex min-h-[280px] items-center justify-center">
+          <CardContent className="flex min-h-[280px] items-center justify-center">
             <Spinner color="primary" label="Loading ticket detail" />
-          </CardBody>
+          </CardContent>
         </Card>
       ) : state.error ? (
         <Card className="border border-danger-200 bg-danger-50 shadow-none">
-          <CardBody className="p-6 text-sm text-danger-700">{state.error}</CardBody>
+          <CardContent className="p-6 text-sm text-danger-700">{state.error}</CardContent>
         </Card>
       ) : (
         <div className="grid gap-6 xl:grid-cols-[1.7fr_1fr]">
@@ -154,7 +154,7 @@ export function TicketDetailPage() {
                 Close ticket
               </Button>
             </CardHeader>
-            <CardBody className={`${adminSectionBodyClassName} gap-4`}>
+            <CardContent className={`${adminSectionBodyClassName} gap-4`}>
               <div className="space-y-4">
                 {(state.detail?.message || []).map(item => (
                   <div
@@ -170,7 +170,7 @@ export function TicketDetailPage() {
                   </div>
                 ))}
               </div>
-              <Textarea
+              <TextArea
                 label="Reply"
                 labelPlacement="outside"
                 minRows={5}
@@ -183,7 +183,7 @@ export function TicketDetailPage() {
                   Send reply
                 </Button>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
 
           <Card shadow="none" radius="lg" className={adminCardClassName}>
@@ -193,7 +193,7 @@ export function TicketDetailPage() {
                 <p className="mt-1 text-sm leading-6 text-slate-500">Operational reference for the active support thread.</p>
               </div>
             </CardHeader>
-            <CardBody className={`${adminSectionBodyClassName} gap-4 text-sm text-slate-600`}>
+            <CardContent className={`${adminSectionBodyClassName} gap-4 text-sm text-slate-600`}>
               <div>
                 <div className="flex gap-2">
                   <Chip color={state.detail?.status === 1 ? "default" : "success"} variant="flat">
@@ -209,7 +209,7 @@ export function TicketDetailPage() {
               <p>Priority: {state.detail?.level ?? 0}</p>
               <p>Created: {formatDateTime(state.detail?.created_at || null)}</p>
               <p>Updated: {formatDateTime(state.detail?.updated_at || null)}</p>
-            </CardBody>
+            </CardContent>
           </Card>
         </div>
       )}
