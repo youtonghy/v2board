@@ -1,6 +1,5 @@
 import {
   Accordion,
-  AccordionItem,
   Button,
   Card,
   CardContent,
@@ -575,8 +574,19 @@ export function UserPage() {
             itemClasses={adminFilterAccordionItemClasses}
             className={adminFilterAccordionClassName}
           >
-            <AccordionItem key="filters" aria-label="Filters" title="Filters" subtitle="Refine the current dataset quickly.">
-              <div className="grid gap-3 md:grid-cols-4">
+            <Accordion.Item id="filters">
+              <Accordion.Heading>
+                <Accordion.Trigger className="flex items-start justify-between gap-4">
+                  <div>
+                    <p>Filters</p>
+                    <p className="mt-1 text-xs text-slate-400">Refine the current dataset quickly.</p>
+                  </div>
+                  <Accordion.Indicator />
+                </Accordion.Trigger>
+              </Accordion.Heading>
+              <Accordion.Panel>
+                <Accordion.Body>
+                  <div className="grid gap-3 md:grid-cols-4">
             <Input
               label="Email"
               labelPlacement="outside"
@@ -651,8 +661,10 @@ export function UserPage() {
                 Reset
               </Button>
             </div>
-              </div>
-            </AccordionItem>
+                  </div>
+                </Accordion.Body>
+              </Accordion.Panel>
+            </Accordion.Item>
           </Accordion>
 
           {error ? (

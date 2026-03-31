@@ -1,4 +1,4 @@
-import { Accordion, AccordionItem, Input, ListBox, ListBoxItem, Select, Switch, TextArea } from "@heroui/react";
+import { Accordion, Input, ListBox, ListBoxItem, Select, Switch, TextArea } from "@heroui/react";
 
 function humanizeKey(key: string): string {
   return key
@@ -114,14 +114,22 @@ export function ObjectRecordEditor({
         }}
         className="rounded-[1.7rem] border border-slate-100 bg-white/95"
       >
-        <AccordionItem
-          key="fields"
-          aria-label="Advanced fields"
-          title="Advanced fields"
-          subtitle="Structured values continue to map to the existing backend payload."
-        >
-          <div className="grid gap-4 md:grid-cols-2">
-            {fieldEntries.map(([key, currentValue]) => {
+        <Accordion.Item id="fields">
+          <Accordion.Heading>
+            <Accordion.Trigger className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Advanced fields</p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Structured values continue to map to the existing backend payload.
+                </p>
+              </div>
+              <Accordion.Indicator />
+            </Accordion.Trigger>
+          </Accordion.Heading>
+          <Accordion.Panel>
+            <Accordion.Body>
+              <div className="grid gap-4 md:grid-cols-2">
+                {fieldEntries.map(([key, currentValue]) => {
         const label = humanizeKey(key);
         const editorValue = stringifyValue(currentValue);
         const useTextarea =
@@ -201,9 +209,11 @@ export function ObjectRecordEditor({
             description={key}
           />
         );
-            })}
-          </div>
-        </AccordionItem>
+                })}
+              </div>
+            </Accordion.Body>
+          </Accordion.Panel>
+        </Accordion.Item>
       </Accordion>
     </div>
   );

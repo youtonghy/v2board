@@ -112,6 +112,14 @@ export function GiftCardPage() {
 
   const selectedType = useMemo(() => (selected?.type ? String(selected.type) : "1"), [selected]);
   const selectedPlan = useMemo(() => (selected?.plan_id ? String(selected.plan_id) : null), [selected]);
+  const typeOptions = useMemo(
+    () => GIFTCARD_TYPE_OPTIONS.map(option => ({ id: option.key, label: option.label })),
+    []
+  );
+  const planOptions = useMemo(
+    () => plans.map(plan => ({ id: String(plan.id), label: plan.name })),
+    [plans]
+  );
   const stats = useMemo(() => {
     const exchangeCards = records.filter(record => Number(record.type) === 5).length;
     const resetCards = records.filter(record => Number(record.type) === 4).length;
@@ -237,7 +245,7 @@ export function GiftCardPage() {
             <Select
               label="Type"
               labelPlacement="outside"
-              items={GIFTCARD_TYPE_OPTIONS.map(option => ({ id: option.key, label: option.label }))}
+              items={typeOptions}
               selectedKey={selectedType}
               onSelectionChange={key => {
                 const nextType = Number(key || 1);
@@ -249,7 +257,7 @@ export function GiftCardPage() {
                 <Select.Indicator />
               </Select.Trigger>
               <Select.Popover>
-                <ListBox items={GIFT_CARD_TYPE_OPTIONS}>
+                <ListBox items={typeOptions}>
                   {item => (
                     <ListBoxItem id={item.id} textValue={item.label}>
                       {item.label}
@@ -270,7 +278,7 @@ export function GiftCardPage() {
               <Select
                 label="Plan"
                 labelPlacement="outside"
-                items={plans.map(plan => ({ id: String(plan.id), label: plan.name }))}
+                items={planOptions}
                 selectedKey={selectedPlan}
                 onSelectionChange={key => {
                   setSelected(current => (current ? { ...current, plan_id: String(key || "") } : current));

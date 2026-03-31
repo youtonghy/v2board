@@ -8,7 +8,6 @@ import {
 } from "@gravity-ui/icons";
 import {
   Accordion,
-  AccordionItem,
   Avatar,
   Button,
   Drawer,
@@ -80,35 +79,45 @@ function NavigationList({
       className="px-1"
     >
       {navGroups.map(group => (
-        <AccordionItem key={group.label} aria-label={group.label} title={group.label}>
-          <div className="space-y-1.5">
-            {group.items.map(item => {
-              const Icon = item.icon;
-              const selected = item.path === currentPath;
-              return (
-                <Button
-                  key={item.path}
-                  variant="light"
-                  onPress={() => onNavigate(item.path)}
-                  className={[
-                    "mb-1.5 h-auto w-full justify-start rounded-[1.25rem] px-2 py-1 text-left",
-                    selected
-                      ? "bg-white shadow-[0_16px_40px_rgba(15,23,32,0.08)]"
-                      : "hover:bg-white/70"
-                  ].join(" ")}
-                >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/80 text-slate-600">
-                    <Icon width={18} height={18} aria-hidden="true" />
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block text-[14px] font-semibold text-slate-900">{item.label}</span>
-                    <span className="block text-xs text-slate-400">{item.description}</span>
-                  </span>
-                </Button>
-              );
-            })}
-          </div>
-        </AccordionItem>
+        <Accordion.Item key={group.label} id={group.label}>
+          <Accordion.Heading>
+            <Accordion.Trigger className="flex items-center justify-between">
+              <span>{group.label}</span>
+              <Accordion.Indicator />
+            </Accordion.Trigger>
+          </Accordion.Heading>
+          <Accordion.Panel>
+            <Accordion.Body className="px-0 pb-0 pt-1">
+              <div className="space-y-1.5">
+                {group.items.map(item => {
+                  const Icon = item.icon;
+                  const selected = item.path === currentPath;
+                  return (
+                    <Button
+                      key={item.path}
+                      variant="light"
+                      onPress={() => onNavigate(item.path)}
+                      className={[
+                        "mb-1.5 h-auto w-full justify-start rounded-[1.25rem] px-2 py-1 text-left",
+                        selected
+                          ? "bg-white shadow-[0_16px_40px_rgba(15,23,32,0.08)]"
+                          : "hover:bg-white/70"
+                      ].join(" ")}
+                    >
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/80 text-slate-600">
+                        <Icon width={18} height={18} aria-hidden="true" />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-[14px] font-semibold text-slate-900">{item.label}</span>
+                        <span className="block text-xs text-slate-400">{item.description}</span>
+                      </span>
+                    </Button>
+                  );
+                })}
+              </div>
+            </Accordion.Body>
+          </Accordion.Panel>
+        </Accordion.Item>
       ))}
     </Accordion>
   );

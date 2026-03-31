@@ -9,7 +9,6 @@ import {
   Modal,
   Spinner,
   Switch,
-  Tab,
   Tabs,
   Table,
   TableBody,

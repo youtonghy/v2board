@@ -1,6 +1,5 @@
 import {
   Accordion,
-  AccordionItem,
   Button,
   Card,
   CardContent,
@@ -241,8 +240,19 @@ export function OrderPage() {
             itemClasses={adminFilterAccordionItemClasses}
             className={adminFilterAccordionClassName}
           >
-            <AccordionItem key="filters" aria-label="Filters" title="Filters" subtitle="Refine the current dataset quickly.">
-              <div className="grid gap-3 md:grid-cols-4">
+            <Accordion.Item id="filters">
+              <Accordion.Heading>
+                <Accordion.Trigger className="flex items-start justify-between gap-4">
+                  <div>
+                    <p>Filters</p>
+                    <p className="mt-1 text-xs text-slate-400">Refine the current dataset quickly.</p>
+                  </div>
+                  <Accordion.Indicator />
+                </Accordion.Trigger>
+              </Accordion.Heading>
+              <Accordion.Panel>
+                <Accordion.Body>
+                  <div className="grid gap-3 md:grid-cols-4">
             <Input label="User Email" labelPlacement="outside" value={email} onValueChange={setEmail} />
             <Input label="Trade No" labelPlacement="outside" value={tradeNo} onValueChange={setTradeNo} />
             <Select
@@ -290,8 +300,10 @@ export function OrderPage() {
                 Reset
               </Button>
             </div>
-              </div>
-            </AccordionItem>
+                  </div>
+                </Accordion.Body>
+              </Accordion.Panel>
+            </Accordion.Item>
           </Accordion>
 
           {error ? <div className="rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">{error}</div> : null}

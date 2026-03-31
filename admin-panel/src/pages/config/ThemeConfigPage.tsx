@@ -1,4 +1,4 @@
-import { Button, Card, CardContent, CardHeader, Separator, Spinner, Tab, Tabs } from "@heroui/react";
+import { Button, Card, CardContent, CardHeader, Separator, Spinner, Tabs } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
 import { adminRequest, unwrapEnvelope } from "../../lib/api";
 import { PageFrame } from "../../components/PageFrame";
