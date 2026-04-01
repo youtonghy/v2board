@@ -201,14 +201,33 @@ export function InviteLinkPage() {
         <CardContent className={`${adminSectionBodyClassName} gap-5`}>
           <AdminFilterAccordion>
             <div className="grid gap-3 md:grid-cols-4">
-            <Input aria-label="User Email" value={email} onChange={event => setEmail(event.target.value)} />
-            <Input aria-label="Keyword" value={keyword} onChange={event => setKeyword(event.target.value)} />
+              <ModalField label="User Email">
+                <Input
+                  aria-label="User Email"
+                  className="w-full"
+                  placeholder="Enter user email"
+                  variant="secondary"
+                  value={email}
+                  onChange={event => setEmail(event.target.value)}
+                />
+              </ModalField>
+              <ModalField label="Keyword">
+                <Input
+                  aria-label="Keyword"
+                  className="w-full"
+                  placeholder="Enter keyword"
+                  variant="secondary"
+                  value={keyword}
+                  onChange={event => setKeyword(event.target.value)}
+                />
+              </ModalField>
             <div>
               <div className="mb-2 space-y-1">
                 <p className="text-sm font-medium text-slate-700">Status</p>
               </div>
               <AdminSelectField
                 ariaLabel="Status"
+                placeholder="Select a status"
                 options={[
                   { id: "0", label: "Active" },
                   { id: "1", label: "Used Up" },

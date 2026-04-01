@@ -7,17 +7,19 @@ export interface AdminSelectOption {
 
 export function AdminSelectField({
   ariaLabel,
+  placeholder = "Select one",
   options,
   selectedKey,
   onSelectionChange,
 }: {
   ariaLabel: string;
+  placeholder?: string;
   options: AdminSelectOption[];
   selectedKey: string | null;
   onSelectionChange: (key: string | null) => void;
 }) {
   return (
-    <Select aria-label={ariaLabel} selectedKey={selectedKey} onSelectionChange={key => onSelectionChange(key ? String(key) : null)}>
+    <Select aria-label={ariaLabel} placeholder={placeholder} selectedKey={selectedKey} onSelectionChange={key => onSelectionChange(key ? String(key) : null)}>
       <Select.Trigger>
         <Select.Value />
         <Select.Indicator />
