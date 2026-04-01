@@ -550,14 +550,6 @@ export function DashboardPage() {
                   }}
                 >
                   <div className="flex min-w-0 items-center gap-3">
-                    <Avatar
-                      color={USER_COLORS[index % USER_COLORS.length]}
-                      variant="solid"
-                      size="sm"
-                      className="text-white font-bold"
-                    >
-                      {index + 1}
-                    </Avatar>
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-slate-900">{user.email || `User #${user.user_id}`}</p>
                       <p className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-400">Rank {index + 1}</p>
