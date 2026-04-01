@@ -4,20 +4,18 @@ import {
   CardContent,
   CardHeader,
   Input,
-  ListBox,
-  ListBoxItem,
   Modal,
-  Select,
   Spinner,
+  TextArea,
   Table,
   TableBody,
   TableCell,
   TableColumn,
   TableHeader,
   TableRow,
-  TextArea
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
+import { AdminSelectField } from "../components/AdminSelectField";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { ModalField } from "../components/ModalField";
 import { PageFrame } from "../components/PageFrame";
@@ -146,7 +144,7 @@ export function ServerRoutePage() {
     >
       <div className={adminStatsGridClassName}>
         {stats.map(item => (
-          <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
+          <Card key={item.label} className={adminCardClassName}>
             <CardContent className={adminStatCardBodyClassName}>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
               <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
@@ -156,7 +154,7 @@ export function ServerRoutePage() {
         ))}
       </div>
 
-      <Card shadow="none" radius="lg" className={adminCardClassName}>
+      <Card className={adminCardClassName}>
         <CardHeader className={adminSectionHeaderClassName}>
           <div>
             <p className="text-[1.1rem] font-semibold tracking-[-0.03em] text-slate-950">Routing Rules</p>
@@ -165,8 +163,8 @@ export function ServerRoutePage() {
             </p>
           </div>
           <Button
-            color="primary"
-            radius="full"
+            variant="primary"
+           
             onPress={() => {
               setSelected(defaultRouteRecord());
               setEditorOpen(true);
@@ -179,19 +177,19 @@ export function ServerRoutePage() {
           {error ? <div className="rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">{error}</div> : null}
           {loading ? (
             <div className="flex min-h-[300px] items-center justify-center">
-              <Spinner color="primary" label="Loading routes" />
+              <Spinner />
             </div>
           ) : (
-            <Table aria-label="Server Routes" classNames={adminTableClassNames}>
+            <Table aria-label="Server Routes" className={adminTableClassNames.wrapper}>
               <Table.Content>
                 <TableHeader>
                   <TableColumn>Remarks</TableColumn>
                   <TableColumn>Action</TableColumn>
                   <TableColumn>Action Value</TableColumn>
                   <TableColumn>Match</TableColumn>
-                  <TableColumn align="end">Actions</TableColumn>
+                  <TableColumn>Actions</TableColumn>
                 </TableHeader>
-                <TableBody items={records} emptyContent="No routes found">
+                <TableBody items={records}>
                   {item => (
                     <TableRow key={item.id}>
                       <TableCell>{item.remarks}</TableCell>
@@ -204,10 +202,10 @@ export function ServerRoutePage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button size="sm" color="primary" variant="light" onPress={() => { setSelected(item); setEditorOpen(true); }}>
+                          <Button size="sm" variant="ghost" onPress={() => { setSelected(item); setEditorOpen(true); }}>
                             Edit
                           </Button>
-                          <Button size="sm" color="danger" variant="light" onPress={() => void deleteRoute(item.id)} isLoading={submitting}>
+                          <Button size="sm" variant="ghost" onPress={() => void deleteRoute(item.id)} isDisabled={submitting}>
                             Delete
                           </Button>
                         </div>
@@ -221,7 +219,7 @@ export function ServerRoutePage() {
         </CardContent>
       </Card>
 
-      <Modal isOpen={editorOpen} onOpenChange={isOpen => !isOpen && setEditorOpen(false)} size="4xl" scrollBehavior="inside">
+      <Modal isOpen={editorOpen} onOpenChange={isOpen => !isOpen && setEditorOpen(false)}>
         <Modal.Backdrop>
           <Modal.Container>
             <Modal.Dialog>
@@ -229,17 +227,19 @@ export function ServerRoutePage() {
                 <Modal.Heading>{selected.id ? "Edit route" : "Create route"}</Modal.Heading>
               </Modal.Header>
               <Modal.Body className="grid gap-4 md:grid-cols-2">
-            <ModalField label="Remarks"><Input aria-label="Remarks" value={selected.remarks} onValueChange={value => setSelected(current => ({ ...current, remarks: value }))} /></ModalField>
+            <ModalField label="Remarks"><Input aria-label="Remarks" value={selected.remarks} onChange={event => setSelected(current => ({ ...current, remarks: event.target.value }))} /></ModalField>
             <ModalField label="Action">
-              <Select aria-label="Action" items={ACTION_OPTIONS.map(action => ({ id: action, label: action }))} selectedKey={selectedAction} onSelectionChange={key => setSelected(current => ({ ...current, action: String(key || "block") }))}>
-                <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
-                <Select.Popover><ListBox items={ACTION_OPTIONS.map(action => ({ id: action, label: action }))}>{item => <ListBoxItem id={item.id} textValue={item.label}>{item.label}</ListBoxItem>}</ListBox></Select.Popover>
-              </Select>
+              <AdminSelectField
+                ariaLabel="Action"
+                options={ACTION_OPTIONS.map(action => ({ id: action, label: action }))}
+                selectedKey={selectedAction}
+                onSelectionChange={key => setSelected(current => ({ ...current, action: String(key || "block") }))}
+              />
             </ModalField>
-            <ModalField label="Action Value" className="md:col-span-2"><Input aria-label="Action Value" value={selected.action_value || ""} onValueChange={value => setSelected(current => ({ ...current, action_value: value }))} /></ModalField>
+            <ModalField label="Action Value" className="md:col-span-2"><Input aria-label="Action Value" value={selected.action_value || ""} onChange={event => setSelected(current => ({ ...current, action_value: event.target.value }))} /></ModalField>
             {selected.action !== "default_out" ? (
               <ModalField label="Match Rules" description="One match item per line." className="md:col-span-2">
-                <TextArea aria-label="Match Rules" minRows={10} value={Array.isArray(selected.match) ? selected.match.join("\n") : selected.match || ""} onValueChange={value => setSelected(current => ({ ...current, match: value }))} />
+                <TextArea aria-label="Match Rules" rows={10} value={Array.isArray(selected.match) ? selected.match.join("\n") : selected.match || ""} onChange={event => setSelected(current => ({ ...current, match: event.target.value }))} />
               </ModalField>
             ) : (
               <div className="md:col-span-2 rounded-2xl border border-default-200 bg-default-50 p-4 text-sm text-slate-600">
@@ -248,8 +248,8 @@ export function ServerRoutePage() {
             )}
               </Modal.Body>
               <Modal.Footer>
-                <Button variant="light" onPress={() => setEditorOpen(false)}>Cancel</Button>
-                <Button color="primary" onPress={() => void saveRoute()} isLoading={submitting}>Save route</Button>
+                <Button variant="ghost" onPress={() => setEditorOpen(false)}>Cancel</Button>
+                <Button variant="primary" onPress={() => void saveRoute()} isDisabled={submitting}>Save route</Button>
               </Modal.Footer>
         </Modal.Dialog>
           </Modal.Container>

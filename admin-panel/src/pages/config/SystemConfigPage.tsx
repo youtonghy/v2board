@@ -1,4 +1,13 @@
-import { Button, Card, CardContent, CardHeader, Input, Separator, Spinner, Tabs } from "@heroui/react";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Input,
+  Separator,
+  Spinner,
+  Tabs,
+} from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
 import { adminRequest } from "../../lib/api";
 import { PageFrame } from "../../components/PageFrame";
@@ -157,7 +166,7 @@ export function SystemConfigPage() {
     >
       <div className={adminStatsGridClassName}>
         {stats.map(item => (
-          <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
+          <Card key={item.label} className={adminCardClassName}>
             <CardContent className={adminStatCardBodyClassName}>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
               <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
@@ -170,12 +179,12 @@ export function SystemConfigPage() {
       {state.loading ? (
         <Card className="border border-default-200 shadow-none">
           <CardContent className="flex min-h-[320px] items-center justify-center">
-            <Spinner color="primary" label="Loading system config" />
+            <Spinner />
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
-          <Card shadow="none" radius="lg" className={adminCardClassName}>
+          <Card className={adminCardClassName}>
             <CardHeader className={adminSectionHeaderClassName}>
               <div>
                 <p className="text-[1.1rem] font-semibold tracking-[-0.03em] text-slate-950">Config Sections</p>
@@ -183,7 +192,7 @@ export function SystemConfigPage() {
                   Editable scalar fields stay inline; arrays and nested objects fall back to JSON-safe textareas.
                 </p>
               </div>
-              <Button color="primary" radius="full" onPress={() => void saveCurrentSection()} isLoading={state.saving}>
+              <Button variant="primary" onPress={() => void saveCurrentSection()} isDisabled={state.saving}>
                 Save section
               </Button>
             </CardHeader>
@@ -192,8 +201,7 @@ export function SystemConfigPage() {
                 <Tabs
                   selectedKey={state.activeKey}
                   onSelectionChange={key => setState(current => ({ ...current, activeKey: String(key) }))}
-                  variant="underlined"
-                  color="primary"
+                  variant="primary"
                 >
                   <Tabs.List className="overflow-x-auto">
                     {sectionKeys.map(key => (
@@ -235,7 +243,7 @@ export function SystemConfigPage() {
             </CardContent>
           </Card>
 
-          <Card shadow="none" radius="lg" className={`${adminCardClassName} xl:col-span-2`}>
+          <Card className={`${adminCardClassName} xl:col-span-2`}>
             <CardHeader className={adminSectionHeaderClassName}>
               <div>
                 <p className="text-[1.1rem] font-semibold tracking-[-0.03em] text-slate-950">Validation Actions</p>
@@ -248,7 +256,7 @@ export function SystemConfigPage() {
               <div className="rounded-2xl border border-default-200 bg-default-50 p-4">
                 <p className="text-sm font-semibold text-slate-900">Test Mail Delivery</p>
                 <p className="mt-1 text-sm text-slate-500">Send a test message to the current admin account using the active SMTP settings.</p>
-                <Button className="mt-4" color="primary" onPress={() => void testSendMail()} isLoading={state.testingMail}>
+                <Button className="mt-4" variant="primary" onPress={() => void testSendMail()} isDisabled={state.testingMail}>
                   Send test mail
                 </Button>
                 {state.mailResult ? (
@@ -264,21 +272,21 @@ export function SystemConfigPage() {
                   <Input
                     aria-label="Telegram Bot Token"
                     value={String(state.sections.telegram?.telegram_bot_token || "")}
-                    onValueChange={value =>
+                    onChange={event =>
                       setState(current => ({
                         ...current,
                         sections: {
                           ...current.sections,
                           telegram: {
                             ...(current.sections.telegram || {}),
-                            telegram_bot_token: value
+                            telegram_bot_token: event.target.value
                           }
                         }
                       }))
                     }
                   />
                 </div>
-                <Button className="mt-4" color="primary" variant="light" onPress={() => void setTelegramWebhook()} isLoading={state.settingWebhook}>
+                <Button className="mt-4" variant="ghost" onPress={() => void setTelegramWebhook()} isDisabled={state.settingWebhook}>
                   Set webhook
                 </Button>
                 {state.webhookResult ? (

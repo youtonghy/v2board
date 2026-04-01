@@ -5,20 +5,18 @@ import {
   CardHeader,
   Chip,
   Input,
-  ListBox,
-  ListBoxItem,
   Modal,
-  Pagination,
-  Select,
   Spinner,
   Table,
   TableBody,
   TableCell,
   TableColumn,
   TableHeader,
-  TableRow
+  TableRow,
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
+import { AdminPagination } from "../components/AdminPagination";
+import { AdminSelectField } from "../components/AdminSelectField";
 import { adminRequest } from "../lib/api";
 import { GIFTCARD_TYPE_OPTIONS, fromDatetimeInput, toDatetimeInput } from "../lib/admin-constants";
 import { ModalField } from "../components/ModalField";
@@ -90,7 +88,7 @@ export function GiftCardPage() {
     try {
       await adminRequest("giftcard/generate", {
         method: "POST",
-        body: selected
+        body: selected as Record<string, unknown>
       });
       setOpen(false);
       await loadGiftCards(page);
@@ -143,7 +141,7 @@ export function GiftCardPage() {
     >
       <div className={adminStatsGridClassName}>
         {stats.map(item => (
-          <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
+          <Card key={item.label} className={adminCardClassName}>
             <CardContent className={adminStatCardBodyClassName}>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
               <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
@@ -153,7 +151,7 @@ export function GiftCardPage() {
         ))}
       </div>
 
-      <Card shadow="none" radius="lg" className={adminCardClassName}>
+      <Card className={adminCardClassName}>
         <CardHeader className={adminSectionHeaderClassName}>
           <div>
             <p className="text-[1.1rem] font-semibold tracking-[-0.03em] text-slate-950">Gift Card Inventory</p>
@@ -162,8 +160,8 @@ export function GiftCardPage() {
             </p>
           </div>
           <Button
-            color="primary"
-            radius="full"
+            variant="primary"
+           
             onPress={() => {
               setSelected(normalizeGiftCard());
               setOpen(true);
@@ -175,11 +173,11 @@ export function GiftCardPage() {
         <CardContent className={`${adminSectionBodyClassName} gap-4`}>
           {loading ? (
             <div className="flex min-h-[280px] items-center justify-center">
-              <Spinner color="primary" label="Loading gift cards" />
+              <Spinner />
             </div>
           ) : (
             <>
-              <Table aria-label="Gift cards" classNames={adminTableClassNames}>
+              <Table aria-label="Gift cards" className={adminTableClassNames.wrapper}>
                 <Table.Content>
                   <TableHeader>
                     <TableColumn>ID</TableColumn>
@@ -187,22 +185,21 @@ export function GiftCardPage() {
                     <TableColumn>Type</TableColumn>
                     <TableColumn>Value</TableColumn>
                     <TableColumn>Code</TableColumn>
-                    <TableColumn align="end">Actions</TableColumn>
+                    <TableColumn>Actions</TableColumn>
                   </TableHeader>
-                  <TableBody items={records} emptyContent="No gift cards found">
+                  <TableBody items={records}>
                     {item => (
                       <TableRow key={String(item.id || Math.random())}>
                         <TableCell>{item.id ?? "—"}</TableCell>
                         <TableCell>{item.name || "Untitled"}</TableCell>
                         <TableCell>{GIFTCARD_TYPE_OPTIONS.find(option => option.value === Number(item.type))?.label || "Unknown"}</TableCell>
                         <TableCell>{item.value ?? "—"}</TableCell>
-                        <TableCell>{item.code ? <Chip size="sm" variant="flat" className="bg-sky-50 text-sky-700">{item.code}</Chip> : "Auto"}</TableCell>
+                        <TableCell>{item.code ? <Chip size="sm" variant="soft" className="bg-sky-50 text-sky-700">{item.code}</Chip> : "Auto"}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button
                               size="sm"
-                              color="primary"
-                              variant="light"
+                              variant="ghost"
                               onPress={() => {
                                 setSelected(normalizeGiftCard(item));
                                 setOpen(true);
@@ -210,7 +207,7 @@ export function GiftCardPage() {
                             >
                               Edit
                             </Button>
-                            <Button size="sm" color="danger" variant="light" onPress={() => void dropGiftCard(item)}>
+                            <Button size="sm" variant="ghost" onPress={() => void dropGiftCard(item)}>
                               Delete
                             </Button>
                           </div>
@@ -221,11 +218,10 @@ export function GiftCardPage() {
                 </Table.Content>
               </Table>
               <div className="flex justify-end">
-                <Pagination
+                <AdminPagination
                   page={page}
                   total={Math.max(1, Math.ceil(total / pageSize))}
                   onChange={nextPage => void loadGiftCards(nextPage)}
-                  showControls
                 />
               </div>
             </>
@@ -233,7 +229,7 @@ export function GiftCardPage() {
         </CardContent>
       </Card>
 
-      <Modal isOpen={open} onOpenChange={isOpen => !isOpen && setOpen(false)} size="5xl" scrollBehavior="inside">
+      <Modal isOpen={open} onOpenChange={isOpen => !isOpen && setOpen(false)}>
         <Modal.Backdrop>
           <Modal.Container>
             <Modal.Dialog>
@@ -241,36 +237,40 @@ export function GiftCardPage() {
                 <Modal.Heading>{selected?.id ? "Edit gift card" : "Create gift card"}</Modal.Heading>
               </Modal.Header>
               <Modal.Body className="grid gap-5 md:grid-cols-2">
-                <ModalField label="Name"><Input aria-label="Name" value={selected?.name || ""} onValueChange={value => setSelected(current => (current ? { ...current, name: value } : current))} /></ModalField>
-                <ModalField label="Code"><Input aria-label="Code" value={selected?.code || ""} onValueChange={value => setSelected(current => (current ? { ...current, code: value, generate_count: undefined } : current))} /></ModalField>
+                <ModalField label="Name"><Input aria-label="Name" value={selected?.name || ""} onChange={event => setSelected(current => (current ? { ...current, name: event.target.value } : current))} /></ModalField>
+                <ModalField label="Code"><Input aria-label="Code" value={selected?.code || ""} onChange={event => setSelected(current => (current ? { ...current, code: event.target.value, generate_count: undefined } : current))} /></ModalField>
                 <ModalField label="Type">
-                  <Select aria-label="Type" items={typeOptions} selectedKey={selectedType} onSelectionChange={key => {
-                    const nextType = Number(key || 1);
-                    setSelected(current => (current ? { ...current, type: nextType, value: nextType === 4 ? 0 : current.value } : current));
-                  }}>
-                    <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
-                    <Select.Popover><ListBox items={typeOptions}>{item => <ListBoxItem id={item.id} textValue={item.label}>{item.label}</ListBoxItem>}</ListBox></Select.Popover>
-                  </Select>
+                  <AdminSelectField
+                    ariaLabel="Type"
+                    options={typeOptions}
+                    selectedKey={selectedType}
+                    onSelectionChange={key => {
+                      const nextType = Number(key || 1);
+                      setSelected(current => (current ? { ...current, type: nextType, value: nextType === 4 ? 0 : current.value } : current));
+                    }}
+                  />
                 </ModalField>
-                <ModalField label="Value"><Input aria-label="Value" type="number" isDisabled={selected?.type === 4} value={String(selected?.type === 4 ? 0 : selected?.value ?? "")} onValueChange={value => setSelected(current => (current ? { ...current, value } : current))} /></ModalField>
+                <ModalField label="Value"><Input aria-label="Value" type="number" disabled={selected?.type === 4} value={String(selected?.type === 4 ? 0 : selected?.value ?? "")} onChange={event => setSelected(current => (current ? { ...current, value: event.target.value } : current))} /></ModalField>
                 {selected?.type === 5 ? (
                   <ModalField label="Plan">
-                    <Select aria-label="Plan" items={planOptions} selectedKey={selectedPlan} onSelectionChange={key => { setSelected(current => (current ? { ...current, plan_id: String(key || "") } : current)); }}>
-                      <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
-                      <Select.Popover><ListBox items={planOptions}>{item => <ListBoxItem id={item.id} textValue={item.label}>{item.label}</ListBoxItem>}</ListBox></Select.Popover>
-                    </Select>
+                    <AdminSelectField
+                      ariaLabel="Plan"
+                      options={planOptions}
+                      selectedKey={selectedPlan}
+                      onSelectionChange={key => { setSelected(current => (current ? { ...current, plan_id: String(key || "") } : current)); }}
+                    />
                   </ModalField>
                 ) : null}
-                <ModalField label="Start Time"><Input aria-label="Start Time" type="datetime-local" value={toDatetimeInput(selected?.started_at)} onValueChange={value => setSelected(current => (current ? { ...current, started_at: fromDatetimeInput(value) } : current))} /></ModalField>
-                <ModalField label="End Time"><Input aria-label="End Time" type="datetime-local" value={toDatetimeInput(selected?.ended_at)} onValueChange={value => setSelected(current => (current ? { ...current, ended_at: fromDatetimeInput(value) } : current))} /></ModalField>
-                <ModalField label="Max Uses"><Input aria-label="Max Uses" type="number" value={String(selected?.limit_use ?? "")} onValueChange={value => setSelected(current => (current ? { ...current, limit_use: value } : current))} /></ModalField>
+                <ModalField label="Start Time"><Input aria-label="Start Time" type="datetime-local" value={toDatetimeInput(selected?.started_at)} onChange={event => setSelected(current => (current ? { ...current, started_at: fromDatetimeInput(event.target.value) } : current))} /></ModalField>
+                <ModalField label="End Time"><Input aria-label="End Time" type="datetime-local" value={toDatetimeInput(selected?.ended_at)} onChange={event => setSelected(current => (current ? { ...current, ended_at: fromDatetimeInput(event.target.value) } : current))} /></ModalField>
+                <ModalField label="Max Uses"><Input aria-label="Max Uses" type="number" value={String(selected?.limit_use ?? "")} onChange={event => setSelected(current => (current ? { ...current, limit_use: event.target.value } : current))} /></ModalField>
                 {!selected?.id && !selected?.code ? (
-                  <ModalField label="Generate Count"><Input aria-label="Generate Count" type="number" value={String(selected?.generate_count ?? "")} onValueChange={value => setSelected(current => (current ? { ...current, generate_count: value } : current))} /></ModalField>
+                  <ModalField label="Generate Count"><Input aria-label="Generate Count" type="number" value={String(selected?.generate_count ?? "")} onChange={event => setSelected(current => (current ? { ...current, generate_count: event.target.value } : current))} /></ModalField>
                 ) : null}
               </Modal.Body>
               <Modal.Footer>
-                <Button variant="light" onPress={() => setOpen(false)}>Cancel</Button>
-                <Button color="primary" onPress={() => void saveGiftCard()} isLoading={saving}>Save gift card</Button>
+                <Button variant="ghost" onPress={() => setOpen(false)}>Cancel</Button>
+                <Button variant="primary" onPress={() => void saveGiftCard()} isDisabled={saving}>Save gift card</Button>
               </Modal.Footer>
         </Modal.Dialog>
           </Modal.Container>

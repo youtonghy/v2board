@@ -1,27 +1,9 @@
 import { DndContext, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import {
-  Accordion,
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  Chip,
-  Input,
-  ListBox,
-  ListBoxItem,
-  Modal,
-  Select,
-  Spinner,
-  Switch,
-  Table,
-  TableBody,
-  TableCell,
-  TableColumn,
-  TableHeader,
-  TextArea
-} from "@heroui/react";
+import { Button, Card, CardContent, CardHeader, Chip, Input, Modal, Spinner, Switch, Table, TableBody, TableCell, TableColumn, TableHeader, TextArea } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
+import { AdminFilterAccordion } from "../components/AdminFilterAccordion";
+import { AdminSelectField } from "../components/AdminSelectField";
 import {
   SortableTableRow,
   adminTableActionCellClassName,
@@ -34,8 +16,6 @@ import { PageFrame } from "../components/PageFrame";
 import { asArray, formatDateTime } from "../lib/admin-format";
 import {
   adminCardClassName,
-  adminFilterAccordionClassName,
-  adminFilterAccordionItemClasses,
   adminSectionBodyClassName,
   adminSectionHeaderClassName,
   adminStatCardBodyClassName,
@@ -223,7 +203,7 @@ export function KnowledgePage() {
     >
       <div className={adminStatsGridClassName}>
         {stats.map(item => (
-          <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
+          <Card key={item.label} className={adminCardClassName}>
             <CardContent className={adminStatCardBodyClassName}>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
               <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
@@ -233,7 +213,7 @@ export function KnowledgePage() {
         ))}
       </div>
 
-      <Card shadow="none" radius="lg" className={adminCardClassName}>
+      <Card className={adminCardClassName}>
         <CardHeader className={adminSectionHeaderClassName}>
           <div>
             <p className="text-[1.1rem] font-semibold tracking-[-0.03em] text-slate-950">Knowledge Base</p>
@@ -242,78 +222,39 @@ export function KnowledgePage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Select
-              className="min-w-[220px]"
-              label="Category"
-              labelPlacement="outside"
-              items={[
-                { id: "all", label: "All Categories" },
-                ...categories.map(category => ({ id: category, label: category }))
-              ]}
-              selectedKey={activeCategory}
-              onSelectionChange={key => setActiveCategory(String(key || "all"))}
-            >
-              <Select.Trigger>
-                <Select.Value />
-                <Select.Indicator />
-              </Select.Trigger>
-              <Select.Popover>
-                <ListBox items={[
+            <div className="min-w-[220px]">
+              <div className="mb-2 space-y-1">
+                <p className="text-sm font-medium text-slate-700">Category</p>
+              </div>
+              <AdminSelectField
+                ariaLabel="Category"
+                options={[
                   { id: "all", label: "All Categories" },
                   ...categories.map(category => ({ id: category, label: category }))
-                ]}>
-                  {item => (
-                    <ListBoxItem id={item.id} textValue={item.label}>
-                      {item.label}
-                    </ListBoxItem>
-                  )}
-                </ListBox>
-              </Select.Popover>
-            </Select>
-            <Button color="primary" radius="full" onPress={() => void openEditor()}>
+                ]}
+                selectedKey={activeCategory}
+                onSelectionChange={key => setActiveCategory(String(key || "all"))}
+              />
+            </div>
+            <Button variant="primary" onPress={() => void openEditor()}>
               Add article
             </Button>
           </div>
         </CardHeader>
         <CardContent className={`${adminSectionBodyClassName} gap-5`}>
-          <Accordion
-            variant="splitted"
-            showDivider={false}
-            itemClasses={adminFilterAccordionItemClasses}
-            className={adminFilterAccordionClassName}
-          >
-            <Accordion.Item id="filters">
-              <Accordion.Heading>
-                <Accordion.Trigger className="flex items-start justify-between gap-4">
-                  <div>
-                    <p>Filters</p>
-                    <p className="mt-1 text-xs text-slate-400">Refine the current dataset quickly.</p>
-                  </div>
-                  <Accordion.Indicator />
-                </Accordion.Trigger>
-              </Accordion.Heading>
-              <Accordion.Panel>
-                <Accordion.Body>
-                  <div className="grid gap-3 md:grid-cols-4">
-                <Input
-                  label="Category Filter"
-                  labelPlacement="outside"
-                  value={activeCategory === "all" ? "" : activeCategory}
-                  isReadOnly
-                />
-                <div className="md:col-span-3 text-sm text-slate-500 flex items-end">
-                  Active category selection is managed from the section header to keep category switching visible at all times.
-                </div>
-                  </div>
-                </Accordion.Body>
-              </Accordion.Panel>
-            </Accordion.Item>
-          </Accordion>
+          <AdminFilterAccordion>
+            <div className="grid gap-3 md:grid-cols-4">
+              <Input value={activeCategory === "all" ? "" : activeCategory} readOnly />
+              <div className="md:col-span-3 flex items-end text-sm text-slate-500">
+                Active category selection is managed from the section header to keep category switching visible at all times.
+              </div>
+            </div>
+          </AdminFilterAccordion>
           {error ? <div className="rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">{error}</div> : null}
 
           {loading ? (
             <div className="flex min-h-[320px] items-center justify-center">
-              <Spinner color="primary" label="Loading knowledge articles" />
+              <Spinner />
             </div>
           ) : (
             <DndContext
@@ -325,7 +266,7 @@ export function KnowledgePage() {
                 items={filtered.map(record => String(record.id))}
                 strategy={verticalListSortingStrategy}
               >
-                <Table aria-label="Knowledge Articles" classNames={adminTableClassNames}>
+                <Table aria-label="Knowledge Articles" className={adminTableClassNames.wrapper}>
                   <Table.Content>
                     <TableHeader>
                       <TableColumn>Sort</TableColumn>
@@ -334,9 +275,9 @@ export function KnowledgePage() {
                       <TableColumn>Language</TableColumn>
                       <TableColumn>Updated</TableColumn>
                       <TableColumn>Visible</TableColumn>
-                      <TableColumn align="end">Actions</TableColumn>
+                      <TableColumn>Actions</TableColumn>
                     </TableHeader>
-                    <TableBody emptyContent="No articles found">
+                    <TableBody>
                     {filtered.map(item => {
                       const sorting = sortingId === item.id;
 
@@ -348,18 +289,18 @@ export function KnowledgePage() {
                           isDisabled={sortingId !== null}
                         >
                           <TableCell>{item.title}</TableCell>
-                          <TableCell><Chip variant="flat" className="bg-sky-50 text-sky-700">{item.category}</Chip></TableCell>
+                          <TableCell><Chip variant="soft" className="bg-sky-50 text-sky-700">{item.category}</Chip></TableCell>
                           <TableCell>{item.language || "en-US"}</TableCell>
                           <TableCell>{formatDateTime(item.updated_at || null)}</TableCell>
                           <TableCell>
-                            <Switch isSelected={Boolean(Number(item.show || 0))} onValueChange={() => void runAction("knowledge/show", { id: item.id })} />
+                            <Switch isSelected={Boolean(Number(item.show || 0))} onChange={() => void runAction("knowledge/show", { id: item.id })} />
                           </TableCell>
                           <TableCell className={adminTableActionCellClassName}>
                             <div className="flex justify-end gap-2">
-                              <Button size="sm" color="primary" variant="light" onPress={() => void openEditor(item)} isLoading={submitting || sorting}>
+                              <Button size="sm" variant="ghost" onPress={() => void openEditor(item)} isDisabled={submitting || sorting}>
                                 Edit
                               </Button>
-                              <Button size="sm" color="danger" variant="light" onPress={() => void runAction("knowledge/drop", { id: item.id })} isDisabled={sorting}>
+                              <Button size="sm" variant="ghost" onPress={() => void runAction("knowledge/drop", { id: item.id })} isDisabled={sorting}>
                                 Delete
                               </Button>
                             </div>
@@ -376,7 +317,7 @@ export function KnowledgePage() {
         </CardContent>
       </Card>
 
-      <Modal isOpen={editorOpen} onOpenChange={isOpen => !isOpen && setEditorOpen(false)} size="5xl" scrollBehavior="inside">
+      <Modal isOpen={editorOpen} onOpenChange={isOpen => !isOpen && setEditorOpen(false)}>
         <Modal.Backdrop>
           <Modal.Container>
             <Modal.Dialog>
@@ -384,14 +325,14 @@ export function KnowledgePage() {
                 <Modal.Heading>{selected.id ? "Edit article" : "Create article"}</Modal.Heading>
               </Modal.Header>
               <Modal.Body className="grid gap-4 md:grid-cols-2">
-                <ModalField label="Title"><Input aria-label="Title" value={selected.title} onValueChange={value => setSelected(current => ({ ...current, title: value }))} /></ModalField>
-                <ModalField label="Language"><Input aria-label="Language" value={selected.language || "en-US"} onValueChange={value => setSelected(current => ({ ...current, language: value }))} /></ModalField>
-                <ModalField label="Category" className="md:col-span-2"><Input aria-label="Category" value={selected.category} onValueChange={value => setSelected(current => ({ ...current, category: value }))} /></ModalField>
-                <ModalField label="Body" className="md:col-span-2"><TextArea aria-label="Body" minRows={16} value={selected.body || ""} onValueChange={value => setSelected(current => ({ ...current, body: value }))} /></ModalField>
+                <ModalField label="Title"><Input aria-label="Title" value={selected.title} onChange={event => setSelected(current => ({ ...current, title: event.target.value }))} /></ModalField>
+                <ModalField label="Language"><Input aria-label="Language" value={selected.language || "en-US"} onChange={event => setSelected(current => ({ ...current, language: event.target.value }))} /></ModalField>
+                <ModalField label="Category" className="md:col-span-2"><Input aria-label="Category" value={selected.category} onChange={event => setSelected(current => ({ ...current, category: event.target.value }))} /></ModalField>
+                <ModalField label="Body" className="md:col-span-2"><TextArea aria-label="Body" rows={16} value={selected.body || ""} onChange={event => setSelected(current => ({ ...current, body: event.target.value }))} /></ModalField>
               </Modal.Body>
               <Modal.Footer>
-                <Button variant="light" onPress={() => setEditorOpen(false)}>Cancel</Button>
-                <Button color="primary" onPress={() => void saveKnowledge()} isLoading={submitting}>Save article</Button>
+                <Button variant="ghost" onPress={() => setEditorOpen(false)}>Cancel</Button>
+                <Button variant="primary" onPress={() => void saveKnowledge()} isDisabled={submitting}>Save article</Button>
               </Modal.Footer>
         </Modal.Dialog>
           </Modal.Container>

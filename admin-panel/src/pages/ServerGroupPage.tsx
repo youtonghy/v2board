@@ -11,7 +11,7 @@ import {
   TableCell,
   TableColumn,
   TableHeader,
-  TableRow
+  TableRow,
 } from "@heroui/react";
 import { useEffect, useState } from "react";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
@@ -106,7 +106,7 @@ export function ServerGroupPage() {
     >
       <div className={adminStatsGridClassName}>
         {stats.map(item => (
-          <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
+          <Card key={item.label} className={adminCardClassName}>
             <CardContent className={adminStatCardBodyClassName}>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
               <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
@@ -116,7 +116,7 @@ export function ServerGroupPage() {
         ))}
       </div>
 
-      <Card shadow="none" radius="lg" className={adminCardClassName}>
+      <Card className={adminCardClassName}>
         <CardHeader className={adminSectionHeaderClassName}>
           <div>
             <p className="text-[1.1rem] font-semibold tracking-[-0.03em] text-slate-950">Server Groups</p>
@@ -125,8 +125,8 @@ export function ServerGroupPage() {
             </p>
           </div>
           <Button
-            color="primary"
-            radius="full"
+            variant="primary"
+           
             onPress={() => {
               setSelected(null);
               setName("");
@@ -140,19 +140,19 @@ export function ServerGroupPage() {
           {error ? <div className="rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">{error}</div> : null}
           {loading ? (
             <div className="flex min-h-[300px] items-center justify-center">
-              <Spinner color="primary" label="Loading groups" />
+              <Spinner />
             </div>
           ) : (
-            <Table aria-label="Server Groups" classNames={adminTableClassNames}>
+            <Table aria-label="Server Groups" className={adminTableClassNames.wrapper}>
               <Table.Content>
                 <TableHeader>
                   <TableColumn>ID</TableColumn>
                   <TableColumn>Name</TableColumn>
                   <TableColumn>Users</TableColumn>
                   <TableColumn>Servers</TableColumn>
-                  <TableColumn align="end">Actions</TableColumn>
+                  <TableColumn>Actions</TableColumn>
                 </TableHeader>
-                <TableBody items={records} emptyContent="No groups found">
+                <TableBody items={records}>
                   {item => (
                     <TableRow key={item.id}>
                       <TableCell>{item.id}</TableCell>
@@ -163,8 +163,7 @@ export function ServerGroupPage() {
                         <div className="flex justify-end gap-2">
                           <Button
                             size="sm"
-                            color="primary"
-                            variant="light"
+                            variant="ghost"
                             onPress={() => {
                               setSelected(item);
                               setName(item.name);
@@ -173,7 +172,7 @@ export function ServerGroupPage() {
                           >
                             Edit
                           </Button>
-                          <Button size="sm" color="danger" variant="light" onPress={() => void deleteGroup(item.id)} isLoading={submitting}>
+                          <Button size="sm" variant="ghost" onPress={() => void deleteGroup(item.id)} isDisabled={submitting}>
                             Delete
                           </Button>
                         </div>
@@ -196,12 +195,12 @@ export function ServerGroupPage() {
               </Modal.Header>
               <Modal.Body>
                 <ModalField label="Group Name">
-                  <Input aria-label="Group Name" value={name} onValueChange={setName} />
+                  <Input aria-label="Group Name" value={name} onChange={event => setName(event.target.value)} />
                 </ModalField>
               </Modal.Body>
               <Modal.Footer>
-                <Button variant="light" onPress={() => setEditorOpen(false)}>Cancel</Button>
-                <Button color="primary" onPress={() => void saveGroup()} isLoading={submitting}>Save group</Button>
+                <Button variant="ghost" onPress={() => setEditorOpen(false)}>Cancel</Button>
+                <Button variant="primary" onPress={() => void saveGroup()} isDisabled={submitting}>Save group</Button>
               </Modal.Footer>
         </Modal.Dialog>
           </Modal.Container>

@@ -1,34 +1,30 @@
 import {
-  Accordion,
   Button,
   Card,
   CardContent,
   CardHeader,
   Chip,
   Input,
-  ListBox,
-  ListBoxItem,
   Modal,
-  Pagination,
-  Select,
   Spinner,
+  TextArea,
   Table,
   TableBody,
   TableCell,
   TableColumn,
   TableHeader,
   TableRow,
-  TextArea
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
+import { AdminFilterAccordion } from "../components/AdminFilterAccordion";
+import { AdminPagination } from "../components/AdminPagination";
+import { AdminSelectField } from "../components/AdminSelectField";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { ModalField } from "../components/ModalField";
 import { PageFrame } from "../components/PageFrame";
 import { formatDateTime } from "../lib/admin-format";
 import {
   adminCardClassName,
-  adminFilterAccordionClassName,
-  adminFilterAccordionItemClasses,
   adminSectionBodyClassName,
   adminSectionHeaderClassName,
   adminStatCardBodyClassName,
@@ -180,7 +176,7 @@ export function InviteLinkPage() {
     >
       <div className={adminStatsGridClassName}>
         {stats.map(item => (
-          <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
+          <Card key={item.label} className={adminCardClassName}>
             <CardContent className={adminStatCardBodyClassName}>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
               <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
@@ -190,7 +186,7 @@ export function InviteLinkPage() {
         ))}
       </div>
 
-      <Card shadow="none" radius="lg" className={adminCardClassName}>
+      <Card className={adminCardClassName}>
         <CardHeader className={adminSectionHeaderClassName}>
           <div>
             <p className="text-[1.1rem] font-semibold tracking-[-0.03em] text-slate-950">Invite Link Inventory</p>
@@ -198,70 +194,37 @@ export function InviteLinkPage() {
               Track issued links, see who they belong to, and disable invalid links without leaving the new panel.
             </p>
           </div>
-          <Button color="primary" radius="full" onPress={() => setGenerateOpen(true)}>
+          <Button variant="primary" onPress={() => setGenerateOpen(true)}>
             Generate invite link
           </Button>
         </CardHeader>
         <CardContent className={`${adminSectionBodyClassName} gap-5`}>
-          <Accordion
-            variant="splitted"
-            showDivider={false}
-            itemClasses={adminFilterAccordionItemClasses}
-            className={adminFilterAccordionClassName}
-          >
-            <Accordion.Item id="filters">
-              <Accordion.Heading>
-                <Accordion.Trigger className="flex items-start justify-between gap-4">
-                  <div>
-                    <p>Filters</p>
-                    <p className="mt-1 text-xs text-slate-400">Refine the current dataset quickly.</p>
-                  </div>
-                  <Accordion.Indicator />
-                </Accordion.Trigger>
-              </Accordion.Heading>
-              <Accordion.Panel>
-                <Accordion.Body>
-                  <div className="grid gap-3 md:grid-cols-4">
-            <Input label="User Email" labelPlacement="outside" value={email} onValueChange={setEmail} />
-            <Input label="Keyword" labelPlacement="outside" value={keyword} onValueChange={setKeyword} />
-            <Select
-              label="Status"
-              labelPlacement="outside"
-              placeholder="All statuses"
-              items={[
-                { id: "0", label: "Active" },
-                { id: "1", label: "Used Up" },
-                { id: "2", label: "Expired" },
-                { id: "3", label: "Disabled" }
-              ]}
-              selectedKey={status || null}
-              onSelectionChange={key => setStatus(String(key || ""))}
-            >
-              <Select.Trigger>
-                <Select.Value />
-                <Select.Indicator />
-              </Select.Trigger>
-              <Select.Popover>
-                <ListBox items={[
+          <AdminFilterAccordion>
+            <div className="grid gap-3 md:grid-cols-4">
+            <Input aria-label="User Email" value={email} onChange={event => setEmail(event.target.value)} />
+            <Input aria-label="Keyword" value={keyword} onChange={event => setKeyword(event.target.value)} />
+            <div>
+              <div className="mb-2 space-y-1">
+                <p className="text-sm font-medium text-slate-700">Status</p>
+              </div>
+              <AdminSelectField
+                ariaLabel="Status"
+                options={[
                   { id: "0", label: "Active" },
                   { id: "1", label: "Used Up" },
                   { id: "2", label: "Expired" },
                   { id: "3", label: "Disabled" }
-                ]}>
-                  {item => (
-                    <ListBoxItem id={item.id} textValue={item.label}>
-                      {item.label}
-                    </ListBoxItem>
-                  )}
-                </ListBox>
-              </Select.Popover>
-            </Select>
+                ]}
+                selectedKey={status || null}
+                onSelectionChange={key => setStatus(String(key || ""))}
+              />
+            </div>
             <div className="flex items-end gap-2">
-              <Button color="primary" onPress={() => { setPage(1); void loadLinks(1); }}>
+              <Button variant="primary" onPress={() => { setPage(1); void loadLinks(1); }}>
                 Apply
               </Button>
               <Button
-                variant="flat"
+                variant="secondary"
                 onPress={() => {
                   setEmail("");
                   setKeyword("");
@@ -273,21 +236,18 @@ export function InviteLinkPage() {
                 Reset
               </Button>
             </div>
-                  </div>
-                </Accordion.Body>
-              </Accordion.Panel>
-            </Accordion.Item>
-          </Accordion>
+            </div>
+          </AdminFilterAccordion>
 
           {error ? <div className="rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">{error}</div> : null}
 
           {loading ? (
             <div className="flex min-h-[320px] items-center justify-center">
-              <Spinner color="primary" label="Loading invite links" />
+              <Spinner />
             </div>
           ) : (
             <>
-              <Table aria-label="Invite Links" classNames={adminTableClassNames}>
+              <Table aria-label="Invite Links" className={adminTableClassNames.wrapper}>
                 <Table.Content>
                   <TableHeader>
                     <TableColumn>Owner</TableColumn>
@@ -295,9 +255,9 @@ export function InviteLinkPage() {
                     <TableColumn>Usage</TableColumn>
                     <TableColumn>Expires</TableColumn>
                     <TableColumn>Status</TableColumn>
-                    <TableColumn align="end">Actions</TableColumn>
+                    <TableColumn>Actions</TableColumn>
                   </TableHeader>
-                  <TableBody items={records} emptyContent="No invite links found">
+                  <TableBody items={records}>
                     {item => (
                       <TableRow key={item.id}>
                         <TableCell>
@@ -318,18 +278,18 @@ export function InviteLinkPage() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Chip color={item.status === 0 ? "success" : item.status === 3 ? "warning" : "default"} variant="flat" className="font-medium">
+                          <Chip color={item.status === 0 ? "success" : item.status === 3 ? "warning" : "default"} variant="soft" className="font-medium">
                             {item.status_text}
                           </Chip>
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             {item.status === 3 ? (
-                              <Button size="sm" color="success" variant="light" onPress={() => void updateStatus(item, 0)} isLoading={submitting}>
+                              <Button size="sm" variant="ghost" onPress={() => void updateStatus(item, 0)} isDisabled={submitting}>
                                 Enable
                               </Button>
                             ) : (
-                              <Button size="sm" color="warning" variant="light" onPress={() => void updateStatus(item, 3)} isLoading={submitting}>
+                              <Button size="sm" variant="ghost" onPress={() => void updateStatus(item, 3)} isDisabled={submitting}>
                                 Disable
                               </Button>
                             )}
@@ -342,14 +302,14 @@ export function InviteLinkPage() {
               </Table>
 
               <div className="flex justify-center">
-                <Pagination page={page} total={totalPages} onChange={setPage} />
+                <AdminPagination page={page} total={totalPages} onChange={setPage} />
               </div>
             </>
           )}
         </CardContent>
       </Card>
 
-      <Modal isOpen={generateOpen} onOpenChange={isOpen => !isOpen && setGenerateOpen(false)} size="3xl">
+      <Modal isOpen={generateOpen} onOpenChange={isOpen => !isOpen && setGenerateOpen(false)}>
         <Modal.Backdrop>
           <Modal.Container>
             <Modal.Dialog>
@@ -358,19 +318,21 @@ export function InviteLinkPage() {
               </Modal.Header>
               <Modal.Body className="grid gap-4 md:grid-cols-2">
                 <ModalField label="Owner">
-                  <Select aria-label="Owner" items={userOptions.map(user => ({ id: String(user.id), label: user.email }))} selectedKey={selectedUser} onSelectionChange={key => setGenerateUserId(String(key || ""))}>
-                    <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
-                    <Select.Popover><ListBox items={userOptions.map(user => ({ id: String(user.id), label: user.email }))}>{item => <ListBoxItem id={item.id} textValue={item.label}>{item.label}</ListBoxItem>}</ListBox></Select.Popover>
-                  </Select>
+                  <AdminSelectField
+                    ariaLabel="Owner"
+                    options={userOptions.map(user => ({ id: String(user.id), label: user.email }))}
+                    selectedKey={selectedUser}
+                    onSelectionChange={key => setGenerateUserId(String(key || ""))}
+                  />
                 </ModalField>
-                <ModalField label="Invitee Name"><Input aria-label="Invitee Name" value={inviteeName} onValueChange={setInviteeName} /></ModalField>
-                <ModalField label="Max Use"><Input aria-label="Max Use" type="number" value={maxUse} onValueChange={setMaxUse} /></ModalField>
-                <ModalField label="Expire Hours"><Input aria-label="Expire Hours" type="number" value={expireHours} onValueChange={setExpireHours} /></ModalField>
-                <ModalField label="Content" className="md:col-span-2"><TextArea aria-label="Content" minRows={4} value={content} onValueChange={setContent} /></ModalField>
+                <ModalField label="Invitee Name"><Input aria-label="Invitee Name" value={inviteeName} onChange={event => setInviteeName(event.target.value)} /></ModalField>
+                <ModalField label="Max Use"><Input aria-label="Max Use" type="number" value={maxUse} onChange={event => setMaxUse(event.target.value)} /></ModalField>
+                <ModalField label="Expire Hours"><Input aria-label="Expire Hours" type="number" value={expireHours} onChange={event => setExpireHours(event.target.value)} /></ModalField>
+                <ModalField label="Content" className="md:col-span-2"><TextArea aria-label="Content" rows={4} value={content} onChange={event => setContent(event.target.value)} /></ModalField>
               </Modal.Body>
               <Modal.Footer>
-                <Button variant="light" onPress={() => setGenerateOpen(false)}>Cancel</Button>
-                <Button color="primary" onPress={() => void generateInviteLink()} isLoading={submitting}>Generate</Button>
+                <Button variant="ghost" onPress={() => setGenerateOpen(false)}>Cancel</Button>
+                <Button variant="primary" onPress={() => void generateInviteLink()} isDisabled={submitting}>Generate</Button>
               </Modal.Footer>
         </Modal.Dialog>
           </Modal.Container>

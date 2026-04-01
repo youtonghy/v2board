@@ -1,25 +1,23 @@
 import {
-  Accordion,
   Button,
   Card,
   CardContent,
   CardHeader,
   Chip,
   Input,
-  ListBox,
-  ListBoxItem,
   Modal,
-  Pagination,
-  Select,
   Spinner,
   Table,
   TableBody,
   TableCell,
   TableColumn,
   TableHeader,
-  TableRow
+  TableRow,
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
+import { AdminFilterAccordion } from "../components/AdminFilterAccordion";
+import { AdminPagination } from "../components/AdminPagination";
+import { AdminSelectField } from "../components/AdminSelectField";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { ModalField } from "../components/ModalField";
 import { PageFrame } from "../components/PageFrame";
@@ -27,8 +25,6 @@ import { formatDateTime, formatMoney, asArray } from "../lib/admin-format";
 import { PERIOD_OPTIONS } from "../lib/admin-constants";
 import {
   adminCardClassName,
-  adminFilterAccordionClassName,
-  adminFilterAccordionItemClasses,
   adminSectionBodyClassName,
   adminSectionHeaderClassName,
   adminStatCardBodyClassName,
@@ -212,7 +208,7 @@ export function OrderPage() {
     >
       <div className={adminStatsGridClassName}>
         {stats.map(item => (
-          <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
+          <Card key={item.label} className={adminCardClassName}>
             <CardContent className={adminStatCardBodyClassName}>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
               <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
@@ -222,7 +218,7 @@ export function OrderPage() {
         ))}
       </div>
 
-      <Card shadow="none" radius="lg" className={adminCardClassName}>
+      <Card className={adminCardClassName}>
         <CardHeader className={adminSectionHeaderClassName}>
           <div>
             <p className="text-[1.1rem] font-semibold tracking-[-0.03em] text-slate-950">Order Operations</p>
@@ -230,66 +226,35 @@ export function OrderPage() {
               Review payment state, inspect order details, and manually assign or settle orders without switching back to the old page.
             </p>
           </div>
-          <Button color="primary" radius="full" onPress={() => setAssignOpen(true)}>
+          <Button variant="primary" onPress={() => setAssignOpen(true)}>
             Assign order
           </Button>
         </CardHeader>
         <CardContent className={`${adminSectionBodyClassName} gap-5`}>
-          <Accordion
-            variant="splitted"
-            showDivider={false}
-            itemClasses={adminFilterAccordionItemClasses}
-            className={adminFilterAccordionClassName}
-          >
-            <Accordion.Item id="filters">
-              <Accordion.Heading>
-                <Accordion.Trigger className="flex items-start justify-between gap-4">
-                  <div>
-                    <p>Filters</p>
-                    <p className="mt-1 text-xs text-slate-400">Refine the current dataset quickly.</p>
-                  </div>
-                  <Accordion.Indicator />
-                </Accordion.Trigger>
-              </Accordion.Heading>
-              <Accordion.Panel>
-                <Accordion.Body>
-                  <div className="grid gap-3 md:grid-cols-4">
-            <Input label="User Email" labelPlacement="outside" value={email} onValueChange={setEmail} />
-            <Input label="Trade No" labelPlacement="outside" value={tradeNo} onValueChange={setTradeNo} />
-            <Select
-              label="Status"
-              labelPlacement="outside"
-              placeholder="All statuses"
-              items={Object.entries(ORDER_STATUS).map(([key, value]) => ({
-                id: key,
-                label: value.label
-              }))}
-              selectedKey={status || null}
-              onSelectionChange={key => setStatus(String(key || ""))}
-            >
-              <Select.Trigger>
-                <Select.Value />
-                <Select.Indicator />
-              </Select.Trigger>
-              <Select.Popover>
-                <ListBox items={Object.entries(ORDER_STATUS).map(([key, value]) => ({
+          <AdminFilterAccordion>
+            <div className="grid gap-3 md:grid-cols-4">
+            <Input aria-label="User Email" value={email} onChange={event => setEmail(event.target.value)} />
+            <Input aria-label="Trade No" value={tradeNo} onChange={event => setTradeNo(event.target.value)} />
+            <div>
+              <div className="mb-2 space-y-1">
+                <p className="text-sm font-medium text-slate-700">Status</p>
+              </div>
+              <AdminSelectField
+                ariaLabel="Status"
+                options={Object.entries(ORDER_STATUS).map(([key, value]) => ({
                   id: key,
                   label: value.label
-                }))}>
-                  {item => (
-                    <ListBoxItem id={item.id} textValue={item.label}>
-                      {item.label}
-                    </ListBoxItem>
-                  )}
-                </ListBox>
-              </Select.Popover>
-            </Select>
+                }))}
+                selectedKey={status || null}
+                onSelectionChange={key => setStatus(String(key || ""))}
+              />
+            </div>
             <div className="flex items-end gap-2">
-              <Button color="primary" onPress={() => { setPage(1); void loadOrders(1); }}>
+              <Button variant="primary" onPress={() => { setPage(1); void loadOrders(1); }}>
                 Apply
               </Button>
               <Button
-                variant="flat"
+                variant="secondary"
                 onPress={() => {
                   setEmail("");
                   setTradeNo("");
@@ -301,21 +266,18 @@ export function OrderPage() {
                 Reset
               </Button>
             </div>
-                  </div>
-                </Accordion.Body>
-              </Accordion.Panel>
-            </Accordion.Item>
-          </Accordion>
+            </div>
+          </AdminFilterAccordion>
 
           {error ? <div className="rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">{error}</div> : null}
 
           {loading ? (
             <div className="flex min-h-[320px] items-center justify-center">
-              <Spinner color="primary" label="Loading orders" />
+              <Spinner />
             </div>
           ) : (
             <>
-              <Table aria-label="Orders" classNames={adminTableClassNames}>
+              <Table aria-label="Orders" className={adminTableClassNames.wrapper}>
                 <Table.Content>
                   <TableHeader>
                     <TableColumn>Trade</TableColumn>
@@ -324,9 +286,9 @@ export function OrderPage() {
                     <TableColumn>Status</TableColumn>
                     <TableColumn>Commission</TableColumn>
                     <TableColumn>Created</TableColumn>
-                    <TableColumn align="end">Actions</TableColumn>
+                    <TableColumn>Actions</TableColumn>
                   </TableHeader>
-                  <TableBody items={records} emptyContent="No orders found">
+                  <TableBody items={records}>
                     {item => (
                       <TableRow key={item.id}>
                         <TableCell>
@@ -341,7 +303,7 @@ export function OrderPage() {
                         </TableCell>
                         <TableCell>{formatMoney((item.total_amount || 0) / 100)}</TableCell>
                         <TableCell>
-                          <Chip color={ORDER_STATUS[item.status]?.color || "default"} variant="flat">
+                          <Chip color={ORDER_STATUS[item.status]?.color || "default"} variant="soft">
                             {ORDER_STATUS[item.status]?.label || item.status}
                           </Chip>
                         </TableCell>
@@ -352,15 +314,15 @@ export function OrderPage() {
                         <TableCell>{formatDateTime(item.created_at || null)}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <Button size="sm" color="primary" variant="light" onPress={() => void openDetail(item)} isLoading={submitting}>
+                            <Button size="sm" variant="ghost" onPress={() => void openDetail(item)} isDisabled={submitting}>
                               Details
                             </Button>
                             {item.status === 0 ? (
                               <>
-                                <Button size="sm" color="success" variant="light" onPress={() => void runAction("order/paid", { trade_no: item.trade_no })} isLoading={submitting}>
+                                <Button size="sm" variant="ghost" onPress={() => void runAction("order/paid", { trade_no: item.trade_no })} isDisabled={submitting}>
                                   Mark paid
                                 </Button>
-                                <Button size="sm" color="warning" variant="light" onPress={() => void runAction("order/cancel", { trade_no: item.trade_no })} isLoading={submitting}>
+                                <Button size="sm" variant="ghost" onPress={() => void runAction("order/cancel", { trade_no: item.trade_no })} isDisabled={submitting}>
                                   Cancel
                                 </Button>
                               </>
@@ -374,14 +336,14 @@ export function OrderPage() {
               </Table>
 
               <div className="flex justify-center">
-                <Pagination page={page} total={totalPages} onChange={setPage} />
+                <AdminPagination page={page} total={totalPages} onChange={setPage} />
               </div>
             </>
           )}
         </CardContent>
       </Card>
 
-      <Modal isOpen={detailOpen} onOpenChange={isOpen => !isOpen && setDetailOpen(false)} size="5xl" scrollBehavior="inside">
+      <Modal isOpen={detailOpen} onOpenChange={isOpen => !isOpen && setDetailOpen(false)}>
         <Modal.Backdrop>
           <Modal.Container>
             <Modal.Dialog>
@@ -401,10 +363,10 @@ export function OrderPage() {
               <p>Status: {COMMISSION_STATUS[selected?.commission_status || 0] || "Pending"}</p>
               <p>Balance: {formatMoney(((selected?.commission_balance || 0) as number) / 100)}</p>
               <div className="flex gap-2">
-                <Button size="sm" color="success" variant="light" onPress={() => void runAction("order/update", { trade_no: selected?.trade_no, commission_status: 1 })} isLoading={submitting}>
+                <Button size="sm" variant="ghost" onPress={() => void runAction("order/update", { trade_no: selected?.trade_no, commission_status: 1 })} isDisabled={submitting}>
                   Settle
                 </Button>
-                <Button size="sm" color="danger" variant="light" onPress={() => void runAction("order/update", { trade_no: selected?.trade_no, commission_status: 3 })} isLoading={submitting}>
+                <Button size="sm" variant="ghost" onPress={() => void runAction("order/update", { trade_no: selected?.trade_no, commission_status: 3 })} isDisabled={submitting}>
                   Reject
                 </Button>
               </div>
@@ -423,7 +385,7 @@ export function OrderPage() {
             </div>
           </Modal.Body>
           <Modal.Footer>
-            <Button variant="light" onPress={() => setDetailOpen(false)}>
+            <Button variant="ghost" onPress={() => setDetailOpen(false)}>
               Close
             </Button>
           </Modal.Footer>
@@ -432,7 +394,7 @@ export function OrderPage() {
         </Modal.Backdrop>
       </Modal>
 
-      <Modal isOpen={assignOpen} onOpenChange={isOpen => !isOpen && setAssignOpen(false)} size="3xl">
+      <Modal isOpen={assignOpen} onOpenChange={isOpen => !isOpen && setAssignOpen(false)}>
         <Modal.Backdrop>
           <Modal.Container>
             <Modal.Dialog>
@@ -440,24 +402,28 @@ export function OrderPage() {
                 <Modal.Heading>Assign order</Modal.Heading>
               </Modal.Header>
               <Modal.Body className="grid gap-4 md:grid-cols-2">
-                <ModalField label="User Email"><Input aria-label="User Email" value={assignEmail} onValueChange={setAssignEmail} /></ModalField>
-                <ModalField label="Total Amount (cents)"><Input aria-label="Total Amount (cents)" type="number" value={assignAmount} onValueChange={setAssignAmount} /></ModalField>
+                <ModalField label="User Email"><Input aria-label="User Email" value={assignEmail} onChange={event => setAssignEmail(event.target.value)} /></ModalField>
+                <ModalField label="Total Amount (cents)"><Input aria-label="Total Amount (cents)" type="number" value={assignAmount} onChange={event => setAssignAmount(event.target.value)} /></ModalField>
                 <ModalField label="Plan">
-                  <Select aria-label="Plan" items={plans.map(plan => ({ id: String(plan.id), label: plan.name }))} selectedKey={selectedPlan} onSelectionChange={key => setAssignPlanId(String(key || ""))}>
-                    <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
-                    <Select.Popover><ListBox items={plans.map(plan => ({ id: String(plan.id), label: plan.name }))}>{item => <ListBoxItem id={item.id} textValue={item.label}>{item.label}</ListBoxItem>}</ListBox></Select.Popover>
-                  </Select>
+                  <AdminSelectField
+                    ariaLabel="Plan"
+                    options={plans.map(plan => ({ id: String(plan.id), label: plan.name }))}
+                    selectedKey={selectedPlan}
+                    onSelectionChange={key => setAssignPlanId(String(key || ""))}
+                  />
                 </ModalField>
                 <ModalField label="Period">
-                  <Select aria-label="Period" items={PERIOD_OPTIONS.map(option => ({ id: option.key, label: option.label }))} selectedKey={selectedPeriod} onSelectionChange={key => setAssignPeriod(String(key || "month_price"))}>
-                    <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
-                    <Select.Popover><ListBox items={PERIOD_OPTIONS.map(option => ({ id: option.key, label: option.label }))}>{item => <ListBoxItem id={item.id} textValue={item.label}>{item.label}</ListBoxItem>}</ListBox></Select.Popover>
-                  </Select>
+                  <AdminSelectField
+                    ariaLabel="Period"
+                    options={PERIOD_OPTIONS.map(option => ({ id: option.key, label: option.label }))}
+                    selectedKey={selectedPeriod}
+                    onSelectionChange={key => setAssignPeriod(String(key || "month_price"))}
+                  />
                 </ModalField>
               </Modal.Body>
               <Modal.Footer>
-                <Button variant="light" onPress={() => setAssignOpen(false)}>Cancel</Button>
-                <Button color="primary" onPress={() => void assignOrder()} isLoading={submitting}>Create order</Button>
+                <Button variant="ghost" onPress={() => setAssignOpen(false)}>Cancel</Button>
+                <Button variant="primary" onPress={() => void assignOrder()} isDisabled={submitting}>Create order</Button>
               </Modal.Footer>
         </Modal.Dialog>
           </Modal.Container>

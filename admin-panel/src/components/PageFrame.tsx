@@ -24,19 +24,16 @@ export function PageFrame({
 
   return (
     <div className="space-y-6">
-      <Card shadow="none" radius="lg" className="border border-white/70 bg-white/90 shadow-panel backdrop-blur-xl">
+      <Card className="border border-white/70 bg-white/90 shadow-panel backdrop-blur-xl">
         <CardContent className="gap-5 px-5 py-5 md:px-7 md:py-6">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-3">
-              <Breadcrumbs
-                itemClasses={{
-                  item: "text-slate-400",
-                  separator: "text-slate-300"
-                }}
-              >
-                <Breadcrumbs.Item>Admin</Breadcrumbs.Item>
+              <Breadcrumbs className="text-slate-400" separator={<span className="text-slate-300">/</span>}>
+                <Breadcrumbs.Item className="text-slate-400">Admin</Breadcrumbs.Item>
                 {segments.map(segment => (
-                  <Breadcrumbs.Item key={segment}>{segment.replaceAll("-", " ")}</Breadcrumbs.Item>
+                  <Breadcrumbs.Item key={segment} className="text-slate-400">
+                    {segment.replaceAll("-", " ")}
+                  </Breadcrumbs.Item>
                 ))}
               </Breadcrumbs>
               <div>
@@ -50,15 +47,15 @@ export function PageFrame({
             <div className="flex flex-wrap items-center gap-3">
               {onRefresh ? (
                 <Button
-                  radius="full"
-                  variant="flat"
-                  color="default"
+                  variant="secondary"
                   className="px-4"
-                  startContent={<ArrowRotateRight width={16} height={16} aria-hidden="true" />}
                   onPress={onRefresh}
-                  isLoading={loading}
+                  isDisabled={loading}
                 >
-                  Refresh
+                  <span className="inline-flex items-center gap-2">
+                    <ArrowRotateRight width={16} height={16} aria-hidden="true" />
+                    <span>Refresh</span>
+                  </span>
                 </Button>
               ) : null}
               {actions}

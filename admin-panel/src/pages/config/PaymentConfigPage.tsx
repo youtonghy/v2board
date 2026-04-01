@@ -252,7 +252,7 @@ export function PaymentConfigPage() {
     >
       <div className={adminStatsGridClassName}>
         {stats.map(item => (
-          <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
+          <Card key={item.label} className={adminCardClassName}>
             <CardContent className={adminStatCardBodyClassName}>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
               <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
@@ -262,7 +262,7 @@ export function PaymentConfigPage() {
         ))}
       </div>
 
-      <Card shadow="none" radius="lg" className={adminCardClassName}>
+      <Card className={adminCardClassName}>
         <CardHeader className={adminSectionHeaderClassName}>
           <div>
             <p className="text-[1.1rem] font-semibold tracking-[-0.03em] text-slate-950">Payment Providers</p>
@@ -271,8 +271,8 @@ export function PaymentConfigPage() {
             </p>
           </div>
           <Button
-            color="primary"
-            radius="full"
+            variant="primary"
+           
             onPress={() => {
               setSelected(normalizePaymentRecord());
               setDynamicForm({});
@@ -286,7 +286,7 @@ export function PaymentConfigPage() {
           {error ? <div className="mb-4 rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">{error}</div> : null}
           {loading ? (
             <div className="flex min-h-[280px] items-center justify-center">
-              <Spinner color="primary" label="Loading payments" />
+              <Spinner />
             </div>
           ) : (
             <DndContext
@@ -298,7 +298,7 @@ export function PaymentConfigPage() {
                 items={payments.map(payment => String(payment.id))}
                 strategy={verticalListSortingStrategy}
               >
-                <Table aria-label="Payments" classNames={adminTableClassNames}>
+                <Table aria-label="Payments" className={adminTableClassNames.wrapper}>
                   <Table.Content>
                     <TableHeader>
                       <TableColumn>Sort</TableColumn>
@@ -306,9 +306,9 @@ export function PaymentConfigPage() {
                       <TableColumn>Name</TableColumn>
                       <TableColumn>Method</TableColumn>
                       <TableColumn>Enabled</TableColumn>
-                      <TableColumn align="end">Actions</TableColumn>
+                      <TableColumn>Actions</TableColumn>
                     </TableHeader>
-                    <TableBody emptyContent="No payments found">
+                    <TableBody>
                     {payments.map(item => {
                       const sorting = sortingId === Number(item.id || 0);
 
@@ -325,15 +325,14 @@ export function PaymentConfigPage() {
                           <TableCell>
                             <Switch
                               isSelected={Boolean(Number(item.enable ?? 0))}
-                              onValueChange={() => void togglePayment(item)}
+                              onChange={() => void togglePayment(item)}
                             />
                           </TableCell>
                           <TableCell className={adminTableActionCellClassName}>
                             <div className="flex justify-end gap-2">
                               <Button
                                 size="sm"
-                                color="primary"
-                                variant="light"
+                                variant="ghost"
                                 onPress={() => {
                                   setSelected(normalizePaymentRecord(item));
                                   setDynamicForm({});
@@ -346,8 +345,7 @@ export function PaymentConfigPage() {
                               </Button>
                               <Button
                                 size="sm"
-                                color="danger"
-                                variant="light"
+                                variant="ghost"
                                 onPress={() => void dropPayment(item)}
                                 isDisabled={sorting}
                               >
@@ -367,7 +365,7 @@ export function PaymentConfigPage() {
         </CardContent>
       </Card>
 
-      <Modal isOpen={editorOpen} onOpenChange={open => !open && setEditorOpen(false)} size="5xl" scrollBehavior="inside">
+      <Modal isOpen={editorOpen} onOpenChange={open => !open && setEditorOpen(false)}>
         <Modal.Backdrop>
           <Modal.Container>
             <Modal.Dialog>
@@ -375,26 +373,26 @@ export function PaymentConfigPage() {
                 <Modal.Heading>{selected?.id ? "Edit payment" : "Create payment"}</Modal.Heading>
               </Modal.Header>
               <Modal.Body className="gap-5">
-            <ModalField label="Display Name"><Input aria-label="Display Name" value={String(selected?.name || "")} onValueChange={value => setSelected(current => (current ? { ...current, name: value } : current))} /></ModalField>
+            <ModalField label="Display Name"><Input aria-label="Display Name" value={String(selected?.name || "")} onChange={event => setSelected(current => (current ? { ...current, name: event.target.value } : current))} /></ModalField>
             <ModalField label="Provider">
-              <Select aria-label="Provider" items={methods.map(method => ({ id: method, label: method }))} selectedKey={selectedPaymentMethod} onSelectionChange={keys => {
+              <Select aria-label="Provider" selectedKey={selectedPaymentMethod} onSelectionChange={keys => {
                 const nextPayment = String(keys || "");
                 setSelected(current => (current ? { ...current, payment: nextPayment, config: normalizeConfigValue(current.config) } : current));
                 void loadPaymentForm(nextPayment, Number(selected?.id || 0) || undefined);
               }}>
                 <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
-                <Select.Popover><ListBox items={methods.map(method => ({ id: method, label: method }))}>{item => <ListBoxItem id={item.id} textValue={item.label}>{item.label}</ListBoxItem>}</ListBox></Select.Popover>
+                <Select.Popover><ListBox>{methods.map(method => <ListBoxItem key={method} id={method} textValue={method}>{method}</ListBoxItem>)}</ListBox></Select.Popover>
               </Select>
             </ModalField>
             <div className="grid gap-5 md:grid-cols-2">
-              <ModalField label="Icon URL"><Input aria-label="Icon URL" value={String(selected?.icon || "")} onValueChange={value => setSelected(current => (current ? { ...current, icon: value } : current))} /></ModalField>
-              <ModalField label="Notify Domain"><Input aria-label="Notify Domain" value={String(selected?.notify_domain || "")} onValueChange={value => setSelected(current => (current ? { ...current, notify_domain: value } : current))} /></ModalField>
-              <ModalField label="Handling Fee (%)"><Input aria-label="Handling Fee (%)" type="number" value={String(selected?.handling_fee_percent ?? "")} onValueChange={value => setSelected(current => (current ? { ...current, handling_fee_percent: value } : current))} /></ModalField>
-              <ModalField label="Fixed Handling Fee"><Input aria-label="Fixed Handling Fee" type="number" value={String(selected?.handling_fee_fixed === undefined || selected?.handling_fee_fixed === null || selected?.handling_fee_fixed === "" ? "" : Number(selected.handling_fee_fixed) / 100)} onValueChange={value => setSelected(current => (current ? { ...current, handling_fee_fixed: value === "" ? "" : String(Math.round(Number(value) * 100)) } : current))} /></ModalField>
+              <ModalField label="Icon URL"><Input aria-label="Icon URL" value={String(selected?.icon || "")} onChange={event => setSelected(current => (current ? { ...current, icon: event.target.value } : current))} /></ModalField>
+              <ModalField label="Notify Domain"><Input aria-label="Notify Domain" value={String(selected?.notify_domain || "")} onChange={event => setSelected(current => (current ? { ...current, notify_domain: event.target.value } : current))} /></ModalField>
+              <ModalField label="Handling Fee (%)"><Input aria-label="Handling Fee (%)" type="number" value={String(selected?.handling_fee_percent ?? "")} onChange={event => setSelected(current => (current ? { ...current, handling_fee_percent: event.target.value } : current))} /></ModalField>
+              <ModalField label="Fixed Handling Fee"><Input aria-label="Fixed Handling Fee" type="number" value={String(selected?.handling_fee_fixed === undefined || selected?.handling_fee_fixed === null || selected?.handling_fee_fixed === "" ? "" : Number(selected.handling_fee_fixed) / 100)} onChange={event => setSelected(current => (current ? { ...current, handling_fee_fixed: event.target.value === "" ? "" : String(Math.round(Number(event.target.value) * 100)) } : current))} /></ModalField>
             </div>
             {formLoading ? (
               <div className="flex min-h-[120px] items-center justify-center rounded-2xl border border-default-200 bg-default-50">
-                <Spinner color="warning" label="Loading provider form" />
+                <Spinner color="accent" />
               </div>
             ) : null}
             {Object.keys(dynamicForm).length ? (
@@ -404,14 +402,14 @@ export function PaymentConfigPage() {
                     <Input
                       aria-label={field.label || key}
                       value={String(normalizeConfigValue(selected?.config)[key] ?? field.value ?? "")}
-                      onValueChange={value =>
+                      onChange={event =>
                         setSelected(current => {
                           if (!current) return current;
                           return {
                             ...current,
                             config: {
                               ...normalizeConfigValue(current.config),
-                              [key]: value
+                              [key]: event.target.value
                             }
                           };
                         })
@@ -427,7 +425,7 @@ export function PaymentConfigPage() {
                 <div className="mt-3">
                   <Switch
                     isSelected={Boolean(Number(selected.enable ?? 0))}
-                    onValueChange={value => setSelected(current => (current ? { ...current, enable: value ? 1 : 0 } : current))}
+                    onChange={value => setSelected(current => (current ? { ...current, enable: value ? 1 : 0 } : current))}
                   >
                     Enable provider after save
                   </Switch>
@@ -436,8 +434,8 @@ export function PaymentConfigPage() {
             ) : null}
               </Modal.Body>
               <Modal.Footer>
-                <Button variant="light" onPress={() => setEditorOpen(false)}>Cancel</Button>
-                <Button color="primary" onPress={() => void savePayment()} isLoading={saving}>Save payment</Button>
+                <Button variant="ghost" onPress={() => setEditorOpen(false)}>Cancel</Button>
+                <Button variant="primary" onPress={() => void savePayment()} isDisabled={saving}>Save payment</Button>
               </Modal.Footer>
         </Modal.Dialog>
           </Modal.Container>

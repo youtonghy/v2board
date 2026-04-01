@@ -1,4 +1,10 @@
-import { Accordion, Input, ListBox, ListBoxItem, Select, Switch, TextArea } from "@heroui/react";
+import {
+  Accordion,
+  Input,
+  Switch,
+  TextArea,
+} from "@heroui/react";
+import { AdminMultiSelectField } from "./AdminMultiSelectField";
 
 function humanizeKey(key: string): string {
   return key
@@ -114,7 +120,7 @@ export function ObjectRecordEditor({
                 <Switch
                   aria-label={label}
                   isSelected={Boolean(currentValue)}
-                  onValueChange={nextValue => onChange({ ...value, [key]: nextValue })}
+                  onChange={nextValue => onChange({ ...value, [key]: nextValue })}
                 >
                   Enabled
                 </Switch>
@@ -125,20 +131,13 @@ export function ObjectRecordEditor({
       ) : null}
 
       <Accordion
-        variant="splitted"
-        showDivider={false}
-        selectionMode="multiple"
+        variant="surface"
+        hideSeparator
         defaultExpandedKeys={["fields"]}
-        itemClasses={{
-          base: "px-0",
-          trigger: "px-5 py-4",
-          title: "text-sm font-semibold text-slate-900",
-          content: "px-5 pb-5 pt-0"
-        }}
         className="rounded-[1.7rem] border border-slate-100 bg-white/95"
       >
-        <Accordion.Item id="fields">
-          <Accordion.Heading>
+        <Accordion.Item id="fields" className="px-0">
+          <Accordion.Heading className="px-5 py-4">
             <Accordion.Trigger className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-sm font-semibold text-slate-900">Advanced fields</p>
@@ -150,7 +149,7 @@ export function ObjectRecordEditor({
             </Accordion.Trigger>
           </Accordion.Heading>
           <Accordion.Panel>
-            <Accordion.Body>
+            <Accordion.Body className="px-5 pb-5 pt-0">
               <div className="grid gap-4 md:grid-cols-2">
                 {fieldEntries.map(([key, currentValue]) => {
         const label = humanizeKey(key);
@@ -166,32 +165,17 @@ export function ObjectRecordEditor({
         if (selectValues && selectValues.length > 0 && selectValues.length <= 8) {
           return (
             <EditorField key={key} label={label} description={key}>
-              <Select
-                aria-label={label}
-                items={selectValues.map(item => ({ id: item, label: item }))}
+              <AdminMultiSelectField
+                ariaLabel={label}
+                options={selectValues.map(item => ({ id: item, label: item }))}
                 selectedKeys={new Set(selectValues)}
-                selectionMode="multiple"
                 onSelectionChange={keys =>
                   onChange({
                     ...value,
-                    [key]: Array.from(keys).map(item => String(item))
+                    [key]: keys === "all" ? selectValues : Array.from(keys).map(item => String(item))
                   })
                 }
-              >
-                <Select.Trigger>
-                  <Select.Value />
-                  <Select.Indicator />
-                </Select.Trigger>
-                <Select.Popover>
-                  <ListBox items={selectValues.map(item => ({ id: item, label: item }))}>
-                    {item => (
-                      <ListBoxItem id={item.id} textValue={item.label}>
-                        {item.label}
-                      </ListBoxItem>
-                    )}
-                  </ListBox>
-                </Select.Popover>
-              </Select>
+              />
             </EditorField>
           );
         }
@@ -201,12 +185,12 @@ export function ObjectRecordEditor({
             <EditorField key={key} label={label} description={key}>
               <TextArea
                 aria-label={label}
-                minRows={4}
+                rows={4}
                 value={editorValue}
-                onValueChange={nextValue =>
+                onChange={event =>
                   onChange({
                     ...value,
-                    [key]: parseTextValue(currentValue, nextValue)
+                    [key]: parseTextValue(currentValue, event.target.value)
                   })
                 }
               />
@@ -220,10 +204,10 @@ export function ObjectRecordEditor({
               aria-label={label}
               type={typeof currentValue === "number" ? "number" : "text"}
               value={editorValue}
-              onValueChange={nextValue =>
+              onChange={event =>
                 onChange({
                   ...value,
-                  [key]: parseTextValue(currentValue, nextValue)
+                  [key]: parseTextValue(currentValue, event.target.value)
                 })
               }
             />

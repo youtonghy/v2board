@@ -6,8 +6,6 @@ import {
   CardContent,
   CardHeader,
   Input,
-  ListBox,
-  ListBoxItem,
   Modal,
   Select,
   Spinner,
@@ -17,10 +15,11 @@ import {
   TableCell,
   TableColumn,
   TableHeader,
-  TextArea,
-  useOverlayState
+  useOverlayState,
 } from "@heroui/react";
+import { TextArea } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
+import { AdminSelectField } from "../components/AdminSelectField";
 import { SortableTableRow, adminTableActionCellClassName, sortableCollisionDetection, useSortableTableSensors } from "../components/SortableTable";
 import { adminRequest } from "../lib/api";
 import { PERIOD_OPTIONS, RESET_TRAFFIC_OPTIONS } from "../lib/admin-constants";
@@ -135,7 +134,7 @@ export function PlanPage() {
     try {
       await adminRequest("plan/save", {
         method: "POST",
-        body: selected
+        body: selected as Record<string, unknown>
       });
       setOpen(false);
       await loadPlans();
@@ -240,7 +239,7 @@ export function PlanPage() {
     >
       <div className={adminStatsGridClassName}>
         {stats.map(item => (
-          <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
+          <Card key={item.label} className={adminCardClassName}>
             <CardContent className={adminStatCardBodyClassName}>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
               <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
@@ -250,7 +249,7 @@ export function PlanPage() {
         ))}
       </div>
 
-      <Card shadow="none" radius="lg" className={adminCardClassName}>
+      <Card className={adminCardClassName}>
         <CardHeader className={adminSectionHeaderClassName}>
           <div>
             <p className="text-[1.1rem] font-semibold tracking-[-0.03em] text-slate-950">Plan Catalog</p>
@@ -259,8 +258,8 @@ export function PlanPage() {
             </p>
           </div>
           <Button
-            color="primary"
-            radius="full"
+            variant="primary"
+           
             onPress={() => {
               setSelected(normalizePlan());
               setOpen(true);
@@ -273,7 +272,7 @@ export function PlanPage() {
           {error ? <div className="mb-4 rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">{error}</div> : null}
           {loading ? (
             <div className="flex min-h-[280px] items-center justify-center">
-              <Spinner color="primary" label="Loading plans" />
+              <Spinner />
             </div>
           ) : (
             <DndContext
@@ -285,7 +284,7 @@ export function PlanPage() {
                 items={records.map(record => String(record.id))}
                 strategy={verticalListSortingStrategy}
               >
-                <Table aria-label="Plans" classNames={adminTableClassNames}>
+                <Table aria-label="Plans" className={adminTableClassNames.wrapper}>
                   <Table.Content>
                     <TableHeader>
                       <TableColumn>Sort</TableColumn>
@@ -296,9 +295,9 @@ export function PlanPage() {
                       <TableColumn>Group</TableColumn>
                       <TableColumn>Monthly</TableColumn>
                       <TableColumn>One Time</TableColumn>
-                      <TableColumn align="end">Actions</TableColumn>
+                      <TableColumn>Actions</TableColumn>
                     </TableHeader>
-                    <TableBody emptyContent="No plans found">
+                    <TableBody>
                     {records.map(item => {
                       const sorting = sortingId === Number(item.id || 0);
 
@@ -310,10 +309,10 @@ export function PlanPage() {
                           isDisabled={sortingId !== null}
                         >
                           <TableCell>
-                            <Switch isSelected={Boolean(Number(item.show ?? 0))} onValueChange={value => void updateField(item, "show", value ? 1 : 0)} />
+                            <Switch isSelected={Boolean(Number(item.show ?? 0))} onChange={value => void updateField(item, "show", value ? 1 : 0)} />
                           </TableCell>
                           <TableCell>
-                            <Switch isSelected={Boolean(Number(item.renew ?? 0))} onValueChange={value => void updateField(item, "renew", value ? 1 : 0)} />
+                            <Switch isSelected={Boolean(Number(item.renew ?? 0))} onChange={value => void updateField(item, "renew", value ? 1 : 0)} />
                           </TableCell>
                           <TableCell>{item.name || "Untitled"}</TableCell>
                           <TableCell>{item.transfer_enable ? `${item.transfer_enable} GB` : "—"}</TableCell>
@@ -324,8 +323,7 @@ export function PlanPage() {
                             <div className="flex justify-end gap-2">
                               <Button
                                 size="sm"
-                                color="primary"
-                                variant="light"
+                                variant="ghost"
                                 onPress={() => {
                                   setSelected(normalizePlan(item));
                                   setOpen(true);
@@ -336,8 +334,7 @@ export function PlanPage() {
                               </Button>
                               <Button
                                 size="sm"
-                                color="danger"
-                                variant="light"
+                                variant="ghost"
                                 onPress={() => void dropPlan(item)}
                                 isDisabled={sorting}
                               >
@@ -359,7 +356,7 @@ export function PlanPage() {
 
       <Modal state={modalState}>
         <Modal.Backdrop>
-          <Modal.Container size="5xl" scroll="inside">
+          <Modal.Container size="lg" scroll="inside">
             <Modal.Dialog>
               <Modal.Header>
                 <Modal.Heading>{selected?.id ? "Edit plan" : "Create plan"}</Modal.Heading>
@@ -369,7 +366,7 @@ export function PlanPage() {
                   <Input
                     aria-label="Plan Name"
                     value={selected?.name || ""}
-                    onValueChange={value => setSelected(current => (current ? { ...current, name: value } : current))}
+                    onChange={event => setSelected(current => (current ? { ...current, name: event.target.value } : current))}
                   />
                 </ModalField>
                 <ModalField label="Transfer (GB)">
@@ -377,73 +374,45 @@ export function PlanPage() {
                     aria-label="Transfer (GB)"
                     type="number"
                     value={String(selected?.transfer_enable ?? "")}
-                    onValueChange={value => setSelected(current => (current ? { ...current, transfer_enable: value } : current))}
+                    onChange={event => setSelected(current => (current ? { ...current, transfer_enable: event.target.value } : current))}
                   />
                 </ModalField>
                 <ModalField label="Description" className="md:col-span-2">
                   <TextArea
                     aria-label="Description"
-                    minRows={6}
+                    rows={6}
                     value={selected?.content || ""}
-                    onValueChange={value => setSelected(current => (current ? { ...current, content: value } : current))}
+                    onChange={event => setSelected(current => (current ? { ...current, content: event.target.value } : current))}
                   />
                 </ModalField>
                 <ModalField label="Permission Group">
-                  <Select
-                    aria-label="Permission Group"
-                    items={groupOptions}
+                  <AdminSelectField
+                    ariaLabel="Permission Group"
+                    options={groupOptions}
                     selectedKey={selectedGroup}
                     onSelectionChange={key => {
                       setSelected(current => (current ? { ...current, group_id: String(key || "") } : current));
                     }}
-                  >
-                    <Select.Trigger>
-                      <Select.Value />
-                      <Select.Indicator />
-                    </Select.Trigger>
-                    <Select.Popover>
-                      <ListBox items={groupOptions}>
-                        {item => (
-                          <ListBoxItem id={item.id} textValue={item.label}>
-                            {item.label}
-                          </ListBoxItem>
-                        )}
-                      </ListBox>
-                    </Select.Popover>
-                  </Select>
+                  />
                 </ModalField>
                 <ModalField label="Traffic Reset">
-                  <Select
-                    aria-label="Traffic Reset"
-                    items={resetMethodOptions}
+                  <AdminSelectField
+                    ariaLabel="Traffic Reset"
+                    options={resetMethodOptions}
                     selectedKey={selectedResetMethod}
                     onSelectionChange={key => {
                       const nextKey = String(key || "null");
                       const option = RESET_TRAFFIC_OPTIONS.find(item => item.key === nextKey);
                       setSelected(current => (current ? { ...current, reset_traffic_method: option?.value ?? null } : current));
                     }}
-                  >
-                    <Select.Trigger>
-                      <Select.Value />
-                      <Select.Indicator />
-                    </Select.Trigger>
-                    <Select.Popover>
-                      <ListBox items={resetMethodOptions}>
-                        {item => (
-                          <ListBoxItem id={item.id} textValue={item.label}>
-                            {item.label}
-                          </ListBoxItem>
-                        )}
-                      </ListBox>
-                    </Select.Popover>
-                  </Select>
+                  />
                 </ModalField>
                 <ModalField label="Device Limit">
                   <Input
                     aria-label="Device Limit"
                     type="number"
                     value={String(selected?.device_limit ?? "")}
-                    onValueChange={value => setSelected(current => (current ? { ...current, device_limit: value } : current))}
+                    onChange={event => setSelected(current => (current ? { ...current, device_limit: event.target.value } : current))}
                   />
                 </ModalField>
                 <ModalField label="Capacity Limit">
@@ -451,7 +420,7 @@ export function PlanPage() {
                     aria-label="Capacity Limit"
                     type="number"
                     value={String(selected?.capacity_limit ?? "")}
-                    onValueChange={value => setSelected(current => (current ? { ...current, capacity_limit: value } : current))}
+                    onChange={event => setSelected(current => (current ? { ...current, capacity_limit: event.target.value } : current))}
                   />
                 </ModalField>
                 <ModalField label="Speed Limit (Mbps)">
@@ -459,14 +428,14 @@ export function PlanPage() {
                     aria-label="Speed Limit (Mbps)"
                     type="number"
                     value={String(selected?.speed_limit ?? "")}
-                    onValueChange={value => setSelected(current => (current ? { ...current, speed_limit: value } : current))}
+                    onChange={event => setSelected(current => (current ? { ...current, speed_limit: event.target.value } : current))}
                   />
                 </ModalField>
                 <div className="rounded-2xl border border-default-200 bg-default-50 p-4">
                   <p className="mb-3 text-sm font-semibold text-slate-900">Force Update Users</p>
                   <Switch
                     isSelected={Boolean(selected?.force_update)}
-                    onValueChange={value => setSelected(current => (current ? { ...current, force_update: value } : current))}
+                    onChange={value => setSelected(current => (current ? { ...current, force_update: value } : current))}
                   >
                     Apply traffic, speed, and group changes to subscribed users
                   </Switch>
@@ -477,18 +446,18 @@ export function PlanPage() {
                       aria-label={`${option.label} (${currency})`}
                       type="number"
                       value={String(selected?.[option.key] ?? "")}
-                      onValueChange={value =>
-                        setSelected(current => (current ? { ...current, [option.key]: value } : current))
+                      onChange={event =>
+                        setSelected(current => (current ? { ...current, [option.key]: event.target.value } : current))
                       }
                     />
                   </ModalField>
                 ))}
               </Modal.Body>
               <Modal.Footer>
-                <Button variant="light" onPress={modalState.close}>
+                <Button variant="ghost" onPress={modalState.close}>
                   Cancel
                 </Button>
-                <Button color="primary" onPress={() => void savePlan()} isLoading={saving}>
+                <Button variant="primary" onPress={() => void savePlan()} isDisabled={saving}>
                   Save plan
                 </Button>
               </Modal.Footer>

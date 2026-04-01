@@ -5,7 +5,7 @@ import {
   CardHeader,
   Chip,
   Spinner,
-  TextArea
+  TextArea,
 } from "@heroui/react";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -120,7 +120,7 @@ export function TicketDetailPage() {
       {state.detail ? (
         <div className={adminStatsGridClassName}>
           {stats.map(item => (
-            <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
+            <Card key={item.label} className={adminCardClassName}>
               <CardContent className={adminStatCardBodyClassName}>
                 <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
                 <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
@@ -134,7 +134,7 @@ export function TicketDetailPage() {
       {state.loading ? (
         <Card className="border border-default-200 shadow-none">
           <CardContent className="flex min-h-[280px] items-center justify-center">
-            <Spinner color="primary" label="Loading ticket detail" />
+            <Spinner />
           </CardContent>
         </Card>
       ) : state.error ? (
@@ -143,7 +143,7 @@ export function TicketDetailPage() {
         </Card>
       ) : (
         <div className="grid gap-6 xl:grid-cols-[1.7fr_1fr]">
-          <Card shadow="none" radius="lg" className={adminCardClassName}>
+          <Card className={adminCardClassName}>
             <CardHeader className={adminSectionHeaderClassName}>
               <div>
                 <p className="text-[1.1rem] font-semibold tracking-[-0.03em] text-slate-950">
@@ -151,7 +151,7 @@ export function TicketDetailPage() {
                 </p>
                 <p className="mt-1 text-sm leading-6 text-slate-500">Reply directly from the new admin thread view.</p>
               </div>
-              <Button color="warning" variant="light" onPress={() => void closeTicket()} isLoading={submitting} isDisabled={state.detail?.status === 1}>
+              <Button variant="ghost" onPress={() => void closeTicket()} isDisabled={submitting || state.detail?.status === 1}>
                 Close ticket
               </Button>
             </CardHeader>
@@ -174,21 +174,21 @@ export function TicketDetailPage() {
               <ModalField label="Reply">
                 <TextArea
                   aria-label="Reply"
-                  minRows={5}
+                  rows={5}
                   value={message}
-                  onValueChange={setMessage}
+                  onChange={event => setMessage(event.target.value)}
                   placeholder="Write a reply to the user"
                 />
               </ModalField>
               <div className="flex justify-end">
-                <Button color="primary" onPress={() => void reply()} isLoading={submitting} isDisabled={!message.trim() || state.detail?.status === 1}>
+                <Button variant="primary" onPress={() => void reply()} isDisabled={submitting || !message.trim() || state.detail?.status === 1}>
                   Send reply
                 </Button>
               </div>
             </CardContent>
           </Card>
 
-          <Card shadow="none" radius="lg" className={adminCardClassName}>
+          <Card className={adminCardClassName}>
             <CardHeader className={adminSectionHeaderClassName}>
               <div>
                 <p className="text-[1.1rem] font-semibold tracking-[-0.03em] text-slate-950">Ticket Meta</p>
@@ -198,10 +198,10 @@ export function TicketDetailPage() {
             <CardContent className={`${adminSectionBodyClassName} gap-4 text-sm text-slate-600`}>
               <div>
                 <div className="flex gap-2">
-                  <Chip color={state.detail?.status === 1 ? "default" : "success"} variant="flat">
+                  <Chip color={state.detail?.status === 1 ? "default" : "success"} variant="soft">
                     {state.detail?.status === 1 ? "Closed" : "Open"}
                   </Chip>
-                  <Chip variant="flat">Reply {state.detail?.reply_status ?? 0}</Chip>
+                  <Chip variant="soft">Reply {state.detail?.reply_status ?? 0}</Chip>
                 </div>
               </div>
               <p>ID: #{state.detail?.id}</p>

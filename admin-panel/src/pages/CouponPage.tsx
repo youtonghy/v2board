@@ -5,11 +5,7 @@ import {
   CardHeader,
   Chip,
   Input,
-  ListBox,
-  ListBoxItem,
   Modal,
-  Pagination,
-  Select,
   Spinner,
   Switch,
   Table,
@@ -17,9 +13,12 @@ import {
   TableCell,
   TableColumn,
   TableHeader,
-  TableRow
+  TableRow,
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
+import { AdminMultiSelectField } from "../components/AdminMultiSelectField";
+import { AdminPagination } from "../components/AdminPagination";
+import { AdminSelectField } from "../components/AdminSelectField";
 import { adminRequest } from "../lib/api";
 import { COUPON_TYPE_OPTIONS, PERIOD_OPTIONS, fromDatetimeInput, toDatetimeInput } from "../lib/admin-constants";
 import { ModalField } from "../components/ModalField";
@@ -172,7 +171,7 @@ export function CouponPage() {
     >
       <div className={adminStatsGridClassName}>
         {stats.map(item => (
-          <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
+          <Card key={item.label} className={adminCardClassName}>
             <CardContent className={adminStatCardBodyClassName}>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
               <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
@@ -182,7 +181,7 @@ export function CouponPage() {
         ))}
       </div>
 
-      <Card shadow="none" radius="lg" className={adminCardClassName}>
+      <Card className={adminCardClassName}>
         <CardHeader className={adminSectionHeaderClassName}>
           <div>
             <p className="text-[1.1rem] font-semibold tracking-[-0.03em] text-slate-950">Coupon Inventory</p>
@@ -191,8 +190,8 @@ export function CouponPage() {
             </p>
           </div>
           <Button
-            color="primary"
-            radius="full"
+            variant="primary"
+           
             onPress={() => {
               setSelected(normalizeCoupon());
               setOpen(true);
@@ -204,11 +203,11 @@ export function CouponPage() {
         <CardContent className={`${adminSectionBodyClassName} gap-4`}>
           {loading ? (
             <div className="flex min-h-[280px] items-center justify-center">
-              <Spinner color="primary" label="Loading coupons" />
+              <Spinner />
             </div>
           ) : (
             <>
-              <Table aria-label="Coupons" classNames={adminTableClassNames}>
+              <Table aria-label="Coupons" className={adminTableClassNames.wrapper}>
                 <Table.Content>
                   <TableHeader>
                     <TableColumn>ID</TableColumn>
@@ -217,30 +216,29 @@ export function CouponPage() {
                     <TableColumn>Type</TableColumn>
                     <TableColumn>Code</TableColumn>
                     <TableColumn>Limit</TableColumn>
-                    <TableColumn align="end">Actions</TableColumn>
+                    <TableColumn>Actions</TableColumn>
                   </TableHeader>
-                  <TableBody items={records} emptyContent="No coupons found">
+                  <TableBody items={records}>
                     {item => (
                       <TableRow key={String(item.id || Math.random())}>
                         <TableCell>{item.id ?? "—"}</TableCell>
                         <TableCell>
                           <Switch
                             isSelected={Boolean(Number(item.show ?? 0))}
-                            onValueChange={() => void toggleCoupon(item)}
+                            onChange={() => void toggleCoupon(item)}
                           />
                         </TableCell>
                         <TableCell>{item.name || "Untitled"}</TableCell>
                         <TableCell>{item.type === 2 ? "Percentage" : "Amount"}</TableCell>
                         <TableCell>
-                          {item.code ? <Chip size="sm" variant="flat" className="bg-sky-50 text-sky-700">{item.code}</Chip> : "Auto"}
+                          {item.code ? <Chip size="sm" variant="soft" className="bg-sky-50 text-sky-700">{item.code}</Chip> : "Auto"}
                         </TableCell>
                         <TableCell>{item.limit_use ?? "Unlimited"}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button
                               size="sm"
-                              color="primary"
-                              variant="light"
+                              variant="ghost"
                               onPress={() => {
                                 setSelected(normalizeCoupon(item));
                                 setOpen(true);
@@ -248,7 +246,7 @@ export function CouponPage() {
                             >
                               Edit
                             </Button>
-                            <Button size="sm" color="danger" variant="light" onPress={() => void dropCoupon(item)}>
+                            <Button size="sm" variant="ghost" onPress={() => void dropCoupon(item)}>
                               Delete
                             </Button>
                           </div>
@@ -259,11 +257,10 @@ export function CouponPage() {
                 </Table.Content>
               </Table>
               <div className="flex justify-end">
-                <Pagination
+                <AdminPagination
                   page={page}
                   total={Math.max(1, Math.ceil(total / pageSize))}
                   onChange={nextPage => void loadCoupons(nextPage)}
-                  showControls
                 />
               </div>
             </>
@@ -273,65 +270,77 @@ export function CouponPage() {
 
       <Modal isOpen={open} onOpenChange={isOpen => !isOpen && setOpen(false)}>
         <Modal.Backdrop>
-          <Modal.Container size="5xl" scroll="inside">
+          <Modal.Container size="lg" scroll="inside">
             <Modal.Dialog>
               <Modal.Header>
                 <Modal.Heading>{selected?.id ? "Edit coupon" : "Create coupon"}</Modal.Heading>
               </Modal.Header>
               <Modal.Body className="grid gap-5 md:grid-cols-2">
                 <ModalField label="Name">
-                  <Input aria-label="Name" value={selected?.name || ""} onValueChange={value => setSelected(current => (current ? { ...current, name: value } : current))} />
+                  <Input aria-label="Name" value={selected?.name || ""} onChange={event => setSelected(current => (current ? { ...current, name: event.target.value } : current))} />
                 </ModalField>
                 <ModalField label="Code">
-                  <Input aria-label="Code" value={selected?.code || ""} onValueChange={value => setSelected(current => (current ? { ...current, code: value, generate_count: undefined } : current))} />
+                  <Input aria-label="Code" value={selected?.code || ""} onChange={event => setSelected(current => (current ? { ...current, code: event.target.value, generate_count: undefined } : current))} />
                 </ModalField>
                 <ModalField label="Discount Type">
-                  <Select aria-label="Discount Type" items={typeOptions} selectedKey={selectedType} onSelectionChange={key => {
-                    const nextType = Number(key || 1);
-                    setSelected(current => (current ? { ...current, type: nextType } : current));
-                  }}>
-                    <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
-                    <Select.Popover><ListBox items={typeOptions}>{item => <ListBoxItem id={item.id} textValue={item.label}>{item.label}</ListBoxItem>}</ListBox></Select.Popover>
-                  </Select>
+                  <AdminSelectField
+                    ariaLabel="Discount Type"
+                    options={typeOptions}
+                    selectedKey={selectedType}
+                    onSelectionChange={key => {
+                      const nextType = Number(key || 1);
+                      setSelected(current => (current ? { ...current, type: nextType } : current));
+                    }}
+                  />
                 </ModalField>
                 <ModalField label="Discount Value" description={selected?.type === 2 ? "%" : "Amount"}>
-                  <Input aria-label="Discount Value" type="number" value={String(selected?.value ?? "")} onValueChange={value => setSelected(current => (current ? { ...current, value } : current))} />
+                  <Input aria-label="Discount Value" type="number" value={String(selected?.value ?? "")} onChange={event => setSelected(current => (current ? { ...current, value: event.target.value } : current))} />
                 </ModalField>
                 <ModalField label="Start Time">
-                  <Input aria-label="Start Time" type="datetime-local" value={toDatetimeInput(selected?.started_at)} onValueChange={value => setSelected(current => (current ? { ...current, started_at: fromDatetimeInput(value) } : current))} />
+                  <Input aria-label="Start Time" type="datetime-local" value={toDatetimeInput(selected?.started_at)} onChange={event => setSelected(current => (current ? { ...current, started_at: fromDatetimeInput(event.target.value) } : current))} />
                 </ModalField>
                 <ModalField label="End Time">
-                  <Input aria-label="End Time" type="datetime-local" value={toDatetimeInput(selected?.ended_at)} onValueChange={value => setSelected(current => (current ? { ...current, ended_at: fromDatetimeInput(value) } : current))} />
+                  <Input aria-label="End Time" type="datetime-local" value={toDatetimeInput(selected?.ended_at)} onChange={event => setSelected(current => (current ? { ...current, ended_at: fromDatetimeInput(event.target.value) } : current))} />
                 </ModalField>
                 <ModalField label="Max Uses">
-                  <Input aria-label="Max Uses" type="number" value={String(selected?.limit_use ?? "")} onValueChange={value => setSelected(current => (current ? { ...current, limit_use: value } : current))} />
+                  <Input aria-label="Max Uses" type="number" value={String(selected?.limit_use ?? "")} onChange={event => setSelected(current => (current ? { ...current, limit_use: event.target.value } : current))} />
                 </ModalField>
                 <ModalField label="Uses Per User">
-                  <Input aria-label="Uses Per User" type="number" value={String(selected?.limit_use_with_user ?? "")} onValueChange={value => setSelected(current => (current ? { ...current, limit_use_with_user: value } : current))} />
+                  <Input aria-label="Uses Per User" type="number" value={String(selected?.limit_use_with_user ?? "")} onChange={event => setSelected(current => (current ? { ...current, limit_use_with_user: event.target.value } : current))} />
                 </ModalField>
                 <ModalField label="Allowed Plans">
-                  <Select aria-label="Allowed Plans" items={planOptions} selectionMode="multiple" selectedKeys={selectedPlanIds} onSelectionChange={keys => {
-                    setSelected(current => current ? { ...current, limit_plan_ids: Array.from(keys).map(item => String(item)) } : current);
-                  }}>
-                    <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
-                    <Select.Popover><ListBox items={planOptions}>{item => <ListBoxItem id={item.id} textValue={item.label}>{item.label}</ListBoxItem>}</ListBox></Select.Popover>
-                  </Select>
+                  <AdminMultiSelectField
+                    ariaLabel="Allowed Plans"
+                    options={planOptions}
+                    selectedKeys={selectedPlanIds}
+                    onSelectionChange={keys => {
+                      setSelected(current => current ? {
+                        ...current,
+                        limit_plan_ids: keys === "all" ? planOptions.map(item => item.id) : Array.from(keys).map(item => String(item))
+                      } : current);
+                    }}
+                  />
                 </ModalField>
                 <ModalField label="Allowed Periods">
-                  <Select aria-label="Allowed Periods" items={periodOptions} selectionMode="multiple" selectedKeys={selectedPeriods} onSelectionChange={keys => setSelected(current => current ? { ...current, limit_period: Array.from(keys).map(item => String(item)) } : current)}>
-                    <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
-                    <Select.Popover><ListBox items={periodOptions}>{item => <ListBoxItem id={item.id} textValue={item.label}>{item.label}</ListBoxItem>}</ListBox></Select.Popover>
-                  </Select>
+                  <AdminMultiSelectField
+                    ariaLabel="Allowed Periods"
+                    options={periodOptions}
+                    selectedKeys={selectedPeriods}
+                    onSelectionChange={keys => setSelected(current => current ? {
+                      ...current,
+                      limit_period: keys === "all" ? periodOptions.map(item => item.id) : Array.from(keys).map(item => String(item))
+                    } : current)}
+                  />
                 </ModalField>
                 {!selected?.id && !selected?.code ? (
                   <ModalField label="Generate Count">
-                    <Input aria-label="Generate Count" type="number" value={String(selected?.generate_count ?? "")} onValueChange={value => setSelected(current => (current ? { ...current, generate_count: value } : current))} />
+                    <Input aria-label="Generate Count" type="number" value={String(selected?.generate_count ?? "")} onChange={event => setSelected(current => (current ? { ...current, generate_count: event.target.value } : current))} />
                   </ModalField>
                 ) : null}
               </Modal.Body>
               <Modal.Footer>
-                <Button variant="light" onPress={() => setOpen(false)}>Cancel</Button>
-                <Button color="primary" onPress={() => void saveCoupon()} isLoading={saving}>Save coupon</Button>
+                <Button variant="ghost" onPress={() => setOpen(false)}>Cancel</Button>
+                <Button variant="primary" onPress={() => void saveCoupon()} isDisabled={saving}>Save coupon</Button>
               </Modal.Footer>
             </Modal.Dialog>
           </Modal.Container>

@@ -1,15 +1,10 @@
 import {
-  Accordion,
   Button,
   Card,
   CardContent,
   CardHeader,
   Chip,
   Input,
-  ListBox,
-  ListBoxItem,
-  Pagination,
-  Select,
   Spinner,
   Tabs,
   Table,
@@ -17,17 +12,18 @@ import {
   TableCell,
   TableColumn,
   TableHeader,
-  TableRow
+  TableRow,
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { AdminFilterAccordion } from "../components/AdminFilterAccordion";
+import { AdminPagination } from "../components/AdminPagination";
+import { AdminSelectField } from "../components/AdminSelectField";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { asArray, formatDateTime } from "../lib/admin-format";
 import {
   adminCardClassName,
-  adminFilterAccordionClassName,
-  adminFilterAccordionItemClasses,
   adminSectionBodyClassName,
   adminSectionHeaderClassName,
   adminStatCardBodyClassName,
@@ -117,7 +113,7 @@ export function TicketPage() {
     >
       <div className={adminStatsGridClassName}>
         {stats.map(item => (
-          <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
+          <Card key={item.label} className={adminCardClassName}>
             <CardContent className={adminStatCardBodyClassName}>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
               <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
@@ -127,7 +123,7 @@ export function TicketPage() {
         ))}
       </div>
 
-      <Card shadow="none" radius="lg" className={adminCardClassName}>
+      <Card className={adminCardClassName}>
         <CardHeader className={adminSectionHeaderClassName}>
           <div>
             <p className="text-[1.1rem] font-semibold tracking-[-0.03em] text-slate-950">Support Queue</p>
@@ -143,8 +139,7 @@ export function TicketPage() {
               setStatus(String(key));
               setPage(1);
             }}
-            color="primary"
-            variant="underlined"
+            variant="secondary"
           >
             <Tabs.List>
               {STATUS_TABS.map(tab => (
@@ -156,88 +151,53 @@ export function TicketPage() {
             </Tabs.List>
           </Tabs>
 
-          <Accordion
-            variant="splitted"
-            showDivider={false}
-            itemClasses={adminFilterAccordionItemClasses}
-            className={adminFilterAccordionClassName}
-          >
-            <Accordion.Item id="filters">
-              <Accordion.Heading>
-                <Accordion.Trigger className="flex items-start justify-between gap-4">
-                  <div>
-                    <p>Filters</p>
-                    <p className="mt-1 text-xs text-slate-400">Refine the current dataset quickly.</p>
-                  </div>
-                  <Accordion.Indicator />
-                </Accordion.Trigger>
-              </Accordion.Heading>
-              <Accordion.Panel>
-                <Accordion.Body>
-                  <div className="grid gap-3 md:grid-cols-4">
-            <Input label="User Email" labelPlacement="outside" value={email} onValueChange={setEmail} />
-            <Select
-              label="Reply Status"
-              labelPlacement="outside"
-              placeholder="All replies"
-              items={[
-                { id: "0", label: "Pending Admin Reply" },
-                { id: "1", label: "Waiting User Reply" },
-                { id: "2", label: "Resolved" }
-              ]}
-              selectedKey={selectedReplyStatus}
-              onSelectionChange={key => setReplyStatus(String(key || ""))}
-            >
-              <Select.Trigger>
-                <Select.Value />
-                <Select.Indicator />
-              </Select.Trigger>
-              <Select.Popover>
-                <ListBox items={[
-                  { id: "0", label: "Pending Admin Reply" },
-                  { id: "1", label: "Waiting User Reply" },
-                  { id: "2", label: "Resolved" }
-                ]}>
-                  {item => (
-                    <ListBoxItem id={item.id} textValue={item.label}>
-                      {item.label}
-                    </ListBoxItem>
-                  )}
-                </ListBox>
-              </Select.Popover>
-            </Select>
-            <div className="flex items-end gap-2 md:col-span-2">
-              <Button color="primary" onPress={() => { setPage(1); void loadTickets(1); }}>
-                Apply
-              </Button>
-              <Button
-                variant="flat"
-                onPress={() => {
-                  setEmail("");
-                  setReplyStatus("");
-                  setStatus("all");
-                  setPage(1);
-                  void loadTickets(1);
-                }}
-              >
-                Reset
-              </Button>
+          <AdminFilterAccordion>
+            <div className="grid gap-3 md:grid-cols-4">
+              <Input aria-label="User Email" value={email} onChange={event => setEmail(event.target.value)} />
+              <div>
+                <div className="mb-2 space-y-1">
+                  <p className="text-sm font-medium text-slate-700">Reply Status</p>
+                </div>
+                <AdminSelectField
+                  ariaLabel="Reply Status"
+                  options={[
+                    { id: "0", label: "Pending Admin Reply" },
+                    { id: "1", label: "Waiting User Reply" },
+                    { id: "2", label: "Resolved" }
+                  ]}
+                  selectedKey={selectedReplyStatus}
+                  onSelectionChange={key => setReplyStatus(String(key || ""))}
+                />
+              </div>
+              <div className="flex items-end gap-2 md:col-span-2">
+                <Button variant="primary" onPress={() => { setPage(1); void loadTickets(1); }}>
+                  Apply
+                </Button>
+                <Button
+                  variant="secondary"
+                  onPress={() => {
+                    setEmail("");
+                    setReplyStatus("");
+                    setStatus("all");
+                    setPage(1);
+                    void loadTickets(1);
+                  }}
+                >
+                  Reset
+                </Button>
+              </div>
             </div>
-                  </div>
-                </Accordion.Body>
-              </Accordion.Panel>
-            </Accordion.Item>
-          </Accordion>
+          </AdminFilterAccordion>
 
           {error ? <div className="rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">{error}</div> : null}
 
           {loading ? (
             <div className="flex min-h-[320px] items-center justify-center">
-              <Spinner color="primary" label="Loading tickets" />
+              <Spinner />
             </div>
           ) : (
             <>
-              <Table aria-label="Tickets" classNames={adminTableClassNames}>
+              <Table aria-label="Tickets" className={adminTableClassNames.wrapper}>
                 <Table.Content>
                   <TableHeader>
                     <TableColumn>ID</TableColumn>
@@ -245,9 +205,9 @@ export function TicketPage() {
                     <TableColumn>Priority</TableColumn>
                     <TableColumn>Status</TableColumn>
                     <TableColumn>Updated</TableColumn>
-                    <TableColumn align="end">Actions</TableColumn>
+                    <TableColumn>Actions</TableColumn>
                   </TableHeader>
-                  <TableBody items={records} emptyContent="No tickets found">
+                  <TableBody items={records}>
                     {item => (
                       <TableRow key={item.id}>
                         <TableCell>#{item.id}</TableCell>
@@ -258,19 +218,19 @@ export function TicketPage() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Chip variant="flat">{item.level ?? 0}</Chip>
+                          <Chip variant="soft">{item.level ?? 0}</Chip>
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2">
-                            <Chip color={item.status === 1 ? "default" : "success"} variant="flat">
+                            <Chip color={item.status === 1 ? "default" : "success"} variant="soft">
                               {item.status === 1 ? "Closed" : "Open"}
                             </Chip>
-                            <Chip variant="flat">Reply {item.reply_status ?? 0}</Chip>
+                            <Chip variant="soft">Reply {item.reply_status ?? 0}</Chip>
                           </div>
                         </TableCell>
                         <TableCell>{formatDateTime(item.updated_at || item.created_at || null)}</TableCell>
                         <TableCell className="text-right">
-                          <Button size="sm" color="primary" variant="light" onPress={() => navigate(`/new/ticket/${item.id}`)}>
+                          <Button size="sm" variant="ghost" onPress={() => navigate(`/new/ticket/${item.id}`)}>
                             Open thread
                           </Button>
                         </TableCell>
@@ -281,7 +241,7 @@ export function TicketPage() {
               </Table>
 
               <div className="flex justify-center">
-                <Pagination page={page} total={totalPages} onChange={setPage} />
+                <AdminPagination page={page} total={totalPages} onChange={setPage} />
               </div>
             </>
           )}

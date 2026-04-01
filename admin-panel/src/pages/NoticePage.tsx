@@ -13,8 +13,8 @@ import {
   TableCell,
   TableColumn,
   TableHeader,
+  TextArea,
   TableRow,
-  TextArea
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
 import { adminRequest } from "../lib/api";
@@ -125,7 +125,7 @@ export function NoticePage() {
     >
       <div className={adminStatsGridClassName}>
         {stats.map(item => (
-          <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
+          <Card key={item.label} className={adminCardClassName}>
             <CardContent className={adminStatCardBodyClassName}>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
               <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
@@ -135,7 +135,7 @@ export function NoticePage() {
         ))}
       </div>
 
-      <Card shadow="none" radius="lg" className={adminCardClassName}>
+      <Card className={adminCardClassName}>
         <CardHeader className={adminSectionHeaderClassName}>
           <div>
             <p className="text-[1.1rem] font-semibold tracking-[-0.03em] text-slate-950">Announcement Feed</p>
@@ -144,8 +144,8 @@ export function NoticePage() {
             </p>
           </div>
           <Button
-            color="primary"
-            radius="full"
+            variant="primary"
+           
             onPress={() => {
               setSelected(normalizeNotice());
               setOpen(true);
@@ -157,10 +157,10 @@ export function NoticePage() {
         <CardContent className={adminSectionBodyClassName}>
         {loading ? (
           <div className="flex min-h-[280px] items-center justify-center">
-            <Spinner color="primary" label="Loading notices" />
+            <Spinner />
           </div>
         ) : (
-          <Table aria-label="Notices" classNames={adminTableClassNames}>
+          <Table aria-label="Notices" className={adminTableClassNames.wrapper}>
             <Table.Content>
               <TableHeader>
                 <TableColumn>ID</TableColumn>
@@ -168,16 +168,16 @@ export function NoticePage() {
                 <TableColumn>Title</TableColumn>
                 <TableColumn>Tags</TableColumn>
                 <TableColumn>Created</TableColumn>
-                <TableColumn align="end">Actions</TableColumn>
+                <TableColumn>Actions</TableColumn>
               </TableHeader>
-              <TableBody items={records} emptyContent="No notices found">
+              <TableBody items={records}>
                 {item => (
                   <TableRow key={String(item.id || Math.random())}>
                     <TableCell>{item.id ?? "—"}</TableCell>
                     <TableCell>
                       <Switch
                         isSelected={Boolean(Number(item.show ?? 0))}
-                        onValueChange={() => void toggleNotice(item)}
+                        onChange={() => void toggleNotice(item)}
                       />
                     </TableCell>
                     <TableCell>
@@ -189,7 +189,7 @@ export function NoticePage() {
                     <TableCell>
                       <div className="flex flex-wrap gap-2">
                         {(item.tags || []).map(tag => (
-                          <Chip key={tag} size="sm" variant="flat" className="bg-sky-50 text-sky-700">
+                          <Chip key={tag} size="sm" variant="soft" className="bg-sky-50 text-sky-700">
                             {tag}
                           </Chip>
                         ))}
@@ -200,8 +200,7 @@ export function NoticePage() {
                       <div className="flex justify-end gap-2">
                         <Button
                           size="sm"
-                          color="primary"
-                          variant="light"
+                          variant="ghost"
                           onPress={() => {
                             setSelected(normalizeNotice(item));
                             setOpen(true);
@@ -209,7 +208,7 @@ export function NoticePage() {
                         >
                           Edit
                         </Button>
-                        <Button size="sm" color="danger" variant="light" onPress={() => void dropNotice(item)}>
+                        <Button size="sm" variant="ghost" onPress={() => void dropNotice(item)}>
                           Delete
                         </Button>
                       </div>
@@ -223,7 +222,7 @@ export function NoticePage() {
         </CardContent>
       </Card>
 
-      <Modal isOpen={open} onOpenChange={isOpen => !isOpen && setOpen(false)} size="4xl" scrollBehavior="inside">
+      <Modal isOpen={open} onOpenChange={isOpen => !isOpen && setOpen(false)}>
         <Modal.Backdrop>
           <Modal.Container>
             <Modal.Dialog>
@@ -232,21 +231,21 @@ export function NoticePage() {
               </Modal.Header>
               <Modal.Body className="gap-5">
                 <ModalField label="Title">
-                  <Input aria-label="Title" value={selected?.title || ""} onValueChange={value => setSelected(current => (current ? { ...current, title: value } : current))} />
+                  <Input aria-label="Title" value={selected?.title || ""} onChange={event => setSelected(current => (current ? { ...current, title: event.target.value } : current))} />
                 </ModalField>
                 <ModalField label="Content">
-                  <TextArea aria-label="Content" minRows={10} value={selected?.content || ""} onValueChange={value => setSelected(current => (current ? { ...current, content: value } : current))} />
+                  <TextArea aria-label="Content" rows={10} value={selected?.content || ""} onChange={event => setSelected(current => (current ? { ...current, content: event.target.value } : current))} />
                 </ModalField>
                 <ModalField label="Image URL">
-                  <Input aria-label="Image URL" value={selected?.img_url || ""} onValueChange={value => setSelected(current => (current ? { ...current, img_url: value } : current))} />
+                  <Input aria-label="Image URL" value={selected?.img_url || ""} onChange={event => setSelected(current => (current ? { ...current, img_url: event.target.value } : current))} />
                 </ModalField>
                 <ModalField label="Tags" description="Comma separated">
-                  <Input aria-label="Tags" value={(selected?.tags || []).join(", ")} onValueChange={value => setSelected(current => current ? { ...current, tags: value.split(",").map(item => item.trim()).filter(Boolean) } : current)} />
+                  <Input aria-label="Tags" value={(selected?.tags || []).join(", ")} onChange={event => setSelected(current => current ? { ...current, tags: event.target.value.split(",").map(item => item.trim()).filter(Boolean) } : current)} />
                 </ModalField>
               </Modal.Body>
               <Modal.Footer>
-                <Button variant="light" onPress={() => setOpen(false)}>Cancel</Button>
-                <Button color="primary" onPress={() => void saveNotice()} isLoading={saving}>Save notice</Button>
+                <Button variant="ghost" onPress={() => setOpen(false)}>Cancel</Button>
+                <Button variant="primary" onPress={() => void saveNotice()} isDisabled={saving}>Save notice</Button>
               </Modal.Footer>
         </Modal.Dialog>
           </Modal.Container>

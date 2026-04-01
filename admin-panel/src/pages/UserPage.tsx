@@ -8,7 +8,6 @@ import {
   TrashBin
 } from "@gravity-ui/icons";
 import {
-  Accordion,
   Button,
   Card,
   CardContent,
@@ -18,7 +17,6 @@ import {
   ListBox,
   ListBoxItem,
   Modal,
-  Pagination,
   Select,
   Spinner,
   Switch,
@@ -29,17 +27,18 @@ import {
   TableHeader,
   TableRow,
   TextArea,
-  Tooltip
+  Tooltip,
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
+import { AdminFilterAccordion } from "../components/AdminFilterAccordion";
+import { AdminPagination } from "../components/AdminPagination";
+import { AdminSelectField } from "../components/AdminSelectField";
 import { ModalField } from "../components/ModalField";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { formatBytes, formatDateTime, formatMoney } from "../lib/admin-format";
 import {
   adminCardClassName,
-  adminFilterAccordionClassName,
-  adminFilterAccordionItemClasses,
   adminSectionBodyClassName,
   adminSectionHeaderClassName,
   adminStatCardBodyClassName,
@@ -567,7 +566,7 @@ export function UserPage() {
     >
       <div className={adminStatsGridClassName}>
         {stats.map(item => (
-          <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
+          <Card key={item.label} className={adminCardClassName}>
             <CardContent className={adminStatCardBodyClassName}>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
               <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
@@ -577,7 +576,7 @@ export function UserPage() {
         ))}
       </div>
 
-      <Card shadow="none" radius="lg" className={adminCardClassName}>
+      <Card className={adminCardClassName}>
         <CardHeader className={adminSectionHeaderClassName}>
           <div>
             <p className="text-[1.1rem] font-semibold tracking-[-0.03em] text-slate-950">User Directory</p>
@@ -586,100 +585,53 @@ export function UserPage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button color="default" variant="light" onPress={() => void dumpCsv()} isLoading={submitting}>
+            <Button variant="ghost" onPress={() => void dumpCsv()} isDisabled={submitting}>
               Export CSV
             </Button>
-            <Button color="secondary" variant="light" onPress={() => setMailOpen(true)}>
+            <Button variant="ghost" onPress={() => setMailOpen(true)}>
               Mass mail
             </Button>
-            <Button color="danger" variant="light" onPress={() => void bulkDelete()} isLoading={submitting}>
+            <Button variant="ghost" onPress={() => void bulkDelete()} isDisabled={submitting}>
               Bulk delete
             </Button>
-            <Button color="primary" onPress={() => setGenerateOpen(true)}>
+            <Button variant="primary" onPress={() => setGenerateOpen(true)}>
               Generate users
             </Button>
           </div>
         </CardHeader>
         <CardContent className={`${adminSectionBodyClassName} gap-5`}>
-          <Accordion
-            variant="splitted"
-            showDivider={false}
-            itemClasses={adminFilterAccordionItemClasses}
-            className={adminFilterAccordionClassName}
-          >
-            <Accordion.Item id="filters">
-              <Accordion.Heading>
-                <Accordion.Trigger className="flex items-start justify-between gap-4">
-                  <div>
-                    <p>Filters</p>
-                    <p className="mt-1 text-xs text-slate-400">Refine the current dataset quickly.</p>
-                  </div>
-                  <Accordion.Indicator />
-                </Accordion.Trigger>
-              </Accordion.Heading>
-              <Accordion.Panel>
-                <Accordion.Body>
-                  <div className="grid gap-3 md:grid-cols-4">
+          <AdminFilterAccordion>
+            <div className="grid gap-3 md:grid-cols-4">
                     <ModalField label="Email">
                       <Input
                         aria-label="Email"
                         placeholder="Search by email"
                         value={searchEmail}
-                        onValueChange={setSearchEmail}
+                        onChange={event => setSearchEmail(event.target.value)}
                       />
                     </ModalField>
                     <ModalField label="Plan">
-                      <Select
-                        aria-label="Plan"
-                        placeholder="All plans"
-                        items={planOptions}
+                      <AdminSelectField
+                        ariaLabel="Plan"
+                        options={planOptions}
                         selectedKey={planFilter || null}
                         onSelectionChange={key => setPlanFilter(String(key || ""))}
-                      >
-                        <Select.Trigger>
-                          <Select.Value />
-                          <Select.Indicator />
-                        </Select.Trigger>
-                        <Select.Popover>
-                          <ListBox items={planOptions}>
-                            {item => (
-                              <ListBoxItem id={item.id} textValue={item.label}>
-                                {item.label}
-                              </ListBoxItem>
-                            )}
-                          </ListBox>
-                        </Select.Popover>
-                      </Select>
+                      />
                     </ModalField>
                     <ModalField label="Status">
-                      <Select
-                        aria-label="Status"
-                        placeholder="All users"
-                        items={statusOptions}
+                      <AdminSelectField
+                        ariaLabel="Status"
+                        options={statusOptions}
                         selectedKey={bannedFilter || null}
                         onSelectionChange={key => setBannedFilter(String(key || ""))}
-                      >
-                        <Select.Trigger>
-                          <Select.Value />
-                          <Select.Indicator />
-                        </Select.Trigger>
-                        <Select.Popover>
-                          <ListBox items={statusOptions}>
-                            {item => (
-                              <ListBoxItem id={item.id} textValue={item.label}>
-                                {item.label}
-                              </ListBoxItem>
-                            )}
-                          </ListBox>
-                        </Select.Popover>
-                      </Select>
+                      />
                     </ModalField>
                     <div className="flex items-end gap-2">
-                      <Button color="primary" onPress={() => { setPage(1); void loadUsers(1); }}>
+                      <Button variant="primary" onPress={() => { setPage(1); void loadUsers(1); }}>
                         Apply filters
                       </Button>
                       <Button
-                        variant="flat"
+                        variant="secondary"
                         onPress={() => {
                           setSearchEmail("");
                           setPlanFilter("");
@@ -691,11 +643,8 @@ export function UserPage() {
                         Reset
                       </Button>
                     </div>
-                  </div>
-                </Accordion.Body>
-              </Accordion.Panel>
-            </Accordion.Item>
-          </Accordion>
+            </div>
+          </AdminFilterAccordion>
 
           {error ? (
             <div className="rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">
@@ -705,11 +654,11 @@ export function UserPage() {
 
           {loading ? (
             <div className="flex min-h-[320px] items-center justify-center">
-              <Spinner color="primary" label="Loading users" />
+              <Spinner />
             </div>
           ) : (
             <>
-              <Table aria-label="Users" classNames={adminTableClassNames}>
+              <Table aria-label="Users" className={adminTableClassNames.wrapper}>
                 <Table.Content>
                   <TableHeader>
                     <TableColumn>Email</TableColumn>
@@ -718,9 +667,9 @@ export function UserPage() {
                     <TableColumn>Usage</TableColumn>
                     <TableColumn>Expires</TableColumn>
                     <TableColumn>Status</TableColumn>
-                    <TableColumn align="end">Actions</TableColumn>
+                    <TableColumn>Actions</TableColumn>
                   </TableHeader>
-                  <TableBody items={records} emptyContent="No users found">
+                  <TableBody items={records}>
                     {item => (
                       <TableRow key={item.id}>
                         <TableCell>
@@ -745,11 +694,11 @@ export function UserPage() {
                         <TableCell>{formatDateTime(item.expired_at)}</TableCell>
                         <TableCell>
                           <div className="flex gap-2">
-                            <Chip color={Number(item.banned || 0) ? "danger" : "success"} variant="flat">
+                            <Chip color={Number(item.banned || 0) ? "danger" : "success"} variant="soft">
                               {Number(item.banned || 0) ? "Banned" : "Active"}
                             </Chip>
-                            {Number(item.is_admin || 0) ? <Chip variant="flat">Admin</Chip> : null}
-                            {Number(item.is_staff || 0) ? <Chip variant="flat">Staff</Chip> : null}
+                            {Number(item.is_admin || 0) ? <Chip variant="soft">Admin</Chip> : null}
+                            {Number(item.is_staff || 0) ? <Chip variant="soft">Staff</Chip> : null}
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
@@ -758,13 +707,12 @@ export function UserPage() {
                               <Tooltip.Trigger>
                                 <Button
                                   size="sm"
-                                  color="primary"
-                                  variant="light"
+                                  variant="ghost"
                                   isIconOnly
-                                  radius="full"
+                                 
                                   aria-label={`Edit ${item.email}`}
                                   onPress={() => void openEditor(item)}
-                                  isLoading={submitting}
+                                  isDisabled={submitting}
                                 >
                                   <PencilToLine width={16} height={16} aria-hidden="true" />
                                 </Button>
@@ -775,13 +723,12 @@ export function UserPage() {
                               <Tooltip.Trigger>
                                 <Button
                                   size="sm"
-                                  color="secondary"
-                                  variant="light"
+                                  variant="ghost"
                                   isIconOnly
-                                  radius="full"
+                                 
                                   aria-label={`Reset secret for ${item.email}`}
                                   onPress={() => void runRowAction("user/resetSecret", { id: item.id })}
-                                  isLoading={submitting}
+                                  isDisabled={submitting}
                                 >
                                   <Key width={16} height={16} aria-hidden="true" />
                                 </Button>
@@ -792,13 +739,12 @@ export function UserPage() {
                               <Tooltip.Trigger>
                                 <Button
                                   size="sm"
-                                  color="primary"
-                                  variant="light"
+                                  variant="ghost"
                                   isIconOnly
-                                  radius="full"
+                                 
                                   aria-label={`View traffic for ${item.email}`}
                                   onPress={() => void openTrafficStats(item)}
-                                  isLoading={submitting}
+                                  isDisabled={submitting}
                                 >
                                   <SquareChartBar width={16} height={16} aria-hidden="true" />
                                 </Button>
@@ -809,13 +755,12 @@ export function UserPage() {
                               <Tooltip.Trigger>
                                 <Button
                                   size="sm"
-                                  color="secondary"
-                                  variant="light"
+                                  variant="ghost"
                                   isIconOnly
-                                  radius="full"
+                                 
                                   aria-label={`View IP geography for ${item.email}`}
                                   onPress={() => void openIpGeo(item)}
-                                  isLoading={submitting}
+                                  isDisabled={submitting}
                                 >
                                   <Globe width={16} height={16} aria-hidden="true" />
                                 </Button>
@@ -826,13 +771,12 @@ export function UserPage() {
                               <Tooltip.Trigger>
                                 <Button
                                   size="sm"
-                                  color="danger"
-                                  variant="light"
+                                  variant="ghost"
                                   isIconOnly
-                                  radius="full"
+                                 
                                   aria-label={Number(item.banned || 0) ? `Unban ${item.email}` : `Ban ${item.email}`}
                                   onPress={() => void runRowAction("user/ban", { filter: [{ key: "id", condition: "=", value: item.id }] })}
-                                  isLoading={submitting}
+                                  isDisabled={submitting}
                                 >
                                   {Number(item.banned || 0) ? (
                                     <LockOpen width={16} height={16} aria-hidden="true" />
@@ -847,13 +791,12 @@ export function UserPage() {
                               <Tooltip.Trigger>
                                 <Button
                                   size="sm"
-                                  color="danger"
-                                  variant="light"
+                                  variant="ghost"
                                   isIconOnly
-                                  radius="full"
+                                 
                                   aria-label={`Delete ${item.email}`}
                                   onPress={() => void runRowAction("user/delUser", { id: item.id })}
-                                  isLoading={submitting}
+                                  isDisabled={submitting}
                                 >
                                   <TrashBin width={16} height={16} aria-hidden="true" />
                                 </Button>
@@ -869,14 +812,14 @@ export function UserPage() {
               </Table>
 
               <div className="flex justify-center">
-                <Pagination page={page} total={totalPages} onChange={setPage} />
+                <AdminPagination page={page} total={totalPages} onChange={setPage} />
               </div>
             </>
           )}
         </CardContent>
       </Card>
 
-      <Modal isOpen={editorOpen} onOpenChange={isOpen => !isOpen && setEditorOpen(false)} size="5xl" scrollBehavior="inside">
+      <Modal isOpen={editorOpen} onOpenChange={isOpen => !isOpen && setEditorOpen(false)}>
         <Modal.Backdrop>
           <Modal.Container>
             <Modal.Dialog>
@@ -885,77 +828,61 @@ export function UserPage() {
               </Modal.Header>
               <Modal.Body className="grid gap-4 md:grid-cols-2">
                 <ModalField label="Email">
-                  <Input aria-label="Email" value={form.email} onValueChange={value => setForm(current => ({ ...current, email: value }))} />
+                  <Input aria-label="Email" value={form.email} onChange={event => setForm(current => ({ ...current, email: event.target.value }))} />
                 </ModalField>
                 <ModalField label="New Password">
-                  <Input aria-label="New Password" type="password" value={form.password} onValueChange={value => setForm(current => ({ ...current, password: value }))} />
+                  <Input aria-label="New Password" type="password" value={form.password} onChange={event => setForm(current => ({ ...current, password: event.target.value }))} />
                 </ModalField>
                 <ModalField label="Plan">
-                  <Select
-                    aria-label="Plan"
-                    items={planOptions}
+                  <AdminSelectField
+                    ariaLabel="Plan"
+                    options={planOptions}
                     selectedKey={selectedPlan}
-                    onSelectionChange={key =>
-                      setForm(current => ({ ...current, plan_id: String(key || "") }))
-                    }
-                  >
-                    <Select.Trigger>
-                      <Select.Value />
-                      <Select.Indicator />
-                    </Select.Trigger>
-                    <Select.Popover>
-                      <ListBox items={planOptions}>
-                        {item => (
-                          <ListBoxItem id={item.id} textValue={item.label}>
-                            {item.label}
-                          </ListBoxItem>
-                        )}
-                      </ListBox>
-                    </Select.Popover>
-                  </Select>
+                    onSelectionChange={key => setForm(current => ({ ...current, plan_id: String(key || "") }))}
+                  />
                 </ModalField>
                 <ModalField label="Transfer (GB)">
-                  <Input aria-label="Transfer (GB)" type="number" value={form.transfer_enable} onValueChange={value => setForm(current => ({ ...current, transfer_enable: value }))} />
+                  <Input aria-label="Transfer (GB)" type="number" value={form.transfer_enable} onChange={event => setForm(current => ({ ...current, transfer_enable: event.target.value }))} />
                 </ModalField>
                 <ModalField label="Device Limit">
-                  <Input aria-label="Device Limit" type="number" value={form.device_limit} onValueChange={value => setForm(current => ({ ...current, device_limit: value }))} />
+                  <Input aria-label="Device Limit" type="number" value={form.device_limit} onChange={event => setForm(current => ({ ...current, device_limit: event.target.value }))} />
                 </ModalField>
                 <ModalField label="Expire Timestamp">
-                  <Input aria-label="Expire Timestamp" value={form.expired_at} onValueChange={value => setForm(current => ({ ...current, expired_at: value }))} />
+                  <Input aria-label="Expire Timestamp" value={form.expired_at} onChange={event => setForm(current => ({ ...current, expired_at: event.target.value }))} />
                 </ModalField>
                 <ModalField label="Balance (cents)">
-                  <Input aria-label="Balance (cents)" value={form.balance} onValueChange={value => setForm(current => ({ ...current, balance: value }))} />
+                  <Input aria-label="Balance (cents)" value={form.balance} onChange={event => setForm(current => ({ ...current, balance: event.target.value }))} />
                 </ModalField>
                 <ModalField label="Commission Balance (cents)">
-                  <Input aria-label="Commission Balance (cents)" value={form.commission_balance} onValueChange={value => setForm(current => ({ ...current, commission_balance: value }))} />
+                  <Input aria-label="Commission Balance (cents)" value={form.commission_balance} onChange={event => setForm(current => ({ ...current, commission_balance: event.target.value }))} />
                 </ModalField>
                 <ModalField label="Commission Rate">
-                  <Input aria-label="Commission Rate" type="number" value={form.commission_rate} onValueChange={value => setForm(current => ({ ...current, commission_rate: value }))} />
+                  <Input aria-label="Commission Rate" type="number" value={form.commission_rate} onChange={event => setForm(current => ({ ...current, commission_rate: event.target.value }))} />
                 </ModalField>
                 <ModalField label="Discount">
-                  <Input aria-label="Discount" type="number" value={form.discount} onValueChange={value => setForm(current => ({ ...current, discount: value }))} />
+                  <Input aria-label="Discount" type="number" value={form.discount} onChange={event => setForm(current => ({ ...current, discount: event.target.value }))} />
                 </ModalField>
                 <ModalField label="Speed Limit">
-                  <Input aria-label="Speed Limit" type="number" value={form.speed_limit} onValueChange={value => setForm(current => ({ ...current, speed_limit: value }))} />
+                  <Input aria-label="Speed Limit" type="number" value={form.speed_limit} onChange={event => setForm(current => ({ ...current, speed_limit: event.target.value }))} />
                 </ModalField>
                 <ModalField label="Invite User Email">
-                  <Input aria-label="Invite User Email" value={form.invite_user_email} onValueChange={value => setForm(current => ({ ...current, invite_user_email: value }))} />
+                  <Input aria-label="Invite User Email" value={form.invite_user_email} onChange={event => setForm(current => ({ ...current, invite_user_email: event.target.value }))} />
                 </ModalField>
                 <ModalField label="Remarks" className="md:col-span-2">
-                  <TextArea aria-label="Remarks" minRows={4} value={form.remarks} onValueChange={value => setForm(current => ({ ...current, remarks: value }))} />
+                  <TextArea aria-label="Remarks" rows={4} value={form.remarks} onChange={event => setForm(current => ({ ...current, remarks: event.target.value }))} />
                 </ModalField>
                 <div className="md:col-span-2 grid gap-3 md:grid-cols-3">
                   <div className="rounded-2xl border border-default-200 bg-default-50 p-4">
                     <p className="mb-3 text-sm font-semibold">Banned</p>
-                    <Switch isSelected={form.banned} onValueChange={value => setForm(current => ({ ...current, banned: value }))} />
+                    <Switch isSelected={form.banned} onChange={value => setForm(current => ({ ...current, banned: value }))} />
                   </div>
                   <div className="rounded-2xl border border-default-200 bg-default-50 p-4">
                     <p className="mb-3 text-sm font-semibold">Admin</p>
-                    <Switch isSelected={form.is_admin} onValueChange={value => setForm(current => ({ ...current, is_admin: value }))} />
+                    <Switch isSelected={form.is_admin} onChange={value => setForm(current => ({ ...current, is_admin: value }))} />
                   </div>
                   <div className="rounded-2xl border border-default-200 bg-default-50 p-4">
                     <p className="mb-3 text-sm font-semibold">Staff</p>
-                    <Switch isSelected={form.is_staff} onValueChange={value => setForm(current => ({ ...current, is_staff: value }))} />
+                    <Switch isSelected={form.is_staff} onChange={value => setForm(current => ({ ...current, is_staff: value }))} />
                   </div>
                 </div>
                 {selected ? (
@@ -968,10 +895,10 @@ export function UserPage() {
                 ) : null}
               </Modal.Body>
               <Modal.Footer>
-                <Button variant="light" onPress={() => setEditorOpen(false)}>
+                <Button variant="ghost" onPress={() => setEditorOpen(false)}>
                   Cancel
                 </Button>
-                <Button color="primary" onPress={() => void submitUserUpdate()} isLoading={submitting}>
+                <Button variant="primary" onPress={() => void submitUserUpdate()} isDisabled={submitting}>
                   Save user
                 </Button>
               </Modal.Footer>
@@ -980,7 +907,7 @@ export function UserPage() {
         </Modal.Backdrop>
       </Modal>
 
-      <Modal isOpen={generateOpen} onOpenChange={isOpen => !isOpen && setGenerateOpen(false)} size="3xl">
+      <Modal isOpen={generateOpen} onOpenChange={isOpen => !isOpen && setGenerateOpen(false)}>
         <Modal.Backdrop>
           <Modal.Container>
             <Modal.Dialog>
@@ -989,50 +916,34 @@ export function UserPage() {
               </Modal.Header>
               <Modal.Body className="grid gap-4 md:grid-cols-2">
                 <ModalField label="Email Prefix">
-                  <Input aria-label="Email Prefix" value={generateForm.email_prefix} onValueChange={value => setGenerateForm(current => ({ ...current, email_prefix: value }))} />
+                  <Input aria-label="Email Prefix" value={generateForm.email_prefix} onChange={event => setGenerateForm(current => ({ ...current, email_prefix: event.target.value }))} />
                 </ModalField>
                 <ModalField label="Email Suffix">
-                  <Input aria-label="Email Suffix" value={generateForm.email_suffix} onValueChange={value => setGenerateForm(current => ({ ...current, email_suffix: value }))} />
+                  <Input aria-label="Email Suffix" value={generateForm.email_suffix} onChange={event => setGenerateForm(current => ({ ...current, email_suffix: event.target.value }))} />
                 </ModalField>
                 <ModalField label="Password">
-                  <Input aria-label="Password" type="password" value={generateForm.password} onValueChange={value => setGenerateForm(current => ({ ...current, password: value }))} />
+                  <Input aria-label="Password" type="password" value={generateForm.password} onChange={event => setGenerateForm(current => ({ ...current, password: event.target.value }))} />
                 </ModalField>
                 <ModalField label="Generate Count">
-                  <Input aria-label="Generate Count" type="number" value={generateForm.generate_count} onValueChange={value => setGenerateForm(current => ({ ...current, generate_count: value }))} />
+                  <Input aria-label="Generate Count" type="number" value={generateForm.generate_count} onChange={event => setGenerateForm(current => ({ ...current, generate_count: event.target.value }))} />
                 </ModalField>
                 <ModalField label="Plan">
-                  <Select
-                    aria-label="Plan"
-                    items={planOptions}
+                  <AdminSelectField
+                    ariaLabel="Plan"
+                    options={planOptions}
                     selectedKey={generatePlan}
-                    onSelectionChange={key =>
-                      setGenerateForm(current => ({ ...current, plan_id: String(key || "") }))
-                    }
-                  >
-                    <Select.Trigger>
-                      <Select.Value />
-                      <Select.Indicator />
-                    </Select.Trigger>
-                    <Select.Popover>
-                      <ListBox items={planOptions}>
-                        {item => (
-                          <ListBoxItem id={item.id} textValue={item.label}>
-                            {item.label}
-                          </ListBoxItem>
-                        )}
-                      </ListBox>
-                    </Select.Popover>
-                  </Select>
+                    onSelectionChange={key => setGenerateForm(current => ({ ...current, plan_id: String(key || "") }))}
+                  />
                 </ModalField>
                 <ModalField label="Expire Timestamp">
-                  <Input aria-label="Expire Timestamp" value={generateForm.expired_at} onValueChange={value => setGenerateForm(current => ({ ...current, expired_at: value }))} />
+                  <Input aria-label="Expire Timestamp" value={generateForm.expired_at} onChange={event => setGenerateForm(current => ({ ...current, expired_at: event.target.value }))} />
                 </ModalField>
               </Modal.Body>
               <Modal.Footer>
-                <Button variant="light" onPress={() => setGenerateOpen(false)}>
+                <Button variant="ghost" onPress={() => setGenerateOpen(false)}>
                   Cancel
                 </Button>
-                <Button color="primary" onPress={() => void submitGenerate()} isLoading={submitting}>
+                <Button variant="primary" onPress={() => void submitGenerate()} isDisabled={submitting}>
                   Generate
                 </Button>
               </Modal.Footer>
@@ -1041,7 +952,7 @@ export function UserPage() {
         </Modal.Backdrop>
       </Modal>
 
-      <Modal isOpen={mailOpen} onOpenChange={isOpen => !isOpen && setMailOpen(false)} size="3xl">
+      <Modal isOpen={mailOpen} onOpenChange={isOpen => !isOpen && setMailOpen(false)}>
         <Modal.Backdrop>
           <Modal.Container>
             <Modal.Dialog>
@@ -1050,17 +961,17 @@ export function UserPage() {
               </Modal.Header>
               <Modal.Body className="gap-4">
                 <ModalField label="Subject">
-                  <Input aria-label="Subject" value={mailForm.subject} onValueChange={value => setMailForm(current => ({ ...current, subject: value }))} />
+                  <Input aria-label="Subject" value={mailForm.subject} onChange={event => setMailForm(current => ({ ...current, subject: event.target.value }))} />
                 </ModalField>
                 <ModalField label="Content">
-                  <TextArea aria-label="Content" minRows={8} value={mailForm.content} onValueChange={value => setMailForm(current => ({ ...current, content: value }))} />
+                  <TextArea aria-label="Content" rows={8} value={mailForm.content} onChange={event => setMailForm(current => ({ ...current, content: event.target.value }))} />
                 </ModalField>
               </Modal.Body>
               <Modal.Footer>
-                <Button variant="light" onPress={() => setMailOpen(false)}>
+                <Button variant="ghost" onPress={() => setMailOpen(false)}>
                   Cancel
                 </Button>
-                <Button color="primary" onPress={() => void sendMail()} isLoading={submitting}>
+                <Button variant="primary" onPress={() => void sendMail()} isDisabled={submitting}>
                   Queue email
                 </Button>
               </Modal.Footer>
@@ -1069,7 +980,7 @@ export function UserPage() {
         </Modal.Backdrop>
       </Modal>
 
-      <Modal isOpen={statsOpen} onOpenChange={isOpen => !isOpen && setStatsOpen(false)} size="5xl" scrollBehavior="inside">
+      <Modal isOpen={statsOpen} onOpenChange={isOpen => !isOpen && setStatsOpen(false)}>
         <Modal.Backdrop>
           <Modal.Container>
             <Modal.Dialog>
@@ -1077,7 +988,7 @@ export function UserPage() {
                 <Modal.Heading>Traffic logs for {statsUser?.email || "user"}</Modal.Heading>
               </Modal.Header>
               <Modal.Body className="gap-4">
-                <Table aria-label="User traffic logs" classNames={adminTableClassNames}>
+                <Table aria-label="User traffic logs" className={adminTableClassNames.wrapper}>
                   <Table.Content>
                     <TableHeader>
                       <TableColumn>Date</TableColumn>
@@ -1085,7 +996,7 @@ export function UserPage() {
                       <TableColumn>Download</TableColumn>
                       <TableColumn>Rate</TableColumn>
                     </TableHeader>
-                    <TableBody items={statsRecords} emptyContent="No traffic records found">
+                    <TableBody items={statsRecords}>
                       {item => (
                         <TableRow key={`${item.record_at}-${item.id || 0}`}>
                           <TableCell>{formatDateTime(item.record_at)}</TableCell>
@@ -1098,7 +1009,7 @@ export function UserPage() {
                   </Table.Content>
                 </Table>
                 <div className="flex justify-center">
-                  <Pagination
+                  <AdminPagination
                     page={statsPage}
                     total={Math.max(1, Math.ceil(statsTotal / PAGE_SIZE))}
                     onChange={setStatsPage}
@@ -1106,7 +1017,7 @@ export function UserPage() {
                 </div>
               </Modal.Body>
               <Modal.Footer>
-                <Button variant="light" onPress={() => setStatsOpen(false)}>
+                <Button variant="ghost" onPress={() => setStatsOpen(false)}>
                   Close
                 </Button>
               </Modal.Footer>
@@ -1115,7 +1026,7 @@ export function UserPage() {
         </Modal.Backdrop>
       </Modal>
 
-      <Modal isOpen={ipGeoOpen} onOpenChange={isOpen => !isOpen && setIpGeoOpen(false)} size="5xl" scrollBehavior="inside">
+      <Modal isOpen={ipGeoOpen} onOpenChange={isOpen => !isOpen && setIpGeoOpen(false)}>
         <Modal.Backdrop>
           <Modal.Container>
             <Modal.Dialog>
@@ -1125,34 +1036,19 @@ export function UserPage() {
               <Modal.Body className="gap-4">
                 <div className="flex flex-wrap items-end gap-3">
                   <ModalField label="Provider" className="w-full max-w-xs">
-                    <Select
-                      aria-label="Provider"
-                      className="max-w-xs"
-                      items={geoProviderOptions}
+                    <AdminSelectField
+                      ariaLabel="Provider"
+                      options={geoProviderOptions}
                       selectedKey={geoProvider}
                       onSelectionChange={key => setGeoProvider(String(key || "ipinfo"))}
-                    >
-                      <Select.Trigger>
-                        <Select.Value />
-                        <Select.Indicator />
-                      </Select.Trigger>
-                      <Select.Popover>
-                        <ListBox items={geoProviderOptions}>
-                          {item => (
-                            <ListBoxItem id={item.id} textValue={item.label}>
-                              {item.label}
-                            </ListBoxItem>
-                          )}
-                        </ListBox>
-                      </Select.Popover>
-                    </Select>
+                    />
                   </ModalField>
-                  <Button color="primary" variant="light" onPress={() => void fetchAllGeo()}>
+                  <Button variant="ghost" onPress={() => void fetchAllGeo()}>
                     Refresh geo
                   </Button>
                 </div>
 
-                <Table aria-label="IP geo records" classNames={adminTableClassNames}>
+                <Table aria-label="IP geo records" className={adminTableClassNames.wrapper}>
                   <Table.Content>
                     <TableHeader>
                       <TableColumn>IP</TableColumn>
@@ -1163,7 +1059,7 @@ export function UserPage() {
                       <TableColumn>ISP</TableColumn>
                       <TableColumn>Organization</TableColumn>
                     </TableHeader>
-                    <TableBody items={ipGeoRows} emptyContent="No IP records found">
+                    <TableBody items={ipGeoRows}>
                       {item => {
                         const geo = geoRecords[item.ip];
                         const loadingState = geoLoading[item.ip];
@@ -1174,7 +1070,7 @@ export function UserPage() {
                             <TableCell>{item.ip}</TableCell>
                             <TableCell>{formatDateTime(item.last_seen_at)}</TableCell>
                             <TableCell>
-                              <Chip variant="flat" color={loadingState ? "secondary" : failed ? "danger" : "success"}>
+                              <Chip variant="soft" color={loadingState ? "default" : failed ? "danger" : "success"}>
                                 {loadingState ? "Loading" : failed ? "Failed" : "Resolved"}
                               </Chip>
                             </TableCell>
@@ -1190,7 +1086,7 @@ export function UserPage() {
                 </Table>
               </Modal.Body>
               <Modal.Footer>
-                <Button variant="light" onPress={() => setIpGeoOpen(false)}>
+                <Button variant="ghost" onPress={() => setIpGeoOpen(false)}>
                   Close
                 </Button>
               </Modal.Footer>

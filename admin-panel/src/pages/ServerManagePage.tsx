@@ -15,7 +15,7 @@ import {
   TableCell,
   TableColumn,
   TableHeader,
-  useOverlayState
+  useOverlayState,
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -349,7 +349,7 @@ export function ServerManagePage() {
     >
       <div className={adminStatsGridClassName}>
         {stats.map(item => (
-          <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
+          <Card key={item.label} className={adminCardClassName}>
             <CardContent className={adminStatCardBodyClassName}>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
               <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
@@ -359,7 +359,7 @@ export function ServerManagePage() {
         ))}
       </div>
 
-      <Card shadow="none" radius="lg" className={adminCardClassName}>
+      <Card className={adminCardClassName}>
         <CardHeader className={adminSectionHeaderClassName}>
           <div>
             <p className="text-[1.1rem] font-semibold tracking-[-0.03em] text-slate-950">Node Inventory</p>
@@ -368,8 +368,8 @@ export function ServerManagePage() {
             </p>
           </div>
           <Button
-            color="primary"
-            radius="full"
+            variant="primary"
+           
             onPress={() => {
               setSelected(defaultServer(activeProtocol));
               setEditorOpen(true);
@@ -382,8 +382,7 @@ export function ServerManagePage() {
           <Tabs
             selectedKey={activeProtocol}
             onSelectionChange={key => setActiveProtocol(String(key) as ServerProtocol)}
-            color="primary"
-            variant="underlined"
+            variant="secondary"
           >
             <Tabs.List>
               {PROTOCOLS.map(protocol => (
@@ -398,7 +397,7 @@ export function ServerManagePage() {
           {error ? <div className="rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">{error}</div> : null}
           {loading ? (
             <div className="flex min-h-[320px] items-center justify-center">
-              <Spinner color="primary" label="Loading servers" />
+              <Spinner />
             </div>
           ) : (
             <DndContext
@@ -410,7 +409,7 @@ export function ServerManagePage() {
                 items={filtered.map(record => String(record.id))}
                 strategy={verticalListSortingStrategy}
               >
-                <Table aria-label="Servers" classNames={adminTableClassNames}>
+                <Table aria-label="Servers" className={adminTableClassNames.wrapper}>
                   <Table.Content>
                     <TableHeader>
                       <TableColumn>Sort</TableColumn>
@@ -421,9 +420,9 @@ export function ServerManagePage() {
                       <TableColumn>Online</TableColumn>
                       <TableColumn>Check</TableColumn>
                       <TableColumn>Visible</TableColumn>
-                      <TableColumn align="end">Actions</TableColumn>
+                      <TableColumn>Actions</TableColumn>
                     </TableHeader>
-                    <TableBody emptyContent="No nodes found">
+                    <TableBody>
                     {filtered.map(item => {
                       const sorting = sortingId === item.id;
 
@@ -442,23 +441,22 @@ export function ServerManagePage() {
                           </TableCell>
                           <TableCell>{String(item.host || "—")}:{String(item.port || "—")}</TableCell>
                           <TableCell>
-                            <Chip variant="flat" className="bg-sky-50 text-sky-700">{Array.isArray(item.group_id) ? item.group_id.join(", ") : String(item.group_id || "—")}</Chip>
+                            <Chip variant="soft" className="bg-sky-50 text-sky-700">{Array.isArray(item.group_id) ? item.group_id.join(", ") : String(item.group_id || "—")}</Chip>
                           </TableCell>
                           <TableCell>{String(item.rate || "1")}</TableCell>
                           <TableCell>{Number(item.online || 0)}</TableCell>
                           <TableCell>{formatDateTime((item.last_check_at as number) || null)}</TableCell>
                           <TableCell>
-                            <Switch
-                              isSelected={Boolean(Number(item.show || 0))}
-                              onValueChange={value => void runAction(UPDATE_ENDPOINTS[item.type], { id: item.id, show: value ? 1 : 0 })}
-                            />
+                              <Switch
+                                isSelected={Boolean(Number(item.show || 0))}
+                              onChange={value => void runAction(UPDATE_ENDPOINTS[item.type], { id: item.id, show: value ? 1 : 0 })}
+                              />
                           </TableCell>
                           <TableCell className={adminTableActionCellClassName}>
                             <div className="flex justify-end gap-2">
                               <Button
                                 size="sm"
-                                color="primary"
-                                variant="light"
+                                variant="ghost"
                                 onPress={() => {
                                   setSelected({ ...item });
                                   setEditorOpen(true);
@@ -467,10 +465,10 @@ export function ServerManagePage() {
                               >
                                 Edit
                               </Button>
-                              <Button size="sm" color="secondary" variant="light" onPress={() => void runAction(COPY_ENDPOINTS[item.type], { id: item.id })} isDisabled={sorting}>
+                              <Button size="sm" variant="ghost" onPress={() => void runAction(COPY_ENDPOINTS[item.type], { id: item.id })} isDisabled={sorting}>
                                 Copy
                               </Button>
-                              <Button size="sm" color="danger" variant="light" onPress={() => void runAction(DROP_ENDPOINTS[item.type], { id: item.id })} isDisabled={sorting}>
+                              <Button size="sm" variant="ghost" onPress={() => void runAction(DROP_ENDPOINTS[item.type], { id: item.id })} isDisabled={sorting}>
                                 Delete
                               </Button>
                             </div>
@@ -489,7 +487,7 @@ export function ServerManagePage() {
 
       <Modal state={editorState}>
         <Modal.Backdrop>
-          <Modal.Container size="5xl" scroll="inside">
+          <Modal.Container size="lg" scroll="inside">
             <Modal.Dialog>
               <Modal.Header>
                 <Modal.Heading>{selected.id ? "Edit node" : "Create node"}</Modal.Heading>
@@ -505,10 +503,10 @@ export function ServerManagePage() {
                 />
               </Modal.Body>
               <Modal.Footer>
-                <Button variant="light" onPress={editorState.close}>
+                <Button variant="ghost" onPress={editorState.close}>
                   Cancel
                 </Button>
-                <Button color="primary" onPress={() => void saveServer()} isLoading={submitting}>
+                <Button variant="primary" onPress={() => void saveServer()} isDisabled={submitting}>
                   Save node
                 </Button>
               </Modal.Footer>

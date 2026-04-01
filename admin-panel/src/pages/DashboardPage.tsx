@@ -7,7 +7,6 @@ import {
   Chip,
   Separator,
   Modal,
-  Pagination,
   Spinner,
   Tabs,
   Table,
@@ -15,7 +14,7 @@ import {
   TableCell,
   TableColumn,
   TableHeader,
-  TableRow
+  TableRow,
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -33,6 +32,7 @@ import {
 } from "recharts";
 import { adminRequest, getEnvelopeError } from "../lib/api";
 import type { ApiEnvelope } from "../types";
+import { AdminPagination } from "../components/AdminPagination";
 import { PageFrame } from "../components/PageFrame";
 import { asArray, asRecord, formatBytes, formatDateTime, formatMoney } from "../lib/admin-format";
 import { adminTableClassNames } from "../components/AdminContent";
@@ -71,14 +71,14 @@ const dashboardSources = [
 ] as const;
 
 function asRankingUsers(value: unknown): RankingUserRecord[] {
-  return asArray(value).filter(
+  return asArray(value as unknown[]).filter(
     (item): item is RankingUserRecord =>
       Boolean(item) && typeof item === "object" && typeof (item as RankingUserRecord).user_id === "number"
   );
 }
 
 function asRankingServers(value: unknown): Array<Record<string, unknown>> {
-  return asArray(value).filter(
+  return asArray(value as unknown[]).filter(
     (item): item is Record<string, unknown> => Boolean(item) && typeof item === "object" && !Array.isArray(item)
   );
 }
@@ -164,8 +164,8 @@ function MetricTile({
             </p>
           </div>
           <Chip
-            radius="full"
-            variant="flat"
+           
+            variant="secondary"
             className={
               deltaPositive
                 ? "bg-emerald-50 text-emerald-600"
@@ -348,29 +348,32 @@ export function DashboardPage() {
               </div>
               <div className="flex flex-wrap items-center gap-3">
                 <Button
-                  radius="full"
-                  variant="light"
+                  variant="ghost"
                   className="bg-slate-100 px-4 text-slate-700"
-                  startContent={<ArrowRotateRight width={16} height={16} aria-hidden="true" />}
                   onPress={() => void loadDashboard()}
                 >
-                  Sync
+                  <span className="inline-flex items-center gap-2">
+                    <ArrowRotateRight width={16} height={16} aria-hidden="true" />
+                    <span>Sync</span>
+                  </span>
                 </Button>
                 <Button
-                  radius="full"
-                  variant="light"
+                  variant="ghost"
                   className="bg-slate-100 px-4 text-slate-700"
-                  startContent={<Bell width={16} height={16} aria-hidden="true" />}
                 >
-                  Alerts
+                  <span className="inline-flex items-center gap-2">
+                    <Bell width={16} height={16} aria-hidden="true" />
+                    <span>Alerts</span>
+                  </span>
                 </Button>
                 <Button
-                  color="primary"
-                  radius="full"
+                  variant="primary"
                   className="px-5"
-                  startContent={<ArrowDownToLine width={16} height={16} aria-hidden="true" />}
                 >
-                  Export
+                  <span className="inline-flex items-center gap-2">
+                    <ArrowDownToLine width={16} height={16} aria-hidden="true" />
+                    <span>Export</span>
+                  </span>
                 </Button>
               </div>
             </div>
@@ -378,7 +381,7 @@ export function DashboardPage() {
             <Tabs
               selectedKey={mode}
               onSelectionChange={key => setMode(String(key) as DashboardMode)}
-              variant="light"
+              variant="secondary"
             >
               <Tabs.List className="rounded-full bg-slate-100 p-1">
                 <Tabs.Tab id="overview" className="px-5 font-medium text-slate-500 data-[selected=true]:text-slate-900">
@@ -405,7 +408,7 @@ export function DashboardPage() {
                 <p className="text-sm font-semibold text-slate-900">Operational Notes</p>
                 <p className="mt-1 text-sm text-slate-500">Quick signal cards from the live backend.</p>
               </div>
-              <Chip radius="full" variant="flat" className="bg-sky-50 text-sky-600">
+              <Chip variant="soft" className="bg-sky-50 text-sky-600">
                 Live
               </Chip>
             </div>
@@ -430,7 +433,7 @@ export function DashboardPage() {
         <Card className="border border-danger-200 bg-danger-50 shadow-none">
           <CardContent className="gap-4 p-6">
             <p className="text-sm text-danger-700">{state.error}</p>
-            <Button color="danger" variant="light" onPress={() => void loadDashboard()}>
+            <Button variant="ghost" onPress={() => void loadDashboard()}>
               Retry dashboard
             </Button>
           </CardContent>
@@ -449,7 +452,7 @@ export function DashboardPage() {
           title="Performance Snapshot"
           hint="The main chart blends today user traffic, server traffic and sampled user records into a dashboard-friendly trend surface."
           action={
-            <Button radius="full" variant="light" className="bg-slate-100 px-4 text-slate-700">
+            <Button variant="ghost" className="bg-slate-100 px-4 text-slate-700">
               Last 2 weeks
             </Button>
           }
@@ -491,7 +494,7 @@ export function DashboardPage() {
         <PanelShell
           title="Traffic Source"
           hint="A softer secondary view for comparing user-side and server-side movement."
-          action={<Chip radius="full" variant="flat" className="bg-slate-100 text-slate-600">Live split</Chip>}
+          action={<Chip variant="soft" className="bg-slate-100 text-slate-600">Live split</Chip>}
         >
           <div className="flex items-center gap-4 text-sm text-slate-500">
             <span className="flex items-center gap-2">
@@ -535,7 +538,7 @@ export function DashboardPage() {
               todayUsers.map((user, index) => (
                 <Button
                   key={`today-user-${user.user_id}`}
-                  variant="light"
+                  variant="ghost"
                   className="flex h-auto w-full items-center justify-between rounded-[1.5rem] border border-slate-100 bg-slate-50/80 px-4 py-4 text-left transition hover:border-sky-100 hover:bg-sky-50/60"
                   onPress={() => {
                     setDetailUser(user);
@@ -617,7 +620,7 @@ export function DashboardPage() {
         </PanelShell>
       </section>
 
-      <Modal isOpen={detailOpen} onOpenChange={isOpen => !isOpen && setDetailOpen(false)} size="5xl" scrollBehavior="inside">
+      <Modal isOpen={detailOpen} onOpenChange={isOpen => !isOpen && setDetailOpen(false)}>
         <Modal.Backdrop>
           <Modal.Container>
             <Modal.Dialog>
@@ -627,11 +630,11 @@ export function DashboardPage() {
           <Modal.Body className="gap-4">
             {detailLoading ? (
               <div className="flex min-h-[240px] items-center justify-center">
-                <Spinner color="warning" label="Loading traffic records" />
+                <Spinner color="accent" />
               </div>
             ) : (
               <>
-                <Table aria-label="Traffic detail" classNames={adminTableClassNames}>
+                <Table aria-label="Traffic detail" className={adminTableClassNames.wrapper}>
                   <Table.Content>
                     <TableHeader>
                       <TableColumn>Date</TableColumn>
@@ -639,7 +642,7 @@ export function DashboardPage() {
                       <TableColumn>Download</TableColumn>
                       <TableColumn>Rate</TableColumn>
                     </TableHeader>
-                    <TableBody items={detailRecords} emptyContent="No traffic records found">
+                    <TableBody items={detailRecords}>
                       {item => (
                         <TableRow key={`${item.record_at}-${item.id || 0}`}>
                           <TableCell>{formatDateTime(item.record_at)}</TableCell>
@@ -652,13 +655,13 @@ export function DashboardPage() {
                   </Table.Content>
                 </Table>
                 <div className="flex justify-center">
-                  <Pagination page={detailPage} total={Math.max(1, Math.ceil(detailTotal / 10))} onChange={setDetailPage} />
+                  <AdminPagination page={detailPage} total={Math.max(1, Math.ceil(detailTotal / 10))} onChange={setDetailPage} />
                 </div>
               </>
             )}
           </Modal.Body>
           <Modal.Footer>
-            <Button variant="light" onPress={() => setDetailOpen(false)}>
+            <Button variant="ghost" onPress={() => setDetailOpen(false)}>
               Close
             </Button>
           </Modal.Footer>

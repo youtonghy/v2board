@@ -42,7 +42,7 @@ function NavigationList({
               <Button
                 key={item.path}
                 isIconOnly
-                variant="light"
+                variant="ghost"
                 aria-label={item.label}
                 onPress={() => onNavigate(item.path)}
                 className={[
@@ -52,10 +52,13 @@ function NavigationList({
                     : "hover:bg-white/70"
                 ].join(" ")}
               >
-                <Tooltip content={item.label} placement="right">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/80 text-slate-600">
-                    <Icon width={18} height={18} aria-hidden="true" />
-                  </span>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/80 text-slate-600">
+                      <Icon width={18} height={18} aria-hidden="true" />
+                    </span>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content placement="right">{item.label}</Tooltip.Content>
                 </Tooltip>
               </Button>
             );
@@ -67,22 +70,15 @@ function NavigationList({
 
   return (
     <Accordion
-      selectionMode="multiple"
+      hideSeparator
       defaultExpandedKeys={navGroups.map(group => group.label)}
-      showDivider={false}
-      itemClasses={{
-        base: "px-0",
-        trigger: "px-3 py-2",
-        title: "text-[11px] uppercase tracking-[0.24em] text-slate-400",
-        content: "px-0 pb-0 pt-1"
-      }}
       className="px-1"
     >
       {navGroups.map(group => (
-        <Accordion.Item key={group.label} id={group.label}>
-          <Accordion.Heading>
+        <Accordion.Item key={group.label} id={group.label} className="px-0">
+          <Accordion.Heading className="px-3 py-2">
             <Accordion.Trigger className="flex items-center justify-between">
-              <span>{group.label}</span>
+              <span className="text-[11px] uppercase tracking-[0.24em] text-slate-400">{group.label}</span>
               <Accordion.Indicator />
             </Accordion.Trigger>
           </Accordion.Heading>
@@ -95,7 +91,7 @@ function NavigationList({
                   return (
                     <Button
                       key={item.path}
-                      variant="light"
+                      variant="ghost"
                       onPress={() => onNavigate(item.path)}
                       className={[
                         "mb-1.5 h-auto w-full justify-start rounded-[1.25rem] px-2 py-1 text-left",
@@ -142,7 +138,7 @@ function SidebarContent({
     <>
       <div className="relative z-10 flex items-center justify-between px-4 py-6">
         <Button
-          variant="light"
+          variant="ghost"
           className={[
             "h-auto min-h-0 justify-start rounded-[1.25rem] px-2 py-2 text-left text-slate-900",
             collapsed ? "w-auto min-w-0 justify-center" : "w-full max-w-[188px]"
@@ -162,7 +158,7 @@ function SidebarContent({
         {showDesktopToggle ? (
           <Button
             isIconOnly
-            variant="light"
+            variant="ghost"
             className="hidden shrink-0 text-slate-500 md:inline-flex"
             onPress={onToggleCollapse}
           >
@@ -187,12 +183,19 @@ function SidebarContent({
           ].join(" ")}
         >
           {collapsed ? (
-            <Tooltip content="System guidance and support" placement="right">
-              <Avatar className="bg-[#1388ef] text-white" name={adminBootstrap.title.slice(0, 1).toUpperCase()} size="sm" />
+            <Tooltip>
+              <Tooltip.Trigger>
+                <Avatar className="bg-[#1388ef] text-white" size="sm">
+                  <Avatar.Fallback>{adminBootstrap.title.slice(0, 1).toUpperCase()}</Avatar.Fallback>
+                </Avatar>
+              </Tooltip.Trigger>
+              <Tooltip.Content placement="right">System guidance and support</Tooltip.Content>
             </Tooltip>
           ) : (
             <div className="flex items-center gap-3">
-              <Avatar className="bg-[#1388ef] text-white" name={userLabel.slice(0, 1).toUpperCase()} size="sm" />
+              <Avatar className="bg-[#1388ef] text-white" size="sm">
+                <Avatar.Fallback>{userLabel.slice(0, 1).toUpperCase()}</Avatar.Fallback>
+              </Avatar>
               <div>
                 <p className="text-sm font-semibold text-slate-900">Help & Information</p>
                 <p className="text-xs text-slate-500">System guidance and support</p>
@@ -253,20 +256,26 @@ export function AdminShell() {
 
   return (
     <div className="admin-app-shell min-h-screen text-ink">
-      <Drawer isOpen={mobileOpen} onOpenChange={setMobileOpen} placement="left" size="xs">
-        <DrawerContent>
-          <DrawerHeader className="sr-only">Navigation</DrawerHeader>
-          <DrawerBody className="bg-[#f5f7fb] p-0">
-            <div className="flex h-full flex-col">
-              <SidebarContent
-                collapsed={false}
-                currentPath={location.pathname}
-                userLabel={userLabel}
-                onNavigate={handleNavigate}
-              />
-            </div>
-          </DrawerBody>
-        </DrawerContent>
+      <Drawer isOpen={mobileOpen} onOpenChange={setMobileOpen}>
+        <Drawer.Backdrop>
+          <Drawer.Content placement="left">
+            <Drawer.Dialog>
+              <Drawer.Header className="sr-only">
+                <Drawer.Heading>Navigation</Drawer.Heading>
+              </Drawer.Header>
+              <Drawer.Body className="bg-[#f5f7fb] p-0">
+                <div className="flex h-full flex-col">
+                  <SidebarContent
+                    collapsed={false}
+                    currentPath={location.pathname}
+                    userLabel={userLabel}
+                    onNavigate={handleNavigate}
+                  />
+                </div>
+              </Drawer.Body>
+            </Drawer.Dialog>
+          </Drawer.Content>
+        </Drawer.Backdrop>
       </Drawer>
 
       <div className="flex min-h-screen">
@@ -293,7 +302,7 @@ export function AdminShell() {
                 <Button
                   isIconOnly
                   size="sm"
-                  variant="light"
+                  variant="ghost"
                   className="h-10 w-10 min-w-10 items-center justify-center text-slate-600 md:hidden"
                   onPress={() => setMobileOpen(true)}
                 >
@@ -309,8 +318,7 @@ export function AdminShell() {
                 <Button
                   isIconOnly
                   size="sm"
-                  radius="full"
-                  variant="flat"
+                  variant="secondary"
                   className="h-10 w-10 min-w-10 bg-white text-slate-700"
                   onPress={() => handleNavigate("/new/user")}
                 >
@@ -319,24 +327,26 @@ export function AdminShell() {
                 <Button
                   isIconOnly
                   size="sm"
-                  radius="full"
-                  variant="flat"
+                  variant="secondary"
                   className="h-10 w-10 min-w-10 bg-white text-slate-700"
                   onPress={() => handleNavigate("/new/notice")}
                 >
                   <Bell width={18} height={18} aria-hidden="true" />
                 </Button>
                 <Button
-                  color="primary"
-                  radius="full"
+                  variant="primary"
                   className="hidden md:inline-flex"
-                  startContent={<PersonPlus width={18} height={18} aria-hidden="true" />}
                   onPress={() => handleNavigate("/new/invite-link")}
                 >
-                  Invite
+                  <span className="inline-flex items-center gap-2">
+                    <PersonPlus width={18} height={18} aria-hidden="true" />
+                    <span>Invite</span>
+                  </span>
                 </Button>
                 <div className="hidden items-center gap-3 rounded-full border border-white/70 bg-white px-3 py-2 shadow-sm lg:flex">
-                  <Avatar className="bg-[#1388ef] text-white" name={userLabel.slice(0, 1).toUpperCase()} size="sm" />
+                  <Avatar className="bg-[#1388ef] text-white" size="sm">
+                    <Avatar.Fallback>{userLabel.slice(0, 1).toUpperCase()}</Avatar.Fallback>
+                  </Avatar>
                   <div className="pr-1">
                     <p className="text-sm font-semibold text-slate-900">{userLabel}</p>
                     <p className="text-xs text-slate-500">Admin</p>
