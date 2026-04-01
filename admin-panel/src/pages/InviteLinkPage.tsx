@@ -4,8 +4,13 @@ import {
   CardContent,
   CardHeader,
   Chip,
+  Form,
   Input,
+  Label,
+  ListBox,
+  ListBoxItem,
   Modal,
+  Select,
   Spinner,
   TextArea,
   Table,
@@ -14,13 +19,13 @@ import {
   TableColumn,
   TableHeader,
   TableRow,
+  TextField,
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
 import { AdminFilterAccordion } from "../components/AdminFilterAccordion";
 import { AdminPagination } from "../components/AdminPagination";
 import { AdminSelectField } from "../components/AdminSelectField";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
-import { ModalField } from "../components/ModalField";
 import { PageFrame } from "../components/PageFrame";
 import { formatDateTime } from "../lib/admin-format";
 import {
@@ -200,59 +205,76 @@ export function InviteLinkPage() {
         </CardHeader>
         <CardContent className={`${adminSectionBodyClassName} gap-5`}>
           <AdminFilterAccordion>
-            <div className="grid gap-3 md:grid-cols-4">
-              <ModalField label="User Email">
+            <Form className="grid gap-3 md:grid-cols-4">
+              <TextField className="space-y-2">
+                <Label>User Email</Label>
                 <Input
-                  aria-label="User Email"
                   className="w-full"
                   placeholder="Enter user email"
                   variant="secondary"
                   value={email}
                   onChange={event => setEmail(event.target.value)}
                 />
-              </ModalField>
-              <ModalField label="Keyword">
+              </TextField>
+
+              <TextField className="space-y-2">
+                <Label>Keyword</Label>
                 <Input
-                  aria-label="Keyword"
                   className="w-full"
                   placeholder="Enter keyword"
                   variant="secondary"
                   value={keyword}
                   onChange={event => setKeyword(event.target.value)}
                 />
-              </ModalField>
-              <ModalField label="Status">
-              <AdminSelectField
-                ariaLabel="Status"
-                placeholder="Select a status"
-                options={[
-                  { id: "0", label: "Active" },
-                  { id: "1", label: "Used Up" },
-                  { id: "2", label: "Expired" },
-                  { id: "3", label: "Disabled" }
-                ]}
-                selectedKey={status || null}
-                onSelectionChange={key => setStatus(String(key || ""))}
-              />
-              </ModalField>
-            <div className="flex items-end gap-2">
-              <Button variant="primary" onPress={() => { setPage(1); void loadLinks(1); }}>
-                Apply
-              </Button>
-              <Button
-                variant="secondary"
-                onPress={() => {
-                  setEmail("");
-                  setKeyword("");
-                  setStatus("");
-                  setPage(1);
-                  void loadLinks(1);
-                }}
-              >
-                Reset
-              </Button>
-            </div>
-            </div>
+              </TextField>
+
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select
+                  className="w-full"
+                  placeholder="Select a status"
+                  selectedKey={status || null}
+                  onSelectionChange={key => setStatus(String(key || ""))}
+                >
+                  <Select.Trigger>
+                    <Select.Value />
+                    <Select.Indicator />
+                  </Select.Trigger>
+                  <Select.Popover>
+                    <ListBox>
+                      {[
+                        { id: "0", label: "Active" },
+                        { id: "1", label: "Used Up" },
+                        { id: "2", label: "Expired" },
+                        { id: "3", label: "Disabled" }
+                      ].map(option => (
+                        <ListBoxItem key={option.id} id={option.id} textValue={option.label}>
+                          {option.label}
+                        </ListBoxItem>
+                      ))}
+                    </ListBox>
+                  </Select.Popover>
+                </Select>
+              </div>
+
+              <div className="flex items-end gap-2">
+                <Button variant="primary" onPress={() => { setPage(1); void loadLinks(1); }}>
+                  Apply
+                </Button>
+                <Button
+                  variant="secondary"
+                  onPress={() => {
+                    setEmail("");
+                    setKeyword("");
+                    setStatus("");
+                    setPage(1);
+                    void loadLinks(1);
+                  }}
+                >
+                  Reset
+                </Button>
+              </div>
+            </Form>
           </AdminFilterAccordion>
 
           {error ? <div className="rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">{error}</div> : null}

@@ -14,7 +14,9 @@ import {
   CardContent,
   CardHeader,
   Chip,
+  Form,
   Input,
+  Label,
   ListBox,
   ListBoxItem,
   Modal,
@@ -27,6 +29,7 @@ import {
   TableColumn,
   TableHeader,
   TableRow,
+  TextField,
   TextArea,
   Tooltip,
 } from "@heroui/react";
@@ -612,49 +615,82 @@ export function UserPage() {
         </CardHeader>
         <CardContent className={`${adminSectionBodyClassName} gap-5`}>
           <AdminFilterAccordion>
-            <div className="grid gap-3 md:grid-cols-4">
-                    <ModalField label="Email">
-                      <Input
-                        aria-label="Email"
-                        placeholder="Search by email"
-                        value={searchEmail}
-                        onChange={event => setSearchEmail(event.target.value)}
-                      />
-                    </ModalField>
-                    <ModalField label="Plan">
-                      <AdminSelectField
-                        ariaLabel="Plan"
-                        options={planOptions}
-                        selectedKey={planFilter || null}
-                        onSelectionChange={key => setPlanFilter(String(key || ""))}
-                      />
-                    </ModalField>
-                    <ModalField label="Status">
-                      <AdminSelectField
-                        ariaLabel="Status"
-                        options={statusOptions}
-                        selectedKey={bannedFilter || null}
-                        onSelectionChange={key => setBannedFilter(String(key || ""))}
-                      />
-                    </ModalField>
-                    <div className="flex items-end gap-2">
-                      <Button variant="primary" onPress={() => { setPage(1); void loadUsers(1); }}>
-                        Apply filters
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        onPress={() => {
-                          setSearchEmail("");
-                          setPlanFilter("");
-                          setBannedFilter("");
-                          setPage(1);
-                          void loadUsers(1);
-                        }}
-                      >
-                        Reset
-                      </Button>
-                    </div>
-            </div>
+            <Form className="grid gap-3 md:grid-cols-4">
+              <TextField className="space-y-2">
+                <Label>Email</Label>
+                <Input
+                  placeholder="Search by email"
+                  value={searchEmail}
+                  onChange={event => setSearchEmail(event.target.value)}
+                />
+              </TextField>
+
+              <div className="space-y-2">
+                <Label>Plan</Label>
+                <Select
+                  className="w-full"
+                  placeholder="Select one"
+                  selectedKey={planFilter || null}
+                  onSelectionChange={key => setPlanFilter(String(key || ""))}
+                >
+                  <Select.Trigger>
+                    <Select.Value />
+                    <Select.Indicator />
+                  </Select.Trigger>
+                  <Select.Popover>
+                    <ListBox>
+                      {planOptions.map(option => (
+                        <ListBoxItem key={option.id} id={option.id} textValue={option.label}>
+                          {option.label}
+                        </ListBoxItem>
+                      ))}
+                    </ListBox>
+                  </Select.Popover>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select
+                  className="w-full"
+                  placeholder="Select one"
+                  selectedKey={bannedFilter || null}
+                  onSelectionChange={key => setBannedFilter(String(key || ""))}
+                >
+                  <Select.Trigger>
+                    <Select.Value />
+                    <Select.Indicator />
+                  </Select.Trigger>
+                  <Select.Popover>
+                    <ListBox>
+                      {statusOptions.map(option => (
+                        <ListBoxItem key={option.id} id={option.id} textValue={option.label}>
+                          {option.label}
+                        </ListBoxItem>
+                      ))}
+                    </ListBox>
+                  </Select.Popover>
+                </Select>
+              </div>
+
+              <div className="flex items-end gap-2">
+                <Button variant="primary" onPress={() => { setPage(1); void loadUsers(1); }}>
+                  Apply filters
+                </Button>
+                <Button
+                  variant="secondary"
+                  onPress={() => {
+                    setSearchEmail("");
+                    setPlanFilter("");
+                    setBannedFilter("");
+                    setPage(1);
+                    void loadUsers(1);
+                  }}
+                >
+                  Reset
+                </Button>
+              </div>
+            </Form>
           </AdminFilterAccordion>
 
           {error ? (
