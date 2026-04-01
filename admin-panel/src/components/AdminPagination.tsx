@@ -5,6 +5,8 @@ interface AdminPaginationProps {
   total: number;
   onChange: (page: number) => void;
   siblings?: number;
+  totalItems?: number;
+  itemsPerPage?: number;
   className?: string;
 }
 
@@ -46,14 +48,25 @@ export function AdminPagination({
   total,
   onChange,
   siblings = 2,
+  totalItems,
+  itemsPerPage = 10,
   className
 }: AdminPaginationProps) {
   const safeTotal = Math.max(1, total);
   const safePage = Math.min(Math.max(1, page), safeTotal);
   const pages = buildPageRange(safePage, safeTotal, siblings);
+  const hasSummary = typeof totalItems === "number";
+  const safeTotalItems = Math.max(0, totalItems || 0);
+  const startItem = hasSummary && safeTotalItems > 0 ? (safePage - 1) * itemsPerPage + 1 : 0;
+  const endItem = hasSummary && safeTotalItems > 0 ? Math.min(safePage * itemsPerPage, safeTotalItems) : 0;
 
   return (
-    <Pagination className={className} aria-label="Pagination">
+    <Pagination className={className ?? "w-full"} aria-label="Pagination">
+      {hasSummary ? (
+        <Pagination.Summary>
+          {safeTotalItems > 0 ? `Showing ${startItem}-${endItem} of ${safeTotalItems} results` : "Showing 0 results"}
+        </Pagination.Summary>
+      ) : null}
       <Pagination.Content>
         <Pagination.Item>
           <Pagination.Previous
@@ -64,7 +77,8 @@ export function AdminPagination({
             }}
             isDisabled={safePage <= 1}
           >
-            <span className="sr-only">Previous</span>
+            <Pagination.PreviousIcon />
+            <span>Previous</span>
           </Pagination.Previous>
         </Pagination.Item>
 
@@ -99,7 +113,8 @@ export function AdminPagination({
             }}
             isDisabled={safePage >= safeTotal}
           >
-            <span className="sr-only">Next</span>
+            <span>Next</span>
+            <Pagination.NextIcon />
           </Pagination.Next>
         </Pagination.Item>
       </Pagination.Content>

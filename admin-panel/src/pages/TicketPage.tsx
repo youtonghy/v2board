@@ -241,7 +241,7 @@ export function TicketPage() {
               </Table>
 
               <div className="flex justify-center">
-                <AdminPagination page={page} total={totalPages} onChange={setPage} />
+                <AdminPagination page={page} total={totalPages} totalItems={total} itemsPerPage={PAGE_SIZE} onChange={setPage} />
               </div>
             </>
           )}

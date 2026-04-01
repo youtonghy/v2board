@@ -260,6 +260,8 @@ export function CouponPage() {
                 <AdminPagination
                   page={page}
                   total={Math.max(1, Math.ceil(total / pageSize))}
+                  totalItems={total}
+                  itemsPerPage={pageSize}
                   onChange={nextPage => void loadCoupons(nextPage)}
                 />
               </div>

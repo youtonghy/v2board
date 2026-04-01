@@ -1,4 +1,4 @@
-import { ArrowDownToLine, ArrowRotateRight, Bell } from "@gravity-ui/icons";
+import { Bell } from "@gravity-ui/icons";
 import {
   Avatar,
   Button,
@@ -9,7 +9,6 @@ import {
   Separator,
   Modal,
   Spinner,
-  Tabs,
   Table,
   TableBody,
   TableCell,
@@ -208,6 +207,14 @@ function PanelShell({
 
 const USER_COLORS = ["primary", "secondary", "success", "warning", "danger"] as const;
 
+const RANK_AVATAR_CLASSES = [
+  "bg-sky-500 text-white ring-sky-100",
+  "bg-emerald-500 text-white ring-emerald-100",
+  "bg-amber-500 text-white ring-amber-100",
+  "bg-rose-500 text-white ring-rose-100",
+  "bg-slate-800 text-white ring-slate-200"
+] as const;
+
 export function DashboardPage() {
   const [state, setState] = useState<DashboardState>({
     loading: true,
@@ -336,74 +343,7 @@ export function DashboardPage() {
       onRefresh={() => void loadDashboard()}
       loading={state.loading}
     >
-      <section className="grid gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.85fr)]">
-        <Card className="border border-white/70 bg-white/95 shadow-panel">
-          <CardContent className="gap-6 p-6 md:p-8">
-            <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.26em] text-slate-400">Overview</p>
-                <h2 className="mt-3 text-[clamp(2.2rem,4vw,3.6rem)] font-semibold tracking-[-0.06em] text-slate-950">
-                  {getGreeting()}, Admin
-                </h2>
-                <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-500">
-                  Revenue, traffic and queue health are grouped into a single workspace so the operational picture is easier to scan and act on.
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-3">
-                <Button
-                  variant="ghost"
-                  className="bg-slate-100 px-4 text-slate-700"
-                  onPress={() => void loadDashboard()}
-                >
-                  <span className="inline-flex items-center gap-2">
-                    <ArrowRotateRight width={16} height={16} aria-hidden="true" />
-                    <span>Sync</span>
-                  </span>
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="bg-slate-100 px-4 text-slate-700"
-                >
-                  <span className="inline-flex items-center gap-2">
-                    <Bell width={16} height={16} aria-hidden="true" />
-                    <span>Alerts</span>
-                  </span>
-                </Button>
-                <Button
-                  variant="primary"
-                  className="px-5"
-                >
-                  <span className="inline-flex items-center gap-2">
-                    <ArrowDownToLine width={16} height={16} aria-hidden="true" />
-                    <span>Export</span>
-                  </span>
-                </Button>
-              </div>
-            </div>
-
-            <Tabs
-              selectedKey={mode}
-              onSelectionChange={key => setMode(String(key) as DashboardMode)}
-              variant="secondary"
-            >
-              <Tabs.List className="rounded-full bg-slate-100 p-1">
-                <Tabs.Tab id="overview" className="px-5 font-medium text-slate-500 data-[selected=true]:text-slate-900">
-                  Overview
-                  <Tabs.Indicator className="rounded-full bg-white shadow-sm" />
-                </Tabs.Tab>
-                <Tabs.Tab id="sales" className="px-5 font-medium text-slate-500 data-[selected=true]:text-slate-900">
-                  Sales
-                  <Tabs.Indicator className="rounded-full bg-white shadow-sm" />
-                </Tabs.Tab>
-                <Tabs.Tab id="traffic" className="px-5 font-medium text-slate-500 data-[selected=true]:text-slate-900">
-                  Traffic
-                  <Tabs.Indicator className="rounded-full bg-white shadow-sm" />
-                </Tabs.Tab>
-              </Tabs.List>
-            </Tabs>
-          </CardContent>
-        </Card>
-
+      <section className="grid gap-6">
         <Card className="border border-white/70 bg-white/95 shadow-panel">
           <CardContent className="grid h-full gap-4 p-6">
             <div className="flex items-center justify-between">
@@ -549,7 +489,13 @@ export function DashboardPage() {
                     setDetailOpen(true);
                   }}
                 >
-                  <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex min-w-0 items-center gap-4">
+                    <Avatar
+                      className={`h-11 w-11 shrink-0 border border-white/80 shadow-sm ${RANK_AVATAR_CLASSES[index % RANK_AVATAR_CLASSES.length]}`}
+                      size="sm"
+                    >
+                      <Avatar.Fallback>{index + 1}</Avatar.Fallback>
+                    </Avatar>
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-slate-900">{user.email || `User #${user.user_id}`}</p>
                       <p className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-400">Rank {index + 1}</p>
@@ -660,7 +606,13 @@ export function DashboardPage() {
                   </Table.Content>
                 </Table>
                 <div className="flex justify-center">
-                  <AdminPagination page={detailPage} total={Math.max(1, Math.ceil(detailTotal / 10))} onChange={setDetailPage} />
+                    <AdminPagination
+                      page={detailPage}
+                      total={Math.max(1, Math.ceil(detailTotal / 10))}
+                      totalItems={detailTotal}
+                      itemsPerPage={10}
+                      onChange={setDetailPage}
+                    />
                 </div>
               </>
             )}

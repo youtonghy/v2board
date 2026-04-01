@@ -8,6 +8,7 @@ import {
   TrashBin
 } from "@gravity-ui/icons";
 import {
+  Avatar,
   Button,
   Card,
   CardContent,
@@ -138,6 +139,16 @@ interface MailFormState {
 }
 
 const PAGE_SIZE = 10;
+
+function getUserInitials(email: string) {
+  const [localPart] = email.trim().split("@");
+  const compact = (localPart || email).replace(/[^a-zA-Z0-9]/g, "");
+  return (compact.slice(0, 2) || email.slice(0, 2) || "NA").toUpperCase();
+}
+
+function getUserAvatarUrl(email: string) {
+  return `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(email)}`;
+}
 
 function emptyUserForm(record?: UserRecord | null): UserFormState {
   return {
@@ -538,7 +549,7 @@ export function UserPage() {
     () => [
       ...(ipGeoUser?.recent_ip_records || []),
       ...(ipGeoUser?.recent_login_ip_records || [])
-    ],
+    ].map((r, i) => ({ ...r, id: `${r.ip}-${r.last_seen_at}-${i}` })),
     [ipGeoUser?.recent_ip_records, ipGeoUser?.recent_login_ip_records]
   );
   const selectedPlan = useMemo(() => form.plan_id || null, [form.plan_id]);
@@ -673,9 +684,15 @@ export function UserPage() {
                     {item => (
                       <TableRow key={item.id}>
                         <TableCell>
-                          <div>
-                            <p className="font-medium text-slate-900">{item.email}</p>
-                            <p className="text-xs text-slate-500">ID {item.id}</p>
+                          <div className="flex items-center gap-3">
+                            <Avatar size="sm">
+                              <Avatar.Image src={getUserAvatarUrl(item.email)} alt={item.email} />
+                              <Avatar.Fallback>{getUserInitials(item.email)}</Avatar.Fallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium text-slate-900">{item.email}</p>
+                              <p className="text-xs text-slate-500">ID {item.id}</p>
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell>{item.plan_name || "No plan"}</TableCell>
@@ -800,7 +817,7 @@ export function UserPage() {
               </Table>
 
               <div className="flex justify-center">
-                <AdminPagination page={page} total={totalPages} onChange={setPage} />
+                <AdminPagination page={page} total={totalPages} totalItems={total} itemsPerPage={PAGE_SIZE} onChange={setPage} />
               </div>
             </>
           )}
@@ -976,30 +993,34 @@ export function UserPage() {
                 <Modal.Heading>Traffic logs for {statsUser?.email || "user"}</Modal.Heading>
               </Modal.Header>
               <Modal.Body className="gap-4">
-                <Table aria-label="User traffic logs" className={adminTableClassNames.wrapper}>
-                  <Table.Content>
-                    <TableHeader>
-                      <TableColumn>Date</TableColumn>
-                      <TableColumn>Upload</TableColumn>
-                      <TableColumn>Download</TableColumn>
-                      <TableColumn>Rate</TableColumn>
-                    </TableHeader>
-                    <TableBody items={statsRecords}>
-                      {item => (
-                        <TableRow key={`${item.record_at}-${item.id || 0}`}>
-                          <TableCell>{formatDateTime(item.record_at)}</TableCell>
-                          <TableCell>{formatBytes(item.u || 0)}</TableCell>
-                          <TableCell>{formatBytes(item.d || 0)}</TableCell>
-                          <TableCell>{item.server_rate || 1}</TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table.Content>
-                </Table>
+                <div className={adminTableClassNames.wrapper + " overflow-auto"}>
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr>
+                        <th className={adminTableClassNames.th + " px-3 py-2 text-left"}>Date</th>
+                        <th className={adminTableClassNames.th + " px-3 py-2 text-left"}>Upload</th>
+                        <th className={adminTableClassNames.th + " px-3 py-2 text-left"}>Download</th>
+                        <th className={adminTableClassNames.th + " px-3 py-2 text-left"}>Rate</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {statsRecords.map((item, i) => (
+                        <tr key={item.id ?? i}>
+                          <td className={adminTableClassNames.td + " px-3"}>{formatDateTime(item.record_at)}</td>
+                          <td className={adminTableClassNames.td + " px-3"}>{formatBytes(item.u || 0)}</td>
+                          <td className={adminTableClassNames.td + " px-3"}>{formatBytes(item.d || 0)}</td>
+                          <td className={adminTableClassNames.td + " px-3"}>{item.server_rate || 1}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
                 <div className="flex justify-center">
                   <AdminPagination
                     page={statsPage}
                     total={Math.max(1, Math.ceil(statsTotal / PAGE_SIZE))}
+                    totalItems={statsTotal}
+                    itemsPerPage={PAGE_SIZE}
                     onChange={setStatsPage}
                   />
                 </div>
@@ -1036,42 +1057,44 @@ export function UserPage() {
                   </Button>
                 </div>
 
-                <Table aria-label="IP geo records" className={adminTableClassNames.wrapper}>
-                  <Table.Content>
-                    <TableHeader>
-                      <TableColumn>IP</TableColumn>
-                      <TableColumn>Last Seen</TableColumn>
-                      <TableColumn>Status</TableColumn>
-                      <TableColumn>Country</TableColumn>
-                      <TableColumn>City</TableColumn>
-                      <TableColumn>ISP</TableColumn>
-                      <TableColumn>Organization</TableColumn>
-                    </TableHeader>
-                    <TableBody items={ipGeoRows}>
-                      {item => {
+                <div className={adminTableClassNames.wrapper + " overflow-auto"}>
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr>
+                        <th className={adminTableClassNames.th + " px-3 py-2 text-left"}>IP</th>
+                        <th className={adminTableClassNames.th + " px-3 py-2 text-left"}>Last Seen</th>
+                        <th className={adminTableClassNames.th + " px-3 py-2 text-left"}>Status</th>
+                        <th className={adminTableClassNames.th + " px-3 py-2 text-left"}>Country</th>
+                        <th className={adminTableClassNames.th + " px-3 py-2 text-left"}>City</th>
+                        <th className={adminTableClassNames.th + " px-3 py-2 text-left"}>ISP</th>
+                        <th className={adminTableClassNames.th + " px-3 py-2 text-left"}>Organization</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {ipGeoRows.map((item) => {
                         const geo = geoRecords[item.ip];
                         const loadingState = geoLoading[item.ip];
                         const failed = geo?.status === "failed";
 
                         return (
-                          <TableRow key={`${item.ip}-${item.last_seen_at}`}>
-                            <TableCell>{item.ip}</TableCell>
-                            <TableCell>{formatDateTime(item.last_seen_at)}</TableCell>
-                            <TableCell>
+                          <tr key={item.id}>
+                            <td className={adminTableClassNames.td + " px-3"}>{item.ip}</td>
+                            <td className={adminTableClassNames.td + " px-3"}>{formatDateTime(item.last_seen_at)}</td>
+                            <td className={adminTableClassNames.td + " px-3"}>
                               <Chip variant="soft" color={loadingState ? "default" : failed ? "danger" : "success"}>
                                 {loadingState ? "Loading" : failed ? "Failed" : "Resolved"}
                               </Chip>
-                            </TableCell>
-                            <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.country || "—"}</TableCell>
-                            <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.city || "—"}</TableCell>
-                            <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.isp || "—"}</TableCell>
-                            <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.organization || "—"}</TableCell>
-                          </TableRow>
+                            </td>
+                            <td className={adminTableClassNames.td + " px-3"}>{loadingState ? "Loading..." : failed ? "Failed" : geo?.country || "—"}</td>
+                            <td className={adminTableClassNames.td + " px-3"}>{loadingState ? "Loading..." : failed ? "Failed" : geo?.city || "—"}</td>
+                            <td className={adminTableClassNames.td + " px-3"}>{loadingState ? "Loading..." : failed ? "Failed" : geo?.isp || "—"}</td>
+                            <td className={adminTableClassNames.td + " px-3"}>{loadingState ? "Loading..." : failed ? "Failed" : geo?.organization || "—"}</td>
+                          </tr>
                         );
-                      }}
-                    </TableBody>
-                  </Table.Content>
-                </Table>
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </Modal.Body>
               <Modal.Footer>
                 <Button variant="ghost" onPress={() => setIpGeoOpen(false)}>

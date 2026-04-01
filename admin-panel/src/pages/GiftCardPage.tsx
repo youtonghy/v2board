@@ -221,6 +221,8 @@ export function GiftCardPage() {
                 <AdminPagination
                   page={page}
                   total={Math.max(1, Math.ceil(total / pageSize))}
+                  totalItems={total}
+                  itemsPerPage={pageSize}
                   onChange={nextPage => void loadGiftCards(nextPage)}
                 />
               </div>
