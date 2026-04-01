@@ -551,7 +551,7 @@ export function DashboardPage() {
                 >
                   <div className="flex min-w-0 items-center gap-3">
                     <Avatar
-                      name={user.email?.[0]?.toUpperCase() || "#"}
+                      name={String(index + 1)}
                       color={USER_COLORS[index % USER_COLORS.length]}
                       variant="soft"
                       size="sm"
