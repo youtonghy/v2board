@@ -19,8 +19,8 @@ export function AdminSelectField({
   onSelectionChange: (key: string | null) => void;
 }) {
   return (
-    <Select aria-label={ariaLabel} placeholder={placeholder} selectedKey={selectedKey} onSelectionChange={key => onSelectionChange(key ? String(key) : null)}>
-      <Select.Trigger className="h-9 w-full">
+    <Select aria-label={ariaLabel} className="w-full" placeholder={placeholder} selectedKey={selectedKey} onSelectionChange={key => onSelectionChange(key ? String(key) : null)}>
+      <Select.Trigger className="h-12 w-full">
         <Select.Value />
         <Select.Indicator />
       </Select.Trigger>
