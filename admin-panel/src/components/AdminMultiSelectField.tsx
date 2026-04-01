@@ -1,4 +1,4 @@
-import { ListBox, ListBoxItem } from "@heroui/react";
+import { ListBox, ListBoxItem, Select } from "@heroui/react";
 import type { Selection } from "react-aria-components";
 import type { AdminSelectOption } from "./AdminSelectField";
 
@@ -14,20 +14,27 @@ export function AdminMultiSelectField({
   onSelectionChange: (keys: Selection) => void;
 }) {
   return (
-    <div className="rounded-[1.1rem] border border-line bg-surface">
-      <ListBox
-        aria-label={ariaLabel}
-        className="max-h-56 overflow-y-auto p-2"
-        selectionMode="multiple"
-        selectedKeys={selectedKeys}
-        onSelectionChange={onSelectionChange}
-      >
-        {options.map(option => (
-          <ListBoxItem key={option.id} id={option.id} textValue={option.label}>
-            {option.label}
-          </ListBoxItem>
-        ))}
-      </ListBox>
-    </div>
+    <Select
+      aria-label={ariaLabel}
+      className="w-full"
+      placeholder="Select options"
+      selectionMode="multiple"
+      selectedKeys={selectedKeys}
+      onSelectionChange={onSelectionChange}
+    >
+      <Select.Trigger>
+        <Select.Value />
+        <Select.Indicator />
+      </Select.Trigger>
+      <Select.Popover>
+        <ListBox selectionMode="multiple" className="max-h-56 overflow-y-auto p-2">
+          {options.map(option => (
+            <ListBoxItem key={option.id} id={option.id} textValue={option.label}>
+              {option.label}
+            </ListBoxItem>
+          ))}
+        </ListBox>
+      </Select.Popover>
+    </Select>
   );
 }

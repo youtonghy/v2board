@@ -17,6 +17,7 @@ import { useEffect, useState } from "react";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { ModalField } from "../components/ModalField";
 import { PageFrame } from "../components/PageFrame";
+import { DangerConfirmButton } from "../components/DangerConfirmButton";
 import { asArray } from "../lib/admin-format";
 import {
   adminCardClassName,
@@ -172,9 +173,16 @@ export function ServerGroupPage() {
                           >
                             Edit
                           </Button>
-                          <Button size="sm" variant="ghost" onPress={() => void deleteGroup(item.id)} isDisabled={submitting}>
+                          <DangerConfirmButton
+                            size="sm"
+                            isDisabled={submitting}
+                            title={`Delete group ${item.name || item.id}?`}
+                            description="This will permanently remove the server group."
+                            confirmLabel="Delete group"
+                            onConfirm={() => void deleteGroup(item.id)}
+                          >
                             Delete
-                          </Button>
+                          </DangerConfirmButton>
                         </div>
                       </TableCell>
                     </TableRow>

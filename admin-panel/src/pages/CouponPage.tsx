@@ -16,6 +16,7 @@ import {
   TableRow,
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
+import { DangerConfirmButton } from "../components/DangerConfirmButton";
 import { AdminMultiSelectField } from "../components/AdminMultiSelectField";
 import { AdminPagination } from "../components/AdminPagination";
 import { AdminSelectField } from "../components/AdminSelectField";
@@ -246,9 +247,15 @@ export function CouponPage() {
                             >
                               Edit
                             </Button>
-                            <Button size="sm" variant="ghost" onPress={() => void dropCoupon(item)}>
+                            <DangerConfirmButton
+                              size="sm"
+                              title={`Delete coupon ${item.name || item.code || item.id || ""}?`}
+                              description="This will permanently remove the coupon."
+                              confirmLabel="Delete coupon"
+                              onConfirm={() => void dropCoupon(item)}
+                            >
                               Delete
-                            </Button>
+                            </DangerConfirmButton>
                           </div>
                         </TableCell>
                       </TableRow>

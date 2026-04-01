@@ -6,7 +6,12 @@
       "Bash(git push)",
       "Bash(git shortlog:*)",
       "Bash(find:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(npx tsc:*)",
+      "Bash(sed -i '/^  Input,$/d' src/pages/GiftCardPage.tsx)",
+      "Bash(sed -i '1s|^|import { Input } from \"../lib/heroui-compat\";\\\\n|' src/pages/GiftCardPage.tsx)",
+      "Bash(sed -i '/^  Input,$/d' src/pages/TicketPage.tsx)",
+      "Bash(sed -i '1s|^|import { Input } from \"../lib/heroui-compat\";\\\\n|' src/pages/TicketPage.tsx)"
     ],
     "deny": [],
     "ask": []

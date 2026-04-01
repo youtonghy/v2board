@@ -16,6 +16,7 @@ import {
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
 import { AdminSelectField } from "../components/AdminSelectField";
+import { DangerConfirmButton } from "../components/DangerConfirmButton";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { ModalField } from "../components/ModalField";
 import { PageFrame } from "../components/PageFrame";
@@ -205,9 +206,16 @@ export function ServerRoutePage() {
                           <Button size="sm" variant="ghost" onPress={() => { setSelected(item); setEditorOpen(true); }}>
                             Edit
                           </Button>
-                          <Button size="sm" variant="ghost" onPress={() => void deleteRoute(item.id)} isDisabled={submitting}>
-                            Delete
-                          </Button>
+                            <DangerConfirmButton
+                              size="sm"
+                              isDisabled={submitting}
+                              title={`Delete route ${item.remarks || item.id}?`}
+                              description="This will permanently remove the route."
+                              confirmLabel="Delete route"
+                              onConfirm={() => void deleteRoute(item.id)}
+                            >
+                              Delete
+                            </DangerConfirmButton>
                         </div>
                       </TableCell>
                     </TableRow>

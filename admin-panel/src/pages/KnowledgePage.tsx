@@ -2,6 +2,7 @@ import { DndContext, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { Button, Card, CardContent, CardHeader, Chip, Input, Modal, Spinner, Switch, Table, TableBody, TableCell, TableColumn, TableHeader, TextArea } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
+import { DangerConfirmButton } from "../components/DangerConfirmButton";
 import { AdminFilterAccordion } from "../components/AdminFilterAccordion";
 import { AdminSelectField } from "../components/AdminSelectField";
 import {
@@ -300,9 +301,16 @@ export function KnowledgePage() {
                               <Button size="sm" variant="ghost" onPress={() => void openEditor(item)} isDisabled={submitting || sorting}>
                                 Edit
                               </Button>
-                              <Button size="sm" variant="ghost" onPress={() => void runAction("knowledge/drop", { id: item.id })} isDisabled={sorting}>
-                                Delete
-                              </Button>
+                                <DangerConfirmButton
+                                  size="sm"
+                                  isDisabled={sorting}
+                                  title={`Delete article ${item.title}?`}
+                                  description="This will permanently remove the knowledge article."
+                                  confirmLabel="Delete article"
+                                  onConfirm={() => void runAction("knowledge/drop", { id: item.id })}
+                                >
+                                  Delete
+                                </DangerConfirmButton>
                             </div>
                           </TableCell>
                         </SortableTableRow>

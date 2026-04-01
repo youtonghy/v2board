@@ -111,7 +111,7 @@ export function QueuePage() {
 
       <div className={adminStatsGridClassName}>
         {statCards.map(item => (
-          <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
+          <Card key={item.label} className={adminCardClassName}>
             <CardContent className={adminStatCardBodyClassName}>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
               <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
@@ -124,12 +124,12 @@ export function QueuePage() {
       {state.loading ? (
         <Card className="border border-default-200 shadow-none">
           <CardContent className="flex min-h-[320px] items-center justify-center">
-            <Spinner color="primary" label="Loading queue" />
+            <Spinner />
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-6 xl:grid-cols-2">
-          <Card shadow="none" radius="lg" className={adminCardClassName}>
+          <Card className={adminCardClassName}>
             <CardHeader className={adminSectionHeaderClassName}>
               <div>
                 <p className="text-[1.1rem] font-semibold tracking-[-0.03em] text-slate-950">Queue Stats</p>
@@ -143,7 +143,7 @@ export function QueuePage() {
             </CardContent>
           </Card>
 
-          <Card shadow="none" radius="lg" className={adminCardClassName}>
+          <Card className={adminCardClassName}>
             <CardHeader className={adminSectionHeaderClassName}>
               <div>
                 <p className="text-[1.1rem] font-semibold tracking-[-0.03em] text-slate-950">Queue Workload</p>
@@ -157,7 +157,7 @@ export function QueuePage() {
             </CardContent>
           </Card>
 
-          <Card shadow="none" radius="lg" className={adminCardClassName}>
+          <Card className={adminCardClassName}>
             <CardHeader className={adminSectionHeaderClassName}>
               <div>
                 <p className="text-[1.1rem] font-semibold tracking-[-0.03em] text-slate-950">Master Supervisors</p>
@@ -171,13 +171,13 @@ export function QueuePage() {
             </CardContent>
           </Card>
 
-          <Card shadow="none" radius="lg" className={adminCardClassName}>
+          <Card className={adminCardClassName}>
             <CardHeader className={adminSectionHeaderClassName}>
               <div>
                 <p className="text-[1.1rem] font-semibold tracking-[-0.03em] text-slate-950">System Log</p>
                 <p className="mt-1 text-sm leading-6 text-slate-500">Current backend runtime output for quick inspection.</p>
               </div>
-              <Button size="sm" color="primary" variant="light" onPress={() => void loadQueue()}>
+              <Button size="sm" variant="ghost" onPress={() => void loadQueue()}>
                 Reload log
               </Button>
             </CardHeader>

@@ -19,6 +19,7 @@ import {
   TableHeader,
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
+import { DangerConfirmButton } from "../../components/DangerConfirmButton";
 import {
   SortableTableRow,
   adminTableActionCellClassName,
@@ -343,14 +344,16 @@ export function PaymentConfigPage() {
                               >
                                 Edit
                               </Button>
-                              <Button
+                              <DangerConfirmButton
                                 size="sm"
-                                variant="ghost"
-                                onPress={() => void dropPayment(item)}
                                 isDisabled={sorting}
+                                title={`Delete payment config ${item.name || item.id || ""}?`}
+                                description="This will permanently remove the payment configuration."
+                                confirmLabel="Delete config"
+                                onConfirm={() => void dropPayment(item)}
                               >
                                 Delete
-                              </Button>
+                              </DangerConfirmButton>
                             </div>
                           </TableCell>
                         </SortableTableRow>

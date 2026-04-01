@@ -18,6 +18,7 @@ import {
   useOverlayState,
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
+import { DangerConfirmButton } from "../components/DangerConfirmButton";
 import {
   SortableTableRow,
   adminTableActionCellClassName,
@@ -468,9 +469,16 @@ export function ServerManagePage() {
                               <Button size="sm" variant="ghost" onPress={() => void runAction(COPY_ENDPOINTS[item.type], { id: item.id })} isDisabled={sorting}>
                                 Copy
                               </Button>
-                              <Button size="sm" variant="ghost" onPress={() => void runAction(DROP_ENDPOINTS[item.type], { id: item.id })} isDisabled={sorting}>
+                              <DangerConfirmButton
+                                size="sm"
+                                isDisabled={sorting}
+                                title={`Delete ${item.name || item.id || "server"}?`}
+                                description="This will permanently remove the server entry."
+                                confirmLabel="Delete server"
+                                onConfirm={() => void runAction(DROP_ENDPOINTS[item.type], { id: item.id })}
+                              >
                                 Delete
-                              </Button>
+                              </DangerConfirmButton>
                             </div>
                           </TableCell>
                         </SortableTableRow>

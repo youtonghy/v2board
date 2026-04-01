@@ -9,22 +9,16 @@ module.exports = {
   darkMode: "class",
   theme: {
     extend: {
-      fontFamily: {
-        sans: ["var(--font-sans)"]
-      },
       colors: {
         canvas: "var(--background)",
         ink: "var(--foreground)",
         accent: "var(--accent)",
         accentSoft: "var(--surface-secondary)",
         panel: "var(--surface)",
-        surface: "var(--surface)",
-        surfaceSoft: "var(--surface-secondary)",
-        surfaceMuted: "var(--surface-tertiary)",
         line: "var(--border)"
       },
       boxShadow: {
-        panel: "var(--surface-shadow)"
+        panel: "0 24px 60px rgba(17, 33, 45, 0.08)"
       },
       borderRadius: {
         panel: "1.5rem"
@@ -37,19 +31,19 @@ module.exports = {
         fantasticAdmin: {
           extend: "light",
           colors: {
-            background: "#f6f8fb",
-            foreground: "#0f1720",
+            background: "#f4f7f9",
+            foreground: "#11212d",
             primary: {
-              50: "#eef7ff",
-              100: "#d8ecff",
-              200: "#badeff",
+              50: "#eef8ff",
+              100: "#d8edff",
+              200: "#bae0ff",
               300: "#8bcbff",
               400: "#54aeff",
               500: "#2b93f6",
               600: "#1388ef",
-              700: "#0d72cf",
-              800: "#0f5fa7",
-              900: "#104d86",
+              700: "#0b6fc9",
+              800: "#0e5aa3",
+              900: "#124c85",
               DEFAULT: "#1388ef",
               foreground: "#ffffff"
             }

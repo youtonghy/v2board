@@ -19,6 +19,7 @@ import {
   adminStatCardBodyClassName,
   adminStatsGridClassName
 } from "../../components/AdminContent";
+import type { AdminSelectOption } from "../../components/AdminSelectField";
 
 interface SystemConfigState {
   loading: boolean;
@@ -147,6 +148,17 @@ export function SystemConfigPage() {
   }, []);
 
   const sectionKeys = useMemo(() => Object.keys(state.sections), [state.sections]);
+  const emailTemplateOptions = useMemo<AdminSelectOption[]>(() => {
+    if (!Array.isArray(state.emailTemplate)) {
+      return [];
+    }
+
+    return state.emailTemplate.map(item => {
+      const value = String(item);
+      return { id: value, label: value };
+    });
+  }, [state.emailTemplate]);
+
   const stats = useMemo(
     () => [
       { label: "Sections", value: String(sectionKeys.length), hint: "Config groups detected" },
@@ -215,6 +227,9 @@ export function SystemConfigPage() {
               ) : null}
               <ObjectRecordEditor
                 value={activeRecord}
+                fieldOptionsByKey={{
+                  email_template: emailTemplateOptions
+                }}
                 onChange={nextValue =>
                   setState(current => ({
                     ...current,
@@ -222,9 +237,9 @@ export function SystemConfigPage() {
                       ...current.sections,
                       [current.activeKey]: nextValue
                     }
-                    }))
-                  }
-                />
+                  }))
+                }
+              />
             </CardContent>
           </Card>
 

@@ -15,6 +15,7 @@ import {
   TableRow,
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
+import { DangerConfirmButton } from "../components/DangerConfirmButton";
 import { AdminPagination } from "../components/AdminPagination";
 import { AdminSelectField } from "../components/AdminSelectField";
 import { adminRequest } from "../lib/api";
@@ -207,9 +208,15 @@ export function GiftCardPage() {
                             >
                               Edit
                             </Button>
-                            <Button size="sm" variant="ghost" onPress={() => void dropGiftCard(item)}>
+                            <DangerConfirmButton
+                              size="sm"
+                              title={`Delete gift card ${item.name || item.code || item.id || ""}?`}
+                              description="This will permanently remove the gift card."
+                              confirmLabel="Delete gift card"
+                              onConfirm={() => void dropGiftCard(item)}
+                            >
                               Delete
-                            </Button>
+                            </DangerConfirmButton>
                           </div>
                         </TableCell>
                       </TableRow>

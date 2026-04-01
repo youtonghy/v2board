@@ -5,6 +5,7 @@ import {
   Card,
   CardContent,
   CardHeader,
+  Checkbox,
   Input,
   Modal,
   Select,
@@ -19,6 +20,7 @@ import {
 } from "@heroui/react";
 import { TextArea } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
+import { DangerConfirmButton } from "../components/DangerConfirmButton";
 import { AdminSelectField } from "../components/AdminSelectField";
 import { SortableTableRow, adminTableActionCellClassName, sortableCollisionDetection, useSortableTableSensors } from "../components/SortableTable";
 import { adminRequest } from "../lib/api";
@@ -309,10 +311,26 @@ export function PlanPage() {
                           isDisabled={sortingId !== null}
                         >
                           <TableCell>
-                            <Switch isSelected={Boolean(Number(item.show ?? 0))} onChange={value => void updateField(item, "show", value ? 1 : 0)} />
+                            <Checkbox
+                              aria-label={`Enable plan ${item.name || item.id || ""}`}
+                              isSelected={Boolean(Number(item.show ?? 0))}
+                              onChange={value => void updateField(item, "show", value ? 1 : 0)}
+                            >
+                              <Checkbox.Control>
+                                <Checkbox.Indicator />
+                              </Checkbox.Control>
+                            </Checkbox>
                           </TableCell>
                           <TableCell>
-                            <Switch isSelected={Boolean(Number(item.renew ?? 0))} onChange={value => void updateField(item, "renew", value ? 1 : 0)} />
+                            <Checkbox
+                              aria-label={`Renew plan ${item.name || item.id || ""}`}
+                              isSelected={Boolean(Number(item.renew ?? 0))}
+                              onChange={value => void updateField(item, "renew", value ? 1 : 0)}
+                            >
+                              <Checkbox.Control>
+                                <Checkbox.Indicator />
+                              </Checkbox.Control>
+                            </Checkbox>
                           </TableCell>
                           <TableCell>{item.name || "Untitled"}</TableCell>
                           <TableCell>{item.transfer_enable ? `${item.transfer_enable} GB` : "—"}</TableCell>
@@ -332,14 +350,16 @@ export function PlanPage() {
                               >
                                 Edit
                               </Button>
-                              <Button
+                              <DangerConfirmButton
                                 size="sm"
-                                variant="ghost"
-                                onPress={() => void dropPlan(item)}
                                 isDisabled={sorting}
+                                title={`Delete plan ${item.name || item.id || ""}?`}
+                                description="This will permanently delete the plan."
+                                confirmLabel="Delete plan"
+                                onConfirm={() => void dropPlan(item)}
                               >
                                 Delete
-                              </Button>
+                              </DangerConfirmButton>
                             </div>
                           </TableCell>
                         </SortableTableRow>
@@ -435,7 +455,7 @@ export function PlanPage() {
                   <p className="mb-3 text-sm font-semibold text-slate-900">Force Update Users</p>
                   <Switch
                     isSelected={Boolean(selected?.force_update)}
-                    onChange={value => setSelected(current => (current ? { ...current, force_update: value } : current))}
+                    onChange={(value: boolean) => setSelected(current => (current ? { ...current, force_update: value } : current))}
                   >
                     Apply traffic, speed, and group changes to subscribed users
                   </Switch>

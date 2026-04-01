@@ -17,6 +17,7 @@ import {
   TableRow,
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
+import { DangerConfirmButton } from "../components/DangerConfirmButton";
 import { adminRequest } from "../lib/api";
 import { ModalField } from "../components/ModalField";
 import { PageFrame } from "../components/PageFrame";
@@ -208,9 +209,15 @@ export function NoticePage() {
                         >
                           Edit
                         </Button>
-                        <Button size="sm" variant="ghost" onPress={() => void dropNotice(item)}>
+                        <DangerConfirmButton
+                          size="sm"
+                          title={`Delete notice ${item.title || item.id || ""}?`}
+                          description="This will permanently remove the notice."
+                          confirmLabel="Delete notice"
+                          onConfirm={() => void dropNotice(item)}
+                        >
                           Delete
-                        </Button>
+                        </DangerConfirmButton>
                       </div>
                     </TableCell>
                   </TableRow>

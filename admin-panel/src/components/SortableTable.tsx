@@ -77,7 +77,7 @@ export function SortableTableRow({
         <Button
           isIconOnly
           size="sm"
-          variant="light"
+          variant="ghost"
           aria-label={dragLabel}
           className={adminSortableHandleButtonClassName}
           isDisabled={isDisabled}

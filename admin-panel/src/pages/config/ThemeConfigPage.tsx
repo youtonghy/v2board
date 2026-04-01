@@ -106,7 +106,7 @@ export function ThemeConfigPage() {
     >
       <div className={adminStatsGridClassName}>
         {stats.map(item => (
-          <Card key={item.label} shadow="none" radius="lg" className={adminCardClassName}>
+          <Card key={item.label} className={adminCardClassName}>
             <CardContent className={adminStatCardBodyClassName}>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
               <p className="text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">{item.value}</p>
@@ -119,18 +119,18 @@ export function ThemeConfigPage() {
       {loading ? (
         <Card className="border border-default-200 shadow-none">
           <CardContent className="flex min-h-[320px] items-center justify-center">
-            <Spinner color="primary" label="Loading themes" />
+            <Spinner />
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
-          <Card shadow="none" radius="lg" className={adminCardClassName}>
+          <Card className={adminCardClassName}>
             <CardHeader className={adminSectionHeaderClassName}>
               <div>
                 <p className="text-[1.1rem] font-semibold tracking-[-0.03em] text-slate-950">Installed Themes</p>
                 <p className="mt-1 text-sm leading-6 text-slate-500">{`Active theme: ${active || "Unknown"}`}</p>
               </div>
-              <Button color="primary" radius="full" onPress={() => void saveTheme()} isLoading={saving}>
+              <Button variant="primary" onPress={() => void saveTheme()} isDisabled={saving}>
                 Save theme config
               </Button>
             </CardHeader>
@@ -138,8 +138,7 @@ export function ThemeConfigPage() {
               <Tabs
                 selectedKey={currentTheme}
                 onSelectionChange={key => void loadThemes(String(key))}
-                variant="underlined"
-                color="primary"
+                variant="primary"
               >
                 <Tabs.List>
                   {themes.map(theme => (

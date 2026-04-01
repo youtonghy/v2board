@@ -22,10 +22,10 @@ export function PageFrame({
     <div className="space-y-6">
       <div className="flex flex-col gap-5 px-1 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-[clamp(2rem,3vw,3.25rem)] font-semibold tracking-[-0.04em] text-ink">
+          <h1 className="text-[clamp(2rem,3vw,3.25rem)] font-semibold tracking-[-0.04em] text-slate-950">
             {title}
           </h1>
-          <p className="mt-2 max-w-3xl text-sm leading-7 text-muted">{description}</p>
+          <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-500">{description}</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
