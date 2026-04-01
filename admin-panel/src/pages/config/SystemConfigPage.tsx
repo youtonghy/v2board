@@ -183,7 +183,7 @@ export function SystemConfigPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
+        <div className="space-y-6">
           <Card className={adminCardClassName}>
             <CardHeader className={adminSectionHeaderClassName}>
               <div>
@@ -225,21 +225,6 @@ export function SystemConfigPage() {
                     }))
                   }
                 />
-            </CardContent>
-          </Card>
-
-          <Card className="border border-default-200 bg-white/90 shadow-panel">
-            <CardHeader>
-              <div>
-                <p className="text-lg font-semibold text-slate-900">Email Template Snapshot</p>
-                <p className="text-sm text-slate-500">Read-only context to keep configuration changes grounded in the current template set.</p>
-              </div>
-            </CardHeader>
-            <Separator />
-            <CardContent>
-              <pre className="max-h-[560px] overflow-auto rounded-2xl bg-slate-950 p-4 text-xs leading-6 text-white">
-                {JSON.stringify(state.emailTemplate, null, 2)}
-              </pre>
             </CardContent>
           </Card>
 
