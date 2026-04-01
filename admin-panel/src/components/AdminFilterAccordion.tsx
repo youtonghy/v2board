@@ -22,8 +22,8 @@ export function AdminFilterAccordion({
         <Accordion.Heading className="px-5 py-4">
           <Accordion.Trigger className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-sm font-semibold text-slate-900">{title}</p>
-              <p className="mt-1 text-xs text-slate-400">{description}</p>
+              <p className="text-sm font-semibold text-ink">{title}</p>
+              <p className="mt-1 text-xs text-muted">{description}</p>
             </div>
             <Accordion.Indicator />
           </Accordion.Trigger>

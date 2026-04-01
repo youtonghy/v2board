@@ -14,8 +14,8 @@ export function ModalField({
   return (
     <div className={className}>
       <div className="mb-2 space-y-1">
-        <p className="text-sm font-medium text-slate-700">{label}</p>
-        {description ? <p className="text-xs text-slate-500">{description}</p> : null}
+        <p className="text-sm font-medium text-ink">{label}</p>
+        {description ? <p className="text-xs text-muted">{description}</p> : null}
       </div>
       {children}
     </div>

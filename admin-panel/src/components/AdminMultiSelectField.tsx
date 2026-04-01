@@ -14,7 +14,7 @@ export function AdminMultiSelectField({
   onSelectionChange: (keys: Selection) => void;
 }) {
   return (
-    <div className="rounded-[1.1rem] border border-slate-200 bg-white">
+    <div className="rounded-[1.1rem] border border-line bg-surface">
       <ListBox
         aria-label={ariaLabel}
         className="max-h-56 overflow-y-auto p-2"

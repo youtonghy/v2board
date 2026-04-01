@@ -72,9 +72,9 @@ export function ObjectRecordEditor({
 
   if (!entries.length) {
     return (
-      <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50/80 p-5">
-        <p className="text-sm font-semibold text-slate-900">No editable fields</p>
-        <p className="mt-2 text-sm leading-6 text-slate-500">
+      <div className="rounded-[1.4rem] border border-line bg-surface-secondary/80 p-5">
+        <p className="text-sm font-semibold text-ink">No editable fields</p>
+        <p className="mt-2 text-sm leading-6 text-muted">
           The current section does not expose configurable values in this view yet.
         </p>
       </div>
@@ -87,14 +87,14 @@ export function ObjectRecordEditor({
         variant="surface"
         hideSeparator
         defaultExpandedKeys={["fields"]}
-        className="rounded-[1.7rem] border border-slate-100 bg-white/95"
+        className="rounded-[1.7rem] border border-line/70 bg-surface/95"
       >
         <Accordion.Item id="fields" className="px-0">
           <Accordion.Heading className="px-5 py-4">
             <Accordion.Trigger className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold text-slate-900">Advanced fields</p>
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="text-sm font-semibold text-ink">Advanced fields</p>
+                <p className="mt-1 text-xs text-muted">
                   Fields are edited one per row with HeroUI inputs, switches and text areas.
                 </p>
               </div>
@@ -126,8 +126,8 @@ export function ObjectRecordEditor({
                           <Table.Row key={key}>
                             <Table.Cell className="align-top">
                               <div className="space-y-1">
-                                <p className="text-sm font-semibold text-slate-900">{label}</p>
-                                <p className="text-xs text-slate-500">{key}</p>
+                                <p className="text-sm font-semibold text-ink">{label}</p>
+                                <p className="text-xs text-muted">{key}</p>
                               </div>
                             </Table.Cell>
                             <Table.Cell className="align-top">
@@ -138,7 +138,7 @@ export function ObjectRecordEditor({
                                     isSelected={Boolean(currentValue)}
                                     onChange={nextValue => onChange({ ...value, [key]: nextValue })}
                                   />
-                                  <span className="text-sm text-slate-500">
+                                  <span className="text-sm text-muted">
                                     {Boolean(currentValue) ? "Enabled" : "Disabled"}
                                   </span>
                                 </div>
