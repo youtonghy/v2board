@@ -233,12 +233,13 @@ export function OrderPage() {
         <CardContent className={`${adminSectionBodyClassName} gap-5`}>
           <AdminFilterAccordion>
             <div className="grid gap-3 md:grid-cols-4">
-            <Input aria-label="User Email" value={email} onChange={event => setEmail(event.target.value)} />
-            <Input aria-label="Trade No" value={tradeNo} onChange={event => setTradeNo(event.target.value)} />
-            <div>
-              <div className="mb-2 space-y-1">
-                <p className="text-sm font-medium text-slate-700">Status</p>
-              </div>
+              <ModalField label="User Email">
+                <Input aria-label="User Email" className="w-full" value={email} onChange={event => setEmail(event.target.value)} />
+              </ModalField>
+              <ModalField label="Trade No">
+                <Input aria-label="Trade No" className="w-full" value={tradeNo} onChange={event => setTradeNo(event.target.value)} />
+              </ModalField>
+              <ModalField label="Status">
               <AdminSelectField
                 ariaLabel="Status"
                 options={Object.entries(ORDER_STATUS).map(([key, value]) => ({
@@ -248,7 +249,7 @@ export function OrderPage() {
                 selectedKey={status || null}
                 onSelectionChange={key => setStatus(String(key || ""))}
               />
-            </div>
+              </ModalField>
             <div className="flex items-end gap-2">
               <Button variant="primary" onPress={() => { setPage(1); void loadOrders(1); }}>
                 Apply

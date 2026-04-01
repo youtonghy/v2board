@@ -221,10 +221,7 @@ export function InviteLinkPage() {
                   onChange={event => setKeyword(event.target.value)}
                 />
               </ModalField>
-            <div>
-              <div className="mb-2 space-y-1">
-                <p className="text-sm font-medium text-slate-700">Status</p>
-              </div>
+              <ModalField label="Status">
               <AdminSelectField
                 ariaLabel="Status"
                 placeholder="Select a status"
@@ -237,7 +234,7 @@ export function InviteLinkPage() {
                 selectedKey={status || null}
                 onSelectionChange={key => setStatus(String(key || ""))}
               />
-            </div>
+              </ModalField>
             <div className="flex items-end gap-2">
               <Button variant="primary" onPress={() => { setPage(1); void loadLinks(1); }}>
                 Apply
