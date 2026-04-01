@@ -254,7 +254,7 @@ export function InviteLinkPage() {
                 </Select>
               </div>
 
-              <div className="grid gap-2 sm:grid-cols-2">
+              <div className="grid gap-2 sm:grid-cols-2 md:pt-[1.75rem]">
                 <Button className="w-full" variant="primary" onPress={() => { setPage(1); void loadLinks(1); }}>
                   Apply
                 </Button>
