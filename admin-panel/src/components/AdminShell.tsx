@@ -390,17 +390,22 @@ export function AdminShell() {
                   </span>
                 </Button>
                 <Dropdown>
-                  <Dropdown.Trigger aria-label={`Open account menu for ${userLabel}`}>
-                    <Badge.Anchor className="hidden lg:inline-flex">
-                      <Avatar className="bg-[#1388ef] text-white" size="sm">
-                        <Avatar.Fallback>{userInitials}</Avatar.Fallback>
-                      </Avatar>
-                      {pendingTicketCount > 0 ? (
-                        <Badge color="danger" placement="top-right" size="md" variant="primary">
-                          {pendingTicketCount > 99 ? "99+" : pendingTicketCount}
-                        </Badge>
-                      ) : null}
-                    </Badge.Anchor>
+                  <Dropdown.Trigger
+                    aria-label={`Open account menu for ${userLabel}`}
+                    className="hidden h-auto min-w-0 rounded-full border-0 bg-transparent p-0 shadow-none outline-none lg:inline-flex"
+                  >
+                    {() => (
+                      <Badge.Anchor>
+                        <Avatar className="bg-[#1388ef] text-white" size="sm">
+                          <Avatar.Fallback>{userInitials}</Avatar.Fallback>
+                        </Avatar>
+                        {pendingTicketCount > 0 ? (
+                          <Badge color="danger" placement="top-right" size="md" variant="primary">
+                            {pendingTicketCount > 99 ? "99+" : pendingTicketCount}
+                          </Badge>
+                        ) : null}
+                      </Badge.Anchor>
+                    )}
                   </Dropdown.Trigger>
                   <Dropdown.Popover placement="bottom-end" className="min-w-[17rem]">
                     <Dropdown.Menu
