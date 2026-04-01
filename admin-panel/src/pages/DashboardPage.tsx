@@ -1,5 +1,6 @@
 import { ArrowDownToLine, ArrowRotateRight, Bell } from "@gravity-ui/icons";
 import {
+  Avatar,
   Button,
   Card,
   CardContent,
@@ -204,6 +205,8 @@ function PanelShell({
     </Card>
   );
 }
+
+const USER_COLORS = ["primary", "secondary", "success", "warning", "danger"] as const;
 
 export function DashboardPage() {
   const [state, setState] = useState<DashboardState>({
@@ -546,9 +549,17 @@ export function DashboardPage() {
                     setDetailOpen(true);
                   }}
                 >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-slate-900">{user.email || `User #${user.user_id}`}</p>
-                    <p className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-400">Rank {index + 1}</p>
+                  <div className="flex min-w-0 items-center gap-3">
+                    <Avatar
+                      name={user.email?.[0]?.toUpperCase() || "#"}
+                      color={USER_COLORS[index % USER_COLORS.length]}
+                      variant="soft"
+                      size="sm"
+                    />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-slate-900">{user.email || `User #${user.user_id}`}</p>
+                      <p className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-400">Rank {index + 1}</p>
+                    </div>
                   </div>
                   <div className="text-right">
                     <p className="text-lg font-semibold tracking-[-0.03em] text-slate-950">{Number(user.total || 0).toFixed(2)} GB</p>
