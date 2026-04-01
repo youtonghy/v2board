@@ -12,6 +12,7 @@ import {
   Modal,
   Select,
   Spinner,
+  SearchField,
   TextArea,
   Table,
   TableBody,
@@ -19,7 +20,6 @@ import {
   TableColumn,
   TableHeader,
   TableRow,
-  TextField,
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
 import { AdminFilterAccordion } from "../components/AdminFilterAccordion";
@@ -206,27 +206,23 @@ export function InviteLinkPage() {
         <CardContent className={`${adminSectionBodyClassName} gap-5`}>
           <AdminFilterAccordion>
             <Form className="grid gap-3 md:grid-cols-4">
-              <TextField className="space-y-2">
+              <SearchField className="space-y-2" value={email} onChange={setEmail}>
                 <Label>User Email</Label>
-                <Input
-                  className="w-full"
-                  placeholder="Enter user email"
-                  variant="secondary"
-                  value={email}
-                  onChange={event => setEmail(event.target.value)}
-                />
-              </TextField>
+                <SearchField.Group>
+                  <SearchField.SearchIcon />
+                  <SearchField.Input className="w-full" placeholder="Enter user email" />
+                  <SearchField.ClearButton />
+                </SearchField.Group>
+              </SearchField>
 
-              <TextField className="space-y-2">
+              <SearchField className="space-y-2" value={keyword} onChange={setKeyword}>
                 <Label>Keyword</Label>
-                <Input
-                  className="w-full"
-                  placeholder="Enter keyword"
-                  variant="secondary"
-                  value={keyword}
-                  onChange={event => setKeyword(event.target.value)}
-                />
-              </TextField>
+                <SearchField.Group>
+                  <SearchField.SearchIcon />
+                  <SearchField.Input className="w-full" placeholder="Enter keyword" />
+                  <SearchField.ClearButton />
+                </SearchField.Group>
+              </SearchField>
 
               <div className="space-y-2">
                 <Label>Status</Label>

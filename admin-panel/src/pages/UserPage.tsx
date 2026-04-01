@@ -10,9 +10,11 @@ import {
 import {
   Avatar,
   Button,
+  ButtonGroup,
   Card,
   CardContent,
   CardHeader,
+  SearchField,
   Chip,
   Form,
   Input,
@@ -29,12 +31,12 @@ import {
   TableColumn,
   TableHeader,
   TableRow,
-  TextField,
   TextArea,
   Tooltip,
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
 import { AdminFilterAccordion } from "../components/AdminFilterAccordion";
+import { DangerConfirmButton } from "../components/DangerConfirmButton";
 import { AdminPagination } from "../components/AdminPagination";
 import { AdminSelectField } from "../components/AdminSelectField";
 import { ModalField } from "../components/ModalField";
@@ -490,7 +492,6 @@ export function UserPage() {
   }
 
   async function bulkDelete() {
-    if (!window.confirm("Delete all users in the current filter scope?")) return;
     setSubmitting(true);
     try {
       await unwrapEnvelope(
@@ -507,6 +508,7 @@ export function UserPage() {
       await loadUsers(1);
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "Failed to delete users");
+      throw nextError;
     } finally {
       setSubmitting(false);
     }
@@ -598,32 +600,38 @@ export function UserPage() {
               Search active accounts, review balance and plan state, and open actions from one place.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <ButtonGroup className="flex flex-wrap gap-2">
             <Button variant="ghost" onPress={() => void dumpCsv()} isDisabled={submitting}>
               Export CSV
             </Button>
             <Button variant="ghost" onPress={() => setMailOpen(true)}>
               Mass mail
             </Button>
-            <Button variant="ghost" onPress={() => void bulkDelete()} isDisabled={submitting}>
+            <DangerConfirmButton
+              title="Delete all users?"
+              description="This will permanently delete every user in the current filter scope."
+              confirmLabel="Delete users"
+              isDisabled={submitting}
+              onConfirm={() => void bulkDelete()}
+            >
               Bulk delete
-            </Button>
+            </DangerConfirmButton>
             <Button variant="primary" onPress={() => setGenerateOpen(true)}>
               Generate users
             </Button>
-          </div>
+          </ButtonGroup>
         </CardHeader>
         <CardContent className={`${adminSectionBodyClassName} gap-5`}>
           <AdminFilterAccordion>
             <Form className="grid gap-3 md:grid-cols-4">
-              <TextField className="space-y-2">
+              <SearchField className="space-y-2" value={searchEmail} onChange={setSearchEmail}>
                 <Label>Email</Label>
-                <Input
-                  placeholder="Search by email"
-                  value={searchEmail}
-                  onChange={event => setSearchEmail(event.target.value)}
-                />
-              </TextField>
+                <SearchField.Group>
+                  <SearchField.SearchIcon />
+                  <SearchField.Input placeholder="Search by email" />
+                  <SearchField.ClearButton />
+                </SearchField.Group>
+              </SearchField>
 
               <div className="space-y-2">
                 <Label>Plan</Label>
@@ -808,42 +816,38 @@ export function UserPage() {
                             >
                               <Globe width={16} height={16} aria-hidden="true" />
                             </Button>
-                            <Tooltip>
-                              <Tooltip.Trigger>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  isIconOnly
-                                 
-                                  aria-label={Number(item.banned || 0) ? `Unban ${item.email}` : `Ban ${item.email}`}
-                                  onPress={() => void runRowAction("user/ban", { filter: [{ key: "id", condition: "=", value: item.id }] })}
-                                  isDisabled={submitting}
-                                >
-                                  {Number(item.banned || 0) ? (
-                                    <LockOpen width={16} height={16} aria-hidden="true" />
-                                  ) : (
-                                    <Ban width={16} height={16} aria-hidden="true" />
-                                  )}
-                                </Button>
-                              </Tooltip.Trigger>
-                              <Tooltip.Content>{Number(item.banned || 0) ? "Unban user" : "Ban user"}<Tooltip.Arrow /></Tooltip.Content>
-                            </Tooltip>
-                            <Tooltip>
-                              <Tooltip.Trigger>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  isIconOnly
-                                 
-                                  aria-label={`Delete ${item.email}`}
-                                  onPress={() => void runRowAction("user/delUser", { id: item.id })}
-                                  isDisabled={submitting}
-                                >
-                                  <TrashBin width={16} height={16} aria-hidden="true" />
-                                </Button>
-                              </Tooltip.Trigger>
-                              <Tooltip.Content>Delete user<Tooltip.Arrow /></Tooltip.Content>
-                            </Tooltip>
+                            <DangerConfirmButton
+                              size="sm"
+                              isIconOnly
+                              aria-label={Number(item.banned || 0) ? `Unban ${item.email}` : `Ban ${item.email}`}
+                              title={Number(item.banned || 0) ? `Unban ${item.email}?` : `Ban ${item.email}?`}
+                              description={
+                                Number(item.banned || 0)
+                                  ? `This will restore access for ${item.email}.`
+                                  : `This will block access for ${item.email}.`
+                              }
+                              confirmLabel={Number(item.banned || 0) ? "Unban user" : "Ban user"}
+                              isDisabled={submitting}
+                              onConfirm={() => void runRowAction("user/ban", { filter: [{ key: "id", condition: "=", value: item.id }] })}
+                            >
+                              {Number(item.banned || 0) ? (
+                                <LockOpen width={16} height={16} aria-hidden="true" />
+                              ) : (
+                                <Ban width={16} height={16} aria-hidden="true" />
+                              )}
+                            </DangerConfirmButton>
+                            <DangerConfirmButton
+                              size="sm"
+                              isIconOnly
+                              aria-label={`Delete ${item.email}`}
+                              title={`Delete ${item.email}?`}
+                              description={`This will permanently delete ${item.email}.`}
+                              confirmLabel="Delete user"
+                              isDisabled={submitting}
+                              onConfirm={() => void runRowAction("user/delUser", { id: item.id })}
+                            >
+                              <TrashBin width={16} height={16} aria-hidden="true" />
+                            </DangerConfirmButton>
                           </div>
                         </TableCell>
                       </TableRow>
