@@ -17,6 +17,8 @@ import {
   DrawerBody,
   DrawerContent,
   DrawerHeader,
+  Dropdown,
+  Label,
   Tooltip
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
@@ -51,13 +53,13 @@ function NavigationList({
                 className={[
                   "h-auto min-h-0 w-full rounded-[1.25rem] px-2 py-2",
                   selected
-                    ? "bg-surface shadow-panel"
-                    : "hover:bg-surface-secondary"
+                    ? "bg-white shadow-[0_16px_40px_rgba(15,23,32,0.08)]"
+                    : "hover:bg-white/70"
                 ].join(" ")}
               >
                 <Tooltip>
                   <Tooltip.Trigger>
-                    <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-surface-secondary text-muted">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/80 text-slate-600">
                       <Icon width={18} height={18} aria-hidden="true" />
                     </span>
                   </Tooltip.Trigger>
@@ -81,7 +83,7 @@ function NavigationList({
         <Accordion.Item key={group.label} id={group.label} className="px-0">
           <Accordion.Heading className="px-3 py-2">
             <Accordion.Trigger className="flex items-center justify-between">
-              <span className="text-[11px] uppercase tracking-[0.24em] text-muted">{group.label}</span>
+              <span className="text-[11px] uppercase tracking-[0.24em] text-slate-400">{group.label}</span>
               <Accordion.Indicator />
             </Accordion.Trigger>
           </Accordion.Heading>
@@ -99,16 +101,16 @@ function NavigationList({
                       className={[
                         "mb-1.5 h-auto w-full justify-start rounded-[1.25rem] px-2 py-1 text-left",
                         selected
-                          ? "bg-surface shadow-panel"
-                          : "hover:bg-surface-secondary"
+                          ? "bg-white shadow-[0_16px_40px_rgba(15,23,32,0.08)]"
+                          : "hover:bg-white/70"
                       ].join(" ")}
                     >
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-surface-secondary text-muted">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/80 text-slate-600">
                         <Icon width={18} height={18} aria-hidden="true" />
                       </span>
                       <span className="min-w-0">
-                        <span className="block text-[14px] font-semibold text-ink">{item.label}</span>
-                        <span className="block text-xs text-muted">{item.description}</span>
+                        <span className="block text-[14px] font-semibold text-slate-900">{item.label}</span>
+                        <span className="block text-xs text-slate-400">{item.description}</span>
                       </span>
                     </Button>
                   );
@@ -143,7 +145,7 @@ function SidebarContent({
         <Button
           variant="ghost"
           className={[
-            "h-auto min-h-0 justify-start rounded-[1.25rem] px-2 py-2 text-left text-ink",
+            "h-auto min-h-0 justify-start rounded-[1.25rem] px-2 py-2 text-left text-slate-900",
             collapsed ? "w-auto min-w-0 justify-center" : "w-full max-w-[188px]"
           ].join(" ")}
           onPress={() => onNavigate("/new/dashboard")}
@@ -152,8 +154,8 @@ function SidebarContent({
             <div className="admin-orb h-11 w-11 rounded-full shrink-0" />
             {!collapsed ? (
               <div>
-                <p className="text-[11px] uppercase tracking-[0.22em] text-muted">Fantastic</p>
-                <p className="mt-1 text-lg font-semibold text-ink">{adminBootstrap.title}</p>
+                <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Fantastic</p>
+                <p className="mt-1 text-lg font-semibold text-slate-900">{adminBootstrap.title}</p>
               </div>
             ) : null}
           </div>
@@ -162,7 +164,7 @@ function SidebarContent({
           <Button
             isIconOnly
             variant="ghost"
-            className="hidden shrink-0 text-muted md:inline-flex"
+            className="hidden shrink-0 text-slate-500 md:inline-flex"
             onPress={onToggleCollapse}
           >
             {collapsed ? (
@@ -178,17 +180,17 @@ function SidebarContent({
         <NavigationList collapsed={collapsed} currentPath={currentPath} onNavigate={onNavigate} />
       </div>
 
-      <div className="border-t border-line/70 px-3 py-4">
+      <div className="border-t border-white/70 px-3 py-4">
         <div
           className={[
-            "rounded-[1.25rem] border border-line/70 bg-surface/85 p-3",
+            "rounded-[1.25rem] border border-white/70 bg-white/85 p-3",
             collapsed ? "flex justify-center" : ""
           ].join(" ")}
         >
           {collapsed ? (
             <Tooltip>
               <Tooltip.Trigger>
-                <Avatar className="bg-accent text-accent-foreground" size="sm">
+                <Avatar className="bg-[#1388ef] text-white" size="sm">
                   <Avatar.Fallback>{adminBootstrap.title.slice(0, 1).toUpperCase()}</Avatar.Fallback>
                 </Avatar>
               </Tooltip.Trigger>
@@ -196,12 +198,12 @@ function SidebarContent({
             </Tooltip>
           ) : (
             <div className="flex items-center gap-3">
-              <Avatar className="bg-accent text-accent-foreground" size="sm">
+              <Avatar className="bg-[#1388ef] text-white" size="sm">
                 <Avatar.Fallback>{userLabel.slice(0, 1).toUpperCase()}</Avatar.Fallback>
               </Avatar>
               <div>
-                <p className="text-sm font-semibold text-ink">Help & Information</p>
-                <p className="text-xs text-muted">System guidance and support</p>
+                <p className="text-sm font-semibold text-slate-900">Help & Information</p>
+                <p className="text-xs text-slate-500">System guidance and support</p>
               </div>
             </div>
           )}
@@ -299,7 +301,7 @@ export function AdminShell() {
               <Drawer.Header className="sr-only">
                 <Drawer.Heading>Navigation</Drawer.Heading>
               </Drawer.Header>
-              <Drawer.Body className="bg-surface p-0">
+              <Drawer.Body className="bg-[#f5f7fb] p-0">
                 <div className="flex h-full flex-col">
                   <SidebarContent
                     collapsed={false}
@@ -317,7 +319,7 @@ export function AdminShell() {
       <div className="flex min-h-screen">
         <aside
           className={[
-            "admin-sidebar hidden border-r border-line/60 text-ink transition-all duration-300 md:sticky md:top-0 md:flex md:h-screen md:flex-col",
+            "admin-sidebar hidden border-r border-white/60 text-[#0f1720] transition-all duration-300 md:sticky md:top-0 md:flex md:h-screen md:flex-col",
             collapsed ? "md:w-[96px]" : "md:w-[272px]"
           ].join(" ")}
         >
@@ -334,36 +336,32 @@ export function AdminShell() {
         <main className="flex min-h-screen min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-30 px-4 pb-4 pt-5 md:px-8">
             <div className="admin-topbar flex items-center justify-between gap-4 rounded-[2rem] px-4 py-3 md:px-6">
-              <div className="flex min-w-0 items-center gap-3 md:gap-4">
+              <div className="flex min-w-0 items-center gap-3">
                 <Button
                   isIconOnly
                   size="sm"
                   variant="ghost"
-                  className="h-10 w-10 min-w-10 items-center justify-center text-muted md:hidden"
+                  className="h-10 w-10 min-w-10 items-center justify-center text-slate-600 md:hidden"
                   onPress={() => setMobileOpen(true)}
                 >
                   <Bars width={18} height={18} aria-hidden="true" />
                 </Button>
                 <div className="min-w-0">
-                  <p className="truncate text-xl font-semibold text-ink md:text-[1.75rem] md:leading-tight">
-                    {pageLabel}
-                  </p>
-                </div>
-                <div className="hidden min-w-0 items-center md:flex">
                   <Breadcrumbs
-                    separator={<span className="px-2 text-muted">/</span>}
-                    className="text-sm text-muted"
+                    separator={<span className="px-1 text-slate-300">/</span>}
+                    className="text-slate-400"
                   >
                     {breadcrumbItems.map(item => (
                       <BreadcrumbsItem
                         key={item.key}
-                        className="text-muted aria-[current=page]:text-ink"
+                        className="text-slate-400 aria-[current=page]:text-slate-600"
                         onPress={() => handleNavigate(item.path)}
                       >
                         {item.label}
                       </BreadcrumbsItem>
                     ))}
                   </Breadcrumbs>
+                  <p className="truncate text-lg font-semibold text-slate-900">{pageLabel}</p>
                 </div>
               </div>
 
@@ -372,7 +370,7 @@ export function AdminShell() {
                   isIconOnly
                   size="sm"
                   variant="secondary"
-                  className="h-10 w-10 min-w-10 bg-surface text-ink"
+                  className="h-10 w-10 min-w-10 bg-white text-slate-700"
                   onPress={() => handleNavigate("/new/user")}
                 >
                   <Magnifier width={18} height={18} aria-hidden="true" />
@@ -381,7 +379,7 @@ export function AdminShell() {
                   isIconOnly
                   size="sm"
                   variant="secondary"
-                  className="h-10 w-10 min-w-10 bg-surface text-ink"
+                  className="h-10 w-10 min-w-10 bg-white text-slate-700"
                   onPress={() => handleNavigate("/new/notice")}
                 >
                   <Bell width={18} height={18} aria-hidden="true" />
@@ -396,23 +394,52 @@ export function AdminShell() {
                     <span>Invite</span>
                   </span>
                 </Button>
-                <div className="hidden items-center gap-3 rounded-full border border-line/70 bg-surface px-3 py-2 shadow-sm lg:flex">
-                  <Badge.Anchor>
-                    <Avatar size="sm">
-                      <Avatar.Image src={userAvatarUrl} alt={userLabel} />
-                      <Avatar.Fallback>{userInitials}</Avatar.Fallback>
-                    </Avatar>
-                    {pendingTicketCount > 0 ? (
-                      <Badge color="danger" size="sm">
-                        {pendingTicketCount > 99 ? "99+" : pendingTicketCount}
-                      </Badge>
-                    ) : null}
-                  </Badge.Anchor>
-                  <div className="pr-1">
-                    <p className="text-sm font-semibold text-ink">{userLabel}</p>
-                    <p className="text-xs text-muted">Admin</p>
-                  </div>
-                </div>
+                <Dropdown>
+                  <Dropdown.Trigger aria-label={`Open account menu for ${userLabel}`}>
+                    <div className="hidden items-center gap-3 rounded-full border border-white/70 bg-white px-3 py-2 shadow-sm transition hover:border-slate-200 hover:shadow-md lg:flex">
+                      <Badge.Anchor>
+                        <Avatar size="sm">
+                          <Avatar.Image src={userAvatarUrl} alt={userLabel} />
+                          <Avatar.Fallback>{userInitials}</Avatar.Fallback>
+                        </Avatar>
+                        {pendingTicketCount > 0 ? (
+                          <Badge color="danger" size="sm">
+                            {pendingTicketCount > 99 ? "99+" : pendingTicketCount}
+                          </Badge>
+                        ) : null}
+                      </Badge.Anchor>
+                      <div className="pr-1 text-left">
+                        <p className="text-sm font-semibold text-slate-900">{userLabel}</p>
+                        <p className="text-xs text-slate-500">Admin</p>
+                      </div>
+                    </div>
+                  </Dropdown.Trigger>
+                  <Dropdown.Popover placement="bottom-end" className="min-w-[17rem]">
+                    <Dropdown.Menu
+                      aria-label="Account actions"
+                      onAction={key => {
+                        const action = String(key);
+                        if (action === "dashboard") {
+                          handleNavigate("/new/dashboard");
+                        } else if (action === "users") {
+                          handleNavigate("/new/user");
+                        } else if (action === "tickets") {
+                          handleNavigate("/new/ticket");
+                        }
+                      }}
+                    >
+                      <Dropdown.Item id="dashboard" textValue="Dashboard">
+                        <Label>Dashboard</Label>
+                      </Dropdown.Item>
+                      <Dropdown.Item id="users" textValue="Users">
+                        <Label>Users</Label>
+                      </Dropdown.Item>
+                      <Dropdown.Item id="tickets" textValue="Tickets">
+                        <Label>Tickets</Label>
+                      </Dropdown.Item>
+                    </Dropdown.Menu>
+                  </Dropdown.Popover>
+                </Dropdown>
               </div>
             </div>
           </header>
