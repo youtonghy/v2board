@@ -14,6 +14,7 @@ import {
   TableColumn,
   TableHeader,
   TableRow,
+  toast,
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
 import { DangerConfirmButton } from "../components/DangerConfirmButton";
@@ -125,6 +126,19 @@ export function CouponPage() {
     await loadCoupons(page);
   }
 
+  async function copyCouponCode(code: string) {
+    try {
+      await navigator.clipboard.writeText(code);
+      toast.success("Coupon code copied", {
+        description: code,
+      });
+    } catch {
+      toast.danger("Failed to copy code", {
+        description: "Please copy it manually.",
+      });
+    }
+  }
+
   useEffect(() => {
     void loadCoupons(1);
   }, []);
@@ -232,7 +246,21 @@ export function CouponPage() {
                         <TableCell>{item.name || "Untitled"}</TableCell>
                         <TableCell>{item.type === 2 ? "Percentage" : "Amount"}</TableCell>
                         <TableCell>
-                          {item.code ? <Chip size="sm" variant="soft" className="bg-sky-50 text-sky-700">{item.code}</Chip> : "Auto"}
+                          {item.code ? (
+                            <button
+                              type="button"
+                              aria-label={`Copy coupon code ${item.code}`}
+                              title="Click to copy code"
+                              className="inline-flex rounded-full outline-none transition-transform duration-150 hover:scale-[1.01] focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+                              onClick={() => void copyCouponCode(item.code || "")}
+                            >
+                              <Chip size="sm" variant="soft" className="cursor-pointer bg-sky-50 text-sky-700">
+                                {item.code}
+                              </Chip>
+                            </button>
+                          ) : (
+                            "Auto"
+                          )}
                         </TableCell>
                         <TableCell>{item.limit_use ?? "Unlimited"}</TableCell>
                         <TableCell className="text-right">
