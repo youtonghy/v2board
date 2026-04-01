@@ -13,6 +13,7 @@ import {
   TableColumn,
   TableHeader,
   TableRow,
+  toast,
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
 import { DangerConfirmButton } from "../components/DangerConfirmButton";
@@ -106,6 +107,19 @@ export function GiftCardPage() {
     await loadGiftCards(page);
   }
 
+  async function copyGiftCardCode(code: string) {
+    try {
+      await navigator.clipboard.writeText(code);
+      toast.success("Gift card code copied", {
+        description: code,
+      });
+    } catch {
+      toast.danger("Failed to copy code", {
+        description: "Please copy it manually.",
+      });
+    }
+  }
+
   useEffect(() => {
     void loadGiftCards(1);
   }, []);
@@ -195,7 +209,22 @@ export function GiftCardPage() {
                         <TableCell>{item.name || "Untitled"}</TableCell>
                         <TableCell>{GIFTCARD_TYPE_OPTIONS.find(option => option.value === Number(item.type))?.label || "Unknown"}</TableCell>
                         <TableCell>{item.value ?? "—"}</TableCell>
-                        <TableCell>{item.code ? <Chip size="sm" variant="soft" className="bg-sky-50 text-sky-700">{item.code}</Chip> : "Auto"}</TableCell>
+                        <TableCell>
+                          {item.code ? (
+                            <button
+                              type="button"
+                              className="inline-flex rounded-full outline-none transition-transform duration-150 hover:scale-[1.01] focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+                              onClick={() => void copyGiftCardCode(item.code || "")}
+                              title="Click to copy code"
+                            >
+                              <Chip size="sm" variant="soft" className="cursor-pointer bg-sky-50 text-sky-700">
+                                {item.code}
+                              </Chip>
+                            </button>
+                          ) : (
+                            "Auto"
+                          )}
+                        </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button
