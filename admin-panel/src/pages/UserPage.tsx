@@ -641,7 +641,7 @@ export function UserPage() {
                   selectedKey={planFilter || null}
                   onSelectionChange={key => setPlanFilter(String(key || ""))}
                 >
-                  <Select.Trigger>
+                  <Select.Trigger className="h-9 w-full">
                     <Select.Value />
                     <Select.Indicator />
                   </Select.Trigger>
@@ -665,7 +665,7 @@ export function UserPage() {
                   selectedKey={bannedFilter || null}
                   onSelectionChange={key => setBannedFilter(String(key || ""))}
                 >
-                  <Select.Trigger>
+                  <Select.Trigger className="h-9 w-full">
                     <Select.Value />
                     <Select.Indicator />
                   </Select.Trigger>

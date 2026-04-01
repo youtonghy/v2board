@@ -233,7 +233,7 @@ export function InviteLinkPage() {
                   selectedKey={status || null}
                   onSelectionChange={key => setStatus(String(key || ""))}
                 >
-                  <Select.Trigger>
+                  <Select.Trigger className="h-9 w-full">
                     <Select.Value />
                     <Select.Indicator />
                   </Select.Trigger>
