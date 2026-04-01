@@ -9,6 +9,8 @@ import {
 import {
   Accordion,
   Avatar,
+  Breadcrumbs,
+  BreadcrumbsItem,
   Button,
   Drawer,
   DrawerBody,
@@ -249,6 +251,17 @@ export function AdminShell() {
     return current?.label || "Dashboard";
   }, [location.pathname]);
 
+  const breadcrumbItems = useMemo(() => {
+    const current = navGroups
+      .flatMap(group => group.items)
+      .find(item => item.path === location.pathname);
+
+    return [
+      { key: "admin", label: "Admin", path: "/new/dashboard" },
+      ...(current ? [{ key: current.path, label: current.label, path: current.path }] : [])
+    ];
+  }, [location.pathname]);
+
   const handleNavigate = (path: string) => {
     navigate(path);
     setMobileOpen(false);
@@ -309,7 +322,20 @@ export function AdminShell() {
                   <Bars width={18} height={18} aria-hidden="true" />
                 </Button>
                 <div className="min-w-0">
-                  <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Admin Workspace</p>
+                  <Breadcrumbs
+                    separator={<span className="px-1 text-slate-300">/</span>}
+                    className="text-slate-400"
+                  >
+                    {breadcrumbItems.map(item => (
+                      <BreadcrumbsItem
+                        key={item.key}
+                        className="text-slate-400 aria-[current=page]:text-slate-600"
+                        onPress={() => handleNavigate(item.path)}
+                      >
+                        {item.label}
+                      </BreadcrumbsItem>
+                    ))}
+                  </Breadcrumbs>
                   <p className="truncate text-lg font-semibold text-slate-900">{pageLabel}</p>
                 </div>
               </div>
