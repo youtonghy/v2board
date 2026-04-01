@@ -1,6 +1,7 @@
 import {
   Accordion,
   Input,
+  Table,
   Switch,
   TextArea,
 } from "@heroui/react";
@@ -58,28 +59,6 @@ function parseTextValue(originalValue: unknown, rawValue: string): unknown {
   return rawValue;
 }
 
-function EditorField({
-  label,
-  description,
-  children,
-  className
-}: {
-  label: string;
-  description: string;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <div className={className}>
-      <div className="mb-2 space-y-1">
-        <p className="text-sm font-semibold text-slate-900">{label}</p>
-        <p className="text-xs text-slate-500">{description}</p>
-      </div>
-      {children}
-    </div>
-  );
-}
-
 export function ObjectRecordEditor({
   value,
   onChange,
@@ -90,8 +69,6 @@ export function ObjectRecordEditor({
   hiddenKeys?: string[];
 }) {
   const entries = Object.entries(value).filter(([key]) => !hiddenKeys.includes(key));
-  const booleanEntries = entries.filter(([, currentValue]) => typeof currentValue === "boolean");
-  const fieldEntries = entries.filter(([, currentValue]) => typeof currentValue !== "boolean");
 
   if (!entries.length) {
     return (
@@ -106,30 +83,6 @@ export function ObjectRecordEditor({
 
   return (
     <div className="space-y-4">
-      {booleanEntries.length ? (
-        <div className="grid gap-4 md:grid-cols-2">
-          {booleanEntries.map(([key, currentValue]) => {
-            const label = humanizeKey(key);
-
-            return (
-              <div key={key} className="rounded-[1.4rem] border border-slate-200 bg-slate-50/80 p-4">
-                <div className="mb-3">
-                  <p className="text-sm font-semibold text-slate-900">{label}</p>
-                  <p className="text-xs text-slate-500">{key}</p>
-                </div>
-                <Switch
-                  aria-label={label}
-                  isSelected={Boolean(currentValue)}
-                  onChange={nextValue => onChange({ ...value, [key]: nextValue })}
-                >
-                  Enabled
-                </Switch>
-              </div>
-            );
-          })}
-        </div>
-      ) : null}
-
       <Accordion
         variant="surface"
         hideSeparator
@@ -142,7 +95,7 @@ export function ObjectRecordEditor({
               <div>
                 <p className="text-sm font-semibold text-slate-900">Advanced fields</p>
                 <p className="mt-1 text-xs text-slate-500">
-                  Structured values continue to map to the existing backend payload.
+                  Fields are edited one per row with HeroUI inputs, switches and text areas.
                 </p>
               </div>
               <Accordion.Indicator />
@@ -150,71 +103,92 @@ export function ObjectRecordEditor({
           </Accordion.Heading>
           <Accordion.Panel>
             <Accordion.Body className="px-5 pb-5 pt-0">
-              <div className="grid gap-4 md:grid-cols-2">
-                {fieldEntries.map(([key, currentValue]) => {
-        const label = humanizeKey(key);
-        const editorValue = stringifyValue(currentValue);
-        const useTextarea =
-          typeof currentValue === "object" ||
-          editorValue.includes("\n") ||
-          editorValue.length > 80;
-        const selectValues = Array.isArray(currentValue) && currentValue.every(item => typeof item === "string")
-          ? currentValue.map(item => String(item))
-          : null;
+              <Table>
+                <Table.ScrollContainer>
+                  <Table.Content aria-label="Advanced config fields" className="min-w-[920px]">
+                    <Table.Header>
+                      <Table.Column isRowHeader>Field</Table.Column>
+                      <Table.Column>Key</Table.Column>
+                      <Table.Column>Value</Table.Column>
+                    </Table.Header>
+                    <Table.Body>
+                      {entries.map(([key, currentValue]) => {
+                        const label = humanizeKey(key);
+                        const editorValue = stringifyValue(currentValue);
+                        const useTextarea =
+                          typeof currentValue === "object" ||
+                          editorValue.includes("\n") ||
+                          editorValue.length > 80;
+                        const selectValues = Array.isArray(currentValue) && currentValue.every(item => typeof item === "string")
+                          ? currentValue.map(item => String(item))
+                          : null;
 
-        if (selectValues && selectValues.length > 0 && selectValues.length <= 8) {
-          return (
-            <EditorField key={key} label={label} description={key}>
-              <AdminMultiSelectField
-                ariaLabel={label}
-                options={selectValues.map(item => ({ id: item, label: item }))}
-                selectedKeys={new Set(selectValues)}
-                onSelectionChange={keys =>
-                  onChange({
-                    ...value,
-                    [key]: keys === "all" ? selectValues : Array.from(keys).map(item => String(item))
-                  })
-                }
-              />
-            </EditorField>
-          );
-        }
-
-        if (useTextarea) {
-          return (
-            <EditorField key={key} label={label} description={key}>
-              <TextArea
-                aria-label={label}
-                rows={4}
-                value={editorValue}
-                onChange={event =>
-                  onChange({
-                    ...value,
-                    [key]: parseTextValue(currentValue, event.target.value)
-                  })
-                }
-              />
-            </EditorField>
-          );
-        }
-
-        return (
-          <EditorField key={key} label={label} description={key}>
-            <Input
-              aria-label={label}
-              type={typeof currentValue === "number" ? "number" : "text"}
-              value={editorValue}
-              onChange={event =>
-                onChange({
-                  ...value,
-                  [key]: parseTextValue(currentValue, event.target.value)
-                })
-              }
-            />
-          </EditorField>
-        );
-                })}
-              </div>
+                        return (
+                          <Table.Row key={key}>
+                            <Table.Cell className="align-top">
+                              <div className="space-y-1">
+                                <p className="text-sm font-semibold text-slate-900">{label}</p>
+                                <p className="text-xs text-slate-500">{key}</p>
+                              </div>
+                            </Table.Cell>
+                            <Table.Cell className="align-top text-sm text-slate-500">{key}</Table.Cell>
+                            <Table.Cell className="align-top">
+                              {typeof currentValue === "boolean" ? (
+                                <div className="flex items-center gap-3">
+                                  <Switch
+                                    aria-label={label}
+                                    isSelected={Boolean(currentValue)}
+                                    onChange={nextValue => onChange({ ...value, [key]: nextValue })}
+                                  />
+                                  <span className="text-sm text-slate-500">
+                                    {Boolean(currentValue) ? "Enabled" : "Disabled"}
+                                  </span>
+                                </div>
+                              ) : selectValues && selectValues.length > 0 && selectValues.length <= 8 ? (
+                                <AdminMultiSelectField
+                                  ariaLabel={label}
+                                  options={selectValues.map(item => ({ id: item, label: item }))}
+                                  selectedKeys={new Set(selectValues)}
+                                  onSelectionChange={keys =>
+                                    onChange({
+                                      ...value,
+                                      [key]: keys === "all" ? selectValues : Array.from(keys).map(item => String(item))
+                                    })
+                                  }
+                                />
+                              ) : useTextarea ? (
+                                <TextArea
+                                  aria-label={label}
+                                  rows={4}
+                                  value={editorValue}
+                                  onChange={event =>
+                                    onChange({
+                                      ...value,
+                                      [key]: parseTextValue(currentValue, event.target.value)
+                                    })
+                                  }
+                                />
+                              ) : (
+                                <Input
+                                  aria-label={label}
+                                  type={typeof currentValue === "number" ? "number" : "text"}
+                                  value={editorValue}
+                                  onChange={event =>
+                                    onChange({
+                                      ...value,
+                                      [key]: parseTextValue(currentValue, event.target.value)
+                                    })
+                                  }
+                                />
+                              )}
+                            </Table.Cell>
+                          </Table.Row>
+                        );
+                      })}
+                    </Table.Body>
+                  </Table.Content>
+                </Table.ScrollContainer>
+              </Table>
             </Accordion.Body>
           </Accordion.Panel>
         </Accordion.Item>

@@ -189,7 +189,7 @@ export function SystemConfigPage() {
               <div>
                 <p className="text-[1.1rem] font-semibold tracking-[-0.03em] text-slate-950">Config Sections</p>
                 <p className="mt-1 text-sm leading-6 text-slate-500">
-                  Editable scalar fields stay inline; arrays and nested objects fall back to JSON-safe textareas.
+                  Fields are edited as table rows with HeroUI inputs, switches and text areas.
                 </p>
               </div>
               <Button variant="primary" onPress={() => void saveCurrentSection()} isDisabled={state.saving}>
