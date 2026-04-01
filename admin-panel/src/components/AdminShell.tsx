@@ -287,11 +287,6 @@ export function AdminShell() {
     return compact.slice(0, 2).toUpperCase() || normalized.slice(0, 2).toUpperCase();
   }, [userLabel]);
 
-  const userAvatarUrl = useMemo(
-    () => `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(userLabel)}`,
-    [userLabel]
-  );
-
   return (
     <div className="admin-app-shell min-h-screen text-ink">
       <Drawer isOpen={mobileOpen} onOpenChange={setMobileOpen}>
@@ -396,23 +391,16 @@ export function AdminShell() {
                 </Button>
                 <Dropdown>
                   <Dropdown.Trigger aria-label={`Open account menu for ${userLabel}`}>
-                    <div className="hidden items-center gap-3 rounded-full border border-white/70 bg-white px-3 py-2 shadow-sm transition hover:border-slate-200 hover:shadow-md lg:flex">
-                      <Badge.Anchor>
-                        <Avatar size="sm">
-                          <Avatar.Image src={userAvatarUrl} alt={userLabel} />
-                          <Avatar.Fallback>{userInitials}</Avatar.Fallback>
-                        </Avatar>
-                        {pendingTicketCount > 0 ? (
-                          <Badge color="danger" size="sm">
-                            {pendingTicketCount > 99 ? "99+" : pendingTicketCount}
-                          </Badge>
-                        ) : null}
-                      </Badge.Anchor>
-                      <div className="pr-1 text-left">
-                        <p className="text-sm font-semibold text-slate-900">{userLabel}</p>
-                        <p className="text-xs text-slate-500">Admin</p>
-                      </div>
-                    </div>
+                    <Badge.Anchor className="hidden lg:inline-flex">
+                      <Avatar className="bg-[#1388ef] text-white" size="sm">
+                        <Avatar.Fallback>{userInitials}</Avatar.Fallback>
+                      </Avatar>
+                      {pendingTicketCount > 0 ? (
+                        <Badge color="danger" placement="top-right" size="md" variant="primary">
+                          {pendingTicketCount > 99 ? "99+" : pendingTicketCount}
+                        </Badge>
+                      ) : null}
+                    </Badge.Anchor>
                   </Dropdown.Trigger>
                   <Dropdown.Popover placement="bottom-end" className="min-w-[17rem]">
                     <Dropdown.Menu
