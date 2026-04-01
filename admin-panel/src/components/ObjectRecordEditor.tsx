@@ -108,7 +108,6 @@ export function ObjectRecordEditor({
                   <Table.Content aria-label="Advanced config fields" className="min-w-[920px]">
                     <Table.Header>
                       <Table.Column isRowHeader>Field</Table.Column>
-                      <Table.Column>Key</Table.Column>
                       <Table.Column>Value</Table.Column>
                     </Table.Header>
                     <Table.Body>
@@ -131,7 +130,6 @@ export function ObjectRecordEditor({
                                 <p className="text-xs text-slate-500">{key}</p>
                               </div>
                             </Table.Cell>
-                            <Table.Cell className="align-top text-sm text-slate-500">{key}</Table.Cell>
                             <Table.Cell className="align-top">
                               {typeof currentValue === "boolean" ? (
                                 <div className="flex items-center gap-3">
