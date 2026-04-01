@@ -735,38 +735,26 @@ export function UserPage() {
                               </Tooltip.Trigger>
                               <Tooltip.Content>Reset key<Tooltip.Arrow /></Tooltip.Content>
                             </Tooltip>
-                            <Tooltip>
-                              <Tooltip.Trigger>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  isIconOnly
-                                 
-                                  aria-label={`View traffic for ${item.email}`}
-                                  onPress={() => void openTrafficStats(item)}
-                                  isDisabled={submitting}
-                                >
-                                  <SquareChartBar width={16} height={16} aria-hidden="true" />
-                                </Button>
-                              </Tooltip.Trigger>
-                              <Tooltip.Content>Traffic stats<Tooltip.Arrow /></Tooltip.Content>
-                            </Tooltip>
-                            <Tooltip>
-                              <Tooltip.Trigger>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  isIconOnly
-                                 
-                                  aria-label={`View IP geography for ${item.email}`}
-                                  onPress={() => void openIpGeo(item)}
-                                  isDisabled={submitting}
-                                >
-                                  <Globe width={16} height={16} aria-hidden="true" />
-                                </Button>
-                              </Tooltip.Trigger>
-                              <Tooltip.Content>IP geo<Tooltip.Arrow /></Tooltip.Content>
-                            </Tooltip>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              isIconOnly
+                              aria-label={`View traffic for ${item.email}`}
+                              onPress={() => void openTrafficStats(item)}
+                              isDisabled={submitting}
+                            >
+                              <SquareChartBar width={16} height={16} aria-hidden="true" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              isIconOnly
+                              aria-label={`View IP geography for ${item.email}`}
+                              onPress={() => void openIpGeo(item)}
+                              isDisabled={submitting}
+                            >
+                              <Globe width={16} height={16} aria-hidden="true" />
+                            </Button>
                             <Tooltip>
                               <Tooltip.Trigger>
                                 <Button
