@@ -20,7 +20,7 @@ export function AdminSelectField({
 }) {
   return (
     <Select aria-label={ariaLabel} className="w-full" placeholder={placeholder} selectedKey={selectedKey} onSelectionChange={key => onSelectionChange(key ? String(key) : null)}>
-      <Select.Trigger className="h-12 w-full">
+      <Select.Trigger className="h-10 w-full">
         <Select.Value />
         <Select.Indicator />
       </Select.Trigger>
