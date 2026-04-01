@@ -281,11 +281,12 @@ export function OrderPage() {
                 </Select>
               </div>
 
-              <div className="flex items-end gap-2">
-                <Button variant="primary" onPress={() => { setPage(1); void loadOrders(1); }}>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <Button className="w-full" variant="primary" onPress={() => { setPage(1); void loadOrders(1); }}>
                   Apply
                 </Button>
                 <Button
+                  className="w-full"
                   variant="secondary"
                   onPress={() => {
                     setEmail("");

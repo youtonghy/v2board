@@ -25,6 +25,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AdminFilterAccordion } from "../components/AdminFilterAccordion";
 import { AdminPagination } from "../components/AdminPagination";
 import { AdminSelectField } from "../components/AdminSelectField";
+import { ModalField } from "../components/ModalField";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { formatDateTime } from "../lib/admin-format";
@@ -253,11 +254,12 @@ export function InviteLinkPage() {
                 </Select>
               </div>
 
-              <div className="flex items-end gap-2">
-                <Button variant="primary" onPress={() => { setPage(1); void loadLinks(1); }}>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <Button className="w-full" variant="primary" onPress={() => { setPage(1); void loadLinks(1); }}>
                   Apply
                 </Button>
                 <Button
+                  className="w-full"
                   variant="secondary"
                   onPress={() => {
                     setEmail("");
