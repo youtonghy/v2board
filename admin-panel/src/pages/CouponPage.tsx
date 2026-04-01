@@ -4,10 +4,10 @@ import {
   CardContent,
   CardHeader,
   Chip,
+  Checkbox,
   Input,
   Modal,
   Spinner,
-  Switch,
   Table,
   TableBody,
   TableCell,
@@ -111,11 +111,34 @@ export function CouponPage() {
   }
 
   async function toggleCoupon(record: CouponRecord) {
-    await adminRequest("coupon/show", {
-      method: "POST",
-      body: { id: record.id }
-    });
-    await loadCoupons(page);
+    const previousShow = Number(record.show ?? 0);
+    const nextShow = Number(record.show ?? 0) ? 0 : 1;
+
+    setRecords(current =>
+      current.map(item =>
+        item.id === record.id ? { ...item, show: nextShow } : item
+      )
+    );
+
+    try {
+      await adminRequest("coupon/show", {
+        method: "POST",
+        body: { id: record.id }
+      });
+
+      toast.success(`Coupon: ${nextShow ? "enabled" : "disabled"}`, {
+        description: record.name || record.code || `Coupon #${record.id || "unknown"}`
+      });
+    } catch (nextError) {
+      setRecords(current =>
+        current.map(item =>
+          item.id === record.id ? { ...item, show: previousShow } : item
+        )
+      );
+      toast.danger("Failed to update coupon status", {
+        description: nextError instanceof Error ? nextError.message : "Please try again."
+      });
+    }
   }
 
   async function dropCoupon(record: CouponRecord) {
@@ -238,10 +261,15 @@ export function CouponPage() {
                       <TableRow key={String(item.id || Math.random())}>
                         <TableCell>{item.id ?? "—"}</TableCell>
                         <TableCell>
-                          <Switch
+                          <Checkbox
+                            aria-label={`Toggle coupon ${item.name || item.code || item.id || ""}`}
                             isSelected={Boolean(Number(item.show ?? 0))}
                             onChange={() => void toggleCoupon(item)}
-                          />
+                          >
+                            <Checkbox.Control>
+                              <Checkbox.Indicator />
+                            </Checkbox.Control>
+                          </Checkbox>
                         </TableCell>
                         <TableCell>{item.name || "Untitled"}</TableCell>
                         <TableCell>{item.type === 2 ? "Percentage" : "Amount"}</TableCell>

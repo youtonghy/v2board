@@ -16,6 +16,7 @@ import {
   TableCell,
   TableColumn,
   TableHeader,
+  toast,
   useOverlayState,
 } from "@heroui/react";
 import { TextArea } from "@heroui/react";
@@ -153,12 +154,35 @@ export function PlanPage() {
     await loadPlans();
   }
 
-  async function updateField(record: PlanRecord, key: string, value: unknown) {
-    await adminRequest("plan/update", {
-      method: "POST",
-      body: { id: record.id, key, value }
-    });
-    await loadPlans();
+  async function updateField(record: PlanRecord, key: "show" | "renew", value: unknown) {
+    const previousValue = record[key];
+
+    setRecords(current =>
+      current.map(item =>
+        item.id === record.id ? { ...item, [key]: value } : item
+      )
+    );
+
+    try {
+      await adminRequest("plan/update", {
+        method: "POST",
+        body: { id: record.id, [key]: value }
+      });
+
+      const fieldLabel = key === "show" ? "Enabled" : "Renew";
+      toast.success(`Plan ${fieldLabel}: ${value ? "enabled" : "disabled"}`, {
+        description: record.name || `Plan #${record.id || "unknown"}`
+      });
+    } catch (nextError) {
+      setRecords(current =>
+        current.map(item =>
+          item.id === record.id ? { ...item, [key]: previousValue } : item
+        )
+      );
+      toast.danger("Failed to update plan status", {
+        description: nextError instanceof Error ? nextError.message : "Please try again."
+      });
+    }
   }
 
   async function reorderPlans(fromIndex: number, toIndex: number) {

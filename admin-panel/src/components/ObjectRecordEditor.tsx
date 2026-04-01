@@ -310,11 +310,13 @@ export function ObjectRecordEditor({
   onChange,
   hiddenKeys = [],
   fieldOptionsByKey = {},
+  onBlurCapture,
 }: {
   value: Record<string, unknown>;
   onChange: (nextValue: Record<string, unknown>) => void;
   hiddenKeys?: string[];
   fieldOptionsByKey?: Record<string, AdminSelectOption[]>;
+  onBlurCapture?: () => void;
 }) {
   const entries = Object.entries(value).filter(([key]) => !hiddenKeys.includes(key));
 
@@ -330,7 +332,10 @@ export function ObjectRecordEditor({
   }
 
   return (
-    <div className="rounded-[1.7rem] border border-slate-100 bg-white/95 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
+    <div
+      className="rounded-[1.7rem] border border-slate-100 bg-white/95 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)]"
+      onBlurCapture={onBlurCapture}
+    >
       <div className="mb-4">
         <p className="text-sm font-semibold text-slate-900">Advanced fields</p>
         <p className="mt-1 text-xs text-slate-500">
@@ -369,12 +374,17 @@ export function ObjectRecordEditor({
                   <Table.Cell className="align-top">
                     <div className="w-full max-w-[30rem]">
                       {BOOLEAN_KEYS.has(key) || typeof currentValue === "boolean" ? (
-                        <div className="flex w-full justify-end rounded-[1rem] border border-slate-200 bg-slate-50 px-4 py-3">
+                        <div className="flex w-full justify-end px-4 py-3">
                           <Switch
                             aria-label={label}
+                            size="sm"
                             isSelected={Boolean(Number(currentValue)) || currentValue === true}
                             onChange={nextValue => onChange({ ...value, [key]: nextValue ? 1 : 0 })}
-                          />
+                          >
+                            <Switch.Control>
+                              <Switch.Thumb />
+                            </Switch.Control>
+                          </Switch>
                         </div>
                       ) : selectOptions ? (
                         <AdminSelectField

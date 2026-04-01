@@ -7,8 +7,9 @@ import {
   Separator,
   Spinner,
   Tabs,
+  toast,
 } from "@heroui/react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { adminRequest } from "../../lib/api";
 import { PageFrame } from "../../components/PageFrame";
 import { ObjectRecordEditor } from "../../components/ObjectRecordEditor";
@@ -44,8 +45,18 @@ export function SystemConfigPage() {
     activeKey: "site",
     emailTemplate: null
   });
+  const autoSaveTimerRef = useRef<number | null>(null);
+  const pendingSaveRef = useRef<{ sectionKey: string; payload: Record<string, unknown> } | null>(null);
+  const savingRef = useRef(false);
 
   const activeRecord = state.sections[state.activeKey] || {};
+
+  function clearAutoSaveTimer() {
+    if (autoSaveTimerRef.current !== null) {
+      window.clearTimeout(autoSaveTimerRef.current);
+      autoSaveTimerRef.current = null;
+    }
+  }
 
   async function loadConfig() {
     setState(current => ({ ...current, loading: true, error: undefined }));
@@ -74,21 +85,61 @@ export function SystemConfigPage() {
     }
   }
 
-  async function saveCurrentSection() {
+  function queueAutoSave() {
     const payload = state.sections[state.activeKey];
     if (!payload) return;
 
-    setState(current => ({ ...current, saving: true }));
+    pendingSaveRef.current = {
+      sectionKey: state.activeKey,
+      payload: { ...payload }
+    };
+
+    clearAutoSaveTimer();
+    autoSaveTimerRef.current = window.setTimeout(() => {
+      autoSaveTimerRef.current = null;
+      void flushPendingSave();
+    }, 250);
+  }
+
+  async function flushPendingSave() {
+    const request = pendingSaveRef.current;
+    if (!request || savingRef.current) return;
+
+    clearAutoSaveTimer();
+    pendingSaveRef.current = null;
+    savingRef.current = true;
+    setState(current => ({ ...current, saving: true, error: undefined }));
     try {
       await adminRequest("config/save", {
         method: "POST",
-        body: payload
+        body: request.payload
       });
-      await loadConfig();
+      toast.success("System config saved", {
+        description: `Section ${request.sectionKey} was updated successfully.`
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to save system config";
+      setState(current => ({
+        ...current,
+        error: message
+      }));
+      toast.danger("Failed to save system config", {
+        description: message
+      });
     } finally {
+      savingRef.current = false;
       setState(current => ({ ...current, saving: false }));
+      if (pendingSaveRef.current) {
+        void flushPendingSave();
+      }
     }
   }
+
+  useEffect(() => {
+    return () => {
+      clearAutoSaveTimer();
+    };
+  }, []);
 
   async function testSendMail() {
     setState(current => ({ ...current, testingMail: true, mailResult: undefined, error: undefined }));
@@ -172,7 +223,7 @@ export function SystemConfigPage() {
   return (
     <PageFrame
       title="System Config"
-      description="This page replaces the generic data snapshot with a HeroUI section editor. The current save contract stays unchanged and still posts the selected config section to the existing admin endpoint."
+      description="This page replaces the generic data snapshot with a HeroUI section editor. Fields auto-save on blur with AJAX and still post the selected config section to the existing admin endpoint."
       onRefresh={() => void loadConfig()}
       loading={state.loading}
     >
@@ -201,12 +252,9 @@ export function SystemConfigPage() {
               <div>
                 <p className="text-[1.1rem] font-semibold tracking-[-0.03em] text-slate-950">Config Sections</p>
                 <p className="mt-1 text-sm leading-6 text-slate-500">
-                  Fields are edited as table rows with HeroUI inputs, switches and text areas.
+                  Fields auto-save on blur with AJAX.
                 </p>
               </div>
-              <Button variant="primary" onPress={() => void saveCurrentSection()} isDisabled={state.saving}>
-                Save section
-              </Button>
             </CardHeader>
             <CardContent className={`${adminSectionBodyClassName} gap-6`}>
               {sectionKeys.length ? (
@@ -230,6 +278,7 @@ export function SystemConfigPage() {
                 fieldOptionsByKey={{
                   email_template: emailTemplateOptions
                 }}
+                onBlurCapture={() => queueAutoSave()}
                 onChange={nextValue =>
                   setState(current => ({
                     ...current,
