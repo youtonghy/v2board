@@ -6,7 +6,6 @@ import {
   CardContent,
   CardHeader,
   Chip,
-  Modal,
   Spinner,
   Switch,
   Tabs,
@@ -15,9 +14,9 @@ import {
   TableCell,
   TableColumn,
   TableHeader,
-  useOverlayState,
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
+import { AdminDrawer } from "../components/AdminDrawer";
 import { DangerConfirmButton } from "../components/DangerConfirmButton";
 import {
   SortableTableRow,
@@ -224,7 +223,6 @@ export function ServerManagePage() {
   const [selected, setSelected] = useState<ServerRecord>(defaultServer("shadowsocks"));
   const [error, setError] = useState<string | null>(null);
   const sortableSensors = useSortableTableSensors();
-  const editorState = useOverlayState({ isOpen: editorOpen, onOpenChange: setEditorOpen });
 
   async function loadServers() {
     setLoading(true);
@@ -493,35 +491,34 @@ export function ServerManagePage() {
         </CardContent>
       </Card>
 
-      <Modal state={editorState}>
-        <Modal.Backdrop>
-          <Modal.Container size="lg" scroll="inside">
-            <Modal.Dialog>
-              <Modal.Header>
-                <Modal.Heading>{selected.id ? "Edit node" : "Create node"}</Modal.Heading>
-              </Modal.Header>
-              <Modal.Body className="gap-5">
-                <div className="rounded-2xl border border-default-200 bg-default-50 p-4 text-sm text-slate-600">
-                  This editor keeps the original backend contract intact. Protocol-specific arrays and nested objects are edited as JSON where needed.
-                </div>
-                <ObjectRecordEditor
-                  value={selected}
-                  onChange={value => setSelected(value as ServerRecord)}
-                  hiddenKeys={["created_at", "updated_at", "cache_key", "online", "last_check_at", "last_push_at", "is_online", "available"]}
-                />
-              </Modal.Body>
-              <Modal.Footer>
-                <Button variant="ghost" onPress={editorState.close}>
-                  Cancel
-                </Button>
-                <Button variant="primary" onPress={() => void saveServer()} isDisabled={submitting}>
-                  Save node
-                </Button>
-              </Modal.Footer>
-            </Modal.Dialog>
-          </Modal.Container>
-        </Modal.Backdrop>
-      </Modal>
+      <AdminDrawer
+        isOpen={editorOpen}
+        onOpenChange={setEditorOpen}
+        title={selected.id ? "Edit node" : "Create node"}
+        isBusy={submitting}
+        size="xl"
+        footer={
+          <>
+            <Button variant="ghost" onPress={() => setEditorOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" onPress={() => void saveServer()} isDisabled={submitting}>
+              Save node
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-5">
+          <div className="rounded-2xl border border-default-200 bg-default-50 p-4 text-sm text-slate-600">
+            This editor keeps the original backend contract intact. Protocol-specific arrays and nested objects are edited as JSON where needed.
+          </div>
+          <ObjectRecordEditor
+            value={selected}
+            onChange={value => setSelected(value as ServerRecord)}
+            hiddenKeys={["created_at", "updated_at", "cache_key", "online", "last_check_at", "last_push_at", "is_online", "available"]}
+          />
+        </div>
+      </AdminDrawer>
     </PageFrame>
   );
 }

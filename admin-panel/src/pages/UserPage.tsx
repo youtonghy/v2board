@@ -968,7 +968,6 @@ export function UserPage() {
           <AdminTextField label="Invite User Email" value={form.invite_user_email} onChange={event => setForm(current => ({ ...current, invite_user_email: event.target.value }))} />
           <AdminTextField
             label="Remarks"
-            className="md:col-span-2"
             multiline
             rows={4}
             value={form.remarks}
@@ -1016,7 +1015,7 @@ export function UserPage() {
             </div>
           </div>
           {selected ? (
-            <div className="md:col-span-2 rounded-2xl border border-default-200 bg-default-50 p-4 text-sm text-slate-600">
+            <div className="rounded-2xl border border-default-200 bg-default-50 p-4 text-sm text-slate-600">
               <p>Subscription URL</p>
               <p className="mt-2 break-all text-slate-900">{selected.subscribe_url || "Unavailable"}</p>
               <p className="mt-4">Recent online IPs: {(selected.recent_ips || []).join(", ") || "—"}</p>

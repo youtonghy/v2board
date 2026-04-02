@@ -363,7 +363,6 @@ export function KnowledgePage() {
           />
           <AdminTextField
             label="Category"
-            className="md:col-span-2"
             value={selected.category}
             onChange={event => setSelected(current => ({ ...current, category: event.target.value }))}
             isRequired
@@ -372,7 +371,6 @@ export function KnowledgePage() {
           />
           <AdminTextField
             label="Body"
-            className="md:col-span-2"
             multiline
             rows={16}
             value={selected.body || ""}

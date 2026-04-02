@@ -408,7 +408,6 @@ export function InviteLinkPage() {
           />
           <AdminTextField
             label="Content"
-            className="md:col-span-2"
             multiline
             rows={4}
             value={content}

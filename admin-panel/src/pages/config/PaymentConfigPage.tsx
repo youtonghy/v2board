@@ -5,10 +5,8 @@ import {
   Card,
   CardContent,
   CardHeader,
-  Input,
   ListBox,
   ListBoxItem,
-  Modal,
   Select,
   Spinner,
   Switch,
@@ -19,6 +17,8 @@ import {
   TableHeader,
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
+import { AdminDrawer } from "../../components/AdminDrawer";
+import { AdminTextField } from "../../components/AdminTextField";
 import { DangerConfirmButton } from "../../components/DangerConfirmButton";
 import {
   SortableTableRow,
@@ -232,6 +232,8 @@ export function PaymentConfigPage() {
     () => (selected?.payment ? String(selected.payment) : null),
     [selected]
   );
+  const paymentNameInvalid = !String(selected?.name || "").trim();
+  const paymentProviderInvalid = !String(selected?.payment || "").trim();
   const stats = useMemo(() => {
     const enabled = payments.filter(payment => Boolean(Number(payment.enable ?? 0))).length;
     const configured = payments.filter(payment => Object.keys(normalizeConfigValue(payment.config)).length > 0).length;
@@ -368,82 +370,90 @@ export function PaymentConfigPage() {
         </CardContent>
       </Card>
 
-      <Modal isOpen={editorOpen} onOpenChange={open => !open && setEditorOpen(false)}>
-        <Modal.Backdrop>
-          <Modal.Container>
-            <Modal.Dialog>
-              <Modal.Header>
-                <Modal.Heading>{selected?.id ? "Edit payment" : "Create payment"}</Modal.Heading>
-              </Modal.Header>
-              <Modal.Body className="gap-5">
-            <ModalField label="Display Name"><Input aria-label="Display Name" value={String(selected?.name || "")} onChange={event => setSelected(current => (current ? { ...current, name: event.target.value } : current))} /></ModalField>
-            <ModalField label="Provider">
-              <Select aria-label="Provider" selectedKey={selectedPaymentMethod} onSelectionChange={keys => {
-                const nextPayment = String(keys || "");
-                setSelected(current => (current ? { ...current, payment: nextPayment, config: normalizeConfigValue(current.config) } : current));
-                void loadPaymentForm(nextPayment, Number(selected?.id || 0) || undefined);
-              }}>
-                <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
-                <Select.Popover><ListBox>{methods.map(method => <ListBoxItem key={method} id={method} textValue={method}>{method}</ListBoxItem>)}</ListBox></Select.Popover>
-              </Select>
-            </ModalField>
-            <div className="grid gap-5 md:grid-cols-2">
-              <ModalField label="Icon URL"><Input aria-label="Icon URL" value={String(selected?.icon || "")} onChange={event => setSelected(current => (current ? { ...current, icon: event.target.value } : current))} /></ModalField>
-              <ModalField label="Notify Domain"><Input aria-label="Notify Domain" value={String(selected?.notify_domain || "")} onChange={event => setSelected(current => (current ? { ...current, notify_domain: event.target.value } : current))} /></ModalField>
-              <ModalField label="Handling Fee (%)"><Input aria-label="Handling Fee (%)" type="number" value={String(selected?.handling_fee_percent ?? "")} onChange={event => setSelected(current => (current ? { ...current, handling_fee_percent: event.target.value } : current))} /></ModalField>
-              <ModalField label="Fixed Handling Fee"><Input aria-label="Fixed Handling Fee" type="number" value={String(selected?.handling_fee_fixed === undefined || selected?.handling_fee_fixed === null || selected?.handling_fee_fixed === "" ? "" : Number(selected.handling_fee_fixed) / 100)} onChange={event => setSelected(current => (current ? { ...current, handling_fee_fixed: event.target.value === "" ? "" : String(Math.round(Number(event.target.value) * 100)) } : current))} /></ModalField>
+      <AdminDrawer
+        isOpen={editorOpen}
+        onOpenChange={open => !open && setEditorOpen(false)}
+        title={selected?.id ? "Edit payment" : "Create payment"}
+        isBusy={saving}
+        size="lg"
+        footer={
+          <>
+            <Button variant="ghost" onPress={() => setEditorOpen(false)}>Cancel</Button>
+            <Button variant="primary" onPress={() => void savePayment()} isDisabled={saving || paymentNameInvalid || paymentProviderInvalid}>Save payment</Button>
+          </>
+        }
+      >
+        <form
+          className="space-y-5"
+          onSubmit={event => {
+            event.preventDefault();
+            if (paymentNameInvalid || paymentProviderInvalid) return;
+            void savePayment();
+          }}
+        >
+          <AdminTextField label="Display Name" value={String(selected?.name || "")} onChange={event => setSelected(current => (current ? { ...current, name: event.target.value } : current))} isRequired isInvalid={paymentNameInvalid} errorMessage="Display name is required." />
+          <ModalField label="Provider" required>
+            <Select aria-label="Provider" selectedKey={selectedPaymentMethod} onSelectionChange={keys => {
+              const nextPayment = String(keys || "");
+              setSelected(current => (current ? { ...current, payment: nextPayment, config: normalizeConfigValue(current.config) } : current));
+              void loadPaymentForm(nextPayment, Number(selected?.id || 0) || undefined);
+            }}>
+              <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
+              <Select.Popover><ListBox>{methods.map(method => <ListBoxItem key={method} id={method} textValue={method}>{method}</ListBoxItem>)}</ListBox></Select.Popover>
+            </Select>
+          </ModalField>
+          <div className="space-y-5">
+            <AdminTextField label="Icon URL" value={String(selected?.icon || "")} onChange={event => setSelected(current => (current ? { ...current, icon: event.target.value } : current))} />
+            <AdminTextField label="Notify Domain" value={String(selected?.notify_domain || "")} onChange={event => setSelected(current => (current ? { ...current, notify_domain: event.target.value } : current))} />
+            <AdminTextField label="Handling Fee (%)" type="number" value={String(selected?.handling_fee_percent ?? "")} onChange={event => setSelected(current => (current ? { ...current, handling_fee_percent: event.target.value } : current))} />
+            <AdminTextField label="Fixed Handling Fee" type="number" value={String(selected?.handling_fee_fixed === undefined || selected?.handling_fee_fixed === null || selected?.handling_fee_fixed === "" ? "" : Number(selected.handling_fee_fixed) / 100)} onChange={event => setSelected(current => (current ? { ...current, handling_fee_fixed: event.target.value === "" ? "" : String(Math.round(Number(event.target.value) * 100)) } : current))} />
+          </div>
+          {formLoading ? (
+            <div className="flex min-h-[120px] items-center justify-center rounded-2xl border border-default-200 bg-default-50">
+              <Spinner color="accent" />
             </div>
-            {formLoading ? (
-              <div className="flex min-h-[120px] items-center justify-center rounded-2xl border border-default-200 bg-default-50">
-                <Spinner color="accent" />
-              </div>
-            ) : null}
-            {Object.keys(dynamicForm).length ? (
-              <div className="grid gap-4 md:grid-cols-2">
-                {Object.entries(dynamicForm).map(([key, field]) => (
-                  <ModalField key={key} label={field.label || key} description={field.description || ""}>
-                    <Input
-                      aria-label={field.label || key}
-                      value={String(normalizeConfigValue(selected?.config)[key] ?? field.value ?? "")}
-                      onChange={event =>
-                        setSelected(current => {
-                          if (!current) return current;
-                          return {
-                            ...current,
-                            config: {
-                              ...normalizeConfigValue(current.config),
-                              [key]: event.target.value
-                            }
-                          };
-                        })
-                      }
-                    />
-                  </ModalField>
-                ))}
-              </div>
-            ) : null}
-            {selected ? (
-              <div className="rounded-2xl border border-default-200 bg-default-50 p-4">
-                <p className="text-sm font-semibold text-slate-900">Gateway Status</p>
-                <div className="mt-3">
-                  <Switch
-                    isSelected={Boolean(Number(selected.enable ?? 0))}
-                    onChange={value => setSelected(current => (current ? { ...current, enable: value ? 1 : 0 } : current))}
-                  >
-                    Enable provider after save
-                  </Switch>
-                </div>
-              </div>
-            ) : null}
-              </Modal.Body>
-              <Modal.Footer>
-                <Button variant="ghost" onPress={() => setEditorOpen(false)}>Cancel</Button>
-                <Button variant="primary" onPress={() => void savePayment()} isDisabled={saving}>Save payment</Button>
-              </Modal.Footer>
-        </Modal.Dialog>
-          </Modal.Container>
-        </Modal.Backdrop>
-      </Modal>
+          ) : null}
+          {Object.keys(dynamicForm).length ? (
+            <div className="space-y-5">
+              {Object.entries(dynamicForm).map(([key, field]) => (
+                <AdminTextField
+                  key={key}
+                  label={field.label || key}
+                  description={field.description || ""}
+                  value={String(normalizeConfigValue(selected?.config)[key] ?? field.value ?? "")}
+                  onChange={event =>
+                    setSelected(current => {
+                      if (!current) return current;
+                      return {
+                        ...current,
+                        config: {
+                          ...normalizeConfigValue(current.config),
+                          [key]: event.target.value
+                        }
+                      };
+                    })
+                  }
+                />
+              ))}
+            </div>
+          ) : null}
+          {selected ? (
+            <div className="flex items-center justify-between rounded-2xl border border-default-200 bg-default-50 px-4 py-3">
+              <span className="text-sm font-medium text-slate-900">Enable provider after save</span>
+              <Switch
+                aria-label="Enable provider after save"
+                size="sm"
+                isSelected={Boolean(Number(selected.enable ?? 0))}
+                onChange={value => setSelected(current => (current ? { ...current, enable: value ? 1 : 0 } : current))}
+              >
+                <Switch.Control>
+                  <Switch.Thumb />
+                </Switch.Control>
+              </Switch>
+            </div>
+          ) : null}
+        </form>
+      </AdminDrawer>
     </PageFrame>
   );
 }

@@ -273,12 +273,11 @@ export function ServerRoutePage() {
               onSelectionChange={key => setSelected(current => ({ ...current, action: String(key || "block") }))}
             />
           </ModalField>
-          <AdminTextField label="Action Value" className="md:col-span-2" value={selected.action_value || ""} onChange={event => setSelected(current => ({ ...current, action_value: event.target.value }))} />
+          <AdminTextField label="Action Value" value={selected.action_value || ""} onChange={event => setSelected(current => ({ ...current, action_value: event.target.value }))} />
           {selected.action !== "default_out" ? (
             <AdminTextField
               label="Match Rules"
               description="One match item per line."
-              className="md:col-span-2"
               multiline
               rows={10}
               value={Array.isArray(selected.match) ? selected.match.join("\n") : selected.match || ""}
@@ -288,7 +287,7 @@ export function ServerRoutePage() {
               errorMessage="Match rules are required."
             />
           ) : (
-            <div className="md:col-span-2 rounded-2xl border border-default-200 bg-default-50 p-4 text-sm text-slate-600">
+            <div className="rounded-2xl border border-default-200 bg-default-50 p-4 text-sm text-slate-600">
               Default out rules do not require explicit match values.
             </div>
           )}

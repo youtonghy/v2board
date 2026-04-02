@@ -1,6 +1,8 @@
 import { ListBox, ListBoxItem, Select } from "@heroui/react";
-import type { Selection } from "react-aria-components";
+import type { Key } from "react";
 import type { AdminSelectOption } from "./AdminSelectField";
+
+type Selection = "all" | Set<Key>;
 
 export function AdminMultiSelectField({
   ariaLabel,
@@ -13,15 +15,21 @@ export function AdminMultiSelectField({
   selectedKeys: Selection;
   onSelectionChange: (keys: Selection) => void;
 }) {
+  const selectProps: any = {
+    "aria-label": ariaLabel,
+    className: "w-full",
+    placeholder: "Select options",
+    selectionMode: "multiple" as const,
+    selectedKeys,
+    onSelectionChange: (key: Key | null) => {
+      const nextKeys: Selection =
+        key === "all" ? "all" : new Set<Key>(key == null ? [] : [key]);
+      onSelectionChange(nextKeys);
+    }
+  };
+
   return (
-    <Select
-      aria-label={ariaLabel}
-      className="w-full"
-      placeholder="Select options"
-      selectionMode="multiple"
-      selectedKeys={selectedKeys}
-      onSelectionChange={onSelectionChange}
-    >
+    <Select {...selectProps}>
       <Select.Trigger>
         <Select.Value />
         <Select.Indicator />

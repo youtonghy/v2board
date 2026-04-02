@@ -6,8 +6,7 @@ import {
   CardContent,
   CardHeader,
   Checkbox,
-  Input,
-  Modal,
+  Label,
   Select,
   Spinner,
   Switch,
@@ -17,10 +16,10 @@ import {
   TableColumn,
   TableHeader,
   toast,
-  useOverlayState,
 } from "@heroui/react";
-import { TextArea } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
+import { AdminDrawer } from "../components/AdminDrawer";
+import { AdminTextField } from "../components/AdminTextField";
 import { DangerConfirmButton } from "../components/DangerConfirmButton";
 import { AdminSelectField } from "../components/AdminSelectField";
 import { SortableTableRow, adminTableActionCellClassName, sortableCollisionDetection, useSortableTableSensors } from "../components/SortableTable";
@@ -105,7 +104,6 @@ export function PlanPage() {
   const [selected, setSelected] = useState<PlanRecord | null>(null);
   const [open, setOpen] = useState(false);
   const sortableSensors = useSortableTableSensors();
-  const modalState = useOverlayState({ isOpen: open, onOpenChange: setOpen });
 
   async function loadPlans() {
     setLoading(true);
@@ -240,6 +238,7 @@ export function PlanPage() {
     const matched = RESET_TRAFFIC_OPTIONS.find(option => option.value === (selected?.reset_traffic_method ?? null));
     return matched?.key || "null";
   }, [selected]);
+  const planNameInvalid = !String(selected?.name || "").trim();
   const stats = useMemo(() => {
     const enabled = records.filter(record => Boolean(Number(record.show ?? 0))).length;
     const renewable = records.filter(record => Boolean(Number(record.renew ?? 0))).length;
@@ -398,117 +397,119 @@ export function PlanPage() {
         </CardContent>
       </Card>
 
-      <Modal state={modalState}>
-        <Modal.Backdrop>
-          <Modal.Container size="lg" scroll="inside">
-            <Modal.Dialog>
-              <Modal.Header>
-                <Modal.Heading>{selected?.id ? "Edit plan" : "Create plan"}</Modal.Heading>
-              </Modal.Header>
-              <Modal.Body className="grid gap-5 md:grid-cols-2">
-                <ModalField label="Plan Name">
-                  <Input
-                    aria-label="Plan Name"
-                    value={selected?.name || ""}
-                    onChange={event => setSelected(current => (current ? { ...current, name: event.target.value } : current))}
-                  />
-                </ModalField>
-                <ModalField label="Transfer (GB)">
-                  <Input
-                    aria-label="Transfer (GB)"
-                    type="number"
-                    value={String(selected?.transfer_enable ?? "")}
-                    onChange={event => setSelected(current => (current ? { ...current, transfer_enable: event.target.value } : current))}
-                  />
-                </ModalField>
-                <ModalField label="Description" className="md:col-span-2">
-                  <TextArea
-                    aria-label="Description"
-                    rows={6}
-                    value={selected?.content || ""}
-                    onChange={event => setSelected(current => (current ? { ...current, content: event.target.value } : current))}
-                  />
-                </ModalField>
-                <ModalField label="Permission Group">
-                  <AdminSelectField
-                    ariaLabel="Permission Group"
-                    options={groupOptions}
-                    selectedKey={selectedGroup}
-                    onSelectionChange={key => {
-                      setSelected(current => (current ? { ...current, group_id: String(key || "") } : current));
-                    }}
-                  />
-                </ModalField>
-                <ModalField label="Traffic Reset">
-                  <AdminSelectField
-                    ariaLabel="Traffic Reset"
-                    options={resetMethodOptions}
-                    selectedKey={selectedResetMethod}
-                    onSelectionChange={key => {
-                      const nextKey = String(key || "null");
-                      const option = RESET_TRAFFIC_OPTIONS.find(item => item.key === nextKey);
-                      setSelected(current => (current ? { ...current, reset_traffic_method: option?.value ?? null } : current));
-                    }}
-                  />
-                </ModalField>
-                <ModalField label="Device Limit">
-                  <Input
-                    aria-label="Device Limit"
-                    type="number"
-                    value={String(selected?.device_limit ?? "")}
-                    onChange={event => setSelected(current => (current ? { ...current, device_limit: event.target.value } : current))}
-                  />
-                </ModalField>
-                <ModalField label="Capacity Limit">
-                  <Input
-                    aria-label="Capacity Limit"
-                    type="number"
-                    value={String(selected?.capacity_limit ?? "")}
-                    onChange={event => setSelected(current => (current ? { ...current, capacity_limit: event.target.value } : current))}
-                  />
-                </ModalField>
-                <ModalField label="Speed Limit (Mbps)">
-                  <Input
-                    aria-label="Speed Limit (Mbps)"
-                    type="number"
-                    value={String(selected?.speed_limit ?? "")}
-                    onChange={event => setSelected(current => (current ? { ...current, speed_limit: event.target.value } : current))}
-                  />
-                </ModalField>
-                <div className="rounded-2xl border border-default-200 bg-default-50 p-4">
-                  <p className="mb-3 text-sm font-semibold text-slate-900">Force Update Users</p>
-                  <Switch
-                    isSelected={Boolean(selected?.force_update)}
-                    onChange={(value: boolean) => setSelected(current => (current ? { ...current, force_update: value } : current))}
-                  >
-                    Apply traffic, speed, and group changes to subscribed users
-                  </Switch>
-                </div>
-                {PERIOD_OPTIONS.map(option => (
-                  <ModalField key={option.key} label={`${option.label} (${currency})`}>
-                    <Input
-                      aria-label={`${option.label} (${currency})`}
-                      type="number"
-                      value={String(selected?.[option.key] ?? "")}
-                      onChange={event =>
-                        setSelected(current => (current ? { ...current, [option.key]: event.target.value } : current))
-                      }
-                    />
-                  </ModalField>
-                ))}
-              </Modal.Body>
-              <Modal.Footer>
-                <Button variant="ghost" onPress={modalState.close}>
-                  Cancel
-                </Button>
-                <Button variant="primary" onPress={() => void savePlan()} isDisabled={saving}>
-                  Save plan
-                </Button>
-              </Modal.Footer>
-            </Modal.Dialog>
-          </Modal.Container>
-        </Modal.Backdrop>
-      </Modal>
+      <AdminDrawer
+        isOpen={open}
+        onOpenChange={setOpen}
+        title={selected?.id ? "Edit plan" : "Create plan"}
+        isBusy={saving}
+        size="lg"
+        footer={
+          <>
+            <Button variant="ghost" onPress={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" onPress={() => void savePlan()} isDisabled={saving || planNameInvalid}>
+              Save plan
+            </Button>
+          </>
+        }
+      >
+        <form
+          className="flex flex-col gap-5"
+          onSubmit={event => {
+            event.preventDefault();
+            if (planNameInvalid) return;
+            void savePlan();
+          }}
+        >
+          <AdminTextField
+            label="Plan Name"
+            value={selected?.name || ""}
+            onChange={event => setSelected(current => (current ? { ...current, name: event.target.value } : current))}
+            isRequired
+            isInvalid={planNameInvalid}
+            errorMessage="Plan name is required."
+          />
+          <AdminTextField
+            label="Transfer (GB)"
+            type="number"
+            value={String(selected?.transfer_enable ?? "")}
+            onChange={event => setSelected(current => (current ? { ...current, transfer_enable: event.target.value } : current))}
+          />
+          <AdminTextField
+            label="Description"
+            multiline
+            rows={6}
+            value={selected?.content || ""}
+            onChange={event => setSelected(current => (current ? { ...current, content: event.target.value } : current))}
+          />
+          <ModalField label="Permission Group">
+            <AdminSelectField
+              ariaLabel="Permission Group"
+              options={groupOptions}
+              selectedKey={selectedGroup}
+              onSelectionChange={key => {
+                setSelected(current => (current ? { ...current, group_id: String(key || "") } : current));
+              }}
+            />
+          </ModalField>
+          <ModalField label="Traffic Reset">
+            <AdminSelectField
+              ariaLabel="Traffic Reset"
+              options={resetMethodOptions}
+              selectedKey={selectedResetMethod}
+              onSelectionChange={key => {
+                const nextKey = String(key || "null");
+                const option = RESET_TRAFFIC_OPTIONS.find(item => item.key === nextKey);
+                setSelected(current => (current ? { ...current, reset_traffic_method: option?.value ?? null } : current));
+              }}
+            />
+          </ModalField>
+          <AdminTextField
+            label="Device Limit"
+            type="number"
+            value={String(selected?.device_limit ?? "")}
+            onChange={event => setSelected(current => (current ? { ...current, device_limit: event.target.value } : current))}
+          />
+          <AdminTextField
+            label="Capacity Limit"
+            type="number"
+            value={String(selected?.capacity_limit ?? "")}
+            onChange={event => setSelected(current => (current ? { ...current, capacity_limit: event.target.value } : current))}
+          />
+          <AdminTextField
+            label="Speed Limit (Mbps)"
+            type="number"
+            value={String(selected?.speed_limit ?? "")}
+            onChange={event => setSelected(current => (current ? { ...current, speed_limit: event.target.value } : current))}
+          />
+          <div className="space-y-2 rounded-2xl border border-default-200 bg-default-50 px-4 py-3">
+            <div className="flex items-center justify-between gap-4">
+              <Label className="text-sm font-medium text-slate-900">Force Update Users</Label>
+              <Switch
+                aria-label="Force Update Users"
+                size="sm"
+                isSelected={Boolean(selected?.force_update)}
+                onChange={(value: boolean) => setSelected(current => (current ? { ...current, force_update: value } : current))}
+              >
+                <Switch.Control>
+                  <Switch.Thumb />
+                </Switch.Control>
+              </Switch>
+            </div>
+            <p className="text-sm text-slate-500">Apply traffic, speed, and group changes to subscribed users</p>
+          </div>
+          {PERIOD_OPTIONS.map(option => (
+            <AdminTextField
+              key={option.key}
+              label={`${option.label} (${currency})`}
+              type="number"
+              value={String(selected?.[option.key] ?? "")}
+              onChange={event => setSelected(current => (current ? { ...current, [option.key]: event.target.value } : current))}
+            />
+          ))}
+        </form>
+      </AdminDrawer>
     </PageFrame>
   );
 }
