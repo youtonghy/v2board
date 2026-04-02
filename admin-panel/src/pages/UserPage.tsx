@@ -1141,7 +1141,7 @@ export function UserPage() {
           }
         }}
         title={`Traffic logs for ${statsUser?.email || "user"}`}
-        size="lg"
+        size="view"
         footer={
           <Button variant="ghost" onPress={() => setStatsOpen(false)}>
             Close
@@ -1230,7 +1230,7 @@ export function UserPage() {
           }
         }}
         title={`IP geography for ${ipGeoUser?.email || "user"}`}
-        size="xl"
+        size="view"
         footer={
           <Button variant="ghost" onPress={() => setIpGeoOpen(false)}>
             Close

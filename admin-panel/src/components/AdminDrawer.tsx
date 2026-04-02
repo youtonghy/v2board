@@ -5,7 +5,8 @@ const drawerWidthClassNames = {
   sm: "w-full sm:max-w-xl",
   md: "w-full sm:max-w-2xl",
   lg: "w-full sm:max-w-4xl",
-  xl: "w-full sm:max-w-5xl"
+  xl: "w-full sm:max-w-5xl",
+  view: "w-full lg:max-w-[min(90vw,1200px)]"
 } as const;
 
 export function AdminDrawer({

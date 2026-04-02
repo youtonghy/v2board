@@ -568,7 +568,7 @@ export function DashboardPage() {
         isOpen={detailOpen}
         onOpenChange={isOpen => !isOpen && setDetailOpen(false)}
         title={`Traffic records for ${detailUser?.email || `User #${detailUser?.user_id || ""}`}`}
-        size="lg"
+        size="view"
         footer={
           <Button variant="ghost" onPress={() => setDetailOpen(false)}>
             Close
