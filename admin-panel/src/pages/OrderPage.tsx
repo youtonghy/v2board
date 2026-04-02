@@ -5,11 +5,9 @@ import {
   CardHeader,
   Chip,
   Form,
-  Input,
   Label,
   ListBox,
   ListBoxItem,
-  Modal,
   Select,
   Spinner,
   SearchField,
@@ -22,8 +20,12 @@ import {
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
 import { AdminFilterAccordion } from "../components/AdminFilterAccordion";
+import { AdminFilterActionGroup } from "../components/AdminFilterActionGroup";
+import { AdminDrawer } from "../components/AdminDrawer";
 import { AdminPagination } from "../components/AdminPagination";
 import { AdminSelectField } from "../components/AdminSelectField";
+import { AdminSortableColumnHeader, useAdminTableSort } from "../components/AdminTable";
+import { AdminTextField } from "../components/AdminTextField";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { ModalField } from "../components/ModalField";
 import { PageFrame } from "../components/PageFrame";
@@ -192,6 +194,22 @@ export function OrderPage() {
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const selectedPlan = useMemo(() => assignPlanId || null, [assignPlanId]);
   const selectedPeriod = useMemo(() => assignPeriod || "month_price", [assignPeriod]);
+  const assignEmailInvalid = !assignEmail.trim();
+  const assignAmountInvalid = !assignAmount.trim();
+  const assignPlanInvalid = !assignPlanId;
+  const assignPeriodInvalid = !assignPeriod;
+  const { sortDescriptor, setSortDescriptor, sortedItems } = useAdminTableSort(
+    records,
+    { column: "created", direction: "descending" },
+    {
+      trade: item => item.trade_no,
+      plan: item => item.plan_name || "",
+      total: item => Number(item.total_amount || 0),
+      status: item => item.status,
+      commission: item => Number(item.commission_balance || 0),
+      created: item => item.created_at || ""
+    }
+  );
   const stats = useMemo(() => {
     const paid = records.filter(record => record.status === 1).length;
     const pending = records.filter(record => record.status === 0).length;
@@ -238,7 +256,7 @@ export function OrderPage() {
         </CardHeader>
         <CardContent className={`${adminSectionBodyClassName} gap-5`}>
           <AdminFilterAccordion>
-            <Form className="grid gap-3 md:grid-cols-4">
+            <Form className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(220px,0.8fr)_auto]">
               <SearchField className="space-y-2" value={email} onChange={setEmail}>
                 <Label>User Email</Label>
                 <SearchField.Group>
@@ -280,24 +298,21 @@ export function OrderPage() {
                   </Select.Popover>
                 </Select>
               </div>
-
-              <div className="grid gap-2 sm:grid-cols-2 md:pt-[1.75rem]">
-                <Button className="w-full" variant="primary" onPress={() => { setPage(1); void loadOrders(1); }}>
-                  Apply
-                </Button>
-                <Button
-                  className="w-full"
-                  variant="secondary"
-                  onPress={() => {
+              <div className="flex items-end justify-end">
+                <AdminFilterActionGroup
+                  isDisabled={loading}
+                  onSearch={() => {
+                    setPage(1);
+                    void loadOrders(1);
+                  }}
+                  onReset={() => {
                     setEmail("");
                     setTradeNo("");
                     setStatus("");
                     setPage(1);
                     void loadOrders(1);
                   }}
-                >
-                  Reset
-                </Button>
+                />
               </div>
             </Form>
           </AdminFilterAccordion>
@@ -310,18 +325,19 @@ export function OrderPage() {
             </div>
           ) : (
             <>
-              <Table aria-label="Orders" className={adminTableClassNames.wrapper}>
-                <Table.Content>
+              <Table variant="secondary" aria-label="Orders" className={adminTableClassNames.wrapper}>
+                <Table.ScrollContainer>
+                  <Table.Content sortDescriptor={sortDescriptor} onSortChange={setSortDescriptor}>
                   <TableHeader>
-                    <TableColumn>Trade</TableColumn>
-                    <TableColumn>Plan</TableColumn>
-                    <TableColumn>Total</TableColumn>
-                    <TableColumn>Status</TableColumn>
-                    <TableColumn>Commission</TableColumn>
-                    <TableColumn>Created</TableColumn>
+                    <TableColumn key="trade" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Trade" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="plan" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Plan" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="total" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Total" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="status" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Status" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="commission" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Commission" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="created" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Created" sortDirection={sortDirection} />}</TableColumn>
                     <TableColumn>Actions</TableColumn>
                   </TableHeader>
-                  <TableBody items={records}>
+                  <TableBody items={sortedItems}>
                     {item => (
                       <TableRow key={item.id}>
                         <TableCell>
@@ -366,6 +382,7 @@ export function OrderPage() {
                     )}
                   </TableBody>
                 </Table.Content>
+                </Table.ScrollContainer>
               </Table>
 
               <div className="flex justify-center">
@@ -376,14 +393,19 @@ export function OrderPage() {
         </CardContent>
       </Card>
 
-      <Modal isOpen={detailOpen} onOpenChange={isOpen => !isOpen && setDetailOpen(false)}>
-        <Modal.Backdrop>
-          <Modal.Container>
-            <Modal.Dialog>
-          <Modal.Header>
-              <Modal.Heading>Order detail</Modal.Heading>
-            </Modal.Header>
-          <Modal.Body className="grid gap-5 md:grid-cols-2">
+      <AdminDrawer
+        isOpen={detailOpen}
+        onOpenChange={isOpen => !isOpen && setDetailOpen(false)}
+        title="Order detail"
+        isBusy={submitting}
+        size="lg"
+        footer={
+          <Button variant="ghost" onPress={() => setDetailOpen(false)}>
+            Close
+          </Button>
+        }
+      >
+        <div className="grid gap-5 md:grid-cols-2">
             <div className="space-y-3 rounded-2xl border border-default-200 bg-default-50 p-4">
               <p className="text-sm font-semibold text-slate-900">Overview</p>
               <p>Trade No: {selected?.trade_no || "—"}</p>
@@ -416,52 +438,72 @@ export function OrderPage() {
                 {JSON.stringify(asArray(selected?.surplus_orders), null, 2)}
               </pre>
             </div>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="ghost" onPress={() => setDetailOpen(false)}>
-              Close
-            </Button>
-          </Modal.Footer>
-        </Modal.Dialog>
-          </Modal.Container>
-        </Modal.Backdrop>
-      </Modal>
+        </div>
+      </AdminDrawer>
 
-      <Modal isOpen={assignOpen} onOpenChange={isOpen => !isOpen && setAssignOpen(false)}>
-        <Modal.Backdrop>
-          <Modal.Container>
-            <Modal.Dialog>
-              <Modal.Header>
-                <Modal.Heading>Assign order</Modal.Heading>
-              </Modal.Header>
-              <Modal.Body className="grid gap-4 md:grid-cols-2">
-                <ModalField label="User Email"><Input aria-label="User Email" value={assignEmail} onChange={event => setAssignEmail(event.target.value)} /></ModalField>
-                <ModalField label="Total Amount (cents)"><Input aria-label="Total Amount (cents)" type="number" value={assignAmount} onChange={event => setAssignAmount(event.target.value)} /></ModalField>
-                <ModalField label="Plan">
-                  <AdminSelectField
-                    ariaLabel="Plan"
-                    options={plans.map(plan => ({ id: String(plan.id), label: plan.name }))}
-                    selectedKey={selectedPlan}
-                    onSelectionChange={key => setAssignPlanId(String(key || ""))}
-                  />
-                </ModalField>
-                <ModalField label="Period">
-                  <AdminSelectField
-                    ariaLabel="Period"
-                    options={PERIOD_OPTIONS.map(option => ({ id: option.key, label: option.label }))}
-                    selectedKey={selectedPeriod}
-                    onSelectionChange={key => setAssignPeriod(String(key || "month_price"))}
-                  />
-                </ModalField>
-              </Modal.Body>
-              <Modal.Footer>
-                <Button variant="ghost" onPress={() => setAssignOpen(false)}>Cancel</Button>
-                <Button variant="primary" onPress={() => void assignOrder()} isDisabled={submitting}>Create order</Button>
-              </Modal.Footer>
-        </Modal.Dialog>
-          </Modal.Container>
-        </Modal.Backdrop>
-      </Modal>
+      <AdminDrawer
+        isOpen={assignOpen}
+        onOpenChange={isOpen => !isOpen && setAssignOpen(false)}
+        title="Assign order"
+        isBusy={submitting}
+        footer={
+          <>
+            <Button variant="ghost" onPress={() => setAssignOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onPress={() => void assignOrder()}
+              isDisabled={submitting || assignEmailInvalid || assignAmountInvalid || assignPlanInvalid || assignPeriodInvalid}
+            >
+              Create order
+            </Button>
+          </>
+        }
+      >
+        <form
+          className="flex flex-col gap-5"
+          onSubmit={event => {
+            event.preventDefault();
+            if (assignEmailInvalid || assignAmountInvalid || assignPlanInvalid || assignPeriodInvalid) return;
+            void assignOrder();
+          }}
+        >
+          <AdminTextField
+            label="User Email"
+            value={assignEmail}
+            onChange={event => setAssignEmail(event.target.value)}
+            isRequired
+            isInvalid={assignEmailInvalid}
+            errorMessage="User email is required."
+          />
+          <AdminTextField
+            label="Total Amount (cents)"
+            type="number"
+            value={assignAmount}
+            onChange={event => setAssignAmount(event.target.value)}
+            isRequired
+            isInvalid={assignAmountInvalid}
+            errorMessage="Total amount is required."
+          />
+          <ModalField label="Plan" required>
+            <AdminSelectField
+              ariaLabel="Plan"
+              options={plans.map(plan => ({ id: String(plan.id), label: plan.name }))}
+              selectedKey={selectedPlan}
+              onSelectionChange={key => setAssignPlanId(String(key || ""))}
+            />
+          </ModalField>
+          <ModalField label="Period" required>
+            <AdminSelectField
+              ariaLabel="Period"
+              options={PERIOD_OPTIONS.map(option => ({ id: option.key, label: option.label }))}
+              selectedKey={selectedPeriod}
+              onSelectionChange={key => setAssignPeriod(String(key || "month_price"))}
+            />
+          </ModalField>
+        </form>
+      </AdminDrawer>
     </PageFrame>
   );
 }

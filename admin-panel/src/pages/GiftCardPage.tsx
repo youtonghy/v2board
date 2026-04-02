@@ -4,8 +4,6 @@ import {
   CardContent,
   CardHeader,
   Chip,
-  Input,
-  Modal,
   Spinner,
   Table,
   TableBody,
@@ -16,9 +14,13 @@ import {
   toast,
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
+import { AdminDatePickerField } from "../components/AdminDatePickerField";
+import { AdminDrawer } from "../components/AdminDrawer";
 import { DangerConfirmButton } from "../components/DangerConfirmButton";
 import { AdminPagination } from "../components/AdminPagination";
 import { AdminSelectField } from "../components/AdminSelectField";
+import { AdminSortableColumnHeader, useAdminTableSort } from "../components/AdminTable";
+import { AdminTextField } from "../components/AdminTextField";
 import { adminRequest } from "../lib/api";
 import { GIFTCARD_TYPE_OPTIONS, fromDatetimeInput, toDatetimeInput } from "../lib/admin-constants";
 import { ModalField } from "../components/ModalField";
@@ -130,10 +132,26 @@ export function GiftCardPage() {
     () => GIFTCARD_TYPE_OPTIONS.map(option => ({ id: option.key, label: option.label })),
     []
   );
+  const { sortDescriptor, setSortDescriptor, sortedItems } = useAdminTableSort(
+    records,
+    { column: "id", direction: "descending" },
+    {
+      id: item => Number(item.id || 0),
+      name: item => item.name || "",
+      type: item => Number(item.type || 0),
+      value: item => Number(item.value || 0),
+      code: item => item.code || ""
+    }
+  );
   const planOptions = useMemo(
     () => plans.map(plan => ({ id: String(plan.id), label: plan.name })),
     [plans]
   );
+  const giftNameInvalid = !String(selected?.name || "").trim();
+  const giftCodeInvalid = selected?.id ? !String(selected?.code || "").trim() : false;
+  const giftValueInvalid = Number(selected?.type) !== 4 && String(selected?.value ?? "").trim() === "";
+  const giftPlanInvalid = Number(selected?.type) === 5 && !String(selected?.plan_id || "").trim();
+  const giftGenerateInvalid = !selected?.id && !String(selected?.code || "").trim() && !String(selected?.generate_count ?? "").trim();
   const stats = useMemo(() => {
     const exchangeCards = records.filter(record => Number(record.type) === 5).length;
     const resetCards = records.filter(record => Number(record.type) === 4).length;
@@ -192,17 +210,18 @@ export function GiftCardPage() {
             </div>
           ) : (
             <>
-              <Table aria-label="Gift cards" className={adminTableClassNames.wrapper}>
-                <Table.Content>
+              <Table variant="secondary" aria-label="Gift cards" className={adminTableClassNames.wrapper}>
+                <Table.ScrollContainer>
+                <Table.Content sortDescriptor={sortDescriptor} onSortChange={setSortDescriptor}>
                   <TableHeader>
-                    <TableColumn>ID</TableColumn>
-                    <TableColumn>Name</TableColumn>
-                    <TableColumn>Type</TableColumn>
-                    <TableColumn>Value</TableColumn>
-                    <TableColumn>Code</TableColumn>
+                    <TableColumn key="id" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="ID" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="name" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Name" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="type" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Type" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="value" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Value" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="code" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Code" sortDirection={sortDirection} />}</TableColumn>
                     <TableColumn>Actions</TableColumn>
                   </TableHeader>
-                  <TableBody items={records}>
+                  <TableBody items={sortedItems}>
                     {item => (
                       <TableRow key={String(item.id || Math.random())}>
                         <TableCell>{item.id ?? "—"}</TableCell>
@@ -252,6 +271,7 @@ export function GiftCardPage() {
                     )}
                   </TableBody>
                 </Table.Content>
+                </Table.ScrollContainer>
               </Table>
               <div className="flex justify-end">
                 <AdminPagination
@@ -267,53 +287,59 @@ export function GiftCardPage() {
         </CardContent>
       </Card>
 
-      <Modal isOpen={open} onOpenChange={isOpen => !isOpen && setOpen(false)}>
-        <Modal.Backdrop>
-          <Modal.Container>
-            <Modal.Dialog>
-              <Modal.Header>
-                <Modal.Heading>{selected?.id ? "Edit gift card" : "Create gift card"}</Modal.Heading>
-              </Modal.Header>
-              <Modal.Body className="grid gap-5 md:grid-cols-2">
-                <ModalField label="Name"><Input aria-label="Name" value={selected?.name || ""} onChange={event => setSelected(current => (current ? { ...current, name: event.target.value } : current))} /></ModalField>
-                <ModalField label="Code"><Input aria-label="Code" value={selected?.code || ""} onChange={event => setSelected(current => (current ? { ...current, code: event.target.value, generate_count: undefined } : current))} /></ModalField>
-                <ModalField label="Type">
-                  <AdminSelectField
-                    ariaLabel="Type"
-                    options={typeOptions}
-                    selectedKey={selectedType}
-                    onSelectionChange={key => {
-                      const nextType = Number(key || 1);
-                      setSelected(current => (current ? { ...current, type: nextType, value: nextType === 4 ? 0 : current.value } : current));
-                    }}
-                  />
-                </ModalField>
-                <ModalField label="Value"><Input aria-label="Value" type="number" disabled={selected?.type === 4} value={String(selected?.type === 4 ? 0 : selected?.value ?? "")} onChange={event => setSelected(current => (current ? { ...current, value: event.target.value } : current))} /></ModalField>
-                {selected?.type === 5 ? (
-                  <ModalField label="Plan">
-                    <AdminSelectField
-                      ariaLabel="Plan"
-                      options={planOptions}
-                      selectedKey={selectedPlan}
-                      onSelectionChange={key => { setSelected(current => (current ? { ...current, plan_id: String(key || "") } : current)); }}
-                    />
-                  </ModalField>
-                ) : null}
-                <ModalField label="Start Time"><Input aria-label="Start Time" type="datetime-local" value={toDatetimeInput(selected?.started_at)} onChange={event => setSelected(current => (current ? { ...current, started_at: fromDatetimeInput(event.target.value) } : current))} /></ModalField>
-                <ModalField label="End Time"><Input aria-label="End Time" type="datetime-local" value={toDatetimeInput(selected?.ended_at)} onChange={event => setSelected(current => (current ? { ...current, ended_at: fromDatetimeInput(event.target.value) } : current))} /></ModalField>
-                <ModalField label="Max Uses"><Input aria-label="Max Uses" type="number" value={String(selected?.limit_use ?? "")} onChange={event => setSelected(current => (current ? { ...current, limit_use: event.target.value } : current))} /></ModalField>
-                {!selected?.id && !selected?.code ? (
-                  <ModalField label="Generate Count"><Input aria-label="Generate Count" type="number" value={String(selected?.generate_count ?? "")} onChange={event => setSelected(current => (current ? { ...current, generate_count: event.target.value } : current))} /></ModalField>
-                ) : null}
-              </Modal.Body>
-              <Modal.Footer>
-                <Button variant="ghost" onPress={() => setOpen(false)}>Cancel</Button>
-                <Button variant="primary" onPress={() => void saveGiftCard()} isDisabled={saving}>Save gift card</Button>
-              </Modal.Footer>
-        </Modal.Dialog>
-          </Modal.Container>
-        </Modal.Backdrop>
-      </Modal>
+      <AdminDrawer
+        isOpen={open}
+        onOpenChange={isOpen => !isOpen && setOpen(false)}
+        title={selected?.id ? "Edit gift card" : "Create gift card"}
+        isBusy={saving}
+        size="lg"
+        footer={
+          <>
+            <Button variant="ghost" onPress={() => setOpen(false)}>Cancel</Button>
+            <Button variant="primary" onPress={() => void saveGiftCard()} isDisabled={saving || giftNameInvalid || giftCodeInvalid || giftValueInvalid || giftPlanInvalid || giftGenerateInvalid}>Save gift card</Button>
+          </>
+        }
+      >
+        <form
+          className="flex flex-col gap-5"
+          onSubmit={event => {
+            event.preventDefault();
+            if (giftNameInvalid || giftCodeInvalid || giftValueInvalid || giftPlanInvalid || giftGenerateInvalid) return;
+            void saveGiftCard();
+          }}
+        >
+          <AdminTextField label="Name" value={selected?.name || ""} onChange={event => setSelected(current => (current ? { ...current, name: event.target.value } : current))} isRequired isInvalid={giftNameInvalid} errorMessage="Name is required." />
+          <AdminTextField label="Code" value={selected?.code || ""} onChange={event => setSelected(current => (current ? { ...current, code: event.target.value, generate_count: undefined } : current))} isRequired={Boolean(selected?.id)} isInvalid={giftCodeInvalid} errorMessage="Code is required for existing gift cards." />
+          <ModalField label="Type" required>
+            <AdminSelectField
+              ariaLabel="Type"
+              options={typeOptions}
+              selectedKey={selectedType}
+              onSelectionChange={key => {
+                const nextType = Number(key || 1);
+                setSelected(current => (current ? { ...current, type: nextType, value: nextType === 4 ? 0 : current.value } : current));
+              }}
+            />
+          </ModalField>
+          <AdminTextField label="Value" type="number" value={String(selected?.type === 4 ? 0 : selected?.value ?? "")} onChange={event => setSelected(current => (current ? { ...current, value: event.target.value } : current))} isDisabled={selected?.type === 4} isRequired={Number(selected?.type) !== 4} isInvalid={giftValueInvalid} errorMessage="Value is required." />
+          {selected?.type === 5 ? (
+            <ModalField label="Plan" required>
+              <AdminSelectField
+                ariaLabel="Plan"
+                options={planOptions}
+                selectedKey={selectedPlan}
+                onSelectionChange={key => { setSelected(current => (current ? { ...current, plan_id: String(key || "") } : current)); }}
+              />
+            </ModalField>
+          ) : null}
+          <AdminDatePickerField label="Start Time" value={selected?.started_at} onChange={nextValue => setSelected(current => (current ? { ...current, started_at: nextValue } : current))} />
+          <AdminDatePickerField label="End Time" value={selected?.ended_at} onChange={nextValue => setSelected(current => (current ? { ...current, ended_at: nextValue } : current))} />
+          <AdminTextField label="Max Uses" type="number" value={String(selected?.limit_use ?? "")} onChange={event => setSelected(current => (current ? { ...current, limit_use: event.target.value } : current))} />
+          {!selected?.id && !selected?.code ? (
+            <AdminTextField label="Generate Count" type="number" value={String(selected?.generate_count ?? "")} onChange={event => setSelected(current => (current ? { ...current, generate_count: event.target.value } : current))} isRequired={!String(selected?.code || "").trim()} isInvalid={giftGenerateInvalid} errorMessage="Enter a code or generate count." />
+          ) : null}
+        </form>
+      </AdminDrawer>
     </PageFrame>
   );
 }

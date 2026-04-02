@@ -5,8 +5,6 @@ import {
   CardHeader,
   Chip,
   Checkbox,
-  Input,
-  Modal,
   Spinner,
   Table,
   TableBody,
@@ -17,10 +15,14 @@ import {
   toast,
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
+import { AdminDatePickerField } from "../components/AdminDatePickerField";
+import { AdminDrawer } from "../components/AdminDrawer";
 import { DangerConfirmButton } from "../components/DangerConfirmButton";
 import { AdminMultiSelectField } from "../components/AdminMultiSelectField";
 import { AdminPagination } from "../components/AdminPagination";
 import { AdminSelectField } from "../components/AdminSelectField";
+import { AdminSortableColumnHeader, useAdminTableSort } from "../components/AdminTable";
+import { AdminTextField } from "../components/AdminTextField";
 import { adminRequest } from "../lib/api";
 import { COUPON_TYPE_OPTIONS, PERIOD_OPTIONS, fromDatetimeInput, toDatetimeInput } from "../lib/admin-constants";
 import { ModalField } from "../components/ModalField";
@@ -187,6 +189,22 @@ export function CouponPage() {
     () => new Set(selected?.limit_period || []),
     [selected]
   );
+  const { sortDescriptor, setSortDescriptor, sortedItems } = useAdminTableSort(
+    records,
+    { column: "id", direction: "descending" },
+    {
+      id: item => Number(item.id || 0),
+      enabled: item => Number(item.show || 0),
+      name: item => item.name || "",
+      type: item => Number(item.type || 0),
+      code: item => item.code || "",
+      limit: item => Number(item.limit_use ?? Number.MAX_SAFE_INTEGER)
+    }
+  );
+  const couponNameInvalid = !String(selected?.name || "").trim();
+  const couponValueInvalid = String(selected?.value ?? "").trim() === "";
+  const couponCodeInvalid = selected?.id ? !String(selected?.code || "").trim() : false;
+  const couponGenerateInvalid = !selected?.id && !String(selected?.code || "").trim() && !String(selected?.generate_count ?? "").trim();
   const stats = useMemo(() => {
     const enabled = records.filter(record => Boolean(Number(record.show ?? 0))).length;
     const amountCoupons = records.filter(record => Number(record.type) === 1).length;
@@ -245,18 +263,19 @@ export function CouponPage() {
             </div>
           ) : (
             <>
-              <Table aria-label="Coupons" className={adminTableClassNames.wrapper}>
-                <Table.Content>
+              <Table variant="secondary" aria-label="Coupons" className={adminTableClassNames.wrapper}>
+                <Table.ScrollContainer>
+                <Table.Content sortDescriptor={sortDescriptor} onSortChange={setSortDescriptor}>
                   <TableHeader>
-                    <TableColumn>ID</TableColumn>
-                    <TableColumn>Enabled</TableColumn>
-                    <TableColumn>Name</TableColumn>
-                    <TableColumn>Type</TableColumn>
-                    <TableColumn>Code</TableColumn>
-                    <TableColumn>Limit</TableColumn>
+                    <TableColumn key="id" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="ID" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="enabled" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Enabled" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="name" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Name" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="type" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Type" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="code" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Code" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="limit" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Limit" sortDirection={sortDirection} />}</TableColumn>
                     <TableColumn>Actions</TableColumn>
                   </TableHeader>
-                  <TableBody items={records}>
+                  <TableBody items={sortedItems}>
                     {item => (
                       <TableRow key={String(item.id || Math.random())}>
                         <TableCell>{item.id ?? "—"}</TableCell>
@@ -318,6 +337,7 @@ export function CouponPage() {
                     )}
                   </TableBody>
                 </Table.Content>
+                </Table.ScrollContainer>
               </Table>
               <div className="flex justify-end">
                 <AdminPagination
@@ -333,84 +353,82 @@ export function CouponPage() {
         </CardContent>
       </Card>
 
-      <Modal isOpen={open} onOpenChange={isOpen => !isOpen && setOpen(false)}>
-        <Modal.Backdrop>
-          <Modal.Container size="lg" scroll="inside">
-            <Modal.Dialog>
-              <Modal.Header>
-                <Modal.Heading>{selected?.id ? "Edit coupon" : "Create coupon"}</Modal.Heading>
-              </Modal.Header>
-              <Modal.Body className="grid gap-5 md:grid-cols-2">
-                <ModalField label="Name">
-                  <Input aria-label="Name" value={selected?.name || ""} onChange={event => setSelected(current => (current ? { ...current, name: event.target.value } : current))} />
-                </ModalField>
-                <ModalField label="Code">
-                  <Input aria-label="Code" value={selected?.code || ""} onChange={event => setSelected(current => (current ? { ...current, code: event.target.value, generate_count: undefined } : current))} />
-                </ModalField>
-                <ModalField label="Discount Type">
-                  <AdminSelectField
-                    ariaLabel="Discount Type"
-                    options={typeOptions}
-                    selectedKey={selectedType}
-                    onSelectionChange={key => {
-                      const nextType = Number(key || 1);
-                      setSelected(current => (current ? { ...current, type: nextType } : current));
-                    }}
-                  />
-                </ModalField>
-                <ModalField label="Discount Value" description={selected?.type === 2 ? "%" : "Amount"}>
-                  <Input aria-label="Discount Value" type="number" value={String(selected?.value ?? "")} onChange={event => setSelected(current => (current ? { ...current, value: event.target.value } : current))} />
-                </ModalField>
-                <ModalField label="Start Time">
-                  <Input aria-label="Start Time" type="datetime-local" value={toDatetimeInput(selected?.started_at)} onChange={event => setSelected(current => (current ? { ...current, started_at: fromDatetimeInput(event.target.value) } : current))} />
-                </ModalField>
-                <ModalField label="End Time">
-                  <Input aria-label="End Time" type="datetime-local" value={toDatetimeInput(selected?.ended_at)} onChange={event => setSelected(current => (current ? { ...current, ended_at: fromDatetimeInput(event.target.value) } : current))} />
-                </ModalField>
-                <ModalField label="Max Uses">
-                  <Input aria-label="Max Uses" type="number" value={String(selected?.limit_use ?? "")} onChange={event => setSelected(current => (current ? { ...current, limit_use: event.target.value } : current))} />
-                </ModalField>
-                <ModalField label="Uses Per User">
-                  <Input aria-label="Uses Per User" type="number" value={String(selected?.limit_use_with_user ?? "")} onChange={event => setSelected(current => (current ? { ...current, limit_use_with_user: event.target.value } : current))} />
-                </ModalField>
-                <ModalField label="Allowed Plans">
-                  <AdminMultiSelectField
-                    ariaLabel="Allowed Plans"
-                    options={planOptions}
-                    selectedKeys={selectedPlanIds}
-                    onSelectionChange={keys => {
-                      setSelected(current => current ? {
-                        ...current,
-                        limit_plan_ids: keys === "all" ? planOptions.map(item => item.id) : Array.from(keys).map(item => String(item))
-                      } : current);
-                    }}
-                  />
-                </ModalField>
-                <ModalField label="Allowed Periods">
-                  <AdminMultiSelectField
-                    ariaLabel="Allowed Periods"
-                    options={periodOptions}
-                    selectedKeys={selectedPeriods}
-                    onSelectionChange={keys => setSelected(current => current ? {
-                      ...current,
-                      limit_period: keys === "all" ? periodOptions.map(item => item.id) : Array.from(keys).map(item => String(item))
-                    } : current)}
-                  />
-                </ModalField>
-                {!selected?.id && !selected?.code ? (
-                  <ModalField label="Generate Count">
-                    <Input aria-label="Generate Count" type="number" value={String(selected?.generate_count ?? "")} onChange={event => setSelected(current => (current ? { ...current, generate_count: event.target.value } : current))} />
-                  </ModalField>
-                ) : null}
-              </Modal.Body>
-              <Modal.Footer>
-                <Button variant="ghost" onPress={() => setOpen(false)}>Cancel</Button>
-                <Button variant="primary" onPress={() => void saveCoupon()} isDisabled={saving}>Save coupon</Button>
-              </Modal.Footer>
-            </Modal.Dialog>
-          </Modal.Container>
-        </Modal.Backdrop>
-      </Modal>
+      <AdminDrawer
+        isOpen={open}
+        onOpenChange={isOpen => !isOpen && setOpen(false)}
+        title={selected?.id ? "Edit coupon" : "Create coupon"}
+        isBusy={saving}
+        size="lg"
+        footer={
+          <>
+            <Button variant="ghost" onPress={() => setOpen(false)}>Cancel</Button>
+            <Button variant="primary" onPress={() => void saveCoupon()} isDisabled={saving || couponNameInvalid || couponValueInvalid || couponCodeInvalid || couponGenerateInvalid}>Save coupon</Button>
+          </>
+        }
+      >
+        <form
+          className="flex flex-col gap-5"
+          onSubmit={event => {
+            event.preventDefault();
+            if (couponNameInvalid || couponValueInvalid || couponCodeInvalid || couponGenerateInvalid) return;
+            void saveCoupon();
+          }}
+        >
+          <AdminTextField label="Name" value={selected?.name || ""} onChange={event => setSelected(current => (current ? { ...current, name: event.target.value } : current))} isRequired isInvalid={couponNameInvalid} errorMessage="Name is required." />
+          <AdminTextField label="Code" value={selected?.code || ""} onChange={event => setSelected(current => (current ? { ...current, code: event.target.value, generate_count: undefined } : current))} isRequired={Boolean(selected?.id)} isInvalid={couponCodeInvalid} errorMessage="Code is required for existing coupons." />
+          <ModalField label="Discount Type">
+            <AdminSelectField
+              ariaLabel="Discount Type"
+              options={typeOptions}
+              selectedKey={selectedType}
+              onSelectionChange={key => {
+                const nextType = Number(key || 1);
+                setSelected(current => (current ? { ...current, type: nextType } : current));
+              }}
+            />
+          </ModalField>
+          <AdminTextField label="Discount Value" description={selected?.type === 2 ? "%" : "Amount"} type="number" value={String(selected?.value ?? "")} onChange={event => setSelected(current => (current ? { ...current, value: event.target.value } : current))} isRequired isInvalid={couponValueInvalid} errorMessage="Discount value is required." />
+          <AdminDatePickerField label="Start Time" value={selected?.started_at} onChange={nextValue => setSelected(current => (current ? { ...current, started_at: nextValue } : current))} />
+          <AdminDatePickerField label="End Time" value={selected?.ended_at} onChange={nextValue => setSelected(current => (current ? { ...current, ended_at: nextValue } : current))} />
+          <AdminTextField label="Max Uses" type="number" value={String(selected?.limit_use ?? "")} onChange={event => setSelected(current => (current ? { ...current, limit_use: event.target.value } : current))} />
+          <AdminTextField label="Uses Per User" type="number" value={String(selected?.limit_use_with_user ?? "")} onChange={event => setSelected(current => (current ? { ...current, limit_use_with_user: event.target.value } : current))} />
+          <ModalField label="Allowed Plans">
+            <AdminMultiSelectField
+              ariaLabel="Allowed Plans"
+              options={planOptions}
+              selectedKeys={selectedPlanIds}
+              onSelectionChange={keys => {
+                setSelected(current => current ? {
+                  ...current,
+                  limit_plan_ids: keys === "all" ? planOptions.map(item => item.id) : Array.from(keys).map(item => String(item))
+                } : current);
+              }}
+            />
+          </ModalField>
+          <ModalField label="Allowed Periods">
+            <AdminMultiSelectField
+              ariaLabel="Allowed Periods"
+              options={periodOptions}
+              selectedKeys={selectedPeriods}
+              onSelectionChange={keys => setSelected(current => current ? {
+                ...current,
+                limit_period: keys === "all" ? periodOptions.map(item => item.id) : Array.from(keys).map(item => String(item))
+              } : current)}
+            />
+          </ModalField>
+          {!selected?.id && !selected?.code ? (
+            <AdminTextField
+              label="Generate Count"
+              type="number"
+              value={String(selected?.generate_count ?? "")}
+              onChange={event => setSelected(current => (current ? { ...current, generate_count: event.target.value } : current))}
+              isRequired={!String(selected?.code || "").trim()}
+              isInvalid={couponGenerateInvalid}
+              errorMessage="Enter a code or generate count."
+            />
+          ) : null}
+        </form>
+      </AdminDrawer>
     </PageFrame>
   );
 }

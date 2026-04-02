@@ -7,7 +7,6 @@ import {
   CardHeader,
   Chip,
   Separator,
-  Modal,
   Spinner,
   Table,
   TableBody,
@@ -33,6 +32,8 @@ import {
 import { adminRequest, getEnvelopeError } from "../lib/api";
 import type { ApiEnvelope } from "../types";
 import { AdminPagination } from "../components/AdminPagination";
+import { AdminDrawer } from "../components/AdminDrawer";
+import { AdminSortableColumnHeader, useAdminTableSort } from "../components/AdminTable";
 import { PageFrame } from "../components/PageFrame";
 import { asArray, asRecord, formatBytes, formatDateTime, formatMoney } from "../lib/admin-format";
 import { adminTableClassNames } from "../components/AdminContent";
@@ -227,6 +228,16 @@ export function DashboardPage() {
   const [detailTotal, setDetailTotal] = useState(0);
   const [detailRecords, setDetailRecords] = useState<StatUserRecord[]>([]);
   const [detailLoading, setDetailLoading] = useState(false);
+  const detailTableSort = useAdminTableSort(
+    detailRecords,
+    { column: "date", direction: "descending" },
+    {
+      date: item => item.record_at,
+      upload: item => item.u,
+      download: item => item.d,
+      rate: item => item.server_rate
+    }
+  );
 
   async function loadDashboard() {
     setState(current => ({ ...current, loading: true, error: undefined }));
@@ -571,29 +582,34 @@ export function DashboardPage() {
         </PanelShell>
       </section>
 
-      <Modal isOpen={detailOpen} onOpenChange={isOpen => !isOpen && setDetailOpen(false)}>
-        <Modal.Backdrop>
-          <Modal.Container>
-            <Modal.Dialog>
-          <Modal.Header>
-              <Modal.Heading>Traffic records for {detailUser?.email || `User #${detailUser?.user_id || ""}`}</Modal.Heading>
-            </Modal.Header>
-          <Modal.Body className="gap-4">
+      <AdminDrawer
+        isOpen={detailOpen}
+        onOpenChange={isOpen => !isOpen && setDetailOpen(false)}
+        title={`Traffic records for ${detailUser?.email || `User #${detailUser?.user_id || ""}`}`}
+        size="lg"
+        footer={
+          <Button variant="ghost" onPress={() => setDetailOpen(false)}>
+            Close
+          </Button>
+        }
+      >
+        <div className="space-y-4">
             {detailLoading ? (
               <div className="flex min-h-[240px] items-center justify-center">
                 <Spinner color="accent" />
               </div>
             ) : (
               <>
-                <Table aria-label="Traffic detail" className={adminTableClassNames.wrapper}>
-                  <Table.Content>
+                <Table variant="secondary" aria-label="Traffic detail" className={adminTableClassNames.wrapper}>
+                  <Table.ScrollContainer>
+                  <Table.Content sortDescriptor={detailTableSort.sortDescriptor} onSortChange={detailTableSort.setSortDescriptor}>
                     <TableHeader>
-                      <TableColumn>Date</TableColumn>
-                      <TableColumn>Upload</TableColumn>
-                      <TableColumn>Download</TableColumn>
-                      <TableColumn>Rate</TableColumn>
+                      <TableColumn key="date" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Date" sortDirection={sortDirection} />}</TableColumn>
+                      <TableColumn key="upload" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Upload" sortDirection={sortDirection} />}</TableColumn>
+                      <TableColumn key="download" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Download" sortDirection={sortDirection} />}</TableColumn>
+                      <TableColumn key="rate" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Rate" sortDirection={sortDirection} />}</TableColumn>
                     </TableHeader>
-                    <TableBody items={detailRecords}>
+                    <TableBody items={detailTableSort.sortedItems}>
                       {item => (
                         <TableRow key={`${item.record_at}-${item.id || 0}`}>
                           <TableCell>{formatDateTime(item.record_at)}</TableCell>
@@ -604,6 +620,7 @@ export function DashboardPage() {
                       )}
                     </TableBody>
                   </Table.Content>
+                  </Table.ScrollContainer>
                 </Table>
                 <div className="flex justify-center">
                     <AdminPagination
@@ -616,16 +633,8 @@ export function DashboardPage() {
                 </div>
               </>
             )}
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="ghost" onPress={() => setDetailOpen(false)}>
-              Close
-            </Button>
-          </Modal.Footer>
-        </Modal.Dialog>
-          </Modal.Container>
-        </Modal.Backdrop>
-      </Modal>
+        </div>
+      </AdminDrawer>
     </PageFrame>
   );
 }

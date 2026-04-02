@@ -3,8 +3,6 @@ import {
   Card,
   CardContent,
   CardHeader,
-  Input,
-  Modal,
   Spinner,
   Table,
   TableBody,
@@ -14,10 +12,12 @@ import {
   TableRow,
 } from "@heroui/react";
 import { useEffect, useState } from "react";
+import { AdminDrawer } from "../components/AdminDrawer";
+import { AdminTextField } from "../components/AdminTextField";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
-import { ModalField } from "../components/ModalField";
 import { PageFrame } from "../components/PageFrame";
 import { DangerConfirmButton } from "../components/DangerConfirmButton";
+import { AdminSortableColumnHeader, useAdminTableSort } from "../components/AdminTable";
 import { asArray } from "../lib/admin-format";
 import {
   adminCardClassName,
@@ -90,6 +90,16 @@ export function ServerGroupPage() {
   useEffect(() => {
     void loadGroups();
   }, []);
+  const { sortDescriptor, setSortDescriptor, sortedItems } = useAdminTableSort(
+    records,
+    { column: "id", direction: "ascending" },
+    {
+      id: item => item.id,
+      name: item => item.name,
+      users: item => Number(item.user_count || 0),
+      servers: item => Number(item.server_count || 0)
+    }
+  );
 
   const stats = [
     { label: "Groups", value: String(records.length), hint: "Access scopes configured" },
@@ -97,6 +107,7 @@ export function ServerGroupPage() {
     { label: "Servers", value: String(records.reduce((sum, record) => sum + Number(record.server_count || 0), 0)), hint: "Nodes mapped to groups" },
     { label: "Busy groups", value: String(records.filter(record => Number(record.server_count || 0) > 0).length), hint: "Groups in active use" }
   ];
+  const groupNameInvalid = !name.trim();
 
   return (
     <PageFrame
@@ -144,16 +155,17 @@ export function ServerGroupPage() {
               <Spinner />
             </div>
           ) : (
-            <Table aria-label="Server Groups" className={adminTableClassNames.wrapper}>
-              <Table.Content>
+            <Table variant="secondary" aria-label="Server Groups" className={adminTableClassNames.wrapper}>
+              <Table.ScrollContainer>
+              <Table.Content sortDescriptor={sortDescriptor} onSortChange={setSortDescriptor}>
                 <TableHeader>
-                  <TableColumn>ID</TableColumn>
-                  <TableColumn>Name</TableColumn>
-                  <TableColumn>Users</TableColumn>
-                  <TableColumn>Servers</TableColumn>
+                  <TableColumn key="id" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="ID" sortDirection={sortDirection} />}</TableColumn>
+                  <TableColumn key="name" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Name" sortDirection={sortDirection} />}</TableColumn>
+                  <TableColumn key="users" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Users" sortDirection={sortDirection} />}</TableColumn>
+                  <TableColumn key="servers" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Servers" sortDirection={sortDirection} />}</TableColumn>
                   <TableColumn>Actions</TableColumn>
                 </TableHeader>
-                <TableBody items={records}>
+                <TableBody items={sortedItems}>
                   {item => (
                     <TableRow key={item.id}>
                       <TableCell>{item.id}</TableCell>
@@ -189,31 +201,46 @@ export function ServerGroupPage() {
                   )}
                 </TableBody>
               </Table.Content>
+              </Table.ScrollContainer>
             </Table>
           )}
         </CardContent>
       </Card>
 
-      <Modal isOpen={editorOpen} onOpenChange={isOpen => !isOpen && setEditorOpen(false)}>
-        <Modal.Backdrop>
-          <Modal.Container>
-            <Modal.Dialog>
-              <Modal.Header>
-                <Modal.Heading>{selected ? "Edit group" : "Create group"}</Modal.Heading>
-              </Modal.Header>
-              <Modal.Body>
-                <ModalField label="Group Name">
-                  <Input aria-label="Group Name" value={name} onChange={event => setName(event.target.value)} />
-                </ModalField>
-              </Modal.Body>
-              <Modal.Footer>
-                <Button variant="ghost" onPress={() => setEditorOpen(false)}>Cancel</Button>
-                <Button variant="primary" onPress={() => void saveGroup()} isDisabled={submitting}>Save group</Button>
-              </Modal.Footer>
-        </Modal.Dialog>
-          </Modal.Container>
-        </Modal.Backdrop>
-      </Modal>
+      <AdminDrawer
+        isOpen={editorOpen}
+        onOpenChange={isOpen => !isOpen && setEditorOpen(false)}
+        title={selected ? "Edit group" : "Create group"}
+        isBusy={submitting}
+        footer={
+          <>
+            <Button variant="ghost" onPress={() => setEditorOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" onPress={() => void saveGroup()} isDisabled={submitting || groupNameInvalid}>
+              Save group
+            </Button>
+          </>
+        }
+      >
+        <form
+          className="space-y-5"
+          onSubmit={event => {
+            event.preventDefault();
+            if (groupNameInvalid) return;
+            void saveGroup();
+          }}
+        >
+          <AdminTextField
+            label="Group Name"
+            value={name}
+            onChange={event => setName(event.target.value)}
+            isRequired
+            isInvalid={groupNameInvalid}
+            errorMessage="Group name is required."
+          />
+        </form>
+      </AdminDrawer>
     </PageFrame>
   );
 }

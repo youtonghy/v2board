@@ -3,10 +3,7 @@ import {
   Card,
   CardContent,
   CardHeader,
-  Input,
-  Modal,
   Spinner,
-  TextArea,
   Table,
   TableBody,
   TableCell,
@@ -15,7 +12,10 @@ import {
   TableRow,
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
+import { AdminDrawer } from "../components/AdminDrawer";
 import { AdminSelectField } from "../components/AdminSelectField";
+import { AdminSortableColumnHeader, useAdminTableSort } from "../components/AdminTable";
+import { AdminTextField } from "../components/AdminTextField";
 import { DangerConfirmButton } from "../components/DangerConfirmButton";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { ModalField } from "../components/ModalField";
@@ -124,6 +124,20 @@ export function ServerRoutePage() {
   }, []);
 
   const selectedAction = useMemo(() => selected.action || "block", [selected.action]);
+  const { sortDescriptor, setSortDescriptor, sortedItems } = useAdminTableSort(
+    records,
+    { column: "remarks", direction: "ascending" },
+    {
+      remarks: item => item.remarks,
+      action: item => item.action,
+      actionValue: item => item.action_value || "",
+      match: item => Array.isArray(item.match) ? item.match.join(",") : item.match
+    }
+  );
+  const routeActionInvalid = !selected.action.trim();
+  const routeMatchInvalid =
+    selected.action !== "default_out" &&
+    !String(Array.isArray(selected.match) ? selected.match.join("\n") : selected.match || "").trim();
   const stats = useMemo(() => {
     const defaultOut = records.filter(record => record.action === "default_out").length;
     const withMatch = records.filter(record => Array.isArray(record.match) ? record.match.length > 0 : Boolean(record.match)).length;
@@ -181,16 +195,17 @@ export function ServerRoutePage() {
               <Spinner />
             </div>
           ) : (
-            <Table aria-label="Server Routes" className={adminTableClassNames.wrapper}>
-              <Table.Content>
+            <Table variant="secondary" aria-label="Server Routes" className={adminTableClassNames.wrapper}>
+              <Table.ScrollContainer>
+              <Table.Content sortDescriptor={sortDescriptor} onSortChange={setSortDescriptor}>
                 <TableHeader>
-                  <TableColumn>Remarks</TableColumn>
-                  <TableColumn>Action</TableColumn>
-                  <TableColumn>Action Value</TableColumn>
-                  <TableColumn>Match</TableColumn>
+                  <TableColumn key="remarks" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Remarks" sortDirection={sortDirection} />}</TableColumn>
+                  <TableColumn key="action" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Action" sortDirection={sortDirection} />}</TableColumn>
+                  <TableColumn key="actionValue" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Action Value" sortDirection={sortDirection} />}</TableColumn>
+                  <TableColumn key="match" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Match" sortDirection={sortDirection} />}</TableColumn>
                   <TableColumn>Actions</TableColumn>
                 </TableHeader>
-                <TableBody items={records}>
+                <TableBody items={sortedItems}>
                   {item => (
                     <TableRow key={item.id}>
                       <TableCell>{item.remarks}</TableCell>
@@ -222,47 +237,63 @@ export function ServerRoutePage() {
                   )}
                 </TableBody>
               </Table.Content>
+              </Table.ScrollContainer>
             </Table>
           )}
         </CardContent>
       </Card>
 
-      <Modal isOpen={editorOpen} onOpenChange={isOpen => !isOpen && setEditorOpen(false)}>
-        <Modal.Backdrop>
-          <Modal.Container>
-            <Modal.Dialog>
-              <Modal.Header>
-                <Modal.Heading>{selected.id ? "Edit route" : "Create route"}</Modal.Heading>
-              </Modal.Header>
-              <Modal.Body className="grid gap-4 md:grid-cols-2">
-            <ModalField label="Remarks"><Input aria-label="Remarks" value={selected.remarks} onChange={event => setSelected(current => ({ ...current, remarks: event.target.value }))} /></ModalField>
-            <ModalField label="Action">
-              <AdminSelectField
-                ariaLabel="Action"
-                options={ACTION_OPTIONS.map(action => ({ id: action, label: action }))}
-                selectedKey={selectedAction}
-                onSelectionChange={key => setSelected(current => ({ ...current, action: String(key || "block") }))}
-              />
-            </ModalField>
-            <ModalField label="Action Value" className="md:col-span-2"><Input aria-label="Action Value" value={selected.action_value || ""} onChange={event => setSelected(current => ({ ...current, action_value: event.target.value }))} /></ModalField>
-            {selected.action !== "default_out" ? (
-              <ModalField label="Match Rules" description="One match item per line." className="md:col-span-2">
-                <TextArea aria-label="Match Rules" rows={10} value={Array.isArray(selected.match) ? selected.match.join("\n") : selected.match || ""} onChange={event => setSelected(current => ({ ...current, match: event.target.value }))} />
-              </ModalField>
-            ) : (
-              <div className="md:col-span-2 rounded-2xl border border-default-200 bg-default-50 p-4 text-sm text-slate-600">
-                Default out rules do not require explicit match values.
-              </div>
-            )}
-              </Modal.Body>
-              <Modal.Footer>
-                <Button variant="ghost" onPress={() => setEditorOpen(false)}>Cancel</Button>
-                <Button variant="primary" onPress={() => void saveRoute()} isDisabled={submitting}>Save route</Button>
-              </Modal.Footer>
-        </Modal.Dialog>
-          </Modal.Container>
-        </Modal.Backdrop>
-      </Modal>
+      <AdminDrawer
+        isOpen={editorOpen}
+        onOpenChange={isOpen => !isOpen && setEditorOpen(false)}
+        title={selected.id ? "Edit route" : "Create route"}
+        isBusy={submitting}
+        size="lg"
+        footer={
+          <>
+            <Button variant="ghost" onPress={() => setEditorOpen(false)}>Cancel</Button>
+            <Button variant="primary" onPress={() => void saveRoute()} isDisabled={submitting || routeActionInvalid || routeMatchInvalid}>Save route</Button>
+          </>
+        }
+      >
+        <form
+          className="flex flex-col gap-5"
+          onSubmit={event => {
+            event.preventDefault();
+            if (routeActionInvalid || routeMatchInvalid) return;
+            void saveRoute();
+          }}
+        >
+          <AdminTextField label="Remarks" value={selected.remarks} onChange={event => setSelected(current => ({ ...current, remarks: event.target.value }))} />
+          <ModalField label="Action" required>
+            <AdminSelectField
+              ariaLabel="Action"
+              options={ACTION_OPTIONS.map(action => ({ id: action, label: action }))}
+              selectedKey={selectedAction}
+              onSelectionChange={key => setSelected(current => ({ ...current, action: String(key || "block") }))}
+            />
+          </ModalField>
+          <AdminTextField label="Action Value" className="md:col-span-2" value={selected.action_value || ""} onChange={event => setSelected(current => ({ ...current, action_value: event.target.value }))} />
+          {selected.action !== "default_out" ? (
+            <AdminTextField
+              label="Match Rules"
+              description="One match item per line."
+              className="md:col-span-2"
+              multiline
+              rows={10}
+              value={Array.isArray(selected.match) ? selected.match.join("\n") : selected.match || ""}
+              onChange={event => setSelected(current => ({ ...current, match: event.target.value }))}
+              isRequired
+              isInvalid={routeMatchInvalid}
+              errorMessage="Match rules are required."
+            />
+          ) : (
+            <div className="md:col-span-2 rounded-2xl border border-default-200 bg-default-50 p-4 text-sm text-slate-600">
+              Default out rules do not require explicit match values.
+            </div>
+          )}
+        </form>
+      </AdminDrawer>
     </PageFrame>
   );
 }

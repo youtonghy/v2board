@@ -5,15 +5,12 @@ import {
   CardHeader,
   Chip,
   Form,
-  Input,
   Label,
   ListBox,
   ListBoxItem,
-  Modal,
   Select,
   Spinner,
   SearchField,
-  TextArea,
   Table,
   TableBody,
   TableCell,
@@ -23,8 +20,12 @@ import {
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
 import { AdminFilterAccordion } from "../components/AdminFilterAccordion";
+import { AdminFilterActionGroup } from "../components/AdminFilterActionGroup";
+import { AdminDrawer } from "../components/AdminDrawer";
 import { AdminPagination } from "../components/AdminPagination";
 import { AdminSelectField } from "../components/AdminSelectField";
+import { AdminSortableColumnHeader, useAdminTableSort } from "../components/AdminTable";
+import { AdminTextField } from "../components/AdminTextField";
 import { ModalField } from "../components/ModalField";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
@@ -159,6 +160,18 @@ export function InviteLinkPage() {
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const selectedUser = useMemo(() => generateUserId || null, [generateUserId]);
+  const inviteOwnerInvalid = !generateUserId;
+  const { sortDescriptor, setSortDescriptor, sortedItems } = useAdminTableSort(
+    records,
+    { column: "expires", direction: "descending" },
+    {
+      owner: item => item.user_email || item.user_id,
+      invitee: item => item.invitee_name || "",
+      usage: item => Number(item.use_count || 0),
+      expires: item => Number(item.expired_at || 0),
+      status: item => item.status
+    }
+  );
   const stats = useMemo(() => {
     const active = records.filter(record => record.status === 0).length;
     const disabled = records.filter(record => record.status === 3).length;
@@ -206,7 +219,7 @@ export function InviteLinkPage() {
         </CardHeader>
         <CardContent className={`${adminSectionBodyClassName} gap-5`}>
           <AdminFilterAccordion>
-            <Form className="grid gap-3 md:grid-cols-4">
+            <Form className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(220px,0.8fr)_auto]">
               <SearchField className="space-y-2" value={email} onChange={setEmail}>
                 <Label>User Email</Label>
                 <SearchField.Group>
@@ -253,24 +266,21 @@ export function InviteLinkPage() {
                   </Select.Popover>
                 </Select>
               </div>
-
-              <div className="grid gap-2 sm:grid-cols-2 md:pt-[1.75rem]">
-                <Button className="w-full" variant="primary" onPress={() => { setPage(1); void loadLinks(1); }}>
-                  Apply
-                </Button>
-                <Button
-                  className="w-full"
-                  variant="secondary"
-                  onPress={() => {
+              <div className="flex items-end justify-end">
+                <AdminFilterActionGroup
+                  isDisabled={loading}
+                  onSearch={() => {
+                    setPage(1);
+                    void loadLinks(1);
+                  }}
+                  onReset={() => {
                     setEmail("");
                     setKeyword("");
                     setStatus("");
                     setPage(1);
                     void loadLinks(1);
                   }}
-                >
-                  Reset
-                </Button>
+                />
               </div>
             </Form>
           </AdminFilterAccordion>
@@ -283,17 +293,18 @@ export function InviteLinkPage() {
             </div>
           ) : (
             <>
-              <Table aria-label="Invite Links" className={adminTableClassNames.wrapper}>
-                <Table.Content>
+              <Table variant="secondary" aria-label="Invite Links" className={adminTableClassNames.wrapper}>
+                <Table.ScrollContainer>
+                  <Table.Content sortDescriptor={sortDescriptor} onSortChange={setSortDescriptor}>
                   <TableHeader>
-                    <TableColumn>Owner</TableColumn>
-                    <TableColumn>Invitee</TableColumn>
-                    <TableColumn>Usage</TableColumn>
-                    <TableColumn>Expires</TableColumn>
-                    <TableColumn>Status</TableColumn>
+                    <TableColumn key="owner" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Owner" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="invitee" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Invitee" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="usage" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Usage" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="expires" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Expires" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="status" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Status" sortDirection={sortDirection} />}</TableColumn>
                     <TableColumn>Actions</TableColumn>
                   </TableHeader>
-                  <TableBody items={records}>
+                  <TableBody items={sortedItems}>
                     {item => (
                       <TableRow key={item.id}>
                         <TableCell>
@@ -335,6 +346,7 @@ export function InviteLinkPage() {
                     )}
                   </TableBody>
                 </Table.Content>
+                </Table.ScrollContainer>
               </Table>
 
               <div className="flex justify-center">
@@ -345,35 +357,65 @@ export function InviteLinkPage() {
         </CardContent>
       </Card>
 
-      <Modal isOpen={generateOpen} onOpenChange={isOpen => !isOpen && setGenerateOpen(false)}>
-        <Modal.Backdrop>
-          <Modal.Container>
-            <Modal.Dialog>
-              <Modal.Header>
-                <Modal.Heading>Generate invite link</Modal.Heading>
-              </Modal.Header>
-              <Modal.Body className="grid gap-4 md:grid-cols-2">
-                <ModalField label="Owner">
-                  <AdminSelectField
-                    ariaLabel="Owner"
-                    options={userOptions.map(user => ({ id: String(user.id), label: user.email }))}
-                    selectedKey={selectedUser}
-                    onSelectionChange={key => setGenerateUserId(String(key || ""))}
-                  />
-                </ModalField>
-                <ModalField label="Invitee Name"><Input aria-label="Invitee Name" value={inviteeName} onChange={event => setInviteeName(event.target.value)} /></ModalField>
-                <ModalField label="Max Use"><Input aria-label="Max Use" type="number" value={maxUse} onChange={event => setMaxUse(event.target.value)} /></ModalField>
-                <ModalField label="Expire Hours"><Input aria-label="Expire Hours" type="number" value={expireHours} onChange={event => setExpireHours(event.target.value)} /></ModalField>
-                <ModalField label="Content" className="md:col-span-2"><TextArea aria-label="Content" rows={4} value={content} onChange={event => setContent(event.target.value)} /></ModalField>
-              </Modal.Body>
-              <Modal.Footer>
-                <Button variant="ghost" onPress={() => setGenerateOpen(false)}>Cancel</Button>
-                <Button variant="primary" onPress={() => void generateInviteLink()} isDisabled={submitting}>Generate</Button>
-              </Modal.Footer>
-        </Modal.Dialog>
-          </Modal.Container>
-        </Modal.Backdrop>
-      </Modal>
+      <AdminDrawer
+        isOpen={generateOpen}
+        onOpenChange={isOpen => !isOpen && setGenerateOpen(false)}
+        title="Generate invite link"
+        isBusy={submitting}
+        footer={
+          <>
+            <Button variant="ghost" onPress={() => setGenerateOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" onPress={() => void generateInviteLink()} isDisabled={submitting || inviteOwnerInvalid}>
+              Generate
+            </Button>
+          </>
+        }
+      >
+        <form
+          className="flex flex-col gap-5"
+          onSubmit={event => {
+            event.preventDefault();
+            if (inviteOwnerInvalid) return;
+            void generateInviteLink();
+          }}
+        >
+          <ModalField label="Owner" required>
+            <AdminSelectField
+              ariaLabel="Owner"
+              options={userOptions.map(user => ({ id: String(user.id), label: user.email }))}
+              selectedKey={selectedUser}
+              onSelectionChange={key => setGenerateUserId(String(key || ""))}
+            />
+          </ModalField>
+          <AdminTextField
+            label="Invitee Name"
+            value={inviteeName}
+            onChange={event => setInviteeName(event.target.value)}
+          />
+          <AdminTextField
+            label="Max Use"
+            type="number"
+            value={maxUse}
+            onChange={event => setMaxUse(event.target.value)}
+          />
+          <AdminTextField
+            label="Expire Hours"
+            type="number"
+            value={expireHours}
+            onChange={event => setExpireHours(event.target.value)}
+          />
+          <AdminTextField
+            label="Content"
+            className="md:col-span-2"
+            multiline
+            rows={4}
+            value={content}
+            onChange={event => setContent(event.target.value)}
+          />
+        </form>
+      </AdminDrawer>
     </PageFrame>
   );
 }

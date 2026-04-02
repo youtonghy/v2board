@@ -17,8 +17,10 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AdminFilterAccordion } from "../components/AdminFilterAccordion";
+import { AdminFilterActionGroup } from "../components/AdminFilterActionGroup";
 import { AdminPagination } from "../components/AdminPagination";
 import { AdminSelectField } from "../components/AdminSelectField";
+import { AdminSortableColumnHeader, useAdminTableSort } from "../components/AdminTable";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { asArray, formatDateTime } from "../lib/admin-format";
@@ -91,6 +93,17 @@ export function TicketPage() {
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const selectedReplyStatus = useMemo(() => replyStatus || null, [replyStatus]);
+  const { sortDescriptor, setSortDescriptor, sortedItems } = useAdminTableSort(
+    records,
+    { column: "updated", direction: "descending" },
+    {
+      id: item => item.id,
+      subject: item => item.subject || "",
+      priority: item => item.level ?? 0,
+      status: item => `${item.status}-${item.reply_status ?? 0}`,
+      updated: item => item.updated_at || item.created_at || ""
+    }
+  );
   const stats = useMemo(() => {
     const open = records.filter(record => record.status === 0).length;
     const pendingAdmin = records.filter(record => record.reply_status === 0).length;
@@ -152,7 +165,7 @@ export function TicketPage() {
           </Tabs>
 
           <AdminFilterAccordion>
-            <div className="grid gap-3 md:grid-cols-4">
+            <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(220px,0.8fr)_auto]">
               <Input aria-label="User Email" value={email} onChange={event => setEmail(event.target.value)} />
               <div>
                 <div className="mb-2 space-y-1">
@@ -169,22 +182,21 @@ export function TicketPage() {
                   onSelectionChange={key => setReplyStatus(String(key || ""))}
                 />
               </div>
-              <div className="flex items-end gap-2 md:col-span-2">
-                <Button variant="primary" onPress={() => { setPage(1); void loadTickets(1); }}>
-                  Apply
-                </Button>
-                <Button
-                  variant="secondary"
-                  onPress={() => {
+              <div className="flex items-end justify-end">
+                <AdminFilterActionGroup
+                  isDisabled={loading}
+                  onSearch={() => {
+                    setPage(1);
+                    void loadTickets(1);
+                  }}
+                  onReset={() => {
                     setEmail("");
                     setReplyStatus("");
                     setStatus("all");
                     setPage(1);
                     void loadTickets(1);
                   }}
-                >
-                  Reset
-                </Button>
+                />
               </div>
             </div>
           </AdminFilterAccordion>
@@ -197,17 +209,18 @@ export function TicketPage() {
             </div>
           ) : (
             <>
-              <Table aria-label="Tickets" className={adminTableClassNames.wrapper}>
-                <Table.Content>
+              <Table variant="secondary" aria-label="Tickets" className={adminTableClassNames.wrapper}>
+                <Table.ScrollContainer>
+                  <Table.Content sortDescriptor={sortDescriptor} onSortChange={setSortDescriptor}>
                   <TableHeader>
-                    <TableColumn>ID</TableColumn>
-                    <TableColumn>Subject</TableColumn>
-                    <TableColumn>Priority</TableColumn>
-                    <TableColumn>Status</TableColumn>
-                    <TableColumn>Updated</TableColumn>
+                    <TableColumn key="id" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="ID" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="subject" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Subject" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="priority" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Priority" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="status" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Status" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="updated" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Updated" sortDirection={sortDirection} />}</TableColumn>
                     <TableColumn>Actions</TableColumn>
                   </TableHeader>
-                  <TableBody items={records}>
+                  <TableBody items={sortedItems}>
                     {item => (
                       <TableRow key={item.id}>
                         <TableCell>#{item.id}</TableCell>
@@ -238,6 +251,7 @@ export function TicketPage() {
                     )}
                   </TableBody>
                 </Table.Content>
+                </Table.ScrollContainer>
               </Table>
 
               <div className="flex justify-center">

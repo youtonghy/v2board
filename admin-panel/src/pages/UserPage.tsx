@@ -10,18 +10,15 @@ import {
 import {
   Avatar,
   Button,
-  ButtonGroup,
   Card,
   CardContent,
   CardHeader,
   SearchField,
   Chip,
   Form,
-  Input,
   Label,
   ListBox,
   ListBoxItem,
-  Modal,
   Select,
   Spinner,
   Switch,
@@ -31,14 +28,18 @@ import {
   TableColumn,
   TableHeader,
   TableRow,
-  TextArea,
   Tooltip,
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
 import { AdminFilterAccordion } from "../components/AdminFilterAccordion";
+import { AdminFilterActionGroup } from "../components/AdminFilterActionGroup";
+import { AdminDatePickerField } from "../components/AdminDatePickerField";
+import { AdminDrawer } from "../components/AdminDrawer";
 import { DangerConfirmButton } from "../components/DangerConfirmButton";
 import { AdminPagination } from "../components/AdminPagination";
 import { AdminSelectField } from "../components/AdminSelectField";
+import { AdminSortableColumnHeader, useAdminTableSort } from "../components/AdminTable";
+import { AdminTextField } from "../components/AdminTextField";
 import { ModalField } from "../components/ModalField";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
@@ -557,8 +558,53 @@ export function UserPage() {
     ].map((r, i) => ({ ...r, id: `${r.ip}-${r.last_seen_at}-${i}` })),
     [ipGeoUser?.recent_ip_records, ipGeoUser?.recent_login_ip_records]
   );
+  const { sortDescriptor, setSortDescriptor, sortedItems } = useAdminTableSort(
+    records,
+    { column: "expires", direction: "descending" },
+    {
+      email: item => item.email,
+      plan: item => item.plan_name || "",
+      balance: item => Number(item.balance || 0),
+      usage: item => Number(item.total_used || 0),
+      expires: item => Number(item.expired_at || 0),
+      status: item => `${item.banned || 0}-${item.is_admin || 0}-${item.is_staff || 0}`
+    }
+  );
+  const statsTableSort = useAdminTableSort(
+    statsRecords,
+    { column: "date", direction: "descending" },
+    {
+      date: item => item.record_at,
+      upload: item => item.u,
+      download: item => item.d,
+      rate: item => item.server_rate
+    }
+  );
+  const ipGeoTableSort = useAdminTableSort(
+    ipGeoRows,
+    { column: "lastSeen", direction: "descending" },
+    {
+      ip: item => item.ip,
+      lastSeen: item => item.last_seen_at,
+      status: item => {
+        const geo = geoRecords[item.ip];
+        if (geoLoading[item.ip]) return 0;
+        if (geo?.status === "failed") return 1;
+        return 2;
+      },
+      country: item => geoRecords[item.ip]?.country || "",
+      city: item => geoRecords[item.ip]?.city || "",
+      isp: item => geoRecords[item.ip]?.isp || "",
+      organization: item => geoRecords[item.ip]?.organization || ""
+    }
+  );
   const selectedPlan = useMemo(() => form.plan_id || null, [form.plan_id]);
   const generatePlan = useMemo(() => generateForm.plan_id || null, [generateForm.plan_id]);
+  const userEmailInvalid = !form.email.trim();
+  const generateSuffixInvalid = !generateForm.email_suffix.trim();
+  const generateCountInvalid = !generateForm.generate_count.trim();
+  const mailSubjectInvalid = !mailForm.subject.trim();
+  const mailContentInvalid = !mailForm.content.trim();
   const stats = useMemo(() => {
     const activeUsers = records.filter(record => !Number(record.banned || 0)).length;
     const adminUsers = records.filter(record => Number(record.is_admin || 0)).length;
@@ -600,7 +646,7 @@ export function UserPage() {
               Search active accounts, review balance and plan state, and open actions from one place.
             </p>
           </div>
-          <ButtonGroup className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button variant="ghost" onPress={() => void dumpCsv()} isDisabled={submitting}>
               Export CSV
             </Button>
@@ -619,11 +665,11 @@ export function UserPage() {
             <Button variant="primary" onPress={() => setGenerateOpen(true)}>
               Generate users
             </Button>
-          </ButtonGroup>
+          </div>
         </CardHeader>
         <CardContent className={`${adminSectionBodyClassName} gap-5`}>
           <AdminFilterAccordion>
-            <Form className="grid gap-3 md:grid-cols-4">
+            <Form className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(220px,0.8fr)_minmax(220px,0.8fr)_auto]">
               <SearchField className="space-y-2" value={searchEmail} onChange={setSearchEmail}>
                 <Label>Email</Label>
                 <SearchField.Group>
@@ -680,24 +726,21 @@ export function UserPage() {
                   </Select.Popover>
                 </Select>
               </div>
-
-              <div className="grid gap-2 sm:grid-cols-2 md:pt-[1.75rem]">
-                <Button className="w-full" variant="primary" onPress={() => { setPage(1); void loadUsers(1); }}>
-                  Apply filters
-                </Button>
-                <Button
-                  className="w-full"
-                  variant="secondary"
-                  onPress={() => {
+              <div className="flex items-end justify-end">
+                <AdminFilterActionGroup
+                  isDisabled={loading}
+                  onSearch={() => {
+                    setPage(1);
+                    void loadUsers(1);
+                  }}
+                  onReset={() => {
                     setSearchEmail("");
                     setPlanFilter("");
                     setBannedFilter("");
                     setPage(1);
                     void loadUsers(1);
                   }}
-                >
-                  Reset
-                </Button>
+                />
               </div>
             </Form>
           </AdminFilterAccordion>
@@ -714,18 +757,19 @@ export function UserPage() {
             </div>
           ) : (
             <>
-              <Table aria-label="Users" className={adminTableClassNames.wrapper}>
-                <Table.Content>
+              <Table variant="secondary" aria-label="Users" className={adminTableClassNames.wrapper}>
+                <Table.ScrollContainer>
+                  <Table.Content sortDescriptor={sortDescriptor} onSortChange={setSortDescriptor}>
                   <TableHeader>
-                    <TableColumn>Email</TableColumn>
-                    <TableColumn>Plan</TableColumn>
-                    <TableColumn>Balance</TableColumn>
-                    <TableColumn>Usage</TableColumn>
-                    <TableColumn>Expires</TableColumn>
-                    <TableColumn>Status</TableColumn>
+                    <TableColumn key="email" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Email" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="plan" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Plan" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="balance" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Balance" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="usage" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Usage" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="expires" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Expires" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="status" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Status" sortDirection={sortDirection} />}</TableColumn>
                     <TableColumn>Actions</TableColumn>
                   </TableHeader>
-                  <TableBody items={records}>
+                  <TableBody items={sortedItems}>
                     {item => (
                       <TableRow key={item.id}>
                         <TableCell>
@@ -855,6 +899,7 @@ export function UserPage() {
                     )}
                   </TableBody>
                 </Table.Content>
+                </Table.ScrollContainer>
               </Table>
 
               <div className="flex justify-center">
@@ -865,197 +910,256 @@ export function UserPage() {
         </CardContent>
       </Card>
 
-      <Modal isOpen={editorOpen} onOpenChange={isOpen => !isOpen && setEditorOpen(false)}>
-        <Modal.Backdrop>
-          <Modal.Container>
-            <Modal.Dialog>
-              <Modal.Header>
-                <Modal.Heading>Edit user</Modal.Heading>
-              </Modal.Header>
-              <Modal.Body className="grid gap-4 md:grid-cols-2">
-                <ModalField label="Email">
-                  <Input aria-label="Email" value={form.email} onChange={event => setForm(current => ({ ...current, email: event.target.value }))} />
-                </ModalField>
-                <ModalField label="New Password">
-                  <Input aria-label="New Password" type="password" value={form.password} onChange={event => setForm(current => ({ ...current, password: event.target.value }))} />
-                </ModalField>
-                <ModalField label="Plan">
-                  <AdminSelectField
-                    ariaLabel="Plan"
-                    options={planOptions}
-                    selectedKey={selectedPlan}
-                    onSelectionChange={key => setForm(current => ({ ...current, plan_id: String(key || "") }))}
-                  />
-                </ModalField>
-                <ModalField label="Transfer (GB)">
-                  <Input aria-label="Transfer (GB)" type="number" value={form.transfer_enable} onChange={event => setForm(current => ({ ...current, transfer_enable: event.target.value }))} />
-                </ModalField>
-                <ModalField label="Device Limit">
-                  <Input aria-label="Device Limit" type="number" value={form.device_limit} onChange={event => setForm(current => ({ ...current, device_limit: event.target.value }))} />
-                </ModalField>
-                <ModalField label="Expire Timestamp">
-                  <Input aria-label="Expire Timestamp" value={form.expired_at} onChange={event => setForm(current => ({ ...current, expired_at: event.target.value }))} />
-                </ModalField>
-                <ModalField label="Balance (cents)">
-                  <Input aria-label="Balance (cents)" value={form.balance} onChange={event => setForm(current => ({ ...current, balance: event.target.value }))} />
-                </ModalField>
-                <ModalField label="Commission Balance (cents)">
-                  <Input aria-label="Commission Balance (cents)" value={form.commission_balance} onChange={event => setForm(current => ({ ...current, commission_balance: event.target.value }))} />
-                </ModalField>
-                <ModalField label="Commission Rate">
-                  <Input aria-label="Commission Rate" type="number" value={form.commission_rate} onChange={event => setForm(current => ({ ...current, commission_rate: event.target.value }))} />
-                </ModalField>
-                <ModalField label="Discount">
-                  <Input aria-label="Discount" type="number" value={form.discount} onChange={event => setForm(current => ({ ...current, discount: event.target.value }))} />
-                </ModalField>
-                <ModalField label="Speed Limit">
-                  <Input aria-label="Speed Limit" type="number" value={form.speed_limit} onChange={event => setForm(current => ({ ...current, speed_limit: event.target.value }))} />
-                </ModalField>
-                <ModalField label="Invite User Email">
-                  <Input aria-label="Invite User Email" value={form.invite_user_email} onChange={event => setForm(current => ({ ...current, invite_user_email: event.target.value }))} />
-                </ModalField>
-                <ModalField label="Remarks" className="md:col-span-2">
-                  <TextArea aria-label="Remarks" rows={4} value={form.remarks} onChange={event => setForm(current => ({ ...current, remarks: event.target.value }))} />
-                </ModalField>
-                <div className="md:col-span-2 grid gap-3 md:grid-cols-3">
-                  <div className="rounded-2xl border border-default-200 bg-default-50 p-4">
-                    <p className="mb-3 text-sm font-semibold">Banned</p>
-                    <Switch isSelected={form.banned} onChange={value => setForm(current => ({ ...current, banned: value }))} />
-                  </div>
-                  <div className="rounded-2xl border border-default-200 bg-default-50 p-4">
-                    <p className="mb-3 text-sm font-semibold">Admin</p>
-                    <Switch isSelected={form.is_admin} onChange={value => setForm(current => ({ ...current, is_admin: value }))} />
-                  </div>
-                  <div className="rounded-2xl border border-default-200 bg-default-50 p-4">
-                    <p className="mb-3 text-sm font-semibold">Staff</p>
-                    <Switch isSelected={form.is_staff} onChange={value => setForm(current => ({ ...current, is_staff: value }))} />
-                  </div>
-                </div>
-                {selected ? (
-                  <div className="md:col-span-2 rounded-2xl border border-default-200 bg-default-50 p-4 text-sm text-slate-600">
-                    <p>Subscription URL</p>
-                    <p className="mt-2 break-all text-slate-900">{selected.subscribe_url || "Unavailable"}</p>
-                    <p className="mt-4">Recent online IPs: {(selected.recent_ips || []).join(", ") || "—"}</p>
-                    <p className="mt-2">Recent login IPs: {(selected.recent_login_ips || []).join(", ") || "—"}</p>
-                  </div>
-                ) : null}
-              </Modal.Body>
-              <Modal.Footer>
-                <Button variant="ghost" onPress={() => setEditorOpen(false)}>
-                  Cancel
-                </Button>
-                <Button variant="primary" onPress={() => void submitUserUpdate()} isDisabled={submitting}>
-                  Save user
-                </Button>
-              </Modal.Footer>
-            </Modal.Dialog>
-          </Modal.Container>
-        </Modal.Backdrop>
-      </Modal>
+      <AdminDrawer
+        isOpen={editorOpen}
+        onOpenChange={isOpen => !isOpen && setEditorOpen(false)}
+        title="Edit user"
+        isBusy={submitting}
+        size="lg"
+        footer={
+          <>
+            <Button variant="ghost" onPress={() => setEditorOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" onPress={() => void submitUserUpdate()} isDisabled={submitting || userEmailInvalid}>
+              Save user
+            </Button>
+          </>
+        }
+      >
+        <form
+          className="flex flex-col gap-5"
+          onSubmit={event => {
+            event.preventDefault();
+            if (userEmailInvalid) return;
+            void submitUserUpdate();
+          }}
+        >
+          <AdminTextField
+            label="Email"
+            value={form.email}
+            onChange={event => setForm(current => ({ ...current, email: event.target.value }))}
+            isRequired
+            isInvalid={userEmailInvalid}
+            errorMessage="Email is required."
+          />
+          <AdminTextField
+            label="New Password"
+            type="password"
+            value={form.password}
+            onChange={event => setForm(current => ({ ...current, password: event.target.value }))}
+          />
+          <ModalField label="Plan">
+            <AdminSelectField
+              ariaLabel="Plan"
+              options={planOptions}
+              selectedKey={selectedPlan}
+              onSelectionChange={key => setForm(current => ({ ...current, plan_id: String(key || "") }))}
+            />
+          </ModalField>
+          <AdminTextField label="Transfer (GB)" type="number" value={form.transfer_enable} onChange={event => setForm(current => ({ ...current, transfer_enable: event.target.value }))} />
+          <AdminTextField label="Device Limit" type="number" value={form.device_limit} onChange={event => setForm(current => ({ ...current, device_limit: event.target.value }))} />
+          <AdminDatePickerField label="Expire Date" value={form.expired_at} onChange={nextValue => setForm(current => ({ ...current, expired_at: nextValue == null ? "" : String(nextValue) }))} />
+          <AdminTextField label="Balance (cents)" value={form.balance} onChange={event => setForm(current => ({ ...current, balance: event.target.value }))} />
+          <AdminTextField label="Commission Balance (cents)" value={form.commission_balance} onChange={event => setForm(current => ({ ...current, commission_balance: event.target.value }))} />
+          <AdminTextField label="Commission Rate" type="number" value={form.commission_rate} onChange={event => setForm(current => ({ ...current, commission_rate: event.target.value }))} />
+          <AdminTextField label="Discount" type="number" value={form.discount} onChange={event => setForm(current => ({ ...current, discount: event.target.value }))} />
+          <AdminTextField label="Speed Limit" type="number" value={form.speed_limit} onChange={event => setForm(current => ({ ...current, speed_limit: event.target.value }))} />
+          <AdminTextField label="Invite User Email" value={form.invite_user_email} onChange={event => setForm(current => ({ ...current, invite_user_email: event.target.value }))} />
+          <AdminTextField
+            label="Remarks"
+            className="md:col-span-2"
+            multiline
+            rows={4}
+            value={form.remarks}
+            onChange={event => setForm(current => ({ ...current, remarks: event.target.value }))}
+          />
+          <div className="space-y-3">
+            <div className="flex items-center justify-between rounded-2xl border border-default-200 bg-default-50 px-4 py-3">
+              <Label className="text-sm font-medium text-slate-900">Banned</Label>
+              <Switch
+                aria-label="Banned"
+                size="sm"
+                isSelected={form.banned}
+                onChange={value => setForm(current => ({ ...current, banned: value }))}
+              >
+                <Switch.Control>
+                  <Switch.Thumb />
+                </Switch.Control>
+              </Switch>
+            </div>
+            <div className="flex items-center justify-between rounded-2xl border border-default-200 bg-default-50 px-4 py-3">
+              <Label className="text-sm font-medium text-slate-900">Admin</Label>
+              <Switch
+                aria-label="Admin"
+                size="sm"
+                isSelected={form.is_admin}
+                onChange={value => setForm(current => ({ ...current, is_admin: value }))}
+              >
+                <Switch.Control>
+                  <Switch.Thumb />
+                </Switch.Control>
+              </Switch>
+            </div>
+            <div className="flex items-center justify-between rounded-2xl border border-default-200 bg-default-50 px-4 py-3">
+              <Label className="text-sm font-medium text-slate-900">Staff</Label>
+              <Switch
+                aria-label="Staff"
+                size="sm"
+                isSelected={form.is_staff}
+                onChange={value => setForm(current => ({ ...current, is_staff: value }))}
+              >
+                <Switch.Control>
+                  <Switch.Thumb />
+                </Switch.Control>
+              </Switch>
+            </div>
+          </div>
+          {selected ? (
+            <div className="md:col-span-2 rounded-2xl border border-default-200 bg-default-50 p-4 text-sm text-slate-600">
+              <p>Subscription URL</p>
+              <p className="mt-2 break-all text-slate-900">{selected.subscribe_url || "Unavailable"}</p>
+              <p className="mt-4">Recent online IPs: {(selected.recent_ips || []).join(", ") || "—"}</p>
+              <p className="mt-2">Recent login IPs: {(selected.recent_login_ips || []).join(", ") || "—"}</p>
+            </div>
+          ) : null}
+        </form>
+      </AdminDrawer>
 
-      <Modal isOpen={generateOpen} onOpenChange={isOpen => !isOpen && setGenerateOpen(false)}>
-        <Modal.Backdrop>
-          <Modal.Container>
-            <Modal.Dialog>
-              <Modal.Header>
-                <Modal.Heading>Generate users</Modal.Heading>
-              </Modal.Header>
-              <Modal.Body className="grid gap-4 md:grid-cols-2">
-                <ModalField label="Email Prefix">
-                  <Input aria-label="Email Prefix" value={generateForm.email_prefix} onChange={event => setGenerateForm(current => ({ ...current, email_prefix: event.target.value }))} />
-                </ModalField>
-                <ModalField label="Email Suffix">
-                  <Input aria-label="Email Suffix" value={generateForm.email_suffix} onChange={event => setGenerateForm(current => ({ ...current, email_suffix: event.target.value }))} />
-                </ModalField>
-                <ModalField label="Password">
-                  <Input aria-label="Password" type="password" value={generateForm.password} onChange={event => setGenerateForm(current => ({ ...current, password: event.target.value }))} />
-                </ModalField>
-                <ModalField label="Generate Count">
-                  <Input aria-label="Generate Count" type="number" value={generateForm.generate_count} onChange={event => setGenerateForm(current => ({ ...current, generate_count: event.target.value }))} />
-                </ModalField>
-                <ModalField label="Plan">
-                  <AdminSelectField
-                    ariaLabel="Plan"
-                    options={planOptions}
-                    selectedKey={generatePlan}
-                    onSelectionChange={key => setGenerateForm(current => ({ ...current, plan_id: String(key || "") }))}
-                  />
-                </ModalField>
-                <ModalField label="Expire Timestamp">
-                  <Input aria-label="Expire Timestamp" value={generateForm.expired_at} onChange={event => setGenerateForm(current => ({ ...current, expired_at: event.target.value }))} />
-                </ModalField>
-              </Modal.Body>
-              <Modal.Footer>
-                <Button variant="ghost" onPress={() => setGenerateOpen(false)}>
-                  Cancel
-                </Button>
-                <Button variant="primary" onPress={() => void submitGenerate()} isDisabled={submitting}>
-                  Generate
-                </Button>
-              </Modal.Footer>
-            </Modal.Dialog>
-          </Modal.Container>
-        </Modal.Backdrop>
-      </Modal>
+      <AdminDrawer
+        isOpen={generateOpen}
+        onOpenChange={isOpen => !isOpen && setGenerateOpen(false)}
+        title="Generate users"
+        isBusy={submitting}
+        footer={
+          <>
+            <Button variant="ghost" onPress={() => setGenerateOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" onPress={() => void submitGenerate()} isDisabled={submitting || generateSuffixInvalid || generateCountInvalid}>
+              Generate
+            </Button>
+          </>
+        }
+      >
+        <form
+          className="flex flex-col gap-5"
+          onSubmit={event => {
+            event.preventDefault();
+            if (generateSuffixInvalid || generateCountInvalid) return;
+            void submitGenerate();
+          }}
+        >
+          <AdminTextField label="Email Prefix" value={generateForm.email_prefix} onChange={event => setGenerateForm(current => ({ ...current, email_prefix: event.target.value }))} />
+          <AdminTextField
+            label="Email Suffix"
+            value={generateForm.email_suffix}
+            onChange={event => setGenerateForm(current => ({ ...current, email_suffix: event.target.value }))}
+            isRequired
+            isInvalid={generateSuffixInvalid}
+            errorMessage="Email suffix is required."
+          />
+          <AdminTextField label="Password" type="password" value={generateForm.password} onChange={event => setGenerateForm(current => ({ ...current, password: event.target.value }))} />
+          <AdminTextField
+            label="Generate Count"
+            type="number"
+            value={generateForm.generate_count}
+            onChange={event => setGenerateForm(current => ({ ...current, generate_count: event.target.value }))}
+            isRequired
+            isInvalid={generateCountInvalid}
+            errorMessage="Generate count is required."
+          />
+          <ModalField label="Plan">
+            <AdminSelectField
+              ariaLabel="Plan"
+              options={planOptions}
+              selectedKey={generatePlan}
+              onSelectionChange={key => setGenerateForm(current => ({ ...current, plan_id: String(key || "") }))}
+            />
+          </ModalField>
+          <AdminDatePickerField label="Expire Date" value={generateForm.expired_at} onChange={nextValue => setGenerateForm(current => ({ ...current, expired_at: nextValue == null ? "" : String(nextValue) }))} />
+        </form>
+      </AdminDrawer>
 
-      <Modal isOpen={mailOpen} onOpenChange={isOpen => !isOpen && setMailOpen(false)}>
-        <Modal.Backdrop>
-          <Modal.Container>
-            <Modal.Dialog>
-              <Modal.Header>
-                <Modal.Heading>Mass mail</Modal.Heading>
-              </Modal.Header>
-              <Modal.Body className="gap-4">
-                <ModalField label="Subject">
-                  <Input aria-label="Subject" value={mailForm.subject} onChange={event => setMailForm(current => ({ ...current, subject: event.target.value }))} />
-                </ModalField>
-                <ModalField label="Content">
-                  <TextArea aria-label="Content" rows={8} value={mailForm.content} onChange={event => setMailForm(current => ({ ...current, content: event.target.value }))} />
-                </ModalField>
-              </Modal.Body>
-              <Modal.Footer>
-                <Button variant="ghost" onPress={() => setMailOpen(false)}>
-                  Cancel
-                </Button>
-                <Button variant="primary" onPress={() => void sendMail()} isDisabled={submitting}>
-                  Queue email
-                </Button>
-              </Modal.Footer>
-            </Modal.Dialog>
-          </Modal.Container>
-        </Modal.Backdrop>
-      </Modal>
+      <AdminDrawer
+        isOpen={mailOpen}
+        onOpenChange={isOpen => !isOpen && setMailOpen(false)}
+        title="Mass mail"
+        isBusy={submitting}
+        footer={
+          <>
+            <Button variant="ghost" onPress={() => setMailOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" onPress={() => void sendMail()} isDisabled={submitting || mailSubjectInvalid || mailContentInvalid}>
+              Queue email
+            </Button>
+          </>
+        }
+      >
+        <form
+          className="space-y-5"
+          onSubmit={event => {
+            event.preventDefault();
+            if (mailSubjectInvalid || mailContentInvalid) return;
+            void sendMail();
+          }}
+        >
+          <AdminTextField
+            label="Subject"
+            value={mailForm.subject}
+            onChange={event => setMailForm(current => ({ ...current, subject: event.target.value }))}
+            isRequired
+            isInvalid={mailSubjectInvalid}
+            errorMessage="Subject is required."
+          />
+          <AdminTextField
+            label="Content"
+            multiline
+            rows={8}
+            value={mailForm.content}
+            onChange={event => setMailForm(current => ({ ...current, content: event.target.value }))}
+            isRequired
+            isInvalid={mailContentInvalid}
+            errorMessage="Content is required."
+          />
+        </form>
+      </AdminDrawer>
 
-      <Modal isOpen={statsOpen} onOpenChange={isOpen => !isOpen && setStatsOpen(false)}>
-        <Modal.Backdrop>
-          <Modal.Container>
-            <Modal.Dialog>
-              <Modal.Header>
-                <Modal.Heading>Traffic logs for {statsUser?.email || "user"}</Modal.Heading>
-              </Modal.Header>
-              <Modal.Body className="gap-4">
-                <div className={adminTableClassNames.wrapper + " overflow-auto"}>
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr>
-                        <th className={adminTableClassNames.th + " px-3 py-2 text-left"}>Date</th>
-                        <th className={adminTableClassNames.th + " px-3 py-2 text-left"}>Upload</th>
-                        <th className={adminTableClassNames.th + " px-3 py-2 text-left"}>Download</th>
-                        <th className={adminTableClassNames.th + " px-3 py-2 text-left"}>Rate</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {statsRecords.map((item, i) => (
-                        <tr key={item.id ?? i}>
-                          <td className={adminTableClassNames.td + " px-3"}>{formatDateTime(item.record_at)}</td>
-                          <td className={adminTableClassNames.td + " px-3"}>{formatBytes(item.u || 0)}</td>
-                          <td className={adminTableClassNames.td + " px-3"}>{formatBytes(item.d || 0)}</td>
-                          <td className={adminTableClassNames.td + " px-3"}>{item.server_rate || 1}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+      <AdminDrawer
+        isOpen={statsOpen}
+        onOpenChange={isOpen => !isOpen && setStatsOpen(false)}
+        title={`Traffic logs for ${statsUser?.email || "user"}`}
+        size="lg"
+        footer={
+          <Button variant="ghost" onPress={() => setStatsOpen(false)}>
+            Close
+          </Button>
+        }
+      >
+        <div className="space-y-4">
+          <Table variant="secondary" aria-label="Traffic logs" className={adminTableClassNames.wrapper}>
+            <Table.ScrollContainer>
+              <Table.Content sortDescriptor={statsTableSort.sortDescriptor} onSortChange={statsTableSort.setSortDescriptor}>
+                <TableHeader>
+                  <TableColumn key="date" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Date" sortDirection={sortDirection} />}</TableColumn>
+                  <TableColumn key="upload" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Upload" sortDirection={sortDirection} />}</TableColumn>
+                  <TableColumn key="download" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Download" sortDirection={sortDirection} />}</TableColumn>
+                  <TableColumn key="rate" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Rate" sortDirection={sortDirection} />}</TableColumn>
+                </TableHeader>
+                <TableBody items={statsTableSort.sortedItems}>
+                  {item => (
+                    <TableRow key={String(item.id ?? item.record_at)}>
+                      <TableCell>{formatDateTime(item.record_at)}</TableCell>
+                      <TableCell>{formatBytes(item.u || 0)}</TableCell>
+                      <TableCell>{formatBytes(item.d || 0)}</TableCell>
+                      <TableCell>{item.server_rate || 1}</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table.Content>
+            </Table.ScrollContainer>
+          </Table>
                 <div className="flex justify-center">
                   <AdminPagination
                     page={statsPage}
@@ -1065,25 +1169,21 @@ export function UserPage() {
                     onChange={setStatsPage}
                   />
                 </div>
-              </Modal.Body>
-              <Modal.Footer>
-                <Button variant="ghost" onPress={() => setStatsOpen(false)}>
-                  Close
-                </Button>
-              </Modal.Footer>
-            </Modal.Dialog>
-          </Modal.Container>
-        </Modal.Backdrop>
-      </Modal>
+        </div>
+      </AdminDrawer>
 
-      <Modal isOpen={ipGeoOpen} onOpenChange={isOpen => !isOpen && setIpGeoOpen(false)}>
-        <Modal.Backdrop>
-          <Modal.Container>
-            <Modal.Dialog>
-              <Modal.Header>
-                <Modal.Heading>IP geography for {ipGeoUser?.email || "user"}</Modal.Heading>
-              </Modal.Header>
-              <Modal.Body className="gap-4">
+      <AdminDrawer
+        isOpen={ipGeoOpen}
+        onOpenChange={isOpen => !isOpen && setIpGeoOpen(false)}
+        title={`IP geography for ${ipGeoUser?.email || "user"}`}
+        size="xl"
+        footer={
+          <Button variant="ghost" onPress={() => setIpGeoOpen(false)}>
+            Close
+          </Button>
+        }
+      >
+        <div className="space-y-4">
                 <div className="flex flex-wrap items-end gap-3">
                   <ModalField label="Provider" className="w-full max-w-xs">
                     <AdminSelectField
@@ -1098,54 +1198,46 @@ export function UserPage() {
                   </Button>
                 </div>
 
-                <div className={adminTableClassNames.wrapper + " overflow-auto"}>
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr>
-                        <th className={adminTableClassNames.th + " px-3 py-2 text-left"}>IP</th>
-                        <th className={adminTableClassNames.th + " px-3 py-2 text-left"}>Last Seen</th>
-                        <th className={adminTableClassNames.th + " px-3 py-2 text-left"}>Status</th>
-                        <th className={adminTableClassNames.th + " px-3 py-2 text-left"}>Country</th>
-                        <th className={adminTableClassNames.th + " px-3 py-2 text-left"}>City</th>
-                        <th className={adminTableClassNames.th + " px-3 py-2 text-left"}>ISP</th>
-                        <th className={adminTableClassNames.th + " px-3 py-2 text-left"}>Organization</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {ipGeoRows.map((item) => {
-                        const geo = geoRecords[item.ip];
-                        const loadingState = geoLoading[item.ip];
-                        const failed = geo?.status === "failed";
+          <Table variant="secondary" aria-label="IP geography" className={adminTableClassNames.wrapper}>
+            <Table.ScrollContainer>
+              <Table.Content sortDescriptor={ipGeoTableSort.sortDescriptor} onSortChange={ipGeoTableSort.setSortDescriptor}>
+                <TableHeader>
+                  <TableColumn key="ip" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="IP" sortDirection={sortDirection} />}</TableColumn>
+                  <TableColumn key="lastSeen" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Last Seen" sortDirection={sortDirection} />}</TableColumn>
+                  <TableColumn key="status" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Status" sortDirection={sortDirection} />}</TableColumn>
+                  <TableColumn key="country" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Country" sortDirection={sortDirection} />}</TableColumn>
+                  <TableColumn key="city" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="City" sortDirection={sortDirection} />}</TableColumn>
+                  <TableColumn key="isp" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="ISP" sortDirection={sortDirection} />}</TableColumn>
+                  <TableColumn key="organization" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Organization" sortDirection={sortDirection} />}</TableColumn>
+                </TableHeader>
+                <TableBody items={ipGeoTableSort.sortedItems}>
+                  {item => {
+                    const geo = geoRecords[item.ip];
+                    const loadingState = geoLoading[item.ip];
+                    const failed = geo?.status === "failed";
 
-                        return (
-                          <tr key={item.id}>
-                            <td className={adminTableClassNames.td + " px-3"}>{item.ip}</td>
-                            <td className={adminTableClassNames.td + " px-3"}>{formatDateTime(item.last_seen_at)}</td>
-                            <td className={adminTableClassNames.td + " px-3"}>
-                              <Chip variant="soft" color={loadingState ? "default" : failed ? "danger" : "success"}>
-                                {loadingState ? "Loading" : failed ? "Failed" : "Resolved"}
-                              </Chip>
-                            </td>
-                            <td className={adminTableClassNames.td + " px-3"}>{loadingState ? "Loading..." : failed ? "Failed" : geo?.country || "—"}</td>
-                            <td className={adminTableClassNames.td + " px-3"}>{loadingState ? "Loading..." : failed ? "Failed" : geo?.city || "—"}</td>
-                            <td className={adminTableClassNames.td + " px-3"}>{loadingState ? "Loading..." : failed ? "Failed" : geo?.isp || "—"}</td>
-                            <td className={adminTableClassNames.td + " px-3"}>{loadingState ? "Loading..." : failed ? "Failed" : geo?.organization || "—"}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </Modal.Body>
-              <Modal.Footer>
-                <Button variant="ghost" onPress={() => setIpGeoOpen(false)}>
-                  Close
-                </Button>
-              </Modal.Footer>
-            </Modal.Dialog>
-          </Modal.Container>
-        </Modal.Backdrop>
-      </Modal>
+                    return (
+                      <TableRow key={item.id}>
+                        <TableCell>{item.ip}</TableCell>
+                        <TableCell>{formatDateTime(item.last_seen_at)}</TableCell>
+                        <TableCell>
+                          <Chip variant="soft" color={loadingState ? "default" : failed ? "danger" : "success"}>
+                            {loadingState ? "Loading" : failed ? "Failed" : "Resolved"}
+                          </Chip>
+                        </TableCell>
+                        <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.country || "—"}</TableCell>
+                        <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.city || "—"}</TableCell>
+                        <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.isp || "—"}</TableCell>
+                        <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.organization || "—"}</TableCell>
+                      </TableRow>
+                    );
+                  }}
+                </TableBody>
+              </Table.Content>
+            </Table.ScrollContainer>
+          </Table>
+        </div>
+      </AdminDrawer>
     </PageFrame>
   );
 }

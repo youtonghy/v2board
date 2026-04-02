@@ -4,8 +4,6 @@ import {
   CardContent,
   CardHeader,
   Chip,
-  Input,
-  Modal,
   Spinner,
   Switch,
   Table,
@@ -13,13 +11,14 @@ import {
   TableCell,
   TableColumn,
   TableHeader,
-  TextArea,
   TableRow,
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
+import { AdminDrawer } from "../components/AdminDrawer";
+import { AdminTextField } from "../components/AdminTextField";
 import { DangerConfirmButton } from "../components/DangerConfirmButton";
+import { AdminSortableColumnHeader, useAdminTableSort } from "../components/AdminTable";
 import { adminRequest } from "../lib/api";
-import { ModalField } from "../components/ModalField";
 import { PageFrame } from "../components/PageFrame";
 import {
   adminCardClassName,
@@ -116,6 +115,19 @@ export function NoticePage() {
       { label: "With image", value: String(withImages), hint: "Visual announcements ready" }
     ];
   }, [records]);
+  const { sortDescriptor, setSortDescriptor, sortedItems } = useAdminTableSort(
+    records,
+    { column: "created", direction: "descending" },
+    {
+      id: item => Number(item.id || 0),
+      visible: item => Number(item.show || 0),
+      title: item => item.title || "",
+      tags: item => (item.tags || []).join(","),
+      created: item => Number(item.created_at || 0)
+    }
+  );
+  const titleInvalid = !String(selected?.title || "").trim();
+  const contentInvalid = !String(selected?.content || "").trim();
 
   return (
     <PageFrame
@@ -161,17 +173,18 @@ export function NoticePage() {
             <Spinner />
           </div>
         ) : (
-          <Table aria-label="Notices" className={adminTableClassNames.wrapper}>
-            <Table.Content>
+          <Table variant="secondary" aria-label="Notices" className={adminTableClassNames.wrapper}>
+            <Table.ScrollContainer>
+            <Table.Content sortDescriptor={sortDescriptor} onSortChange={setSortDescriptor}>
               <TableHeader>
-                <TableColumn>ID</TableColumn>
-                <TableColumn>Visible</TableColumn>
-                <TableColumn>Title</TableColumn>
-                <TableColumn>Tags</TableColumn>
-                <TableColumn>Created</TableColumn>
+                <TableColumn key="id" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="ID" sortDirection={sortDirection} />}</TableColumn>
+                <TableColumn key="visible" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Visible" sortDirection={sortDirection} />}</TableColumn>
+                <TableColumn key="title" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Title" sortDirection={sortDirection} />}</TableColumn>
+                <TableColumn key="tags" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Tags" sortDirection={sortDirection} />}</TableColumn>
+                <TableColumn key="created" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Created" sortDirection={sortDirection} />}</TableColumn>
                 <TableColumn>Actions</TableColumn>
               </TableHeader>
-              <TableBody items={records}>
+              <TableBody items={sortedItems}>
                 {item => (
                   <TableRow key={String(item.id || Math.random())}>
                     <TableCell>{item.id ?? "—"}</TableCell>
@@ -224,40 +237,67 @@ export function NoticePage() {
                 )}
               </TableBody>
             </Table.Content>
+            </Table.ScrollContainer>
           </Table>
         )}
         </CardContent>
       </Card>
 
-      <Modal isOpen={open} onOpenChange={isOpen => !isOpen && setOpen(false)}>
-        <Modal.Backdrop>
-          <Modal.Container>
-            <Modal.Dialog>
-              <Modal.Header>
-                <Modal.Heading>{selected?.id ? "Edit notice" : "Create notice"}</Modal.Heading>
-              </Modal.Header>
-              <Modal.Body className="gap-5">
-                <ModalField label="Title">
-                  <Input aria-label="Title" value={selected?.title || ""} onChange={event => setSelected(current => (current ? { ...current, title: event.target.value } : current))} />
-                </ModalField>
-                <ModalField label="Content">
-                  <TextArea aria-label="Content" rows={10} value={selected?.content || ""} onChange={event => setSelected(current => (current ? { ...current, content: event.target.value } : current))} />
-                </ModalField>
-                <ModalField label="Image URL">
-                  <Input aria-label="Image URL" value={selected?.img_url || ""} onChange={event => setSelected(current => (current ? { ...current, img_url: event.target.value } : current))} />
-                </ModalField>
-                <ModalField label="Tags" description="Comma separated">
-                  <Input aria-label="Tags" value={(selected?.tags || []).join(", ")} onChange={event => setSelected(current => current ? { ...current, tags: event.target.value.split(",").map(item => item.trim()).filter(Boolean) } : current)} />
-                </ModalField>
-              </Modal.Body>
-              <Modal.Footer>
-                <Button variant="ghost" onPress={() => setOpen(false)}>Cancel</Button>
-                <Button variant="primary" onPress={() => void saveNotice()} isDisabled={saving}>Save notice</Button>
-              </Modal.Footer>
-        </Modal.Dialog>
-          </Modal.Container>
-        </Modal.Backdrop>
-      </Modal>
+      <AdminDrawer
+        isOpen={open}
+        onOpenChange={isOpen => !isOpen && setOpen(false)}
+        title={selected?.id ? "Edit notice" : "Create notice"}
+        isBusy={saving}
+        footer={
+          <>
+            <Button variant="ghost" onPress={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" onPress={() => void saveNotice()} isDisabled={saving || titleInvalid || contentInvalid}>
+              Save notice
+            </Button>
+          </>
+        }
+      >
+        <form
+          className="space-y-5"
+          onSubmit={event => {
+            event.preventDefault();
+            if (titleInvalid || contentInvalid) return;
+            void saveNotice();
+          }}
+        >
+          <AdminTextField
+            label="Title"
+            value={selected?.title || ""}
+            onChange={event => setSelected(current => (current ? { ...current, title: event.target.value } : current))}
+            isRequired
+            isInvalid={titleInvalid}
+            errorMessage="Title is required."
+          />
+          <AdminTextField
+            label="Content"
+            multiline
+            rows={10}
+            value={selected?.content || ""}
+            onChange={event => setSelected(current => (current ? { ...current, content: event.target.value } : current))}
+            isRequired
+            isInvalid={contentInvalid}
+            errorMessage="Content is required."
+          />
+          <AdminTextField
+            label="Image URL"
+            value={selected?.img_url || ""}
+            onChange={event => setSelected(current => (current ? { ...current, img_url: event.target.value } : current))}
+          />
+          <AdminTextField
+            label="Tags"
+            description="Comma separated"
+            value={(selected?.tags || []).join(", ")}
+            onChange={event => setSelected(current => current ? { ...current, tags: event.target.value.split(",").map(item => item.trim()).filter(Boolean) } : current)}
+          />
+        </form>
+      </AdminDrawer>
     </PageFrame>
   );
 }

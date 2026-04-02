@@ -1,10 +1,11 @@
 import { DndContext, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { Button, Card, CardContent, CardHeader, Chip, Input, Modal, Spinner, Switch, Table, TableBody, TableCell, TableColumn, TableHeader, TextArea } from "@heroui/react";
+import { Button, Card, CardContent, CardHeader, Chip, Input, Spinner, Switch, Table, TableBody, TableCell, TableColumn, TableHeader } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
 import { DangerConfirmButton } from "../components/DangerConfirmButton";
-import { AdminFilterAccordion } from "../components/AdminFilterAccordion";
+import { AdminDrawer } from "../components/AdminDrawer";
 import { AdminSelectField } from "../components/AdminSelectField";
+import { AdminTextField } from "../components/AdminTextField";
 import {
   SortableTableRow,
   adminTableActionCellClassName,
@@ -12,7 +13,6 @@ import {
   useSortableTableSensors
 } from "../components/SortableTable";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
-import { ModalField } from "../components/ModalField";
 import { PageFrame } from "../components/PageFrame";
 import { asArray, formatDateTime } from "../lib/admin-format";
 import {
@@ -194,6 +194,9 @@ export function KnowledgePage() {
       { label: "Localized", value: String(localized), hint: "Language metadata set" }
     ];
   }, [activeCategory, categories.length, filtered]);
+  const titleInvalid = !selected.title.trim();
+  const categoryInvalid = !selected.category.trim();
+  const bodyInvalid = !String(selected.body || "").trim();
 
   return (
     <PageFrame
@@ -243,14 +246,9 @@ export function KnowledgePage() {
           </div>
         </CardHeader>
         <CardContent className={`${adminSectionBodyClassName} gap-5`}>
-          <AdminFilterAccordion>
-            <div className="grid gap-3 md:grid-cols-4">
-              <Input value={activeCategory === "all" ? "" : activeCategory} readOnly />
-              <div className="md:col-span-3 flex items-end text-sm text-slate-500">
-                Active category selection is managed from the section header to keep category switching visible at all times.
-              </div>
-            </div>
-          </AdminFilterAccordion>
+          <div className="rounded-[1.7rem] border border-slate-100 bg-white/90 px-5 py-4 text-sm text-slate-500">
+            Active category selection is managed from the section header to keep category switching visible at all times.
+          </div>
           {error ? <div className="rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">{error}</div> : null}
 
           {loading ? (
@@ -325,27 +323,66 @@ export function KnowledgePage() {
         </CardContent>
       </Card>
 
-      <Modal isOpen={editorOpen} onOpenChange={isOpen => !isOpen && setEditorOpen(false)}>
-        <Modal.Backdrop>
-          <Modal.Container>
-            <Modal.Dialog>
-              <Modal.Header>
-                <Modal.Heading>{selected.id ? "Edit article" : "Create article"}</Modal.Heading>
-              </Modal.Header>
-              <Modal.Body className="grid gap-4 md:grid-cols-2">
-                <ModalField label="Title"><Input aria-label="Title" value={selected.title} onChange={event => setSelected(current => ({ ...current, title: event.target.value }))} /></ModalField>
-                <ModalField label="Language"><Input aria-label="Language" value={selected.language || "en-US"} onChange={event => setSelected(current => ({ ...current, language: event.target.value }))} /></ModalField>
-                <ModalField label="Category" className="md:col-span-2"><Input aria-label="Category" value={selected.category} onChange={event => setSelected(current => ({ ...current, category: event.target.value }))} /></ModalField>
-                <ModalField label="Body" className="md:col-span-2"><TextArea aria-label="Body" rows={16} value={selected.body || ""} onChange={event => setSelected(current => ({ ...current, body: event.target.value }))} /></ModalField>
-              </Modal.Body>
-              <Modal.Footer>
-                <Button variant="ghost" onPress={() => setEditorOpen(false)}>Cancel</Button>
-                <Button variant="primary" onPress={() => void saveKnowledge()} isDisabled={submitting}>Save article</Button>
-              </Modal.Footer>
-        </Modal.Dialog>
-          </Modal.Container>
-        </Modal.Backdrop>
-      </Modal>
+      <AdminDrawer
+        isOpen={editorOpen}
+        onOpenChange={isOpen => !isOpen && setEditorOpen(false)}
+        title={selected.id ? "Edit article" : "Create article"}
+        isBusy={submitting}
+        size="lg"
+        footer={
+          <>
+            <Button variant="ghost" onPress={() => setEditorOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" onPress={() => void saveKnowledge()} isDisabled={submitting || titleInvalid || categoryInvalid || bodyInvalid}>
+              Save article
+            </Button>
+          </>
+        }
+      >
+        <form
+          className="flex flex-col gap-5"
+          onSubmit={event => {
+            event.preventDefault();
+            if (titleInvalid || categoryInvalid || bodyInvalid) return;
+            void saveKnowledge();
+          }}
+        >
+          <AdminTextField
+            label="Title"
+            value={selected.title}
+            onChange={event => setSelected(current => ({ ...current, title: event.target.value }))}
+            isRequired
+            isInvalid={titleInvalid}
+            errorMessage="Title is required."
+          />
+          <AdminTextField
+            label="Language"
+            value={selected.language || "en-US"}
+            onChange={event => setSelected(current => ({ ...current, language: event.target.value }))}
+          />
+          <AdminTextField
+            label="Category"
+            className="md:col-span-2"
+            value={selected.category}
+            onChange={event => setSelected(current => ({ ...current, category: event.target.value }))}
+            isRequired
+            isInvalid={categoryInvalid}
+            errorMessage="Category is required."
+          />
+          <AdminTextField
+            label="Body"
+            className="md:col-span-2"
+            multiline
+            rows={16}
+            value={selected.body || ""}
+            onChange={event => setSelected(current => ({ ...current, body: event.target.value }))}
+            isRequired
+            isInvalid={bodyInvalid}
+            errorMessage="Body is required."
+          />
+        </form>
+      </AdminDrawer>
     </PageFrame>
   );
 }
