@@ -24,16 +24,56 @@
 
             function redirectHome(clearToken) {
                 if (clearToken) {
-                    try { localStorage.removeItem('auth_data'); } catch (e) {}
+                    try {
+                        localStorage.removeItem('authorization');
+                        localStorage.removeItem('auth_data');
+                    } catch (e) {}
                 }
                 window.location.replace('/');
             }
 
             function redirectLogin(clearToken) {
                 if (clearToken) {
-                    try { localStorage.removeItem('auth_data'); } catch (e) {}
+                    try {
+                        localStorage.removeItem('authorization');
+                        localStorage.removeItem('auth_data');
+                    } catch (e) {}
                 }
                 window.location.replace('/#/login');
+            }
+
+            function readStorage(key) {
+                try {
+                    var value = localStorage.getItem(key);
+                    return (typeof value === 'string' && value.trim()) ? value : null;
+                } catch (e) {
+                    return null;
+                }
+            }
+
+            function unwrapLegacyToken(raw) {
+                if (!raw) return null;
+                try {
+                    var parsed = JSON.parse(raw);
+                    if (parsed && typeof parsed === 'object') {
+                        if (typeof parsed.value === 'string' && parsed.value.trim()) return parsed.value;
+                        if (typeof parsed.data === 'string' && parsed.data.trim()) return parsed.data;
+                    }
+                } catch (e) {}
+                return raw;
+            }
+
+            function getAdminAuthToken() {
+                var legacyToken = unwrapLegacyToken(readStorage('authorization'));
+                if (legacyToken) return legacyToken;
+
+                var authDataToken = readStorage('auth_data');
+                if (authDataToken) {
+                    try { localStorage.setItem('authorization', authDataToken); } catch (e) {}
+                    return authDataToken;
+                }
+
+                return null;
             }
 
             function showAppRoot(mode) {
@@ -348,8 +388,7 @@
                 }
             }
 
-            var token = null;
-            try { token = localStorage.getItem('auth_data'); } catch (e) {}
+            var token = getAdminAuthToken();
             if (!token) return redirectLogin(false);
 
             var xhr = new XMLHttpRequest();

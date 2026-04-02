@@ -1,13 +1,6 @@
 import { adminBootstrap } from "./bootstrap";
+import { clearAdminAuthStorage, getAdminAuthToken } from "./authStorage";
 import type { ApiEnvelope } from "../types";
-
-function getAuthToken(): string | null {
-  try {
-    return window.localStorage.getItem("auth_data");
-  } catch (error) {
-    return null;
-  }
-}
 
 function appendQueryValue(
   params: URLSearchParams,
@@ -68,7 +61,7 @@ export async function adminRequest<T>(
     body?: Record<string, unknown>;
   }
 ): Promise<ApiEnvelope<T>> {
-  const token = getAuthToken();
+  const token = getAdminAuthToken();
   const method = options?.method || "GET";
   const headers = new Headers({
     Accept: "application/json",
@@ -92,6 +85,10 @@ export async function adminRequest<T>(
     body
   });
 
+  if (response.status === 401 || response.status === 403) {
+    clearAdminAuthStorage();
+  }
+
   return parseResponse<T>(response);
 }
 
@@ -99,7 +96,7 @@ export async function gatewayRequest<T>(
   endpoint: string,
   options?: { method?: "GET" | "POST"; params?: Record<string, unknown> }
 ): Promise<ApiEnvelope<T>> {
-  const token = getAuthToken();
+  const token = getAdminAuthToken();
   const headers = new Headers({
     Accept: "application/json",
     "Content-Type": "application/json",
@@ -120,6 +117,10 @@ export async function gatewayRequest<T>(
       params: options?.params || {}
     })
   });
+
+  if (response.status === 401 || response.status === 403) {
+    clearAdminAuthStorage();
+  }
 
   return parseResponse<T>(response);
 }
