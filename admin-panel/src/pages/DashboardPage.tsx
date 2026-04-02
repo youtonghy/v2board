@@ -8,12 +8,6 @@ import {
   Chip,
   Separator,
   Spinner,
-  Table,
-  TableBody,
-  TableCell,
-  TableColumn,
-  TableHeader,
-  TableRow,
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -33,10 +27,8 @@ import { adminRequest, getEnvelopeError } from "../lib/api";
 import type { ApiEnvelope } from "../types";
 import { AdminPagination } from "../components/AdminPagination";
 import { AdminDrawer } from "../components/AdminDrawer";
-import { useAdminTableSort } from "../components/AdminTable";
 import { PageFrame } from "../components/PageFrame";
 import { asArray, asRecord, formatBytes, formatDateTime, formatMoney } from "../lib/admin-format";
-import { adminTableClassNames } from "../components/AdminContent";
 
 interface DashboardState {
   loading: boolean;
@@ -228,16 +220,6 @@ export function DashboardPage() {
   const [detailTotal, setDetailTotal] = useState(0);
   const [detailRecords, setDetailRecords] = useState<StatUserRecord[]>([]);
   const [detailLoading, setDetailLoading] = useState(false);
-  const detailTableSort = useAdminTableSort(
-    detailRecords,
-    { column: "date", direction: "descending" },
-    {
-      date: item => item.record_at,
-      upload: item => item.u,
-      download: item => item.d,
-      rate: item => item.server_rate
-    }
-  );
 
   async function loadDashboard() {
     setState(current => ({ ...current, loading: true, error: undefined }));
@@ -594,45 +576,67 @@ export function DashboardPage() {
         }
       >
         <div className="space-y-4">
-            {detailLoading ? (
-              <div className="flex min-h-[240px] items-center justify-center">
-                <Spinner color="accent" />
-              </div>
-            ) : (
-              <>
-                <Table variant="secondary" aria-label="Traffic detail" className={adminTableClassNames.wrapper}>
-                  <Table.ScrollContainer>
-                  <Table.Content sortDescriptor={detailTableSort.sortDescriptor} onSortChange={detailTableSort.setSortDescriptor}>
-                    <TableHeader>
-                      <TableColumn key="date" allowsSorting>Date</TableColumn>
-                      <TableColumn key="upload" allowsSorting>Upload</TableColumn>
-                      <TableColumn key="download" allowsSorting>Download</TableColumn>
-                      <TableColumn key="rate" allowsSorting>Rate</TableColumn>
-                    </TableHeader>
-                    <TableBody items={detailTableSort.sortedItems}>
-                      {item => (
-                        <TableRow key={`${item.record_at}-${item.id || 0}`}>
-                          <TableCell>{formatDateTime(item.record_at)}</TableCell>
-                          <TableCell>{formatBytes(item.u || 0)}</TableCell>
-                          <TableCell>{formatBytes(item.d || 0)}</TableCell>
-                          <TableCell>{item.server_rate || 1}</TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table.Content>
-                  </Table.ScrollContainer>
-                </Table>
-                <div className="flex justify-center">
-                    <AdminPagination
-                      page={detailPage}
-                      total={Math.max(1, Math.ceil(detailTotal / 10))}
-                      totalItems={detailTotal}
-                      itemsPerPage={10}
-                      onChange={setDetailPage}
-                    />
+          {detailLoading ? (
+            <div className="flex min-h-[240px] items-center justify-center">
+              <Spinner color="accent" />
+            </div>
+          ) : (
+            <>
+              {detailRecords.length ? (
+                <div className="space-y-3">
+                  {detailRecords.map((item, index) => (
+                    <Card
+                      key={`${item.record_at}-${item.id || index}`}
+                      className="border border-slate-100 bg-slate-50/70 shadow-none"
+                    >
+                      <CardContent className="gap-4 p-5">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div>
+                            <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Date</p>
+                            <p className="mt-2 text-sm font-semibold text-slate-900">
+                              {formatDateTime(item.record_at)}
+                            </p>
+                          </div>
+                          <Chip variant="soft" className="bg-sky-50 text-sky-700">
+                            Rate {item.server_rate || 1}
+                          </Chip>
+                        </div>
+                        <Separator />
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <div className="rounded-[1.1rem] border border-slate-100 bg-white/90 px-4 py-3">
+                            <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Upload</p>
+                            <p className="mt-2 text-base font-semibold text-slate-950">
+                              {formatBytes(item.u || 0)}
+                            </p>
+                          </div>
+                          <div className="rounded-[1.1rem] border border-slate-100 bg-white/90 px-4 py-3">
+                            <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Download</p>
+                            <p className="mt-2 text-base font-semibold text-slate-950">
+                              {formatBytes(item.d || 0)}
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
-              </>
-            )}
+              ) : (
+                <div className="rounded-[1.5rem] border border-dashed border-slate-200 bg-slate-50/70 px-4 py-10 text-center">
+                  <p className="text-sm font-medium text-slate-700">No traffic records found.</p>
+                  <p className="mt-2 text-sm text-slate-500">This user has no detail rows for the selected page.</p>
+                </div>
+              )}
+              <div className="flex justify-center">
+                <AdminPagination
+                  page={detailPage}
+                  total={Math.max(1, Math.ceil(detailTotal / 10))}
+                  totalItems={detailTotal}
+                  itemsPerPage={10}
+                  onChange={setDetailPage}
+                />
+              </div>
+            </>
+          )}
         </div>
       </AdminDrawer>
     </PageFrame>
