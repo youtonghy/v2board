@@ -96,6 +96,21 @@ a {
   backdrop-filter: blur(18px);
 }
 
+.admin-nav-drawer-backdrop {
+  background: rgba(15, 23, 42, 0.18);
+  backdrop-filter: blur(10px);
+}
+
+.admin-nav-drawer-content {
+  width: min(22rem, calc(100vw - 1rem));
+}
+
+.admin-nav-drawer-dialog {
+  background:
+    radial-gradient(circle at top left, rgba(19, 136, 239, 0.1), transparent 18rem),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(244, 246, 249, 0.98) 100%);
+}
+
 .shadow-panel {
   border-radius: 2rem !important;
   overflow: hidden;

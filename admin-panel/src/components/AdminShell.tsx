@@ -14,9 +14,6 @@ import {
   BreadcrumbsItem,
   Button,
   Drawer,
-  DrawerBody,
-  DrawerContent,
-  DrawerHeader,
   Dropdown,
   Label,
   Tooltip
@@ -130,7 +127,8 @@ function SidebarContent({
   userLabel,
   onNavigate,
   onToggleCollapse,
-  showDesktopToggle
+  showDesktopToggle,
+  headerAction
 }: {
   collapsed: boolean;
   currentPath: string;
@@ -138,6 +136,7 @@ function SidebarContent({
   onNavigate: (path: string) => void;
   onToggleCollapse?: () => void;
   showDesktopToggle?: boolean;
+  headerAction?: React.ReactNode;
 }) {
   return (
     <>
@@ -160,11 +159,13 @@ function SidebarContent({
             ) : null}
           </div>
         </Button>
-        {showDesktopToggle ? (
+        {headerAction ? (
+          headerAction
+        ) : showDesktopToggle ? (
           <Button
             isIconOnly
             variant="ghost"
-            className="hidden shrink-0 text-slate-500 md:inline-flex"
+            className="hidden shrink-0 text-slate-500 lg:inline-flex"
             onPress={onToggleCollapse}
           >
             {collapsed ? (
@@ -289,20 +290,42 @@ export function AdminShell() {
 
   return (
     <div className="admin-app-shell min-h-screen text-ink">
-      <Drawer isOpen={mobileOpen} onOpenChange={setMobileOpen}>
-        <Drawer.Backdrop>
-          <Drawer.Content placement="left">
-            <Drawer.Dialog>
-              <Drawer.Header className="sr-only">
-                <Drawer.Heading>Navigation</Drawer.Heading>
+      <Drawer>
+        <Drawer.Backdrop
+          isOpen={mobileOpen}
+          onOpenChange={setMobileOpen}
+          variant="blur"
+          className="admin-nav-drawer-backdrop lg:hidden"
+        >
+          <Drawer.Content placement="left" className="admin-nav-drawer-content lg:hidden">
+            <Drawer.Dialog
+              aria-label="Navigation"
+              className="admin-nav-drawer-dialog h-full border-r border-white/60 bg-[#f5f7fb]/95 shadow-[0_24px_80px_rgba(15,23,42,0.18)] backdrop-blur-xl"
+            >
+              <Drawer.CloseTrigger className="right-4 top-4 rounded-full border border-white/70 bg-white/90 text-slate-500 shadow-sm transition hover:bg-white hover:text-slate-900" />
+              <Drawer.Header className="border-b border-white/60 px-4 py-4 pr-14">
+                <Drawer.Heading className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  Navigation
+                </Drawer.Heading>
               </Drawer.Header>
-              <Drawer.Body className="bg-[#f5f7fb] p-0">
+              <Drawer.Body className="p-0">
                 <div className="flex h-full flex-col">
                   <SidebarContent
                     collapsed={false}
                     currentPath={location.pathname}
                     userLabel={userLabel}
                     onNavigate={handleNavigate}
+                    headerAction={
+                      <Button
+                        isIconOnly
+                        variant="ghost"
+                        className="shrink-0 text-slate-500"
+                        aria-label="Close navigation"
+                        onPress={() => setMobileOpen(false)}
+                      >
+                        <ArrowLeftToLine width={18} height={18} aria-hidden="true" />
+                      </Button>
+                    }
                   />
                 </div>
               </Drawer.Body>
@@ -314,8 +337,8 @@ export function AdminShell() {
       <div className="flex min-h-screen">
         <aside
           className={[
-            "admin-sidebar hidden border-r border-white/60 text-[#0f1720] transition-all duration-300 md:sticky md:top-0 md:flex md:h-screen md:flex-col",
-            collapsed ? "md:w-[96px]" : "md:w-[272px]"
+            "admin-sidebar hidden border-r border-white/60 text-[#0f1720] transition-all duration-300 lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col",
+            collapsed ? "lg:w-[96px]" : "lg:w-[272px]"
           ].join(" ")}
         >
           <SidebarContent
@@ -336,8 +359,9 @@ export function AdminShell() {
                   isIconOnly
                   size="sm"
                   variant="ghost"
-                  className="h-10 w-10 min-w-10 items-center justify-center text-slate-600 md:hidden"
+                  className="h-10 w-10 min-w-10 items-center justify-center text-slate-600 lg:hidden"
                   onPress={() => setMobileOpen(true)}
+                  aria-label="Open navigation"
                 >
                   <Bars width={18} height={18} aria-hidden="true" />
                 </Button>
@@ -407,7 +431,7 @@ export function AdminShell() {
                       </Badge.Anchor>
                     )}
                   </Dropdown.Trigger>
-                  <Dropdown.Popover placement="bottom-end" className="min-w-[17rem]">
+                  <Dropdown.Popover placement="bottom end" className="min-w-[17rem]">
                     <Dropdown.Menu
                       aria-label="Account actions"
                       onAction={key => {
