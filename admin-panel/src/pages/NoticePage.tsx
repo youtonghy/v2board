@@ -4,8 +4,8 @@ import {
   CardContent,
   CardHeader,
   Chip,
+  Checkbox,
   Spinner,
-  Switch,
   Table,
   TableBody,
   TableCell,
@@ -84,6 +84,7 @@ export function NoticePage() {
   }
 
   async function toggleNotice(record: NoticeRecord) {
+    if (!record.id) return;
     await adminRequest("notice/show", {
       method: "POST",
       body: { id: record.id }
@@ -186,13 +187,18 @@ export function NoticePage() {
               </TableHeader>
               <TableBody items={sortedItems}>
                 {item => (
-                  <TableRow key={String(item.id || Math.random())}>
+                  <TableRow key={String(item.id ?? "") }>
                     <TableCell>{item.id ?? "—"}</TableCell>
                     <TableCell>
-                      <Switch
+                      <Checkbox
+                        aria-label={`Toggle notice ${item.title || item.id || ""}`}
                         isSelected={Boolean(Number(item.show ?? 0))}
                         onChange={() => void toggleNotice(item)}
-                      />
+                      >
+                        <Checkbox.Control>
+                          <Checkbox.Indicator />
+                        </Checkbox.Control>
+                      </Checkbox>
                     </TableCell>
                     <TableCell>
                       <div>

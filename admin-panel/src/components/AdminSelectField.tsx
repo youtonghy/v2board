@@ -18,10 +18,8 @@ export function AdminSelectField({
   selectedKey: string | null;
   onSelectionChange: (key: string | null) => void;
 }) {
-  const safeSelectedKey = selectedKey && options.some(option => option.id === selectedKey) ? selectedKey : null;
-
   return (
-    <Select aria-label={ariaLabel} className="w-full" placeholder={placeholder} selectedKey={safeSelectedKey} onSelectionChange={key => onSelectionChange(key ? String(key) : null)}>
+    <Select aria-label={ariaLabel} className="w-full" placeholder={placeholder} selectedKey={selectedKey} onSelectionChange={key => onSelectionChange(key ? String(key) : null)}>
       <Select.Trigger className="h-10 w-full">
         <Select.Value />
         <Select.Indicator />

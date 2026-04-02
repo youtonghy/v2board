@@ -33,6 +33,7 @@ import {
   adminSectionHeaderClassName,
   adminStatCardBodyClassName,
   adminStatsGridClassName,
+  adminTableActionCellClassName,
   adminTableClassNames
 } from "../components/AdminContent";
 
@@ -265,7 +266,7 @@ export function CouponPage() {
             <>
               <Table variant="secondary" aria-label="Coupons" className={adminTableClassNames.wrapper}>
                 <Table.ScrollContainer>
-                <Table.Content sortDescriptor={sortDescriptor} onSortChange={setSortDescriptor}>
+                  <Table.Content className="min-w-[980px]" sortDescriptor={sortDescriptor} onSortChange={setSortDescriptor}>
                   <TableHeader>
                     <TableColumn key="id" allowsSorting>ID</TableColumn>
                     <TableColumn key="enabled" allowsSorting>Enabled</TableColumn>
@@ -277,7 +278,7 @@ export function CouponPage() {
                   </TableHeader>
                   <TableBody items={sortedItems}>
                     {item => (
-                      <TableRow key={String(item.id || Math.random())}>
+                      <TableRow key={String(item.id ?? item.code ?? item.name ?? "")}>
                         <TableCell>{item.id ?? "—"}</TableCell>
                         <TableCell>
                           <Checkbox
@@ -310,7 +311,7 @@ export function CouponPage() {
                           )}
                         </TableCell>
                         <TableCell>{item.limit_use ?? "Unlimited"}</TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className={adminTableActionCellClassName}>
                           <div className="flex justify-end gap-2">
                             <Button
                               size="sm"
@@ -336,7 +337,7 @@ export function CouponPage() {
                       </TableRow>
                     )}
                   </TableBody>
-                </Table.Content>
+                  </Table.Content>
                 </Table.ScrollContainer>
               </Table>
               <div className="flex justify-end">
