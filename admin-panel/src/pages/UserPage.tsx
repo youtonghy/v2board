@@ -38,7 +38,7 @@ import { AdminDrawer } from "../components/AdminDrawer";
 import { DangerConfirmButton } from "../components/DangerConfirmButton";
 import { AdminPagination } from "../components/AdminPagination";
 import { AdminSelectField } from "../components/AdminSelectField";
-import { AdminSortableColumnHeader, useAdminTableSort } from "../components/AdminTable";
+import { useAdminTableSort } from "../components/AdminTable";
 import { AdminTextField } from "../components/AdminTextField";
 import { ModalField } from "../components/ModalField";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
@@ -591,33 +591,13 @@ export function UserPage() {
       status: item => `${item.banned || 0}-${item.is_admin || 0}-${item.is_staff || 0}`
     }
   );
-  const statsTableSort = useAdminTableSort(
-    statsRecords,
-    { column: "date", direction: "descending" },
-    {
-      date: item => item.record_at,
-      upload: item => item.u,
-      download: item => item.d,
-      rate: item => item.server_rate
-    }
+  const sortedStatsRecords = useMemo(
+    () => [...statsRecords].sort((left, right) => Number(right.record_at || 0) - Number(left.record_at || 0)),
+    [statsRecords]
   );
-  const ipGeoTableSort = useAdminTableSort(
-    ipGeoRows,
-    { column: "lastSeen", direction: "descending" },
-    {
-      ip: item => item.ip,
-      lastSeen: item => item.last_seen_at,
-      status: item => {
-        const geo = geoRecords[item.ip];
-        if (geoLoading[item.ip]) return 0;
-        if (geo?.status === "failed") return 1;
-        return 2;
-      },
-      country: item => geoRecords[item.ip]?.country || "",
-      city: item => geoRecords[item.ip]?.city || "",
-      isp: item => geoRecords[item.ip]?.isp || "",
-      organization: item => geoRecords[item.ip]?.organization || ""
-    }
+  const sortedIpGeoRows = useMemo(
+    () => [...ipGeoRows].sort((left, right) => Number(right.last_seen_at || 0) - Number(left.last_seen_at || 0)),
+    [ipGeoRows]
   );
   const selectedPlan = useMemo(() => form.plan_id || null, [form.plan_id]);
   const generatePlan = useMemo(() => generateForm.plan_id || null, [generateForm.plan_id]);
@@ -1183,28 +1163,42 @@ export function UserPage() {
             </div>
           ) : hasStatsRecords ? (
             <>
-              <Table variant="secondary" aria-label="Traffic logs" className={adminTableClassNames.wrapper}>
-                <Table.ScrollContainer>
-                  <Table.Content sortDescriptor={statsTableSort.sortDescriptor} onSortChange={statsTableSort.setSortDescriptor}>
-                    <TableHeader>
-                      <TableColumn key="date" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Date" sortDirection={sortDirection} />}</TableColumn>
-                      <TableColumn key="upload" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Upload" sortDirection={sortDirection} />}</TableColumn>
-                      <TableColumn key="download" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Download" sortDirection={sortDirection} />}</TableColumn>
-                      <TableColumn key="rate" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Rate" sortDirection={sortDirection} />}</TableColumn>
-                    </TableHeader>
-                    <TableBody items={statsTableSort.sortedItems}>
-                      {item => (
-                        <TableRow key={String(item.id ?? item.record_at)}>
-                          <TableCell>{formatDateTime(item.record_at)}</TableCell>
-                          <TableCell>{formatBytes(item.u || 0)}</TableCell>
-                          <TableCell>{formatBytes(item.d || 0)}</TableCell>
-                          <TableCell>{item.server_rate || 1}</TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table.Content>
-                </Table.ScrollContainer>
-              </Table>
+              <div className="space-y-3">
+                {sortedStatsRecords.map((item, index) => (
+                  <Card
+                    key={String(item.id ?? item.record_at ?? index)}
+                    className="border border-slate-100 bg-slate-50/70 shadow-none"
+                  >
+                    <CardContent className="gap-4 p-5">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Date</p>
+                          <p className="mt-2 text-sm font-semibold text-slate-900">
+                            {formatDateTime(item.record_at)}
+                          </p>
+                        </div>
+                        <Chip variant="soft" className="bg-sky-50 text-sky-700">
+                          Rate {item.server_rate || 1}
+                        </Chip>
+                      </div>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="rounded-[1.1rem] border border-slate-100 bg-white/90 px-4 py-3">
+                          <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Upload</p>
+                          <p className="mt-2 text-base font-semibold text-slate-950">
+                            {formatBytes(item.u || 0)}
+                          </p>
+                        </div>
+                        <div className="rounded-[1.1rem] border border-slate-100 bg-white/90 px-4 py-3">
+                          <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Download</p>
+                          <p className="mt-2 text-base font-semibold text-slate-950">
+                            {formatBytes(item.d || 0)}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
               <div className="flex justify-center">
                 <AdminPagination
                   page={statsPage}
@@ -1270,44 +1264,55 @@ export function UserPage() {
               No recent IP records found for this user.
             </div>
           ) : (
-            <Table variant="secondary" aria-label="IP geography" className={adminTableClassNames.wrapper}>
-              <Table.ScrollContainer>
-                <Table.Content sortDescriptor={ipGeoTableSort.sortDescriptor} onSortChange={ipGeoTableSort.setSortDescriptor}>
-                  <TableHeader>
-                    <TableColumn key="ip" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="IP" sortDirection={sortDirection} />}</TableColumn>
-                    <TableColumn key="lastSeen" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Last Seen" sortDirection={sortDirection} />}</TableColumn>
-                    <TableColumn key="status" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Status" sortDirection={sortDirection} />}</TableColumn>
-                    <TableColumn key="country" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Country" sortDirection={sortDirection} />}</TableColumn>
-                    <TableColumn key="city" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="City" sortDirection={sortDirection} />}</TableColumn>
-                    <TableColumn key="isp" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="ISP" sortDirection={sortDirection} />}</TableColumn>
-                    <TableColumn key="organization" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Organization" sortDirection={sortDirection} />}</TableColumn>
-                  </TableHeader>
-                  <TableBody items={ipGeoTableSort.sortedItems}>
-                    {item => {
-                      const geo = geoRecords[item.ip];
-                      const loadingState = geoLoading[item.ip];
-                      const failed = geo?.status === "failed";
+            <div className="space-y-3">
+              {sortedIpGeoRows.map(item => {
+                const geo = geoRecords[item.ip];
+                const loadingState = geoLoading[item.ip];
+                const failed = geo?.status === "failed";
+                const statusLabel = loadingState ? "Loading" : failed ? "Failed" : "Resolved";
+                const countryLabel = loadingState ? "Loading..." : failed ? "Failed" : geo?.country || "—";
+                const cityLabel = loadingState ? "Loading..." : failed ? "Failed" : geo?.city || "—";
+                const ispLabel = loadingState ? "Loading..." : failed ? "Failed" : geo?.isp || "—";
+                const organizationLabel = loadingState ? "Loading..." : failed ? "Failed" : geo?.organization || "—";
 
-                      return (
-                        <TableRow key={item.id}>
-                          <TableCell>{item.ip}</TableCell>
-                          <TableCell>{formatDateTime(item.last_seen_at)}</TableCell>
-                          <TableCell>
-                            <Chip variant="soft" color={loadingState ? "default" : failed ? "danger" : "success"}>
-                              {loadingState ? "Loading" : failed ? "Failed" : "Resolved"}
-                            </Chip>
-                          </TableCell>
-                          <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.country || "—"}</TableCell>
-                          <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.city || "—"}</TableCell>
-                          <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.isp || "—"}</TableCell>
-                          <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.organization || "—"}</TableCell>
-                        </TableRow>
-                      );
-                    }}
-                  </TableBody>
-                </Table.Content>
-              </Table.ScrollContainer>
-            </Table>
+                return (
+                  <Card key={item.id} className="border border-slate-100 bg-slate-50/70 shadow-none">
+                    <CardContent className="gap-4 p-5">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-xs uppercase tracking-[0.18em] text-slate-400">IP</p>
+                          <p className="mt-2 break-all text-sm font-semibold text-slate-900">{item.ip}</p>
+                          <p className="mt-2 text-sm text-slate-500">
+                            Last Seen {formatDateTime(item.last_seen_at)}
+                          </p>
+                        </div>
+                        <Chip variant="soft" color={loadingState ? "default" : failed ? "danger" : "success"}>
+                          {statusLabel}
+                        </Chip>
+                      </div>
+                      <div className="grid gap-3 md:grid-cols-2">
+                        <div className="rounded-[1.1rem] border border-slate-100 bg-white/90 px-4 py-3">
+                          <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Country</p>
+                          <p className="mt-2 text-sm font-semibold text-slate-950">{countryLabel}</p>
+                        </div>
+                        <div className="rounded-[1.1rem] border border-slate-100 bg-white/90 px-4 py-3">
+                          <p className="text-xs uppercase tracking-[0.18em] text-slate-400">City</p>
+                          <p className="mt-2 text-sm font-semibold text-slate-950">{cityLabel}</p>
+                        </div>
+                        <div className="rounded-[1.1rem] border border-slate-100 bg-white/90 px-4 py-3">
+                          <p className="text-xs uppercase tracking-[0.18em] text-slate-400">ISP</p>
+                          <p className="mt-2 text-sm font-semibold text-slate-950">{ispLabel}</p>
+                        </div>
+                        <div className="rounded-[1.1rem] border border-slate-100 bg-white/90 px-4 py-3">
+                          <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Organization</p>
+                          <p className="mt-2 text-sm font-semibold text-slate-950">{organizationLabel}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
           )}
         </div>
       </AdminDrawer>
