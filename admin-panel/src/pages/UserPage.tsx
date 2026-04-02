@@ -38,7 +38,7 @@ import { AdminDrawer } from "../components/AdminDrawer";
 import { DangerConfirmButton } from "../components/DangerConfirmButton";
 import { AdminPagination } from "../components/AdminPagination";
 import { AdminSelectField } from "../components/AdminSelectField";
-import { useAdminTableSort } from "../components/AdminTable";
+import { AdminSortableColumnHeader, useAdminTableSort } from "../components/AdminTable";
 import { AdminTextField } from "../components/AdminTextField";
 import { ModalField } from "../components/ModalField";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
@@ -227,10 +227,14 @@ export function UserPage() {
   const [statsPage, setStatsPage] = useState(1);
   const [statsTotal, setStatsTotal] = useState(0);
   const [statsRecords, setStatsRecords] = useState<UserStatRecord[]>([]);
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [statsError, setStatsError] = useState<string | null>(null);
   const [geoProviders, setGeoProviders] = useState<IpGeoProvider[]>([]);
   const [geoProvider, setGeoProvider] = useState("ipinfo");
   const [geoLoading, setGeoLoading] = useState<Record<string, boolean>>({});
   const [geoRecords, setGeoRecords] = useState<Record<string, IpGeoResponse>>({});
+  const [geoRefreshing, setGeoRefreshing] = useState(false);
+  const [geoError, setGeoError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function loadUsers(nextPage = page) {
@@ -374,12 +378,14 @@ export function UserPage() {
 
   async function loadIpGeoProviders() {
     try {
+      setGeoError(null);
       const envelope = await adminRequest<{ providers: IpGeoProvider[]; default?: string }>("user/ipGeoProviders");
       const payload = unwrapEnvelope(envelope);
       setGeoProviders(payload.providers || []);
       setGeoProvider(payload.default || payload.providers?.[0]?.key || "ipinfo");
     } catch (nextError) {
       setGeoProviders([]);
+      setGeoError(nextError instanceof Error ? nextError.message : "Failed to load providers");
     }
   }
 
@@ -421,26 +427,38 @@ export function UserPage() {
   }
 
   async function fetchAllGeo() {
-    const ipRecords = [
-      ...(ipGeoUser?.recent_ip_records || []),
-      ...(ipGeoUser?.recent_login_ip_records || [])
-    ];
-    const uniqueIps = Array.from(new Set(ipRecords.map(item => item.ip).filter(Boolean)));
-    for (const ip of uniqueIps) {
-      // eslint-disable-next-line no-await-in-loop
-      await fetchGeo(ip);
+    setGeoRefreshing(true);
+    setGeoError(null);
+    try {
+      const ipRecords = [
+        ...(ipGeoUser?.recent_ip_records || []),
+        ...(ipGeoUser?.recent_login_ip_records || [])
+      ];
+      const uniqueIps = Array.from(new Set(ipRecords.map(item => item.ip).filter(Boolean)));
+      for (const ip of uniqueIps) {
+        // eslint-disable-next-line no-await-in-loop
+        await fetchGeo(ip);
+      }
+    } catch (nextError) {
+      setGeoError(nextError instanceof Error ? nextError.message : "Failed to refresh geo records");
+    } finally {
+      setGeoRefreshing(false);
     }
   }
 
   async function openTrafficStats(record: UserRecord) {
     setStatsUser(record);
     setStatsPage(1);
+    setStatsRecords([]);
+    setStatsTotal(0);
+    setStatsError(null);
     setStatsOpen(true);
   }
 
   async function loadTrafficStats(currentPage = statsPage, user = statsUser) {
     if (!user?.id) return;
-    setSubmitting(true);
+    setStatsLoading(true);
+    setStatsError(null);
     try {
       const envelope = await adminRequest<UserStatRecord[]>("stat/getStatUser", {
         query: {
@@ -453,16 +471,19 @@ export function UserPage() {
       setStatsRecords(payload || []);
       setStatsTotal(Number(envelope.total || 0));
     } catch (nextError) {
-      setError(nextError instanceof Error ? nextError.message : "Failed to load traffic stats");
+      setStatsError(nextError instanceof Error ? nextError.message : "Failed to load traffic stats");
       setStatsRecords([]);
       setStatsTotal(0);
     } finally {
-      setSubmitting(false);
+      setStatsLoading(false);
     }
   }
 
   async function openIpGeo(record: UserRecord) {
     setIpGeoUser(record);
+    setGeoRecords({});
+    setGeoLoading({});
+    setGeoError(null);
     setIpGeoOpen(true);
   }
 
@@ -605,6 +626,8 @@ export function UserPage() {
   const generateCountInvalid = !generateForm.generate_count.trim();
   const mailSubjectInvalid = !mailForm.subject.trim();
   const mailContentInvalid = !mailForm.content.trim();
+  const hasStatsRecords = statsRecords.length > 0;
+  const hasIpGeoRows = ipGeoRows.length > 0;
   const stats = useMemo(() => {
     const activeUsers = records.filter(record => !Number(record.banned || 0)).length;
     const adminUsers = records.filter(record => Number(record.is_admin || 0)).length;
@@ -1127,7 +1150,16 @@ export function UserPage() {
 
       <AdminDrawer
         isOpen={statsOpen}
-        onOpenChange={isOpen => !isOpen && setStatsOpen(false)}
+        onOpenChange={isOpen => {
+          if (!isOpen) {
+            setStatsOpen(false);
+            setStatsUser(null);
+            setStatsPage(1);
+            setStatsRecords([]);
+            setStatsTotal(0);
+            setStatsError(null);
+          }
+        }}
         title={`Traffic logs for ${statsUser?.email || "user"}`}
         size="lg"
         footer={
@@ -1137,43 +1169,72 @@ export function UserPage() {
         }
       >
         <div className="space-y-4">
-          <Table variant="secondary" aria-label="Traffic logs" className={adminTableClassNames.wrapper}>
-            <Table.ScrollContainer>
-              <Table.Content sortDescriptor={statsTableSort.sortDescriptor} onSortChange={statsTableSort.setSortDescriptor}>
-                <TableHeader>
-                  <TableColumn key="date" allowsSorting>Date</TableColumn>
-                  <TableColumn key="upload" allowsSorting>Upload</TableColumn>
-                  <TableColumn key="download" allowsSorting>Download</TableColumn>
-                  <TableColumn key="rate" allowsSorting>Rate</TableColumn>
-                </TableHeader>
-                <TableBody items={statsTableSort.sortedItems}>
-                  {item => (
-                    <TableRow key={String(item.id ?? item.record_at)}>
-                      <TableCell>{formatDateTime(item.record_at)}</TableCell>
-                      <TableCell>{formatBytes(item.u || 0)}</TableCell>
-                      <TableCell>{formatBytes(item.d || 0)}</TableCell>
-                      <TableCell>{item.server_rate || 1}</TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table.Content>
-            </Table.ScrollContainer>
-          </Table>
-                <div className="flex justify-center">
-                  <AdminPagination
-                    page={statsPage}
-                    total={Math.max(1, Math.ceil(statsTotal / PAGE_SIZE))}
-                    totalItems={statsTotal}
-                    itemsPerPage={PAGE_SIZE}
-                    onChange={setStatsPage}
-                  />
-                </div>
+          <div className="rounded-2xl border border-default-200 bg-default-50 px-4 py-3 text-sm text-slate-600">
+            Review the selected user's upload and download records by day.
+          </div>
+          {statsError ? (
+            <div className="rounded-2xl border border-danger-200 bg-danger-50 px-4 py-3 text-sm text-danger-700">
+              {statsError}
+            </div>
+          ) : null}
+          {statsLoading ? (
+            <div className="flex min-h-[240px] items-center justify-center rounded-2xl border border-default-200 bg-default-50">
+              <Spinner color="accent" />
+            </div>
+          ) : hasStatsRecords ? (
+            <>
+              <Table variant="secondary" aria-label="Traffic logs" className={adminTableClassNames.wrapper}>
+                <Table.ScrollContainer>
+                  <Table.Content sortDescriptor={statsTableSort.sortDescriptor} onSortChange={statsTableSort.setSortDescriptor}>
+                    <TableHeader>
+                      <TableColumn key="date" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Date" sortDirection={sortDirection} />}</TableColumn>
+                      <TableColumn key="upload" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Upload" sortDirection={sortDirection} />}</TableColumn>
+                      <TableColumn key="download" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Download" sortDirection={sortDirection} />}</TableColumn>
+                      <TableColumn key="rate" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Rate" sortDirection={sortDirection} />}</TableColumn>
+                    </TableHeader>
+                    <TableBody items={statsTableSort.sortedItems}>
+                      {item => (
+                        <TableRow key={String(item.id ?? item.record_at)}>
+                          <TableCell>{formatDateTime(item.record_at)}</TableCell>
+                          <TableCell>{formatBytes(item.u || 0)}</TableCell>
+                          <TableCell>{formatBytes(item.d || 0)}</TableCell>
+                          <TableCell>{item.server_rate || 1}</TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table.Content>
+                </Table.ScrollContainer>
+              </Table>
+              <div className="flex justify-center">
+                <AdminPagination
+                  page={statsPage}
+                  total={Math.max(1, Math.ceil(statsTotal / PAGE_SIZE))}
+                  totalItems={statsTotal}
+                  itemsPerPage={PAGE_SIZE}
+                  onChange={setStatsPage}
+                />
+              </div>
+            </>
+          ) : (
+            <div className="rounded-2xl border border-default-200 bg-default-50 px-4 py-6 text-sm text-slate-500">
+              No traffic records found for this user.
+            </div>
+          )}
         </div>
       </AdminDrawer>
 
       <AdminDrawer
         isOpen={ipGeoOpen}
-        onOpenChange={isOpen => !isOpen && setIpGeoOpen(false)}
+        onOpenChange={isOpen => {
+          if (!isOpen) {
+            setIpGeoOpen(false);
+            setIpGeoUser(null);
+            setGeoRecords({});
+            setGeoLoading({});
+            setGeoRefreshing(false);
+            setGeoError(null);
+          }
+        }}
         title={`IP geography for ${ipGeoUser?.email || "user"}`}
         size="xl"
         footer={
@@ -1183,58 +1244,71 @@ export function UserPage() {
         }
       >
         <div className="space-y-4">
-                <div className="flex flex-wrap items-end gap-3">
-                  <ModalField label="Provider" className="w-full max-w-xs">
-                    <AdminSelectField
-                      ariaLabel="Provider"
-                      options={geoProviderOptions}
-                      selectedKey={geoProvider}
-                      onSelectionChange={key => setGeoProvider(String(key || "ipinfo"))}
-                    />
-                  </ModalField>
-                  <Button variant="ghost" onPress={() => void fetchAllGeo()}>
-                    Refresh geo
-                  </Button>
-                </div>
+          <div className="rounded-2xl border border-default-200 bg-default-50 px-4 py-3 text-sm text-slate-600">
+            Inspect recent online and login IP records with geo resolution status.
+          </div>
+          <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-default-200 bg-default-50 px-4 py-4">
+            <ModalField label="Provider" className="w-full max-w-xs">
+              <AdminSelectField
+                ariaLabel="Provider"
+                options={geoProviderOptions}
+                selectedKey={geoProvider}
+                onSelectionChange={key => setGeoProvider(String(key || "ipinfo"))}
+              />
+            </ModalField>
+            <Button variant="ghost" onPress={() => void fetchAllGeo()} isDisabled={!geoProviderOptions.length || geoRefreshing}>
+              Refresh geo
+            </Button>
+          </div>
+          {geoError ? (
+            <div className="rounded-2xl border border-danger-200 bg-danger-50 px-4 py-3 text-sm text-danger-700">
+              {geoError}
+            </div>
+          ) : null}
+          {!hasIpGeoRows ? (
+            <div className="rounded-2xl border border-default-200 bg-default-50 px-4 py-6 text-sm text-slate-500">
+              No recent IP records found for this user.
+            </div>
+          ) : (
+            <Table variant="secondary" aria-label="IP geography" className={adminTableClassNames.wrapper}>
+              <Table.ScrollContainer>
+                <Table.Content sortDescriptor={ipGeoTableSort.sortDescriptor} onSortChange={ipGeoTableSort.setSortDescriptor}>
+                  <TableHeader>
+                    <TableColumn key="ip" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="IP" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="lastSeen" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Last Seen" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="status" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Status" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="country" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Country" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="city" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="City" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="isp" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="ISP" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="organization" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Organization" sortDirection={sortDirection} />}</TableColumn>
+                  </TableHeader>
+                  <TableBody items={ipGeoTableSort.sortedItems}>
+                    {item => {
+                      const geo = geoRecords[item.ip];
+                      const loadingState = geoLoading[item.ip];
+                      const failed = geo?.status === "failed";
 
-          <Table variant="secondary" aria-label="IP geography" className={adminTableClassNames.wrapper}>
-            <Table.ScrollContainer>
-              <Table.Content sortDescriptor={ipGeoTableSort.sortDescriptor} onSortChange={ipGeoTableSort.setSortDescriptor}>
-                <TableHeader>
-                  <TableColumn key="ip" allowsSorting>IP</TableColumn>
-                  <TableColumn key="lastSeen" allowsSorting>Last Seen</TableColumn>
-                  <TableColumn key="status" allowsSorting>Status</TableColumn>
-                  <TableColumn key="country" allowsSorting>Country</TableColumn>
-                  <TableColumn key="city" allowsSorting>City</TableColumn>
-                  <TableColumn key="isp" allowsSorting>ISP</TableColumn>
-                  <TableColumn key="organization" allowsSorting>Organization</TableColumn>
-                </TableHeader>
-                <TableBody items={ipGeoTableSort.sortedItems}>
-                  {item => {
-                    const geo = geoRecords[item.ip];
-                    const loadingState = geoLoading[item.ip];
-                    const failed = geo?.status === "failed";
-
-                    return (
-                      <TableRow key={item.id}>
-                        <TableCell>{item.ip}</TableCell>
-                        <TableCell>{formatDateTime(item.last_seen_at)}</TableCell>
-                        <TableCell>
-                          <Chip variant="soft" color={loadingState ? "default" : failed ? "danger" : "success"}>
-                            {loadingState ? "Loading" : failed ? "Failed" : "Resolved"}
-                          </Chip>
-                        </TableCell>
-                        <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.country || "—"}</TableCell>
-                        <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.city || "—"}</TableCell>
-                        <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.isp || "—"}</TableCell>
-                        <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.organization || "—"}</TableCell>
-                      </TableRow>
-                    );
-                  }}
-                </TableBody>
-              </Table.Content>
-            </Table.ScrollContainer>
-          </Table>
+                      return (
+                        <TableRow key={item.id}>
+                          <TableCell>{item.ip}</TableCell>
+                          <TableCell>{formatDateTime(item.last_seen_at)}</TableCell>
+                          <TableCell>
+                            <Chip variant="soft" color={loadingState ? "default" : failed ? "danger" : "success"}>
+                              {loadingState ? "Loading" : failed ? "Failed" : "Resolved"}
+                            </Chip>
+                          </TableCell>
+                          <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.country || "—"}</TableCell>
+                          <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.city || "—"}</TableCell>
+                          <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.isp || "—"}</TableCell>
+                          <TableCell>{loadingState ? "Loading..." : failed ? "Failed" : geo?.organization || "—"}</TableCell>
+                        </TableRow>
+                      );
+                    }}
+                  </TableBody>
+                </Table.Content>
+              </Table.ScrollContainer>
+            </Table>
+          )}
         </div>
       </AdminDrawer>
     </PageFrame>

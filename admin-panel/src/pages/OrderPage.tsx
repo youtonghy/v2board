@@ -405,39 +405,39 @@ export function OrderPage() {
           </Button>
         }
       >
-        <div className="grid gap-5 md:grid-cols-2">
-            <div className="space-y-3 rounded-2xl border border-default-200 bg-default-50 p-4">
-              <p className="text-sm font-semibold text-slate-900">Overview</p>
-              <p>Trade No: {selected?.trade_no || "—"}</p>
-              <p>Plan: {selected?.plan_name || "—"}</p>
-              <p>Total: {formatMoney(((selected?.total_amount || 0) as number) / 100)}</p>
-              <p>Created: {formatDateTime(selected?.created_at || null)}</p>
+        <div className="space-y-5">
+          <div className="space-y-3 rounded-2xl border border-default-200 bg-default-50 p-4">
+            <p className="text-sm font-semibold text-slate-900">Overview</p>
+            <p>Trade No: {selected?.trade_no || "—"}</p>
+            <p>Plan: {selected?.plan_name || "—"}</p>
+            <p>Total: {formatMoney(((selected?.total_amount || 0) as number) / 100)}</p>
+            <p>Created: {formatDateTime(selected?.created_at || null)}</p>
+          </div>
+          <div className="space-y-3 rounded-2xl border border-default-200 bg-default-50 p-4">
+            <p className="text-sm font-semibold text-slate-900">Commission</p>
+            <p>Status: {COMMISSION_STATUS[selected?.commission_status || 0] || "Pending"}</p>
+            <p>Balance: {formatMoney(((selected?.commission_balance || 0) as number) / 100)}</p>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant="ghost" onPress={() => void runAction("order/update", { trade_no: selected?.trade_no, commission_status: 1 })} isDisabled={submitting}>
+                Settle
+              </Button>
+              <Button size="sm" variant="ghost" onPress={() => void runAction("order/update", { trade_no: selected?.trade_no, commission_status: 3 })} isDisabled={submitting}>
+                Reject
+              </Button>
             </div>
-            <div className="space-y-3 rounded-2xl border border-default-200 bg-default-50 p-4">
-              <p className="text-sm font-semibold text-slate-900">Commission</p>
-              <p>Status: {COMMISSION_STATUS[selected?.commission_status || 0] || "Pending"}</p>
-              <p>Balance: {formatMoney(((selected?.commission_balance || 0) as number) / 100)}</p>
-              <div className="flex gap-2">
-                <Button size="sm" variant="ghost" onPress={() => void runAction("order/update", { trade_no: selected?.trade_no, commission_status: 1 })} isDisabled={submitting}>
-                  Settle
-                </Button>
-                <Button size="sm" variant="ghost" onPress={() => void runAction("order/update", { trade_no: selected?.trade_no, commission_status: 3 })} isDisabled={submitting}>
-                  Reject
-                </Button>
-              </div>
-            </div>
-            <div className="md:col-span-2 rounded-2xl border border-default-200 bg-default-50 p-4">
-              <p className="mb-3 text-sm font-semibold text-slate-900">Commission Logs</p>
-              <pre className="overflow-x-auto whitespace-pre-wrap text-xs text-slate-600">
-                {JSON.stringify(asArray(selected?.commission_log), null, 2)}
-              </pre>
-            </div>
-            <div className="md:col-span-2 rounded-2xl border border-default-200 bg-default-50 p-4">
-              <p className="mb-3 text-sm font-semibold text-slate-900">Surplus Orders</p>
-              <pre className="overflow-x-auto whitespace-pre-wrap text-xs text-slate-600">
-                {JSON.stringify(asArray(selected?.surplus_orders), null, 2)}
-              </pre>
-            </div>
+          </div>
+          <div className="rounded-2xl border border-default-200 bg-default-50 p-4">
+            <p className="mb-3 text-sm font-semibold text-slate-900">Commission Logs</p>
+            <pre className="overflow-x-auto whitespace-pre-wrap text-xs text-slate-600">
+              {JSON.stringify(asArray(selected?.commission_log), null, 2)}
+            </pre>
+          </div>
+          <div className="rounded-2xl border border-default-200 bg-default-50 p-4">
+            <p className="mb-3 text-sm font-semibold text-slate-900">Surplus Orders</p>
+            <pre className="overflow-x-auto whitespace-pre-wrap text-xs text-slate-600">
+              {JSON.stringify(asArray(selected?.surplus_orders), null, 2)}
+            </pre>
+          </div>
         </div>
       </AdminDrawer>
 
