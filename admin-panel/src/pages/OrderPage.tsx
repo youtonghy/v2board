@@ -24,7 +24,7 @@ import { AdminFilterActionGroup } from "../components/AdminFilterActionGroup";
 import { AdminDrawer } from "../components/AdminDrawer";
 import { AdminPagination } from "../components/AdminPagination";
 import { AdminSelectField } from "../components/AdminSelectField";
-import { AdminSortableColumnHeader, useAdminTableSort } from "../components/AdminTable";
+import { useAdminTableSort } from "../components/AdminTable";
 import { AdminTextField } from "../components/AdminTextField";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { ModalField } from "../components/ModalField";
@@ -329,12 +329,12 @@ export function OrderPage() {
                 <Table.ScrollContainer>
                   <Table.Content sortDescriptor={sortDescriptor} onSortChange={setSortDescriptor}>
                   <TableHeader>
-                    <TableColumn key="trade" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Trade" sortDirection={sortDirection} />}</TableColumn>
-                    <TableColumn key="plan" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Plan" sortDirection={sortDirection} />}</TableColumn>
-                    <TableColumn key="total" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Total" sortDirection={sortDirection} />}</TableColumn>
-                    <TableColumn key="status" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Status" sortDirection={sortDirection} />}</TableColumn>
-                    <TableColumn key="commission" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Commission" sortDirection={sortDirection} />}</TableColumn>
-                    <TableColumn key="created" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Created" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="trade" allowsSorting>Trade</TableColumn>
+                    <TableColumn key="plan" allowsSorting>Plan</TableColumn>
+                    <TableColumn key="total" allowsSorting>Total</TableColumn>
+                    <TableColumn key="status" allowsSorting>Status</TableColumn>
+                    <TableColumn key="commission" allowsSorting>Commission</TableColumn>
+                    <TableColumn key="created" allowsSorting>Created</TableColumn>
                     <TableColumn>Actions</TableColumn>
                   </TableHeader>
                   <TableBody items={sortedItems}>

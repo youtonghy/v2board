@@ -38,7 +38,7 @@ import { AdminDrawer } from "../components/AdminDrawer";
 import { DangerConfirmButton } from "../components/DangerConfirmButton";
 import { AdminPagination } from "../components/AdminPagination";
 import { AdminSelectField } from "../components/AdminSelectField";
-import { AdminSortableColumnHeader, useAdminTableSort } from "../components/AdminTable";
+import { useAdminTableSort } from "../components/AdminTable";
 import { AdminTextField } from "../components/AdminTextField";
 import { ModalField } from "../components/ModalField";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
@@ -761,12 +761,12 @@ export function UserPage() {
                 <Table.ScrollContainer>
                   <Table.Content sortDescriptor={sortDescriptor} onSortChange={setSortDescriptor}>
                   <TableHeader>
-                    <TableColumn key="email" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Email" sortDirection={sortDirection} />}</TableColumn>
-                    <TableColumn key="plan" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Plan" sortDirection={sortDirection} />}</TableColumn>
-                    <TableColumn key="balance" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Balance" sortDirection={sortDirection} />}</TableColumn>
-                    <TableColumn key="usage" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Usage" sortDirection={sortDirection} />}</TableColumn>
-                    <TableColumn key="expires" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Expires" sortDirection={sortDirection} />}</TableColumn>
-                    <TableColumn key="status" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Status" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="email" allowsSorting>Email</TableColumn>
+                    <TableColumn key="plan" allowsSorting>Plan</TableColumn>
+                    <TableColumn key="balance" allowsSorting>Balance</TableColumn>
+                    <TableColumn key="usage" allowsSorting>Usage</TableColumn>
+                    <TableColumn key="expires" allowsSorting>Expires</TableColumn>
+                    <TableColumn key="status" allowsSorting>Status</TableColumn>
                     <TableColumn>Actions</TableColumn>
                   </TableHeader>
                   <TableBody items={sortedItems}>
@@ -1141,10 +1141,10 @@ export function UserPage() {
             <Table.ScrollContainer>
               <Table.Content sortDescriptor={statsTableSort.sortDescriptor} onSortChange={statsTableSort.setSortDescriptor}>
                 <TableHeader>
-                  <TableColumn key="date" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Date" sortDirection={sortDirection} />}</TableColumn>
-                  <TableColumn key="upload" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Upload" sortDirection={sortDirection} />}</TableColumn>
-                  <TableColumn key="download" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Download" sortDirection={sortDirection} />}</TableColumn>
-                  <TableColumn key="rate" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Rate" sortDirection={sortDirection} />}</TableColumn>
+                  <TableColumn key="date" allowsSorting>Date</TableColumn>
+                  <TableColumn key="upload" allowsSorting>Upload</TableColumn>
+                  <TableColumn key="download" allowsSorting>Download</TableColumn>
+                  <TableColumn key="rate" allowsSorting>Rate</TableColumn>
                 </TableHeader>
                 <TableBody items={statsTableSort.sortedItems}>
                   {item => (
@@ -1201,13 +1201,13 @@ export function UserPage() {
             <Table.ScrollContainer>
               <Table.Content sortDescriptor={ipGeoTableSort.sortDescriptor} onSortChange={ipGeoTableSort.setSortDescriptor}>
                 <TableHeader>
-                  <TableColumn key="ip" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="IP" sortDirection={sortDirection} />}</TableColumn>
-                  <TableColumn key="lastSeen" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Last Seen" sortDirection={sortDirection} />}</TableColumn>
-                  <TableColumn key="status" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Status" sortDirection={sortDirection} />}</TableColumn>
-                  <TableColumn key="country" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Country" sortDirection={sortDirection} />}</TableColumn>
-                  <TableColumn key="city" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="City" sortDirection={sortDirection} />}</TableColumn>
-                  <TableColumn key="isp" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="ISP" sortDirection={sortDirection} />}</TableColumn>
-                  <TableColumn key="organization" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Organization" sortDirection={sortDirection} />}</TableColumn>
+                  <TableColumn key="ip" allowsSorting>IP</TableColumn>
+                  <TableColumn key="lastSeen" allowsSorting>Last Seen</TableColumn>
+                  <TableColumn key="status" allowsSorting>Status</TableColumn>
+                  <TableColumn key="country" allowsSorting>Country</TableColumn>
+                  <TableColumn key="city" allowsSorting>City</TableColumn>
+                  <TableColumn key="isp" allowsSorting>ISP</TableColumn>
+                  <TableColumn key="organization" allowsSorting>Organization</TableColumn>
                 </TableHeader>
                 <TableBody items={ipGeoTableSort.sortedItems}>
                   {item => {

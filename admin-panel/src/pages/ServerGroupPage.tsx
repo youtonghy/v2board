@@ -17,7 +17,7 @@ import { AdminTextField } from "../components/AdminTextField";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { DangerConfirmButton } from "../components/DangerConfirmButton";
-import { AdminSortableColumnHeader, useAdminTableSort } from "../components/AdminTable";
+import { useAdminTableSort } from "../components/AdminTable";
 import { asArray } from "../lib/admin-format";
 import {
   adminCardClassName,
@@ -159,10 +159,10 @@ export function ServerGroupPage() {
               <Table.ScrollContainer>
               <Table.Content sortDescriptor={sortDescriptor} onSortChange={setSortDescriptor}>
                 <TableHeader>
-                  <TableColumn key="id" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="ID" sortDirection={sortDirection} />}</TableColumn>
-                  <TableColumn key="name" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Name" sortDirection={sortDirection} />}</TableColumn>
-                  <TableColumn key="users" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Users" sortDirection={sortDirection} />}</TableColumn>
-                  <TableColumn key="servers" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Servers" sortDirection={sortDirection} />}</TableColumn>
+                  <TableColumn key="id" allowsSorting>ID</TableColumn>
+                  <TableColumn key="name" allowsSorting>Name</TableColumn>
+                  <TableColumn key="users" allowsSorting>Users</TableColumn>
+                  <TableColumn key="servers" allowsSorting>Servers</TableColumn>
                   <TableColumn>Actions</TableColumn>
                 </TableHeader>
                 <TableBody items={sortedItems}>

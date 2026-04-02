@@ -17,7 +17,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AdminDrawer } from "../components/AdminDrawer";
 import { AdminTextField } from "../components/AdminTextField";
 import { DangerConfirmButton } from "../components/DangerConfirmButton";
-import { AdminSortableColumnHeader, useAdminTableSort } from "../components/AdminTable";
+import { useAdminTableSort } from "../components/AdminTable";
 import { adminRequest } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import {
@@ -177,11 +177,11 @@ export function NoticePage() {
             <Table.ScrollContainer>
             <Table.Content sortDescriptor={sortDescriptor} onSortChange={setSortDescriptor}>
               <TableHeader>
-                <TableColumn key="id" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="ID" sortDirection={sortDirection} />}</TableColumn>
-                <TableColumn key="visible" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Visible" sortDirection={sortDirection} />}</TableColumn>
-                <TableColumn key="title" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Title" sortDirection={sortDirection} />}</TableColumn>
-                <TableColumn key="tags" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Tags" sortDirection={sortDirection} />}</TableColumn>
-                <TableColumn key="created" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Created" sortDirection={sortDirection} />}</TableColumn>
+                <TableColumn key="id" allowsSorting>ID</TableColumn>
+                <TableColumn key="visible" allowsSorting>Visible</TableColumn>
+                <TableColumn key="title" allowsSorting>Title</TableColumn>
+                <TableColumn key="tags" allowsSorting>Tags</TableColumn>
+                <TableColumn key="created" allowsSorting>Created</TableColumn>
                 <TableColumn>Actions</TableColumn>
               </TableHeader>
               <TableBody items={sortedItems}>

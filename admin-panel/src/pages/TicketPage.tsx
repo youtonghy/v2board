@@ -20,7 +20,7 @@ import { AdminFilterAccordion } from "../components/AdminFilterAccordion";
 import { AdminFilterActionGroup } from "../components/AdminFilterActionGroup";
 import { AdminPagination } from "../components/AdminPagination";
 import { AdminSelectField } from "../components/AdminSelectField";
-import { AdminSortableColumnHeader, useAdminTableSort } from "../components/AdminTable";
+import { useAdminTableSort } from "../components/AdminTable";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { asArray, formatDateTime } from "../lib/admin-format";
@@ -213,11 +213,11 @@ export function TicketPage() {
                 <Table.ScrollContainer>
                   <Table.Content sortDescriptor={sortDescriptor} onSortChange={setSortDescriptor}>
                   <TableHeader>
-                    <TableColumn key="id" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="ID" sortDirection={sortDirection} />}</TableColumn>
-                    <TableColumn key="subject" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Subject" sortDirection={sortDirection} />}</TableColumn>
-                    <TableColumn key="priority" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Priority" sortDirection={sortDirection} />}</TableColumn>
-                    <TableColumn key="status" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Status" sortDirection={sortDirection} />}</TableColumn>
-                    <TableColumn key="updated" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Updated" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="id" allowsSorting>ID</TableColumn>
+                    <TableColumn key="subject" allowsSorting>Subject</TableColumn>
+                    <TableColumn key="priority" allowsSorting>Priority</TableColumn>
+                    <TableColumn key="status" allowsSorting>Status</TableColumn>
+                    <TableColumn key="updated" allowsSorting>Updated</TableColumn>
                     <TableColumn>Actions</TableColumn>
                   </TableHeader>
                   <TableBody items={sortedItems}>

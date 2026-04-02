@@ -21,7 +21,7 @@ import { DangerConfirmButton } from "../components/DangerConfirmButton";
 import { AdminMultiSelectField } from "../components/AdminMultiSelectField";
 import { AdminPagination } from "../components/AdminPagination";
 import { AdminSelectField } from "../components/AdminSelectField";
-import { AdminSortableColumnHeader, useAdminTableSort } from "../components/AdminTable";
+import { useAdminTableSort } from "../components/AdminTable";
 import { AdminTextField } from "../components/AdminTextField";
 import { adminRequest } from "../lib/api";
 import { COUPON_TYPE_OPTIONS, PERIOD_OPTIONS, fromDatetimeInput, toDatetimeInput } from "../lib/admin-constants";
@@ -267,12 +267,12 @@ export function CouponPage() {
                 <Table.ScrollContainer>
                 <Table.Content sortDescriptor={sortDescriptor} onSortChange={setSortDescriptor}>
                   <TableHeader>
-                    <TableColumn key="id" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="ID" sortDirection={sortDirection} />}</TableColumn>
-                    <TableColumn key="enabled" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Enabled" sortDirection={sortDirection} />}</TableColumn>
-                    <TableColumn key="name" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Name" sortDirection={sortDirection} />}</TableColumn>
-                    <TableColumn key="type" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Type" sortDirection={sortDirection} />}</TableColumn>
-                    <TableColumn key="code" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Code" sortDirection={sortDirection} />}</TableColumn>
-                    <TableColumn key="limit" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Limit" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="id" allowsSorting>ID</TableColumn>
+                    <TableColumn key="enabled" allowsSorting>Enabled</TableColumn>
+                    <TableColumn key="name" allowsSorting>Name</TableColumn>
+                    <TableColumn key="type" allowsSorting>Type</TableColumn>
+                    <TableColumn key="code" allowsSorting>Code</TableColumn>
+                    <TableColumn key="limit" allowsSorting>Limit</TableColumn>
                     <TableColumn>Actions</TableColumn>
                   </TableHeader>
                   <TableBody items={sortedItems}>

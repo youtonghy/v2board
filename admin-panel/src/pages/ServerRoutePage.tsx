@@ -14,7 +14,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { AdminDrawer } from "../components/AdminDrawer";
 import { AdminSelectField } from "../components/AdminSelectField";
-import { AdminSortableColumnHeader, useAdminTableSort } from "../components/AdminTable";
+import { useAdminTableSort } from "../components/AdminTable";
 import { AdminTextField } from "../components/AdminTextField";
 import { DangerConfirmButton } from "../components/DangerConfirmButton";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
@@ -199,10 +199,10 @@ export function ServerRoutePage() {
               <Table.ScrollContainer>
               <Table.Content sortDescriptor={sortDescriptor} onSortChange={setSortDescriptor}>
                 <TableHeader>
-                  <TableColumn key="remarks" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Remarks" sortDirection={sortDirection} />}</TableColumn>
-                  <TableColumn key="action" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Action" sortDirection={sortDirection} />}</TableColumn>
-                  <TableColumn key="actionValue" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Action Value" sortDirection={sortDirection} />}</TableColumn>
-                  <TableColumn key="match" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Match" sortDirection={sortDirection} />}</TableColumn>
+                  <TableColumn key="remarks" allowsSorting>Remarks</TableColumn>
+                  <TableColumn key="action" allowsSorting>Action</TableColumn>
+                  <TableColumn key="actionValue" allowsSorting>Action Value</TableColumn>
+                  <TableColumn key="match" allowsSorting>Match</TableColumn>
                   <TableColumn>Actions</TableColumn>
                 </TableHeader>
                 <TableBody items={sortedItems}>

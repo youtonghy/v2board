@@ -24,7 +24,7 @@ import { AdminFilterActionGroup } from "../components/AdminFilterActionGroup";
 import { AdminDrawer } from "../components/AdminDrawer";
 import { AdminPagination } from "../components/AdminPagination";
 import { AdminSelectField } from "../components/AdminSelectField";
-import { AdminSortableColumnHeader, useAdminTableSort } from "../components/AdminTable";
+import { useAdminTableSort } from "../components/AdminTable";
 import { AdminTextField } from "../components/AdminTextField";
 import { ModalField } from "../components/ModalField";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
@@ -297,11 +297,11 @@ export function InviteLinkPage() {
                 <Table.ScrollContainer>
                   <Table.Content sortDescriptor={sortDescriptor} onSortChange={setSortDescriptor}>
                   <TableHeader>
-                    <TableColumn key="owner" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Owner" sortDirection={sortDirection} />}</TableColumn>
-                    <TableColumn key="invitee" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Invitee" sortDirection={sortDirection} />}</TableColumn>
-                    <TableColumn key="usage" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Usage" sortDirection={sortDirection} />}</TableColumn>
-                    <TableColumn key="expires" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Expires" sortDirection={sortDirection} />}</TableColumn>
-                    <TableColumn key="status" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Status" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="owner" allowsSorting>Owner</TableColumn>
+                    <TableColumn key="invitee" allowsSorting>Invitee</TableColumn>
+                    <TableColumn key="usage" allowsSorting>Usage</TableColumn>
+                    <TableColumn key="expires" allowsSorting>Expires</TableColumn>
+                    <TableColumn key="status" allowsSorting>Status</TableColumn>
                     <TableColumn>Actions</TableColumn>
                   </TableHeader>
                   <TableBody items={sortedItems}>

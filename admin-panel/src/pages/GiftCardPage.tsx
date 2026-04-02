@@ -19,7 +19,7 @@ import { AdminDrawer } from "../components/AdminDrawer";
 import { DangerConfirmButton } from "../components/DangerConfirmButton";
 import { AdminPagination } from "../components/AdminPagination";
 import { AdminSelectField } from "../components/AdminSelectField";
-import { AdminSortableColumnHeader, useAdminTableSort } from "../components/AdminTable";
+import { useAdminTableSort } from "../components/AdminTable";
 import { AdminTextField } from "../components/AdminTextField";
 import { adminRequest } from "../lib/api";
 import { GIFTCARD_TYPE_OPTIONS, fromDatetimeInput, toDatetimeInput } from "../lib/admin-constants";
@@ -214,11 +214,11 @@ export function GiftCardPage() {
                 <Table.ScrollContainer>
                 <Table.Content sortDescriptor={sortDescriptor} onSortChange={setSortDescriptor}>
                   <TableHeader>
-                    <TableColumn key="id" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="ID" sortDirection={sortDirection} />}</TableColumn>
-                    <TableColumn key="name" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Name" sortDirection={sortDirection} />}</TableColumn>
-                    <TableColumn key="type" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Type" sortDirection={sortDirection} />}</TableColumn>
-                    <TableColumn key="value" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Value" sortDirection={sortDirection} />}</TableColumn>
-                    <TableColumn key="code" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Code" sortDirection={sortDirection} />}</TableColumn>
+                    <TableColumn key="id" allowsSorting>ID</TableColumn>
+                    <TableColumn key="name" allowsSorting>Name</TableColumn>
+                    <TableColumn key="type" allowsSorting>Type</TableColumn>
+                    <TableColumn key="value" allowsSorting>Value</TableColumn>
+                    <TableColumn key="code" allowsSorting>Code</TableColumn>
                     <TableColumn>Actions</TableColumn>
                   </TableHeader>
                   <TableBody items={sortedItems}>

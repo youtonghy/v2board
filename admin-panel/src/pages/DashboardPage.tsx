@@ -33,7 +33,7 @@ import { adminRequest, getEnvelopeError } from "../lib/api";
 import type { ApiEnvelope } from "../types";
 import { AdminPagination } from "../components/AdminPagination";
 import { AdminDrawer } from "../components/AdminDrawer";
-import { AdminSortableColumnHeader, useAdminTableSort } from "../components/AdminTable";
+import { useAdminTableSort } from "../components/AdminTable";
 import { PageFrame } from "../components/PageFrame";
 import { asArray, asRecord, formatBytes, formatDateTime, formatMoney } from "../lib/admin-format";
 import { adminTableClassNames } from "../components/AdminContent";
@@ -604,10 +604,10 @@ export function DashboardPage() {
                   <Table.ScrollContainer>
                   <Table.Content sortDescriptor={detailTableSort.sortDescriptor} onSortChange={detailTableSort.setSortDescriptor}>
                     <TableHeader>
-                      <TableColumn key="date" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Date" sortDirection={sortDirection} />}</TableColumn>
-                      <TableColumn key="upload" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Upload" sortDirection={sortDirection} />}</TableColumn>
-                      <TableColumn key="download" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Download" sortDirection={sortDirection} />}</TableColumn>
-                      <TableColumn key="rate" allowsSorting>{({ sortDirection }) => <AdminSortableColumnHeader label="Rate" sortDirection={sortDirection} />}</TableColumn>
+                      <TableColumn key="date" allowsSorting>Date</TableColumn>
+                      <TableColumn key="upload" allowsSorting>Upload</TableColumn>
+                      <TableColumn key="download" allowsSorting>Download</TableColumn>
+                      <TableColumn key="rate" allowsSorting>Rate</TableColumn>
                     </TableHeader>
                     <TableBody items={detailTableSort.sortedItems}>
                       {item => (
