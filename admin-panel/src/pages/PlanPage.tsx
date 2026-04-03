@@ -17,6 +17,7 @@ import {
   TableHeader,
   toast,
 } from "@heroui/react";
+import { PencilToLine, TrashBin } from "@gravity-ui/icons";
 import { useEffect, useMemo, useState } from "react";
 import { AdminDrawer } from "../components/AdminDrawer";
 import { AdminTextField } from "../components/AdminTextField";
@@ -364,24 +365,28 @@ export function PlanPage() {
                             <div className="flex justify-end gap-2">
                               <Button
                                 size="sm"
-                                variant="ghost"
+                                variant="primary"
+                                isIconOnly
+                                aria-label={`Edit plan ${item.name || item.id || ""}`}
                                 onPress={() => {
                                   setSelected(normalizePlan(item));
                                   setOpen(true);
                                 }}
                                 isDisabled={sorting}
                               >
-                                Edit
+                                <PencilToLine width={16} height={16} aria-hidden="true" />
                               </Button>
                               <DangerConfirmButton
                                 size="sm"
                                 isDisabled={sorting}
+                                isIconOnly
+                                aria-label={`Delete plan ${item.name || item.id || ""}`}
                                 title={`Delete plan ${item.name || item.id || ""}?`}
                                 description="This will permanently delete the plan."
                                 confirmLabel="Delete plan"
                                 onConfirm={() => void dropPlan(item)}
                               >
-                                Delete
+                                <TrashBin width={16} height={16} aria-hidden="true" />
                               </DangerConfirmButton>
                             </div>
                           </TableCell>

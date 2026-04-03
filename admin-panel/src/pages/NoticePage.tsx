@@ -13,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@heroui/react";
+import { PencilToLine, TrashBin } from "@gravity-ui/icons";
 import { useEffect, useMemo, useState } from "react";
 import { AdminDrawer } from "../components/AdminDrawer";
 import { AdminTextField } from "../components/AdminTextField";
@@ -208,22 +209,26 @@ export function NoticePage() {
                       <div className="flex justify-end gap-2">
                         <Button
                           size="sm"
-                          variant="ghost"
+                          variant="primary"
+                          isIconOnly
+                          aria-label={`Edit notice ${item.title || item.id || ""}`}
                           onPress={() => {
                             setSelected(normalizeNotice(item));
                             setOpen(true);
                           }}
                         >
-                          Edit
+                          <PencilToLine width={16} height={16} aria-hidden="true" />
                         </Button>
                         <DangerConfirmButton
                           size="sm"
+                          isIconOnly
+                          aria-label={`Delete notice ${item.title || item.id || ""}`}
                           title={`Delete notice ${item.title || item.id || ""}?`}
                           description="This will permanently remove the notice."
                           confirmLabel="Delete notice"
                           onConfirm={() => void dropNotice(item)}
                         >
-                          Delete
+                          <TrashBin width={16} height={16} aria-hidden="true" />
                         </DangerConfirmButton>
                       </div>
                     </TableCell>

@@ -19,8 +19,9 @@ import {
   TableRow,
   toast,
 } from "@heroui/react";
-import { QrCode } from "@gravity-ui/icons";
+import { Check, Copy, QrCode, Xmark } from "@gravity-ui/icons";
 import { useEffect, useMemo, useState } from "react";
+import { DangerConfirmButton } from "../components/DangerConfirmButton";
 import { QRCodeSVG } from "qrcode.react";
 import { AdminFilterModal } from "../components/AdminFilterModal";
 import { AdminDrawer } from "../components/AdminDrawer";
@@ -335,17 +336,39 @@ export function InviteLinkPage() {
                         <TableCell className="text-right">
                           <div className="flex flex-col gap-3">
                             <div className="flex flex-wrap justify-end gap-2">
-                              <Button size="sm" variant="ghost" onPress={() => void copyInviteLink(item.link_url)}>
-                                Copy Link
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                isIconOnly
+                                aria-label={`Copy invite link for ${item.user_email || item.user_id || "user"}`}
+                                onPress={() => void copyInviteLink(item.link_url)}
+                              >
+                                <Copy width={16} height={16} aria-hidden="true" />
                               </Button>
                               {item.status === 3 ? (
-                                <Button size="sm" variant="ghost" onPress={() => void updateStatus(item, 0)} isDisabled={submitting}>
-                                  Enable
+                                <Button
+                                  size="sm"
+                                  variant="primary"
+                                  isIconOnly
+                                  aria-label={`Enable invite link for ${item.user_email || item.user_id || "user"}`}
+                                  onPress={() => void updateStatus(item, 0)}
+                                  isDisabled={submitting}
+                                >
+                                  <Check width={16} height={16} aria-hidden="true" />
                                 </Button>
                               ) : (
-                                <Button size="sm" variant="ghost" onPress={() => void updateStatus(item, 3)} isDisabled={submitting}>
-                                  Disable
-                                </Button>
+                                <DangerConfirmButton
+                                  size="sm"
+                                  isIconOnly
+                                  aria-label={`Disable invite link for ${item.user_email || item.user_id || "user"}`}
+                                  title={`Disable invite link for ${item.user_email || item.user_id || "user"}?`}
+                                  description={`This will disable the invite link for ${item.user_email || item.user_id || "this user"}.`}
+                                  confirmLabel="Disable link"
+                                  isDisabled={submitting}
+                                  onConfirm={() => void updateStatus(item, 3)}
+                                >
+                                  <Xmark width={16} height={16} aria-hidden="true" />
+                                </DangerConfirmButton>
                               )}
                             </div>
 

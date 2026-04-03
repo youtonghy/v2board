@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@heroui/react";
+import { Link } from "@gravity-ui/icons";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AdminFilterModal } from "../components/AdminFilterModal";
@@ -232,8 +233,14 @@ export function TicketPage() {
                         </TableCell>
                         <TableCell>{formatDateTime(item.updated_at || item.created_at || null)}</TableCell>
                         <TableCell className="text-right">
-                          <Button size="sm" variant="ghost" onPress={() => navigate(`/new/ticket/${item.id}`)}>
-                            Open thread
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            isIconOnly
+                            aria-label={`Open thread for ticket ${item.id}`}
+                            onPress={() => navigate(`/new/ticket/${item.id}`)}
+                          >
+                            <Link width={16} height={16} aria-hidden="true" />
                           </Button>
                         </TableCell>
                       </TableRow>

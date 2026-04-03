@@ -16,6 +16,7 @@ import {
   TableColumn,
   TableHeader,
 } from "@heroui/react";
+import { PencilToLine, TrashBin } from "@gravity-ui/icons";
 import { useEffect, useMemo, useState } from "react";
 import { AdminDrawer } from "../../components/AdminDrawer";
 import { AdminTextField } from "../../components/AdminTextField";
@@ -335,7 +336,9 @@ export function PaymentConfigPage() {
                             <div className="flex justify-end gap-2">
                               <Button
                                 size="sm"
-                                variant="ghost"
+                                 variant="primary"
+                                 isIconOnly
+                                 aria-label={`Edit payment ${String(item.name || item.id || "")}`}
                                 onPress={() => {
                                   setSelected(normalizePaymentRecord(item));
                                   setDynamicForm({});
@@ -344,17 +347,19 @@ export function PaymentConfigPage() {
                                 }}
                                 isDisabled={sorting}
                               >
-                                Edit
+                                 <PencilToLine width={16} height={16} aria-hidden="true" />
                               </Button>
                               <DangerConfirmButton
                                 size="sm"
                                 isDisabled={sorting}
+                                isIconOnly
+                                aria-label={`Delete payment config ${String(item.name || item.id || "")}`}
                                 title={`Delete payment config ${item.name || item.id || ""}?`}
                                 description="This will permanently remove the payment configuration."
                                 confirmLabel="Delete config"
                                 onConfirm={() => void dropPayment(item)}
                               >
-                                Delete
+                                 <TrashBin width={16} height={16} aria-hidden="true" />
                               </DangerConfirmButton>
                             </div>
                           </TableCell>

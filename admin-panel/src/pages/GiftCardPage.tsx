@@ -13,6 +13,7 @@ import {
   TableRow,
   toast,
 } from "@heroui/react";
+import { PencilToLine, TrashBin } from "@gravity-ui/icons";
 import { useEffect, useMemo, useState } from "react";
 import { AdminDatePickerField } from "../components/AdminDatePickerField";
 import { AdminDrawer } from "../components/AdminDrawer";
@@ -236,22 +237,26 @@ export function GiftCardPage() {
                           <div className="flex justify-end gap-2">
                             <Button
                               size="sm"
-                              variant="ghost"
+                              variant="primary"
+                              isIconOnly
+                              aria-label={`Edit gift card ${item.name || item.code || item.id || ""}`}
                               onPress={() => {
                                 setSelected(normalizeGiftCard(item));
                                 setOpen(true);
                               }}
                             >
-                              Edit
+                              <PencilToLine width={16} height={16} aria-hidden="true" />
                             </Button>
                             <DangerConfirmButton
                               size="sm"
+                              isIconOnly
+                              aria-label={`Delete gift card ${item.name || item.code || item.id || ""}`}
                               title={`Delete gift card ${item.name || item.code || item.id || ""}?`}
                               description="This will permanently remove the gift card."
                               confirmLabel="Delete gift card"
                               onConfirm={() => void dropGiftCard(item)}
                             >
-                              Delete
+                              <TrashBin width={16} height={16} aria-hidden="true" />
                             </DangerConfirmButton>
                           </div>
                         </TableCell>

@@ -15,6 +15,7 @@ import {
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { asArray, formatDateTime } from "../lib/admin-format";
+import { PencilToLine, TrashBin } from "@gravity-ui/icons";
 import {
   adminCardClassName,
   adminSectionBodyClassName,
@@ -296,19 +297,29 @@ export function KnowledgePage() {
                           </TableCell>
                           <TableCell className={adminTableActionCellClassName}>
                             <div className="flex justify-end gap-2">
-                              <Button size="sm" variant="ghost" onPress={() => void openEditor(item)} isDisabled={submitting || sorting}>
-                                Edit
+                              <Button
+                                size="sm"
+                                variant="primary"
+                                isIconOnly
+                                aria-label={`Edit article ${item.title}`}
+                                onPress={() => void openEditor(item)}
+                                isDisabled={submitting || sorting}
+                              >
+                                <PencilToLine width={16} height={16} aria-hidden="true" />
                               </Button>
-                                <DangerConfirmButton
-                                  size="sm"
-                                  isDisabled={sorting}
-                                  title={`Delete article ${item.title}?`}
-                                  description="This will permanently remove the knowledge article."
-                                  confirmLabel="Delete article"
-                                  onConfirm={() => void runAction("knowledge/drop", { id: item.id })}
-                                >
-                                  Delete
-                                </DangerConfirmButton>
+
+                              <DangerConfirmButton
+                                size="sm"
+                                isDisabled={sorting}
+                                isIconOnly
+                                aria-label={`Delete article ${item.title}`}
+                                title={`Delete article ${item.title}?`}
+                                description="This will permanently remove the knowledge article."
+                                confirmLabel="Delete article"
+                                onConfirm={() => void runAction("knowledge/drop", { id: item.id })}
+                              >
+                                <TrashBin width={16} height={16} aria-hidden="true" />
+                              </DangerConfirmButton>
                             </div>
                           </TableCell>
                         </SortableTableRow>

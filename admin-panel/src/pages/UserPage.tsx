@@ -799,7 +799,7 @@ export function UserPage() {
                               <Tooltip.Trigger>
                                 <Button
                                   size="sm"
-                                  variant="ghost"
+                                  variant="primary"
                                   isIconOnly
                                  
                                   aria-label={`Edit ${item.email}`}

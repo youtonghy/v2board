@@ -18,8 +18,10 @@ import {
   SearchField,
   TableRow,
 } from "@heroui/react";
+import { Check, Eye, Xmark } from "@gravity-ui/icons";
 import { useEffect, useMemo, useState } from "react";
 import { AdminDrawer } from "../components/AdminDrawer";
+import { DangerConfirmButton } from "../components/DangerConfirmButton";
 import { AdminFilterModal } from "../components/AdminFilterModal";
 import { AdminPagination } from "../components/AdminPagination";
 import { AdminSelectField } from "../components/AdminSelectField";
@@ -349,17 +351,40 @@ export function OrderPage() {
                         <TableCell>{formatDateTime(item.created_at || null)}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <Button size="sm" variant="ghost" onPress={() => void openDetail(item)} isDisabled={submitting}>
-                              Details
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              isIconOnly
+                              aria-label={`View order ${item.trade_no}`}
+                              onPress={() => void openDetail(item)}
+                              isDisabled={submitting}
+                            >
+                              <Eye width={16} height={16} aria-hidden="true" />
                             </Button>
                             {item.status === 0 ? (
                               <>
-                                <Button size="sm" variant="ghost" onPress={() => void runAction("order/paid", { trade_no: item.trade_no })} isDisabled={submitting}>
-                                  Mark paid
+                                <Button
+                                  size="sm"
+                                  variant="primary"
+                                  isIconOnly
+                                  aria-label={`Mark order ${item.trade_no} as paid`}
+                                  onPress={() => void runAction("order/paid", { trade_no: item.trade_no })}
+                                  isDisabled={submitting}
+                                >
+                                  <Check width={16} height={16} aria-hidden="true" />
                                 </Button>
-                                <Button size="sm" variant="ghost" onPress={() => void runAction("order/cancel", { trade_no: item.trade_no })} isDisabled={submitting}>
-                                  Cancel
-                                </Button>
+                                <DangerConfirmButton
+                                  size="sm"
+                                  isIconOnly
+                                  aria-label={`Cancel order ${item.trade_no}`}
+                                  title={`Cancel order ${item.trade_no}?`}
+                                  description="This will cancel the selected order."
+                                  confirmLabel="Cancel order"
+                                  isDisabled={submitting}
+                                  onConfirm={() => void runAction("order/cancel", { trade_no: item.trade_no })}
+                                >
+                                  <Xmark width={16} height={16} aria-hidden="true" />
+                                </DangerConfirmButton>
                               </>
                             ) : null}
                           </div>

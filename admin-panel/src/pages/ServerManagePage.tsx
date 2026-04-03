@@ -15,6 +15,7 @@ import {
   TableColumn,
   TableHeader,
 } from "@heroui/react";
+import { Copy, PencilToLine, TrashBin } from "@gravity-ui/icons";
 import { useEffect, useMemo, useState } from "react";
 import { AdminDrawer } from "../components/AdminDrawer";
 import { DangerConfirmButton } from "../components/DangerConfirmButton";
@@ -455,27 +456,38 @@ export function ServerManagePage() {
                             <div className="flex justify-end gap-2">
                               <Button
                                 size="sm"
-                                variant="ghost"
+                                variant="primary"
+                                isIconOnly
+                                aria-label={`Edit node ${String(item.name || item.id || "")}`}
                                 onPress={() => {
                                   setSelected({ ...item });
                                   setEditorOpen(true);
                                 }}
                                 isDisabled={sorting}
                               >
-                                Edit
+                                <PencilToLine width={16} height={16} aria-hidden="true" />
                               </Button>
-                              <Button size="sm" variant="ghost" onPress={() => void runAction(COPY_ENDPOINTS[item.type], { id: item.id })} isDisabled={sorting}>
-                                Copy
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                isIconOnly
+                                aria-label={`Copy node ${String(item.name || item.id || "")}`}
+                                onPress={() => void runAction(COPY_ENDPOINTS[item.type], { id: item.id })}
+                                isDisabled={sorting}
+                              >
+                                <Copy width={16} height={16} aria-hidden="true" />
                               </Button>
                               <DangerConfirmButton
                                 size="sm"
                                 isDisabled={sorting}
+                                isIconOnly
+                                aria-label={`Delete node ${String(item.name || item.id || "")}`}
                                 title={`Delete ${item.name || item.id || "server"}?`}
                                 description="This will permanently remove the server entry."
                                 confirmLabel="Delete server"
                                 onConfirm={() => void runAction(DROP_ENDPOINTS[item.type], { id: item.id })}
                               >
-                                Delete
+                                <TrashBin width={16} height={16} aria-hidden="true" />
                               </DangerConfirmButton>
                             </div>
                           </TableCell>

@@ -11,6 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@heroui/react";
+import { PencilToLine, TrashBin } from "@gravity-ui/icons";
 import { useEffect, useMemo, useState } from "react";
 import { AdminDrawer } from "../components/AdminDrawer";
 import { AdminSelectField } from "../components/AdminSelectField";
@@ -207,18 +208,29 @@ export function ServerRoutePage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button size="sm" variant="ghost" onPress={() => { setSelected(item); setEditorOpen(true); }}>
-                            Edit
+                          <Button
+                            size="sm"
+                            variant="primary"
+                            isIconOnly
+                            aria-label={`Edit route ${item.remarks || item.id || ""}`}
+                            onPress={() => {
+                              setSelected(item);
+                              setEditorOpen(true);
+                            }}
+                          >
+                            <PencilToLine width={16} height={16} aria-hidden="true" />
                           </Button>
                             <DangerConfirmButton
                               size="sm"
                               isDisabled={submitting}
+                              isIconOnly
+                              aria-label={`Delete route ${item.remarks || item.id || ""}`}
                               title={`Delete route ${item.remarks || item.id}?`}
                               description="This will permanently remove the route."
                               confirmLabel="Delete route"
                               onConfirm={() => void deleteRoute(item.id)}
                             >
-                              Delete
+                              <TrashBin width={16} height={16} aria-hidden="true" />
                             </DangerConfirmButton>
                         </div>
                       </TableCell>
