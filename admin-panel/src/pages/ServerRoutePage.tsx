@@ -14,7 +14,6 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { AdminDrawer } from "../components/AdminDrawer";
 import { AdminSelectField } from "../components/AdminSelectField";
-import { useAdminTableSort } from "../components/AdminTable";
 import { AdminTextField } from "../components/AdminTextField";
 import { DangerConfirmButton } from "../components/DangerConfirmButton";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
@@ -124,16 +123,6 @@ export function ServerRoutePage() {
   }, []);
 
   const selectedAction = useMemo(() => selected.action || "block", [selected.action]);
-  const { sortDescriptor, setSortDescriptor, sortedItems } = useAdminTableSort(
-    records,
-    { column: "remarks", direction: "ascending" },
-    {
-      remarks: item => item.remarks,
-      action: item => item.action,
-      actionValue: item => item.action_value || "",
-      match: item => Array.isArray(item.match) ? item.match.join(",") : item.match
-    }
-  );
   const routeActionInvalid = !selected.action.trim();
   const routeMatchInvalid =
     selected.action !== "default_out" &&
@@ -197,15 +186,15 @@ export function ServerRoutePage() {
           ) : (
             <Table variant="secondary" aria-label="Server Routes" className={adminTableClassNames.wrapper}>
               <Table.ScrollContainer>
-              <Table.Content sortDescriptor={sortDescriptor} onSortChange={setSortDescriptor}>
+              <Table.Content>
                 <TableHeader>
-                  <TableColumn key="remarks" allowsSorting>Remarks</TableColumn>
-                  <TableColumn key="action" allowsSorting>Action</TableColumn>
-                  <TableColumn key="actionValue" allowsSorting>Action Value</TableColumn>
-                  <TableColumn key="match" allowsSorting>Match</TableColumn>
+                  <TableColumn>Remarks</TableColumn>
+                  <TableColumn>Action</TableColumn>
+                  <TableColumn>Action Value</TableColumn>
+                  <TableColumn>Match</TableColumn>
                   <TableColumn>Actions</TableColumn>
                 </TableHeader>
-                <TableBody items={sortedItems}>
+                <TableBody items={records}>
                   {item => (
                     <TableRow key={item.id}>
                       <TableCell>{item.remarks}</TableCell>

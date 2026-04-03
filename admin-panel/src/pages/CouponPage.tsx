@@ -21,7 +21,6 @@ import { DangerConfirmButton } from "../components/DangerConfirmButton";
 import { AdminMultiSelectField } from "../components/AdminMultiSelectField";
 import { AdminPagination } from "../components/AdminPagination";
 import { AdminSelectField } from "../components/AdminSelectField";
-import { useAdminTableSort } from "../components/AdminTable";
 import { AdminTextField } from "../components/AdminTextField";
 import { adminRequest } from "../lib/api";
 import { COUPON_TYPE_OPTIONS, PERIOD_OPTIONS, fromDatetimeInput, toDatetimeInput } from "../lib/admin-constants";
@@ -190,18 +189,6 @@ export function CouponPage() {
     () => new Set(selected?.limit_period || []),
     [selected]
   );
-  const { sortDescriptor, setSortDescriptor, sortedItems } = useAdminTableSort(
-    records,
-    { column: "id", direction: "descending" },
-    {
-      id: item => Number(item.id || 0),
-      enabled: item => Number(item.show || 0),
-      name: item => item.name || "",
-      type: item => Number(item.type || 0),
-      code: item => item.code || "",
-      limit: item => Number(item.limit_use ?? Number.MAX_SAFE_INTEGER)
-    }
-  );
   const couponNameInvalid = !String(selected?.name || "").trim();
   const couponValueInvalid = String(selected?.value ?? "").trim() === "";
   const couponCodeInvalid = selected?.id ? !String(selected?.code || "").trim() : false;
@@ -266,17 +253,17 @@ export function CouponPage() {
             <>
               <Table variant="secondary" aria-label="Coupons" className={adminTableClassNames.wrapper}>
                 <Table.ScrollContainer>
-                  <Table.Content className="min-w-[980px]" sortDescriptor={sortDescriptor} onSortChange={setSortDescriptor}>
+                  <Table.Content className="min-w-[980px]">
                   <TableHeader>
-                    <TableColumn key="id" allowsSorting>ID</TableColumn>
-                    <TableColumn key="enabled" allowsSorting>Enabled</TableColumn>
-                    <TableColumn key="name" allowsSorting>Name</TableColumn>
-                    <TableColumn key="type" allowsSorting>Type</TableColumn>
-                    <TableColumn key="code" allowsSorting>Code</TableColumn>
-                    <TableColumn key="limit" allowsSorting>Limit</TableColumn>
+                    <TableColumn>ID</TableColumn>
+                    <TableColumn>Enabled</TableColumn>
+                    <TableColumn>Name</TableColumn>
+                    <TableColumn>Type</TableColumn>
+                    <TableColumn>Code</TableColumn>
+                    <TableColumn>Limit</TableColumn>
                     <TableColumn>Actions</TableColumn>
                   </TableHeader>
-                  <TableBody items={sortedItems}>
+                  <TableBody items={records}>
                     {item => (
                       <TableRow key={String(item.id ?? item.code ?? item.name ?? "")}>
                         <TableCell>{item.id ?? "—"}</TableCell>

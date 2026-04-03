@@ -19,7 +19,6 @@ import { AdminDrawer } from "../components/AdminDrawer";
 import { DangerConfirmButton } from "../components/DangerConfirmButton";
 import { AdminPagination } from "../components/AdminPagination";
 import { AdminSelectField } from "../components/AdminSelectField";
-import { useAdminTableSort } from "../components/AdminTable";
 import { AdminTextField } from "../components/AdminTextField";
 import { adminRequest } from "../lib/api";
 import { GIFTCARD_TYPE_OPTIONS, fromDatetimeInput, toDatetimeInput } from "../lib/admin-constants";
@@ -132,17 +131,6 @@ export function GiftCardPage() {
     () => GIFTCARD_TYPE_OPTIONS.map(option => ({ id: option.key, label: option.label })),
     []
   );
-  const { sortDescriptor, setSortDescriptor, sortedItems } = useAdminTableSort(
-    records,
-    { column: "id", direction: "descending" },
-    {
-      id: item => Number(item.id || 0),
-      name: item => item.name || "",
-      type: item => Number(item.type || 0),
-      value: item => Number(item.value || 0),
-      code: item => item.code || ""
-    }
-  );
   const planOptions = useMemo(
     () => plans.map(plan => ({ id: String(plan.id), label: plan.name })),
     [plans]
@@ -212,18 +200,18 @@ export function GiftCardPage() {
             <>
               <Table variant="secondary" aria-label="Gift cards" className={adminTableClassNames.wrapper}>
                 <Table.ScrollContainer>
-                <Table.Content sortDescriptor={sortDescriptor} onSortChange={setSortDescriptor}>
+                <Table.Content>
                   <TableHeader>
-                    <TableColumn key="id" allowsSorting>ID</TableColumn>
-                    <TableColumn key="name" allowsSorting>Name</TableColumn>
-                    <TableColumn key="type" allowsSorting>Type</TableColumn>
-                    <TableColumn key="value" allowsSorting>Value</TableColumn>
-                    <TableColumn key="code" allowsSorting>Code</TableColumn>
+                    <TableColumn>ID</TableColumn>
+                    <TableColumn>Name</TableColumn>
+                    <TableColumn>Type</TableColumn>
+                    <TableColumn>Value</TableColumn>
+                    <TableColumn>Code</TableColumn>
                     <TableColumn>Actions</TableColumn>
                   </TableHeader>
-                  <TableBody items={sortedItems}>
+                  <TableBody items={records}>
                     {item => (
-                      <TableRow key={String(item.id || Math.random())}>
+                      <TableRow key={String(item.id ?? item.code ?? item.name ?? "")}>
                         <TableCell>{item.id ?? "—"}</TableCell>
                         <TableCell>{item.name || "Untitled"}</TableCell>
                         <TableCell>{GIFTCARD_TYPE_OPTIONS.find(option => option.value === Number(item.type))?.label || "Unknown"}</TableCell>

@@ -15,7 +15,6 @@ import {
   CardHeader,
   SearchField,
   Chip,
-  Form,
   Label,
   ListBox,
   ListBoxItem,
@@ -31,14 +30,12 @@ import {
   Tooltip,
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
-import { AdminFilterAccordion } from "../components/AdminFilterAccordion";
-import { AdminFilterActionGroup } from "../components/AdminFilterActionGroup";
 import { AdminDatePickerField } from "../components/AdminDatePickerField";
+import { AdminFilterModal } from "../components/AdminFilterModal";
 import { AdminDrawer } from "../components/AdminDrawer";
 import { DangerConfirmButton } from "../components/DangerConfirmButton";
 import { AdminPagination } from "../components/AdminPagination";
 import { AdminSelectField } from "../components/AdminSelectField";
-import { useAdminTableSort } from "../components/AdminTable";
 import { AdminTextField } from "../components/AdminTextField";
 import { ModalField } from "../components/ModalField";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
@@ -579,18 +576,6 @@ export function UserPage() {
     ].map((r, i) => ({ ...r, id: `${r.ip}-${r.last_seen_at}-${i}` })),
     [ipGeoUser?.recent_ip_records, ipGeoUser?.recent_login_ip_records]
   );
-  const { sortDescriptor, setSortDescriptor, sortedItems } = useAdminTableSort(
-    records,
-    { column: "expires", direction: "descending" },
-    {
-      email: item => item.email,
-      plan: item => item.plan_name || "",
-      balance: item => Number(item.balance || 0),
-      usage: item => Number(item.total_used || 0),
-      expires: item => Number(item.expired_at || 0),
-      status: item => `${item.banned || 0}-${item.is_admin || 0}-${item.is_staff || 0}`
-    }
-  );
   const sortedStatsRecords = useMemo(
     () => [...statsRecords].sort((left, right) => Number(right.record_at || 0) - Number(left.record_at || 0)),
     [statsRecords]
@@ -649,7 +634,82 @@ export function UserPage() {
               Search active accounts, review balance and plan state, and open actions from one place.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <AdminFilterModal
+              title="User filters"
+              description="Filter users by email, plan, and account status before refreshing the table."
+              onSearch={() => {
+                setPage(1);
+                void loadUsers(1);
+              }}
+              onReset={() => {
+                setSearchEmail("");
+                setPlanFilter("");
+                setBannedFilter("");
+                setPage(1);
+                void loadUsers(1);
+              }}
+              isBusy={loading}
+            >
+              <div className="flex flex-col gap-4">
+                <SearchField className="space-y-2" value={searchEmail} onChange={setSearchEmail}>
+                  <Label>Email</Label>
+                  <SearchField.Group>
+                    <SearchField.SearchIcon />
+                    <SearchField.Input placeholder="Search by email" />
+                    <SearchField.ClearButton />
+                  </SearchField.Group>
+                </SearchField>
+
+                <div className="space-y-2">
+                  <Label>Plan</Label>
+                  <Select
+                    className="w-full"
+                    placeholder="Select one"
+                    selectedKey={planFilter || null}
+                    onSelectionChange={key => setPlanFilter(String(key || ""))}
+                  >
+                    <Select.Trigger className="h-10 w-full">
+                      <Select.Value />
+                      <Select.Indicator />
+                    </Select.Trigger>
+                    <Select.Popover>
+                      <ListBox>
+                        {planOptions.map(option => (
+                          <ListBoxItem key={option.id} id={option.id} textValue={option.label}>
+                            {option.label}
+                          </ListBoxItem>
+                        ))}
+                      </ListBox>
+                    </Select.Popover>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <Select
+                    className="w-full"
+                    placeholder="Select one"
+                    selectedKey={bannedFilter || null}
+                    onSelectionChange={key => setBannedFilter(String(key || ""))}
+                  >
+                    <Select.Trigger className="h-10 w-full">
+                      <Select.Value />
+                      <Select.Indicator />
+                    </Select.Trigger>
+                    <Select.Popover>
+                      <ListBox>
+                        {statusOptions.map(option => (
+                          <ListBoxItem key={option.id} id={option.id} textValue={option.label}>
+                            {option.label}
+                          </ListBoxItem>
+                        ))}
+                      </ListBox>
+                    </Select.Popover>
+                  </Select>
+                </div>
+              </div>
+            </AdminFilterModal>
             <Button variant="ghost" onPress={() => void dumpCsv()} isDisabled={submitting}>
               Export CSV
             </Button>
@@ -671,83 +731,6 @@ export function UserPage() {
           </div>
         </CardHeader>
         <CardContent className={`${adminSectionBodyClassName} gap-5`}>
-          <AdminFilterAccordion>
-            <Form className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(220px,0.8fr)_minmax(220px,0.8fr)_auto]">
-              <SearchField className="space-y-2" value={searchEmail} onChange={setSearchEmail}>
-                <Label>Email</Label>
-                <SearchField.Group>
-                  <SearchField.SearchIcon />
-                  <SearchField.Input placeholder="Search by email" />
-                  <SearchField.ClearButton />
-                </SearchField.Group>
-              </SearchField>
-
-              <div className="space-y-2">
-                <Label>Plan</Label>
-                <Select
-                  className="w-full"
-                  placeholder="Select one"
-                  selectedKey={planFilter || null}
-                  onSelectionChange={key => setPlanFilter(String(key || ""))}
-                >
-                  <Select.Trigger className="h-10 w-full">
-                    <Select.Value />
-                    <Select.Indicator />
-                  </Select.Trigger>
-                  <Select.Popover>
-                    <ListBox>
-                      {planOptions.map(option => (
-                        <ListBoxItem key={option.id} id={option.id} textValue={option.label}>
-                          {option.label}
-                        </ListBoxItem>
-                      ))}
-                    </ListBox>
-                  </Select.Popover>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Status</Label>
-                <Select
-                  className="w-full"
-                  placeholder="Select one"
-                  selectedKey={bannedFilter || null}
-                  onSelectionChange={key => setBannedFilter(String(key || ""))}
-                >
-                  <Select.Trigger className="h-10 w-full">
-                    <Select.Value />
-                    <Select.Indicator />
-                  </Select.Trigger>
-                  <Select.Popover>
-                    <ListBox>
-                      {statusOptions.map(option => (
-                        <ListBoxItem key={option.id} id={option.id} textValue={option.label}>
-                          {option.label}
-                        </ListBoxItem>
-                      ))}
-                    </ListBox>
-                  </Select.Popover>
-                </Select>
-              </div>
-              <div className="flex items-end justify-end">
-                <AdminFilterActionGroup
-                  isDisabled={loading}
-                  onSearch={() => {
-                    setPage(1);
-                    void loadUsers(1);
-                  }}
-                  onReset={() => {
-                    setSearchEmail("");
-                    setPlanFilter("");
-                    setBannedFilter("");
-                    setPage(1);
-                    void loadUsers(1);
-                  }}
-                />
-              </div>
-            </Form>
-          </AdminFilterAccordion>
-
           {error ? (
             <div className="rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">
               {error}
@@ -762,17 +745,17 @@ export function UserPage() {
             <>
               <Table variant="secondary" aria-label="Users" className={adminTableClassNames.wrapper}>
                 <Table.ScrollContainer>
-                  <Table.Content sortDescriptor={sortDescriptor} onSortChange={setSortDescriptor}>
+                  <Table.Content>
                   <TableHeader>
-                    <TableColumn key="email" allowsSorting>Email</TableColumn>
-                    <TableColumn key="plan" allowsSorting>Plan</TableColumn>
-                    <TableColumn key="balance" allowsSorting>Balance</TableColumn>
-                    <TableColumn key="usage" allowsSorting>Usage</TableColumn>
-                    <TableColumn key="expires" allowsSorting>Expires</TableColumn>
-                    <TableColumn key="status" allowsSorting>Status</TableColumn>
+                    <TableColumn>Email</TableColumn>
+                    <TableColumn>Plan</TableColumn>
+                    <TableColumn>Balance</TableColumn>
+                    <TableColumn>Usage</TableColumn>
+                    <TableColumn>Expires</TableColumn>
+                    <TableColumn>Status</TableColumn>
                     <TableColumn>Actions</TableColumn>
                   </TableHeader>
-                  <TableBody items={sortedItems}>
+                  <TableBody items={records}>
                     {item => (
                       <TableRow key={item.id}>
                         <TableCell>

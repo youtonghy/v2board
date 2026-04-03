@@ -17,7 +17,6 @@ import { AdminTextField } from "../components/AdminTextField";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { DangerConfirmButton } from "../components/DangerConfirmButton";
-import { useAdminTableSort } from "../components/AdminTable";
 import { asArray } from "../lib/admin-format";
 import {
   adminCardClassName,
@@ -90,17 +89,6 @@ export function ServerGroupPage() {
   useEffect(() => {
     void loadGroups();
   }, []);
-  const { sortDescriptor, setSortDescriptor, sortedItems } = useAdminTableSort(
-    records,
-    { column: "id", direction: "ascending" },
-    {
-      id: item => item.id,
-      name: item => item.name,
-      users: item => Number(item.user_count || 0),
-      servers: item => Number(item.server_count || 0)
-    }
-  );
-
   const stats = [
     { label: "Groups", value: String(records.length), hint: "Access scopes configured" },
     { label: "Users", value: String(records.reduce((sum, record) => sum + Number(record.user_count || 0), 0)), hint: "Accounts linked to groups" },
@@ -157,15 +145,15 @@ export function ServerGroupPage() {
           ) : (
             <Table variant="secondary" aria-label="Server Groups" className={adminTableClassNames.wrapper}>
               <Table.ScrollContainer>
-              <Table.Content sortDescriptor={sortDescriptor} onSortChange={setSortDescriptor}>
+              <Table.Content>
                 <TableHeader>
-                  <TableColumn key="id" allowsSorting>ID</TableColumn>
-                  <TableColumn key="name" allowsSorting>Name</TableColumn>
-                  <TableColumn key="users" allowsSorting>Users</TableColumn>
-                  <TableColumn key="servers" allowsSorting>Servers</TableColumn>
+                  <TableColumn>ID</TableColumn>
+                  <TableColumn>Name</TableColumn>
+                  <TableColumn>Users</TableColumn>
+                  <TableColumn>Servers</TableColumn>
                   <TableColumn>Actions</TableColumn>
                 </TableHeader>
-                <TableBody items={sortedItems}>
+                <TableBody items={records}>
                   {item => (
                     <TableRow key={item.id}>
                       <TableCell>{item.id}</TableCell>

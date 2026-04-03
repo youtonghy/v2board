@@ -4,10 +4,10 @@ import {
   CardContent,
   CardHeader,
   Chip,
-  Form,
   Label,
   ListBox,
   ListBoxItem,
+  Modal,
   Select,
   Spinner,
   SearchField,
@@ -17,14 +17,15 @@ import {
   TableColumn,
   TableHeader,
   TableRow,
+  toast,
 } from "@heroui/react";
+import { QrCode } from "@gravity-ui/icons";
 import { useEffect, useMemo, useState } from "react";
-import { AdminFilterAccordion } from "../components/AdminFilterAccordion";
-import { AdminFilterActionGroup } from "../components/AdminFilterActionGroup";
+import { QRCodeSVG } from "qrcode.react";
+import { AdminFilterModal } from "../components/AdminFilterModal";
 import { AdminDrawer } from "../components/AdminDrawer";
 import { AdminPagination } from "../components/AdminPagination";
 import { AdminSelectField } from "../components/AdminSelectField";
-import { useAdminTableSort } from "../components/AdminTable";
 import { AdminTextField } from "../components/AdminTextField";
 import { ModalField } from "../components/ModalField";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
@@ -154,6 +155,19 @@ export function InviteLinkPage() {
     }
   }
 
+  async function copyInviteLink(linkUrl: string) {
+    try {
+      await navigator.clipboard.writeText(linkUrl);
+      toast.success("Invite link copied", {
+        description: linkUrl
+      });
+    } catch {
+      toast.danger("Failed to copy invite link", {
+        description: "Please copy it manually."
+      });
+    }
+  }
+
   useEffect(() => {
     void loadLinks(page);
   }, [page]);
@@ -161,17 +175,6 @@ export function InviteLinkPage() {
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const selectedUser = useMemo(() => generateUserId || null, [generateUserId]);
   const inviteOwnerInvalid = !generateUserId;
-  const { sortDescriptor, setSortDescriptor, sortedItems } = useAdminTableSort(
-    records,
-    { column: "expires", direction: "descending" },
-    {
-      owner: item => item.user_email || item.user_id,
-      invitee: item => item.invitee_name || "",
-      usage: item => Number(item.use_count || 0),
-      expires: item => Number(item.expired_at || 0),
-      status: item => item.status
-    }
-  );
   const stats = useMemo(() => {
     const active = records.filter(record => record.status === 0).length;
     const disabled = records.filter(record => record.status === 3).length;
@@ -213,78 +216,78 @@ export function InviteLinkPage() {
               Track issued links, see who they belong to, and disable invalid links without leaving the new panel.
             </p>
           </div>
-          <Button variant="primary" onPress={() => setGenerateOpen(true)}>
-            Generate invite link
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <AdminFilterModal
+              title="Invite link filters"
+              description="Filter invite links by owner, keyword, and status before refreshing the inventory."
+              onSearch={() => {
+                setPage(1);
+                void loadLinks(1);
+              }}
+              onReset={() => {
+                setEmail("");
+                setKeyword("");
+                setStatus("");
+                setPage(1);
+                void loadLinks(1);
+              }}
+              isBusy={loading}
+            >
+              <div className="flex flex-col gap-4">
+                <SearchField className="space-y-2" value={email} onChange={setEmail}>
+                  <Label>User Email</Label>
+                  <SearchField.Group>
+                    <SearchField.SearchIcon />
+                    <SearchField.Input className="w-full" placeholder="Enter user email" />
+                    <SearchField.ClearButton />
+                  </SearchField.Group>
+                </SearchField>
+
+                <SearchField className="space-y-2" value={keyword} onChange={setKeyword}>
+                  <Label>Keyword</Label>
+                  <SearchField.Group>
+                    <SearchField.SearchIcon />
+                    <SearchField.Input className="w-full" placeholder="Enter keyword" />
+                    <SearchField.ClearButton />
+                  </SearchField.Group>
+                </SearchField>
+
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <Select
+                    className="w-full"
+                    placeholder="Select a status"
+                    selectedKey={status || null}
+                    onSelectionChange={key => setStatus(String(key || ""))}
+                  >
+                    <Select.Trigger className="h-9 w-full">
+                      <Select.Value />
+                      <Select.Indicator />
+                    </Select.Trigger>
+                    <Select.Popover>
+                      <ListBox>
+                        {[
+                          { id: "0", label: "Active" },
+                          { id: "1", label: "Used Up" },
+                          { id: "2", label: "Expired" },
+                          { id: "3", label: "Disabled" }
+                        ].map(option => (
+                          <ListBoxItem key={option.id} id={option.id} textValue={option.label}>
+                            {option.label}
+                          </ListBoxItem>
+                        ))}
+                      </ListBox>
+                    </Select.Popover>
+                  </Select>
+                </div>
+              </div>
+            </AdminFilterModal>
+            <Button variant="primary" onPress={() => setGenerateOpen(true)}>
+              Generate invite link
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className={`${adminSectionBodyClassName} gap-5`}>
-          <AdminFilterAccordion>
-            <Form className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(220px,0.8fr)_auto]">
-              <SearchField className="space-y-2" value={email} onChange={setEmail}>
-                <Label>User Email</Label>
-                <SearchField.Group>
-                  <SearchField.SearchIcon />
-                  <SearchField.Input className="w-full" placeholder="Enter user email" />
-                  <SearchField.ClearButton />
-                </SearchField.Group>
-              </SearchField>
-
-              <SearchField className="space-y-2" value={keyword} onChange={setKeyword}>
-                <Label>Keyword</Label>
-                <SearchField.Group>
-                  <SearchField.SearchIcon />
-                  <SearchField.Input className="w-full" placeholder="Enter keyword" />
-                  <SearchField.ClearButton />
-                </SearchField.Group>
-              </SearchField>
-
-              <div className="space-y-2">
-                <Label>Status</Label>
-                <Select
-                  className="w-full"
-                  placeholder="Select a status"
-                  selectedKey={status || null}
-                  onSelectionChange={key => setStatus(String(key || ""))}
-                >
-                  <Select.Trigger className="h-9 w-full">
-                    <Select.Value />
-                    <Select.Indicator />
-                  </Select.Trigger>
-                  <Select.Popover>
-                    <ListBox>
-                      {[
-                        { id: "0", label: "Active" },
-                        { id: "1", label: "Used Up" },
-                        { id: "2", label: "Expired" },
-                        { id: "3", label: "Disabled" }
-                      ].map(option => (
-                        <ListBoxItem key={option.id} id={option.id} textValue={option.label}>
-                          {option.label}
-                        </ListBoxItem>
-                      ))}
-                    </ListBox>
-                  </Select.Popover>
-                </Select>
-              </div>
-              <div className="flex items-end justify-end">
-                <AdminFilterActionGroup
-                  isDisabled={loading}
-                  onSearch={() => {
-                    setPage(1);
-                    void loadLinks(1);
-                  }}
-                  onReset={() => {
-                    setEmail("");
-                    setKeyword("");
-                    setStatus("");
-                    setPage(1);
-                    void loadLinks(1);
-                  }}
-                />
-              </div>
-            </Form>
-          </AdminFilterAccordion>
-
           {error ? <div className="rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">{error}</div> : null}
 
           {loading ? (
@@ -295,16 +298,16 @@ export function InviteLinkPage() {
             <>
               <Table variant="secondary" aria-label="Invite Links" className={adminTableClassNames.wrapper}>
                 <Table.ScrollContainer>
-                  <Table.Content sortDescriptor={sortDescriptor} onSortChange={setSortDescriptor}>
+                  <Table.Content>
                   <TableHeader>
-                    <TableColumn key="owner" allowsSorting>Owner</TableColumn>
-                    <TableColumn key="invitee" allowsSorting>Invitee</TableColumn>
-                    <TableColumn key="usage" allowsSorting>Usage</TableColumn>
-                    <TableColumn key="expires" allowsSorting>Expires</TableColumn>
-                    <TableColumn key="status" allowsSorting>Status</TableColumn>
+                    <TableColumn>Owner</TableColumn>
+                    <TableColumn>Invitee</TableColumn>
+                    <TableColumn>Usage</TableColumn>
+                    <TableColumn>Expires</TableColumn>
+                    <TableColumn>Status</TableColumn>
                     <TableColumn>Actions</TableColumn>
                   </TableHeader>
-                  <TableBody items={sortedItems}>
+                  <TableBody items={records}>
                     {item => (
                       <TableRow key={item.id}>
                         <TableCell>
@@ -330,16 +333,65 @@ export function InviteLinkPage() {
                           </Chip>
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            {item.status === 3 ? (
-                              <Button size="sm" variant="ghost" onPress={() => void updateStatus(item, 0)} isDisabled={submitting}>
-                                Enable
+                          <div className="flex flex-col gap-3">
+                            <div className="flex flex-wrap justify-end gap-2">
+                              <Button size="sm" variant="ghost" onPress={() => void copyInviteLink(item.link_url)}>
+                                Copy Link
                               </Button>
-                            ) : (
-                              <Button size="sm" variant="ghost" onPress={() => void updateStatus(item, 3)} isDisabled={submitting}>
-                                Disable
+                              {item.status === 3 ? (
+                                <Button size="sm" variant="ghost" onPress={() => void updateStatus(item, 0)} isDisabled={submitting}>
+                                  Enable
+                                </Button>
+                              ) : (
+                                <Button size="sm" variant="ghost" onPress={() => void updateStatus(item, 3)} isDisabled={submitting}>
+                                  Disable
+                                </Button>
+                              )}
+                            </div>
+
+                            <Modal>
+                              <Button
+                                isIconOnly
+                                size="sm"
+                                variant="ghost"
+                                aria-label="Open QR code share modal"
+                                className="self-end"
+                              >
+                                <QrCode width={16} height={16} />
                               </Button>
-                            )}
+                              <Modal.Backdrop variant="blur" className="bg-slate-950/30 backdrop-blur-sm">
+                                <Modal.Container>
+                                  <Modal.Dialog className="sm:max-w-[420px]">
+                                    <Modal.CloseTrigger className="top-5 right-5 rounded-full border border-slate-200/80 bg-white/80 text-slate-500 shadow-sm transition hover:bg-slate-50 hover:text-slate-900" />
+                                    <Modal.Header className="border-b border-slate-100 px-6 py-5">
+                                      <Modal.Heading className="text-lg font-semibold tracking-[-0.02em] text-slate-950">
+                                        QR Share
+                                      </Modal.Heading>
+                                      <p className="mt-1 text-sm leading-6 text-slate-500">
+                                        Scan the code or copy the invite link below.
+                                      </p>
+                                    </Modal.Header>
+                                    <Modal.Body className="flex flex-col items-center gap-4 px-6 py-5">
+                                      <div className="flex flex-col items-center gap-2 text-center">
+                                        <p className="text-sm font-medium text-slate-900">{item.invitee_name || item.user_email || `User #${item.user_id}`}</p>
+                                        <p className="max-w-[320px] break-all text-xs text-slate-500">{item.link_url}</p>
+                                      </div>
+                                      <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                                        <QRCodeSVG value={item.link_url} size={200} includeMargin />
+                                      </div>
+                                      <Button size="sm" variant="secondary" onPress={() => void copyInviteLink(item.link_url)}>
+                                        Copy Link
+                                      </Button>
+                                    </Modal.Body>
+                                    <Modal.Footer className="border-t border-slate-100 px-6 py-4">
+                                      <Button slot="close" variant="primary" className="w-full sm:w-auto">
+                                        Close
+                                      </Button>
+                                    </Modal.Footer>
+                                  </Modal.Dialog>
+                                </Modal.Container>
+                              </Modal.Backdrop>
+                            </Modal>
                           </div>
                         </TableCell>
                       </TableRow>

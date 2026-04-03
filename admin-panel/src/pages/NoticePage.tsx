@@ -17,7 +17,6 @@ import { useEffect, useMemo, useState } from "react";
 import { AdminDrawer } from "../components/AdminDrawer";
 import { AdminTextField } from "../components/AdminTextField";
 import { DangerConfirmButton } from "../components/DangerConfirmButton";
-import { useAdminTableSort } from "../components/AdminTable";
 import { adminRequest } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import {
@@ -116,17 +115,6 @@ export function NoticePage() {
       { label: "With image", value: String(withImages), hint: "Visual announcements ready" }
     ];
   }, [records]);
-  const { sortDescriptor, setSortDescriptor, sortedItems } = useAdminTableSort(
-    records,
-    { column: "created", direction: "descending" },
-    {
-      id: item => Number(item.id || 0),
-      visible: item => Number(item.show || 0),
-      title: item => item.title || "",
-      tags: item => (item.tags || []).join(","),
-      created: item => Number(item.created_at || 0)
-    }
-  );
   const titleInvalid = !String(selected?.title || "").trim();
   const contentInvalid = !String(selected?.content || "").trim();
 
@@ -176,16 +164,16 @@ export function NoticePage() {
         ) : (
           <Table variant="secondary" aria-label="Notices" className={adminTableClassNames.wrapper}>
             <Table.ScrollContainer>
-            <Table.Content sortDescriptor={sortDescriptor} onSortChange={setSortDescriptor}>
+            <Table.Content>
               <TableHeader>
-                <TableColumn key="id" allowsSorting>ID</TableColumn>
-                <TableColumn key="visible" allowsSorting>Visible</TableColumn>
-                <TableColumn key="title" allowsSorting>Title</TableColumn>
-                <TableColumn key="tags" allowsSorting>Tags</TableColumn>
-                <TableColumn key="created" allowsSorting>Created</TableColumn>
+                <TableColumn>ID</TableColumn>
+                <TableColumn>Visible</TableColumn>
+                <TableColumn>Title</TableColumn>
+                <TableColumn>Tags</TableColumn>
+                <TableColumn>Created</TableColumn>
                 <TableColumn>Actions</TableColumn>
               </TableHeader>
-              <TableBody items={sortedItems}>
+              <TableBody items={records}>
                 {item => (
                   <TableRow key={String(item.id ?? "") }>
                     <TableCell>{item.id ?? "—"}</TableCell>

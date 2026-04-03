@@ -16,11 +16,9 @@ import {
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AdminFilterAccordion } from "../components/AdminFilterAccordion";
-import { AdminFilterActionGroup } from "../components/AdminFilterActionGroup";
+import { AdminFilterModal } from "../components/AdminFilterModal";
 import { AdminPagination } from "../components/AdminPagination";
 import { AdminSelectField } from "../components/AdminSelectField";
-import { useAdminTableSort } from "../components/AdminTable";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { PageFrame } from "../components/PageFrame";
 import { asArray, formatDateTime } from "../lib/admin-format";
@@ -93,17 +91,6 @@ export function TicketPage() {
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const selectedReplyStatus = useMemo(() => replyStatus || null, [replyStatus]);
-  const { sortDescriptor, setSortDescriptor, sortedItems } = useAdminTableSort(
-    records,
-    { column: "updated", direction: "descending" },
-    {
-      id: item => item.id,
-      subject: item => item.subject || "",
-      priority: item => item.level ?? 0,
-      status: item => `${item.status}-${item.reply_status ?? 0}`,
-      updated: item => item.updated_at || item.created_at || ""
-    }
-  );
   const stats = useMemo(() => {
     const open = records.filter(record => record.status === 0).length;
     const pendingAdmin = records.filter(record => record.reply_status === 0).length;
@@ -141,11 +128,50 @@ export function TicketPage() {
           <div>
             <p className="text-[1.1rem] font-semibold tracking-[-0.03em] text-slate-950">Support Queue</p>
             <p className="mt-1 text-sm leading-6 text-slate-500">
-              Filter open tickets, sort by recency, and jump directly into the threaded detail workflow.
+              Filter open tickets and jump directly into the threaded detail workflow.
             </p>
           </div>
         </CardHeader>
         <CardContent className={`${adminSectionBodyClassName} gap-5`}>
+          <AdminFilterModal
+            title="Ticket filters"
+            description="Filter tickets by user email and reply status before refreshing the queue."
+            onSearch={() => {
+              setPage(1);
+              void loadTickets(1);
+            }}
+            onReset={() => {
+              setEmail("");
+              setReplyStatus("");
+              setStatus("all");
+              setPage(1);
+              void loadTickets(1);
+            }}
+            isBusy={loading}
+            size="md"
+          >
+            <div className="flex flex-col gap-4">
+              <div className="space-y-2">
+                <Input className="w-full" aria-label="User Email" value={email} onChange={event => setEmail(event.target.value)} />
+              </div>
+              <div>
+                <div className="mb-2 space-y-1">
+                  <p className="text-sm font-medium text-slate-700">Reply Status</p>
+                </div>
+                <AdminSelectField
+                  ariaLabel="Reply Status"
+                  options={[
+                    { id: "0", label: "Pending Admin Reply" },
+                    { id: "1", label: "Waiting User Reply" },
+                    { id: "2", label: "Resolved" }
+                  ]}
+                  selectedKey={selectedReplyStatus}
+                  onSelectionChange={key => setReplyStatus(String(key || ""))}
+                />
+              </div>
+            </div>
+          </AdminFilterModal>
+
           <Tabs
             selectedKey={status}
             onSelectionChange={key => {
@@ -164,43 +190,6 @@ export function TicketPage() {
             </Tabs.List>
           </Tabs>
 
-          <AdminFilterAccordion>
-            <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(220px,0.8fr)_auto]">
-              <Input aria-label="User Email" value={email} onChange={event => setEmail(event.target.value)} />
-              <div>
-                <div className="mb-2 space-y-1">
-                  <p className="text-sm font-medium text-slate-700">Reply Status</p>
-                </div>
-                <AdminSelectField
-                  ariaLabel="Reply Status"
-                  options={[
-                    { id: "0", label: "Pending Admin Reply" },
-                    { id: "1", label: "Waiting User Reply" },
-                    { id: "2", label: "Resolved" }
-                  ]}
-                  selectedKey={selectedReplyStatus}
-                  onSelectionChange={key => setReplyStatus(String(key || ""))}
-                />
-              </div>
-              <div className="flex items-end justify-end">
-                <AdminFilterActionGroup
-                  isDisabled={loading}
-                  onSearch={() => {
-                    setPage(1);
-                    void loadTickets(1);
-                  }}
-                  onReset={() => {
-                    setEmail("");
-                    setReplyStatus("");
-                    setStatus("all");
-                    setPage(1);
-                    void loadTickets(1);
-                  }}
-                />
-              </div>
-            </div>
-          </AdminFilterAccordion>
-
           {error ? <div className="rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">{error}</div> : null}
 
           {loading ? (
@@ -211,16 +200,16 @@ export function TicketPage() {
             <>
               <Table variant="secondary" aria-label="Tickets" className={adminTableClassNames.wrapper}>
                 <Table.ScrollContainer>
-                  <Table.Content sortDescriptor={sortDescriptor} onSortChange={setSortDescriptor}>
+                  <Table.Content>
                   <TableHeader>
-                    <TableColumn key="id" allowsSorting>ID</TableColumn>
-                    <TableColumn key="subject" allowsSorting>Subject</TableColumn>
-                    <TableColumn key="priority" allowsSorting>Priority</TableColumn>
-                    <TableColumn key="status" allowsSorting>Status</TableColumn>
-                    <TableColumn key="updated" allowsSorting>Updated</TableColumn>
+                    <TableColumn>ID</TableColumn>
+                    <TableColumn>Subject</TableColumn>
+                    <TableColumn>Priority</TableColumn>
+                    <TableColumn>Status</TableColumn>
+                    <TableColumn>Updated</TableColumn>
                     <TableColumn>Actions</TableColumn>
                   </TableHeader>
-                  <TableBody items={sortedItems}>
+                  <TableBody items={records}>
                     {item => (
                       <TableRow key={item.id}>
                         <TableCell>#{item.id}</TableCell>

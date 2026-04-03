@@ -10,21 +10,19 @@ import {
   ListBoxItem,
   Select,
   Spinner,
-  SearchField,
   Table,
   TableBody,
   TableCell,
   TableColumn,
   TableHeader,
+  SearchField,
   TableRow,
 } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
-import { AdminFilterAccordion } from "../components/AdminFilterAccordion";
-import { AdminFilterActionGroup } from "../components/AdminFilterActionGroup";
 import { AdminDrawer } from "../components/AdminDrawer";
+import { AdminFilterModal } from "../components/AdminFilterModal";
 import { AdminPagination } from "../components/AdminPagination";
 import { AdminSelectField } from "../components/AdminSelectField";
-import { useAdminTableSort } from "../components/AdminTable";
 import { AdminTextField } from "../components/AdminTextField";
 import { adminRequest, unwrapEnvelope } from "../lib/api";
 import { ModalField } from "../components/ModalField";
@@ -198,18 +196,6 @@ export function OrderPage() {
   const assignAmountInvalid = !assignAmount.trim();
   const assignPlanInvalid = !assignPlanId;
   const assignPeriodInvalid = !assignPeriod;
-  const { sortDescriptor, setSortDescriptor, sortedItems } = useAdminTableSort(
-    records,
-    { column: "created", direction: "descending" },
-    {
-      trade: item => item.trade_no,
-      plan: item => item.plan_name || "",
-      total: item => Number(item.total_amount || 0),
-      status: item => item.status,
-      commission: item => Number(item.commission_balance || 0),
-      created: item => item.created_at || ""
-    }
-  );
   const stats = useMemo(() => {
     const paid = records.filter(record => record.status === 1).length;
     const pending = records.filter(record => record.status === 0).length;
@@ -250,73 +236,73 @@ export function OrderPage() {
               Review payment state, inspect order details, and manually assign or settle orders without switching back to the old page.
             </p>
           </div>
-          <Button variant="primary" onPress={() => setAssignOpen(true)}>
-            Assign order
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <AdminFilterModal
+              title="Order filters"
+              description="Filter orders by user email, trade number, and payment status before refreshing the list."
+              onSearch={() => {
+                setPage(1);
+                void loadOrders(1);
+              }}
+              onReset={() => {
+                setEmail("");
+                setTradeNo("");
+                setStatus("");
+                setPage(1);
+                void loadOrders(1);
+              }}
+              isBusy={loading}
+            >
+              <div className="flex flex-col gap-4">
+                <SearchField className="space-y-2" value={email} onChange={setEmail}>
+                  <Label>User Email</Label>
+                  <SearchField.Group>
+                    <SearchField.SearchIcon />
+                    <SearchField.Input className="w-full" placeholder="Enter user email" />
+                    <SearchField.ClearButton />
+                  </SearchField.Group>
+                </SearchField>
+
+                <SearchField className="space-y-2" value={tradeNo} onChange={setTradeNo}>
+                  <Label>Trade No</Label>
+                  <SearchField.Group>
+                    <SearchField.SearchIcon />
+                    <SearchField.Input className="w-full" placeholder="Enter trade no" />
+                    <SearchField.ClearButton />
+                  </SearchField.Group>
+                </SearchField>
+
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <Select
+                    className="w-full"
+                    placeholder="Select one"
+                    selectedKey={status || null}
+                    onSelectionChange={key => setStatus(String(key || ""))}
+                  >
+                    <Select.Trigger className="h-9 w-full">
+                      <Select.Value />
+                      <Select.Indicator />
+                    </Select.Trigger>
+                    <Select.Popover>
+                      <ListBox>
+                        {Object.entries(ORDER_STATUS).map(([key, value]) => (
+                          <ListBoxItem key={key} id={key} textValue={value.label}>
+                            {value.label}
+                          </ListBoxItem>
+                        ))}
+                      </ListBox>
+                    </Select.Popover>
+                  </Select>
+                </div>
+              </div>
+            </AdminFilterModal>
+            <Button variant="primary" onPress={() => setAssignOpen(true)}>
+              Assign order
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className={`${adminSectionBodyClassName} gap-5`}>
-          <AdminFilterAccordion>
-            <Form className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(220px,0.8fr)_auto]">
-              <SearchField className="space-y-2" value={email} onChange={setEmail}>
-                <Label>User Email</Label>
-                <SearchField.Group>
-                  <SearchField.SearchIcon />
-                  <SearchField.Input className="w-full" placeholder="Enter user email" />
-                  <SearchField.ClearButton />
-                </SearchField.Group>
-              </SearchField>
-
-              <SearchField className="space-y-2" value={tradeNo} onChange={setTradeNo}>
-                <Label>Trade No</Label>
-                <SearchField.Group>
-                  <SearchField.SearchIcon />
-                  <SearchField.Input className="w-full" placeholder="Enter trade no" />
-                  <SearchField.ClearButton />
-                </SearchField.Group>
-              </SearchField>
-
-              <div className="space-y-2">
-                <Label>Status</Label>
-                <Select
-                  className="w-full"
-                  placeholder="Select one"
-                  selectedKey={status || null}
-                  onSelectionChange={key => setStatus(String(key || ""))}
-                >
-                  <Select.Trigger className="h-9 w-full">
-                    <Select.Value />
-                    <Select.Indicator />
-                  </Select.Trigger>
-                  <Select.Popover>
-                    <ListBox>
-                      {Object.entries(ORDER_STATUS).map(([key, value]) => (
-                        <ListBoxItem key={key} id={key} textValue={value.label}>
-                          {value.label}
-                        </ListBoxItem>
-                      ))}
-                    </ListBox>
-                  </Select.Popover>
-                </Select>
-              </div>
-              <div className="flex items-end justify-end">
-                <AdminFilterActionGroup
-                  isDisabled={loading}
-                  onSearch={() => {
-                    setPage(1);
-                    void loadOrders(1);
-                  }}
-                  onReset={() => {
-                    setEmail("");
-                    setTradeNo("");
-                    setStatus("");
-                    setPage(1);
-                    void loadOrders(1);
-                  }}
-                />
-              </div>
-            </Form>
-          </AdminFilterAccordion>
-
           {error ? <div className="rounded-2xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700">{error}</div> : null}
 
           {loading ? (
@@ -327,17 +313,17 @@ export function OrderPage() {
             <>
               <Table variant="secondary" aria-label="Orders" className={adminTableClassNames.wrapper}>
                 <Table.ScrollContainer>
-                  <Table.Content sortDescriptor={sortDescriptor} onSortChange={setSortDescriptor}>
+                  <Table.Content>
                   <TableHeader>
-                    <TableColumn key="trade" allowsSorting>Trade</TableColumn>
-                    <TableColumn key="plan" allowsSorting>Plan</TableColumn>
-                    <TableColumn key="total" allowsSorting>Total</TableColumn>
-                    <TableColumn key="status" allowsSorting>Status</TableColumn>
-                    <TableColumn key="commission" allowsSorting>Commission</TableColumn>
-                    <TableColumn key="created" allowsSorting>Created</TableColumn>
+                    <TableColumn>Trade</TableColumn>
+                    <TableColumn>Plan</TableColumn>
+                    <TableColumn>Total</TableColumn>
+                    <TableColumn>Status</TableColumn>
+                    <TableColumn>Commission</TableColumn>
+                    <TableColumn>Created</TableColumn>
                     <TableColumn>Actions</TableColumn>
                   </TableHeader>
-                  <TableBody items={sortedItems}>
+                  <TableBody items={records}>
                     {item => (
                       <TableRow key={item.id}>
                         <TableCell>
