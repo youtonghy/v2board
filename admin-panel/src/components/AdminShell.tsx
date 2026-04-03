@@ -11,7 +11,6 @@ import {
   Avatar,
   Badge,
   Breadcrumbs,
-  BreadcrumbsItem,
   Button,
   Drawer,
   Dropdown,
@@ -257,21 +256,28 @@ export function AdminShell() {
     });
   }, []);
 
-  const pageLabel = useMemo(() => {
-    const current = navGroups
-      .flatMap(group => group.items)
-      .find(item => item.path === location.pathname);
-    return current?.label || "Dashboard";
-  }, [location.pathname]);
-
   const breadcrumbItems = useMemo(() => {
-    const current = navGroups
-      .flatMap(group => group.items)
-      .find(item => item.path === location.pathname);
+    const entries = navGroups.flatMap(group => {
+      const groupPath = group.items[0]?.path || "/new/dashboard";
+      return group.items.map(item => ({
+        groupLabel: group.label,
+        groupPath,
+        item
+      }));
+    });
+
+    const current = entries
+      .filter(entry => location.pathname === entry.item.path || location.pathname.startsWith(`${entry.item.path}/`))
+      .sort((left, right) => right.item.path.length - left.item.path.length)[0];
+
+    const currentGroupLabel = current?.groupLabel || "Overview";
+    const currentGroupPath = current?.groupPath || "/new/dashboard";
+    const currentPageLabel = current?.item.label || "Dashboard";
 
     return [
-      { key: "admin", label: "Admin", path: "/new/dashboard" },
-      ...(current ? [{ key: current.path, label: current.label, path: current.path }] : [])
+      { key: "admin", label: "admin", path: "/new/dashboard" },
+      { key: "group", label: currentGroupLabel.toLowerCase(), path: currentGroupPath },
+      { key: "page", label: currentPageLabel }
     ];
   }, [location.pathname]);
 
@@ -365,23 +371,26 @@ export function AdminShell() {
                 >
                   <Bars width={18} height={18} aria-hidden="true" />
                 </Button>
-                <div className="min-w-0">
-                  <Breadcrumbs
-                    separator={<span className="px-1 text-slate-300">/</span>}
-                    className="text-slate-400"
-                  >
-                    {breadcrumbItems.map(item => (
-                      <BreadcrumbsItem
+                <Breadcrumbs separator={<span className="px-1 text-slate-300">/</span>} className="min-w-0 text-slate-400">
+                  {breadcrumbItems.map((item, index) => {
+                    const isCurrent = index === breadcrumbItems.length - 1;
+
+                    return (
+                      <Breadcrumbs.Item
                         key={item.key}
-                        className="text-slate-400 aria-[current=page]:text-slate-600"
-                        onPress={() => handleNavigate(item.path)}
+                        className={[
+                          "truncate text-sm transition",
+                          isCurrent
+                            ? "font-semibold text-slate-900"
+                            : "text-slate-500 hover:text-slate-900"
+                        ].join(" ")}
+                        onPress={!isCurrent && item.path ? () => handleNavigate(item.path) : undefined}
                       >
                         {item.label}
-                      </BreadcrumbsItem>
-                    ))}
-                  </Breadcrumbs>
-                  <p className="truncate text-lg font-semibold text-slate-900">{pageLabel}</p>
-                </div>
+                      </Breadcrumbs.Item>
+                    );
+                  })}
+                </Breadcrumbs>
               </div>
 
               <div className="flex items-center gap-2 md:gap-3">
