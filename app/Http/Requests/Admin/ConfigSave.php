@@ -6,6 +6,17 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class ConfigSave extends FormRequest
 {
+    public const SECRET_KEYS = [
+        'server_token',
+        'email_password',
+        'email_oauth_client_secret',
+        'email_oauth_refresh_token',
+        'telegram_bot_token',
+        'sso_casdoor_client_secret',
+        'recaptcha_key',
+        'turnstile_secret_key',
+    ];
+
     const RULES = [
         // deposit
         'deposit_bounus' => [

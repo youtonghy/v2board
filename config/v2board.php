@@ -1,5 +1,12 @@
 <?php
- return array (
+
+$localConfigPath = base_path('config/v2board.local.php');
+$localConfig = is_file($localConfigPath) ? require $localConfigPath : [];
+if (!is_array($localConfig)) {
+    $localConfig = [];
+}
+
+$baseConfig = array (
   'telegram_bot_enable' => '1',
   'telegram_bot_token' => '',
   'telegram_discuss_link' => NULL,
@@ -151,4 +158,6 @@
   'deposit_bounus' => 
   array (
   ),
-) ;
+);
+
+return array_replace($baseConfig, $localConfig);

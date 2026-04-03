@@ -376,17 +376,17 @@ class ConfigController extends Controller
             $data = array_merge($data, RegisterMode::legacyFlagsForMode((int)$data['register_mode']));
         }
         $config = config('v2board');
-        foreach (ConfigSave::RULES as $k => $v) {
-            if (!in_array($k, array_keys(ConfigSave::RULES))) {
-                unset($config[$k]);
-                continue;
-            }
-            if (array_key_exists($k, $data)) {
-                $config[$k] = $data[$k];
-            }
+        foreach ($data as $key => $value) {
+            $config[$key] = $value;
         }
-        $data = var_export($config, 1);
-        if (!File::put(base_path() . '/config/v2board.php', "<?php\n return $data ;")) {
+
+        [$versionedConfig, $localConfig] = $this->splitVersionedConfig($config);
+
+        if (!$this->writeConfigSnapshot(base_path('config/v2board.php'), $versionedConfig)) {
+            abort(500, '修改失败');
+        }
+
+        if (!$this->writeConfigSnapshot(base_path('config/v2board.local.php'), $localConfig)) {
             abort(500, '修改失败');
         }
         if (function_exists('opcache_reset')) {
@@ -425,6 +425,21 @@ class ConfigController extends Controller
         return response([
             'data' => true
         ]);
+    }
+
+    private function splitVersionedConfig(array $config): array
+    {
+        $secretKeys = array_flip(ConfigSave::SECRET_KEYS);
+
+        return [
+            array_diff_key($config, $secretKeys),
+            array_intersect_key($config, $secretKeys),
+        ];
+    }
+
+    private function writeConfigSnapshot(string $path, array $config): bool
+    {
+        return File::put($path, "<?php\n\nreturn " . var_export($config, true) . ";\n") !== false;
     }
 
     private function normalizeCorsSafeConfig(array $data): array
