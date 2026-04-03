@@ -746,145 +746,143 @@ export function UserPage() {
               <Table variant="secondary" aria-label="Users" className={adminTableClassNames.wrapper}>
                 <Table.ScrollContainer>
                   <Table.Content>
-                  <TableHeader>
-                    <TableColumn>Email</TableColumn>
-                    <TableColumn>Plan</TableColumn>
-                    <TableColumn>Balance</TableColumn>
-                    <TableColumn>Usage</TableColumn>
-                    <TableColumn>Expires</TableColumn>
-                    <TableColumn>Status</TableColumn>
-                    <TableColumn>Actions</TableColumn>
-                  </TableHeader>
-                  <TableBody items={records}>
-                    {item => (
-                      <TableRow key={item.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Avatar size="sm">
-                              <Avatar.Image src={getUserAvatarUrl(item.email)} alt={item.email} />
-                              <Avatar.Fallback>{getUserInitials(item.email)}</Avatar.Fallback>
-                            </Avatar>
-                            <div>
-                              <p className="font-medium text-slate-900">{item.email}</p>
-                              <p className="text-xs text-slate-500">ID {item.id}</p>
+                    <TableHeader>
+                      <TableColumn>Email</TableColumn>
+                      <TableColumn>Plan</TableColumn>
+                      <TableColumn>Balance</TableColumn>
+                      <TableColumn>Usage</TableColumn>
+                      <TableColumn>Expires</TableColumn>
+                      <TableColumn>Status</TableColumn>
+                      <TableColumn>Actions</TableColumn>
+                    </TableHeader>
+                    <TableBody items={records}>
+                      {item => (
+                        <TableRow key={item.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <Avatar size="sm">
+                                <Avatar.Image src={getUserAvatarUrl(item.email)} alt={item.email} />
+                                <Avatar.Fallback>{getUserInitials(item.email)}</Avatar.Fallback>
+                              </Avatar>
+                              <div>
+                                <p className="font-medium text-slate-900">{item.email}</p>
+                                <p className="text-xs text-slate-500">ID {item.id}</p>
+                              </div>
                             </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{item.plan_name || "No plan"}</TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <p>{formatMoney((item.balance || 0) / 100)}</p>
-                            <p className="text-xs text-slate-500">Commission {formatMoney((item.commission_balance || 0) / 100)}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <p>{formatBytes(item.total_used || 0)} used</p>
-                            <p className="text-xs text-slate-500">Cap {formatBytes(item.transfer_enable || 0)}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell>{formatDateTime(item.expired_at)}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Chip color={Number(item.banned || 0) ? "danger" : "success"} variant="soft">
-                              {Number(item.banned || 0) ? "Banned" : "Active"}
-                            </Chip>
-                            {Number(item.is_admin || 0) ? <Chip variant="soft">Admin</Chip> : null}
-                            {Number(item.is_staff || 0) ? <Chip variant="soft">Staff</Chip> : null}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Tooltip>
-                              <Tooltip.Trigger>
-                                <Button
-                                  size="sm"
-                                  variant="primary"
-                                  isIconOnly
-                                 
-                                  aria-label={`Edit ${item.email}`}
-                                  onPress={() => void openEditor(item)}
-                                  isDisabled={submitting}
-                                >
-                                  <PencilToLine width={16} height={16} aria-hidden="true" />
-                                </Button>
-                              </Tooltip.Trigger>
-                              <Tooltip.Content>Edit user<Tooltip.Arrow /></Tooltip.Content>
-                            </Tooltip>
-                            <Tooltip>
-                              <Tooltip.Trigger>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  isIconOnly
-                                 
-                                  aria-label={`Reset secret for ${item.email}`}
-                                  onPress={() => void runRowAction("user/resetSecret", { id: item.id })}
-                                  isDisabled={submitting}
-                                >
-                                  <Key width={16} height={16} aria-hidden="true" />
-                                </Button>
-                              </Tooltip.Trigger>
-                              <Tooltip.Content>Reset key<Tooltip.Arrow /></Tooltip.Content>
-                            </Tooltip>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              isIconOnly
-                              aria-label={`View traffic for ${item.email}`}
-                              onPress={() => void openTrafficStats(item)}
-                              isDisabled={submitting}
-                            >
-                              <SquareChartBar width={16} height={16} aria-hidden="true" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              isIconOnly
-                              aria-label={`View IP geography for ${item.email}`}
-                              onPress={() => void openIpGeo(item)}
-                              isDisabled={submitting}
-                            >
-                              <Globe width={16} height={16} aria-hidden="true" />
-                            </Button>
-                            <DangerConfirmButton
-                              size="sm"
-                              isIconOnly
-                              aria-label={Number(item.banned || 0) ? `Unban ${item.email}` : `Ban ${item.email}`}
-                              title={Number(item.banned || 0) ? `Unban ${item.email}?` : `Ban ${item.email}?`}
-                              description={
-                                Number(item.banned || 0)
-                                  ? `This will restore access for ${item.email}.`
-                                  : `This will block access for ${item.email}.`
-                              }
-                              confirmLabel={Number(item.banned || 0) ? "Unban user" : "Ban user"}
-                              isDisabled={submitting}
-                              onConfirm={() => void runRowAction("user/ban", { filter: [{ key: "id", condition: "=", value: item.id }] })}
-                            >
-                              {Number(item.banned || 0) ? (
-                                <LockOpen width={16} height={16} aria-hidden="true" />
-                              ) : (
-                                <Ban width={16} height={16} aria-hidden="true" />
-                              )}
-                            </DangerConfirmButton>
-                            <DangerConfirmButton
-                              size="sm"
-                              isIconOnly
-                              aria-label={`Delete ${item.email}`}
-                              title={`Delete ${item.email}?`}
-                              description={`This will permanently delete ${item.email}.`}
-                              confirmLabel="Delete user"
-                              isDisabled={submitting}
-                              onConfirm={() => void runRowAction("user/delUser", { id: item.id })}
-                            >
-                              <TrashBin width={16} height={16} aria-hidden="true" />
-                            </DangerConfirmButton>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table.Content>
+                          </TableCell>
+                          <TableCell>{item.plan_name || "No plan"}</TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              <p>{formatMoney((item.balance || 0) / 100)}</p>
+                              <p className="text-xs text-slate-500">Commission {formatMoney((item.commission_balance || 0) / 100)}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              <p>{formatBytes(item.total_used || 0)} used</p>
+                              <p className="text-xs text-slate-500">Cap {formatBytes(item.transfer_enable || 0)}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell>{formatDateTime(item.expired_at)}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Chip color={Number(item.banned || 0) ? "danger" : "success"} variant="soft">
+                                {Number(item.banned || 0) ? "Banned" : "Active"}
+                              </Chip>
+                              {Number(item.is_admin || 0) ? <Chip variant="soft">Admin</Chip> : null}
+                              {Number(item.is_staff || 0) ? <Chip variant="soft">Staff</Chip> : null}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <Tooltip>
+                                <Tooltip.Trigger>
+                                  <Button
+                                    size="sm"
+                                    variant="primary"
+                                    isIconOnly
+                                    aria-label={`Edit ${item.email}`}
+                                    onPress={() => void openEditor(item)}
+                                    isDisabled={submitting}
+                                  >
+                                    <PencilToLine width={16} height={16} aria-hidden="true" />
+                                  </Button>
+                                </Tooltip.Trigger>
+                                <Tooltip.Content>Edit user<Tooltip.Arrow /></Tooltip.Content>
+                              </Tooltip>
+                              <Tooltip>
+                                <Tooltip.Trigger>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    isIconOnly
+                                    aria-label={`Reset secret for ${item.email}`}
+                                    onPress={() => void runRowAction("user/resetSecret", { id: item.id })}
+                                    isDisabled={submitting}
+                                  >
+                                    <Key width={16} height={16} aria-hidden="true" />
+                                  </Button>
+                                </Tooltip.Trigger>
+                                <Tooltip.Content>Reset key<Tooltip.Arrow /></Tooltip.Content>
+                              </Tooltip>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                isIconOnly
+                                aria-label={`View traffic for ${item.email}`}
+                                onPress={() => void openTrafficStats(item)}
+                                isDisabled={submitting}
+                              >
+                                <SquareChartBar width={16} height={16} aria-hidden="true" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                isIconOnly
+                                aria-label={`View IP geography for ${item.email}`}
+                                onPress={() => void openIpGeo(item)}
+                                isDisabled={submitting}
+                              >
+                                <Globe width={16} height={16} aria-hidden="true" />
+                              </Button>
+                              <DangerConfirmButton
+                                size="sm"
+                                isIconOnly
+                                aria-label={Number(item.banned || 0) ? `Unban ${item.email}` : `Ban ${item.email}`}
+                                title={Number(item.banned || 0) ? `Unban ${item.email}?` : `Ban ${item.email}?`}
+                                description={
+                                  Number(item.banned || 0)
+                                    ? `This will restore access for ${item.email}.`
+                                    : `This will block access for ${item.email}.`
+                                }
+                                confirmLabel={Number(item.banned || 0) ? "Unban user" : "Ban user"}
+                                isDisabled={submitting}
+                                onConfirm={() => void runRowAction("user/ban", { filter: [{ key: "id", condition: "=", value: item.id }] })}
+                              >
+                                {Number(item.banned || 0) ? (
+                                  <LockOpen width={16} height={16} aria-hidden="true" />
+                                ) : (
+                                  <Ban width={16} height={16} aria-hidden="true" />
+                                )}
+                              </DangerConfirmButton>
+                              <DangerConfirmButton
+                                size="sm"
+                                isIconOnly
+                                aria-label={`Delete ${item.email}`}
+                                title={`Delete ${item.email}?`}
+                                description={`This will permanently delete ${item.email}.`}
+                                confirmLabel="Delete user"
+                                isDisabled={submitting}
+                                onConfirm={() => void runRowAction("user/delUser", { id: item.id })}
+                              >
+                                <TrashBin width={16} height={16} aria-hidden="true" />
+                              </DangerConfirmButton>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table.Content>
                 </Table.ScrollContainer>
               </Table>
 
@@ -921,20 +919,22 @@ export function UserPage() {
             void submitUserUpdate();
           }}
         >
-          <AdminTextField
-            label="Email"
-            value={form.email}
-            onChange={event => setForm(current => ({ ...current, email: event.target.value }))}
-            isRequired
-            isInvalid={userEmailInvalid}
-            errorMessage="Email is required."
-          />
-          <AdminTextField
-            label="New Password"
-            type="password"
-            value={form.password}
-            onChange={event => setForm(current => ({ ...current, password: event.target.value }))}
-          />
+          <div className="space-y-4">
+            <AdminTextField
+              label="Email"
+              value={form.email}
+              onChange={event => setForm(current => ({ ...current, email: event.target.value }))}
+              isRequired
+              isInvalid={userEmailInvalid}
+              errorMessage="Email is required."
+            />
+            <AdminTextField
+              label="New Password"
+              type="password"
+              value={form.password}
+              onChange={event => setForm(current => ({ ...current, password: event.target.value }))}
+            />
+          </div>
           <ModalField label="Plan">
             <AdminSelectField
               ariaLabel="Plan"
@@ -943,22 +943,24 @@ export function UserPage() {
               onSelectionChange={key => setForm(current => ({ ...current, plan_id: String(key || "") }))}
             />
           </ModalField>
-          <AdminTextField label="Transfer (GB)" type="number" value={form.transfer_enable} onChange={event => setForm(current => ({ ...current, transfer_enable: event.target.value }))} />
-          <AdminTextField label="Device Limit" type="number" value={form.device_limit} onChange={event => setForm(current => ({ ...current, device_limit: event.target.value }))} />
-          <AdminDatePickerField label="Expire Date" value={form.expired_at} onChange={nextValue => setForm(current => ({ ...current, expired_at: nextValue == null ? "" : String(nextValue) }))} />
-          <AdminTextField label="Balance (cents)" value={form.balance} onChange={event => setForm(current => ({ ...current, balance: event.target.value }))} />
-          <AdminTextField label="Commission Balance (cents)" value={form.commission_balance} onChange={event => setForm(current => ({ ...current, commission_balance: event.target.value }))} />
-          <AdminTextField label="Commission Rate" type="number" value={form.commission_rate} onChange={event => setForm(current => ({ ...current, commission_rate: event.target.value }))} />
-          <AdminTextField label="Discount" type="number" value={form.discount} onChange={event => setForm(current => ({ ...current, discount: event.target.value }))} />
-          <AdminTextField label="Speed Limit" type="number" value={form.speed_limit} onChange={event => setForm(current => ({ ...current, speed_limit: event.target.value }))} />
-          <AdminTextField label="Invite User Email" value={form.invite_user_email} onChange={event => setForm(current => ({ ...current, invite_user_email: event.target.value }))} />
-          <AdminTextField
-            label="Remarks"
-            multiline
-            rows={4}
-            value={form.remarks}
-            onChange={event => setForm(current => ({ ...current, remarks: event.target.value }))}
-          />
+          <div className="space-y-4">
+            <AdminTextField label="Transfer (GB)" type="number" value={form.transfer_enable} onChange={event => setForm(current => ({ ...current, transfer_enable: event.target.value }))} />
+            <AdminTextField label="Device Limit" type="number" value={form.device_limit} onChange={event => setForm(current => ({ ...current, device_limit: event.target.value }))} />
+            <AdminDatePickerField label="Expire Date" value={form.expired_at} onChange={nextValue => setForm(current => ({ ...current, expired_at: nextValue == null ? "" : String(nextValue) }))} />
+            <AdminTextField label="Balance (cents)" value={form.balance} onChange={event => setForm(current => ({ ...current, balance: event.target.value }))} />
+            <AdminTextField label="Commission Balance (cents)" value={form.commission_balance} onChange={event => setForm(current => ({ ...current, commission_balance: event.target.value }))} />
+            <AdminTextField label="Commission Rate" type="number" value={form.commission_rate} onChange={event => setForm(current => ({ ...current, commission_rate: event.target.value }))} />
+            <AdminTextField label="Discount" type="number" value={form.discount} onChange={event => setForm(current => ({ ...current, discount: event.target.value }))} />
+            <AdminTextField label="Speed Limit" type="number" value={form.speed_limit} onChange={event => setForm(current => ({ ...current, speed_limit: event.target.value }))} />
+            <AdminTextField label="Invite User Email" value={form.invite_user_email} onChange={event => setForm(current => ({ ...current, invite_user_email: event.target.value }))} />
+            <AdminTextField
+              label="Remarks"
+              multiline
+              rows={4}
+              value={form.remarks}
+              onChange={event => setForm(current => ({ ...current, remarks: event.target.value }))}
+            />
+          </div>
           <div className="space-y-3">
             <div className="flex items-center justify-between rounded-2xl border border-default-200 bg-default-50 px-4 py-3">
               <Label className="text-sm font-medium text-slate-900">Banned</Label>
@@ -1035,25 +1037,27 @@ export function UserPage() {
             void submitGenerate();
           }}
         >
-          <AdminTextField label="Email Prefix" value={generateForm.email_prefix} onChange={event => setGenerateForm(current => ({ ...current, email_prefix: event.target.value }))} />
-          <AdminTextField
-            label="Email Suffix"
-            value={generateForm.email_suffix}
-            onChange={event => setGenerateForm(current => ({ ...current, email_suffix: event.target.value }))}
-            isRequired
-            isInvalid={generateSuffixInvalid}
-            errorMessage="Email suffix is required."
-          />
-          <AdminTextField label="Password" type="password" value={generateForm.password} onChange={event => setGenerateForm(current => ({ ...current, password: event.target.value }))} />
-          <AdminTextField
-            label="Generate Count"
-            type="number"
-            value={generateForm.generate_count}
-            onChange={event => setGenerateForm(current => ({ ...current, generate_count: event.target.value }))}
-            isRequired
-            isInvalid={generateCountInvalid}
-            errorMessage="Generate count is required."
-          />
+          <div className="space-y-4">
+            <AdminTextField label="Email Prefix" value={generateForm.email_prefix} onChange={event => setGenerateForm(current => ({ ...current, email_prefix: event.target.value }))} />
+            <AdminTextField
+              label="Email Suffix"
+              value={generateForm.email_suffix}
+              onChange={event => setGenerateForm(current => ({ ...current, email_suffix: event.target.value }))}
+              isRequired
+              isInvalid={generateSuffixInvalid}
+              errorMessage="Email suffix is required."
+            />
+            <AdminTextField label="Password" type="password" value={generateForm.password} onChange={event => setGenerateForm(current => ({ ...current, password: event.target.value }))} />
+            <AdminTextField
+              label="Generate Count"
+              type="number"
+              value={generateForm.generate_count}
+              onChange={event => setGenerateForm(current => ({ ...current, generate_count: event.target.value }))}
+              isRequired
+              isInvalid={generateCountInvalid}
+              errorMessage="Generate count is required."
+            />
+          </div>
           <ModalField label="Plan">
             <AdminSelectField
               ariaLabel="Plan"

@@ -148,4 +148,7 @@
   'register_mode' => 1,
   'public_register_enable' => 0,
   'ticket_status' => 0,
+  'deposit_bounus' => 
+  array (
+  ),
 ) ;

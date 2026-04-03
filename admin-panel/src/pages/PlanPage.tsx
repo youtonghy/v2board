@@ -427,27 +427,29 @@ export function PlanPage() {
             void savePlan();
           }}
         >
-          <AdminTextField
-            label="Plan Name"
-            value={selected?.name || ""}
-            onChange={event => setSelected(current => (current ? { ...current, name: event.target.value } : current))}
-            isRequired
-            isInvalid={planNameInvalid}
-            errorMessage="Plan name is required."
-          />
-          <AdminTextField
-            label="Transfer (GB)"
-            type="number"
-            value={String(selected?.transfer_enable ?? "")}
-            onChange={event => setSelected(current => (current ? { ...current, transfer_enable: event.target.value } : current))}
-          />
-          <AdminTextField
-            label="Description"
-            multiline
-            rows={6}
-            value={selected?.content || ""}
-            onChange={event => setSelected(current => (current ? { ...current, content: event.target.value } : current))}
-          />
+          <div className="space-y-4">
+            <AdminTextField
+              label="Plan Name"
+              value={selected?.name || ""}
+              onChange={event => setSelected(current => (current ? { ...current, name: event.target.value } : current))}
+              isRequired
+              isInvalid={planNameInvalid}
+              errorMessage="Plan name is required."
+            />
+            <AdminTextField
+              label="Transfer (GB)"
+              type="number"
+              value={String(selected?.transfer_enable ?? "")}
+              onChange={event => setSelected(current => (current ? { ...current, transfer_enable: event.target.value } : current))}
+            />
+            <AdminTextField
+              label="Description"
+              multiline
+              rows={6}
+              value={selected?.content || ""}
+              onChange={event => setSelected(current => (current ? { ...current, content: event.target.value } : current))}
+            />
+          </div>
           <ModalField label="Permission Group">
             <AdminSelectField
               ariaLabel="Permission Group"
@@ -470,24 +472,26 @@ export function PlanPage() {
               }}
             />
           </ModalField>
-          <AdminTextField
-            label="Device Limit"
-            type="number"
-            value={String(selected?.device_limit ?? "")}
-            onChange={event => setSelected(current => (current ? { ...current, device_limit: event.target.value } : current))}
-          />
-          <AdminTextField
-            label="Capacity Limit"
-            type="number"
-            value={String(selected?.capacity_limit ?? "")}
-            onChange={event => setSelected(current => (current ? { ...current, capacity_limit: event.target.value } : current))}
-          />
-          <AdminTextField
-            label="Speed Limit (Mbps)"
-            type="number"
-            value={String(selected?.speed_limit ?? "")}
-            onChange={event => setSelected(current => (current ? { ...current, speed_limit: event.target.value } : current))}
-          />
+          <div className="space-y-4">
+            <AdminTextField
+              label="Device Limit"
+              type="number"
+              value={String(selected?.device_limit ?? "")}
+              onChange={event => setSelected(current => (current ? { ...current, device_limit: event.target.value } : current))}
+            />
+            <AdminTextField
+              label="Capacity Limit"
+              type="number"
+              value={String(selected?.capacity_limit ?? "")}
+              onChange={event => setSelected(current => (current ? { ...current, capacity_limit: event.target.value } : current))}
+            />
+            <AdminTextField
+              label="Speed Limit (Mbps)"
+              type="number"
+              value={String(selected?.speed_limit ?? "")}
+              onChange={event => setSelected(current => (current ? { ...current, speed_limit: event.target.value } : current))}
+            />
+          </div>
           <div className="space-y-2 rounded-2xl border border-default-200 bg-default-50 px-4 py-3">
             <div className="flex items-center justify-between gap-4">
               <Label className="text-sm font-medium text-slate-900">Force Update Users</Label>
