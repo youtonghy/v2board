@@ -1,212 +1,149 @@
 import {
-  ArrowLeftToLine,
-  ArrowRightToLine,
   Bars,
   Bell,
   Magnifier,
   PersonPlus
 } from "@gravity-ui/icons";
 import {
-  Accordion,
   Avatar,
   Badge,
   Breadcrumbs,
   Button,
   Drawer,
   Dropdown,
+  Description,
+  Header,
   Label,
-  Tooltip
+  ListBox,
+  Separator
 } from "@heroui/react";
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { navGroups } from "../config/nav";
 import { adminBootstrap } from "../lib/bootstrap";
 import { gatewayRequest } from "../lib/api";
 
+function getActiveNavEntry(currentPath: string) {
+  const entries = navGroups.flatMap(group =>
+    group.items.map(item => ({
+      group,
+      item
+    }))
+  );
+
+  return entries
+    .filter(entry => currentPath === entry.item.path || currentPath.startsWith(`${entry.item.path}/`))
+    .sort((left, right) => right.item.path.length - left.item.path.length)[0];
+}
+
 function NavigationList({
-  collapsed,
   currentPath,
   onNavigate
 }: {
-  collapsed: boolean;
   currentPath: string;
   onNavigate: (path: string) => void;
 }) {
-  if (collapsed) {
-    return (
-      <div className="space-y-2 px-2">
-        {navGroups.flatMap(group =>
-          group.items.map(item => {
-            const Icon = item.icon;
-            const selected = item.path === currentPath;
-            return (
-              <Button
-                key={item.path}
-                isIconOnly
-                variant="ghost"
-                aria-label={item.label}
-                onPress={() => onNavigate(item.path)}
-                className={[
-                  "h-auto min-h-0 w-full rounded-[1.25rem] px-2 py-2",
-                  selected
-                    ? "bg-white shadow-[0_16px_40px_rgba(15,23,32,0.08)]"
-                    : "hover:bg-white/70"
-                ].join(" ")}
-              >
-                <Tooltip>
-                  <Tooltip.Trigger>
-                    <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/80 text-slate-600">
-                      <Icon width={18} height={18} aria-hidden="true" />
-                    </span>
-                  </Tooltip.Trigger>
-                  <Tooltip.Content placement="right">{item.label}</Tooltip.Content>
-                </Tooltip>
-              </Button>
-            );
-          })
-        )}
-      </div>
-    );
-  }
+  const activeEntry = getActiveNavEntry(currentPath);
+  const selectedKey = activeEntry?.item.path || "/new/dashboard";
 
   return (
-    <Accordion
-      hideSeparator
-      defaultExpandedKeys={navGroups.map(group => group.label)}
-      className="px-1"
+    <ListBox
+      aria-label="Admin navigation"
+      className="flex flex-col gap-4 px-3 py-2"
+      selectionMode="none"
+      onAction={key => onNavigate(String(key))}
     >
-      {navGroups.map(group => (
-        <Accordion.Item key={group.label} id={group.label} className="px-0">
-          <Accordion.Heading className="px-3 py-2">
-            <Accordion.Trigger className="flex items-center justify-between">
-              <span className="text-[11px] uppercase tracking-[0.24em] text-slate-400">{group.label}</span>
-              <Accordion.Indicator />
-            </Accordion.Trigger>
-          </Accordion.Heading>
-          <Accordion.Panel>
-            <Accordion.Body className="px-0 pb-0 pt-1">
-              <div className="space-y-1.5">
-                {group.items.map(item => {
-                  const Icon = item.icon;
-                  const selected = item.path === currentPath;
-                  return (
-                    <Button
-                      key={item.path}
-                      variant="ghost"
-                      onPress={() => onNavigate(item.path)}
-                      className={[
-                        "mb-1.5 h-auto w-full justify-start rounded-[1.25rem] px-2 py-1 text-left",
-                        selected
-                          ? "bg-white shadow-[0_16px_40px_rgba(15,23,32,0.08)]"
-                          : "hover:bg-white/70"
-                      ].join(" ")}
-                    >
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/80 text-slate-600">
-                        <Icon width={18} height={18} aria-hidden="true" />
-                      </span>
-                      <span className="min-w-0">
-                        <span className="block text-[14px] font-semibold text-slate-900">{item.label}</span>
-                        <span className="block text-xs text-slate-400">{item.description}</span>
-                      </span>
-                    </Button>
-                  );
-                })}
-              </div>
-            </Accordion.Body>
-          </Accordion.Panel>
-        </Accordion.Item>
+      {navGroups.map((group, groupIndex) => (
+        <Fragment key={group.label}>
+          <ListBox.Section>
+            <Header className="px-3 text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-400">
+              {group.label}
+            </Header>
+            {group.items.map(item => {
+              const Icon = item.icon;
+              const isSelected = selectedKey === item.path;
+
+              return (
+                <ListBox.Item
+                  key={item.path}
+                  id={item.path}
+                  textValue={`${group.label} ${item.label}`}
+                  className={[
+                    "group flex items-start gap-3 rounded-[1.4rem] px-3 py-3 outline-none transition",
+                    "data-[hovered=true]:bg-white/70 data-[focused=true]:bg-white/70",
+                    isSelected ? "bg-white shadow-[0_16px_40px_rgba(15,23,32,0.08)]" : ""
+                  ].join(" ")}
+                >
+                  <span
+                    className={[
+                      "mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/85 text-slate-600 shadow-sm transition",
+                      isSelected ? "text-[#1388ef]" : ""
+                    ].join(" ")}
+                  >
+                    <Icon width={18} height={18} aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <Label className="block text-sm font-semibold text-slate-900">{item.label}</Label>
+                    <Description className="block text-xs leading-5 text-slate-400">
+                      {item.description}
+                    </Description>
+                  </span>
+                  {isSelected ? (
+                    <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[#1388ef]" aria-hidden="true" />
+                  ) : null}
+                </ListBox.Item>
+              );
+            })}
+          </ListBox.Section>
+          {groupIndex < navGroups.length - 1 ? <Separator className="mx-3 bg-white/70" /> : null}
+        </Fragment>
       ))}
-    </Accordion>
+    </ListBox>
   );
 }
 
 function SidebarContent({
-  collapsed,
   currentPath,
   userLabel,
-  onNavigate,
-  onToggleCollapse,
-  showDesktopToggle,
-  headerAction
+  onNavigate
 }: {
-  collapsed: boolean;
   currentPath: string;
   userLabel: string;
   onNavigate: (path: string) => void;
-  onToggleCollapse?: () => void;
-  showDesktopToggle?: boolean;
-  headerAction?: React.ReactNode;
 }) {
   return (
     <>
-      <div className="relative z-10 flex items-center justify-between px-4 py-6">
+      <div className="relative z-10 px-4 py-6">
         <Button
           variant="ghost"
-          className={[
-            "h-auto min-h-0 justify-start rounded-[1.25rem] px-2 py-2 text-left text-slate-900",
-            collapsed ? "w-auto min-w-0 justify-center" : "w-full max-w-[188px]"
-          ].join(" ")}
+          className="h-auto min-h-0 w-full justify-start rounded-[1.25rem] px-2 py-2 text-left text-slate-900"
           onPress={() => onNavigate("/new/dashboard")}
         >
-          <div className={["flex items-center gap-3 transition-all", collapsed ? "justify-center" : ""].join(" ")}>
+          <div className="flex items-center gap-3">
             <div className="admin-orb h-11 w-11 rounded-full shrink-0" />
-            {!collapsed ? (
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Fantastic</p>
-                <p className="mt-1 text-lg font-semibold text-slate-900">{adminBootstrap.title}</p>
-              </div>
-            ) : null}
+            <div className="min-w-0 text-left">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Fantastic</p>
+              <p className="mt-1 truncate text-lg font-semibold text-slate-900">{adminBootstrap.title}</p>
+            </div>
           </div>
         </Button>
-        {headerAction ? (
-          headerAction
-        ) : showDesktopToggle ? (
-          <Button
-            isIconOnly
-            variant="ghost"
-            className="hidden shrink-0 text-slate-500 lg:inline-flex"
-            onPress={onToggleCollapse}
-          >
-            {collapsed ? (
-              <ArrowRightToLine width={18} height={18} aria-hidden="true" />
-            ) : (
-              <ArrowLeftToLine width={18} height={18} aria-hidden="true" />
-            )}
-          </Button>
-        ) : null}
       </div>
 
       <div className="flex-1 overflow-y-auto pb-6">
-        <NavigationList collapsed={collapsed} currentPath={currentPath} onNavigate={onNavigate} />
+        <NavigationList currentPath={currentPath} onNavigate={onNavigate} />
       </div>
 
-      <div className="border-t border-white/70 px-3 py-4">
-        <div
-          className={[
-            "rounded-[1.25rem] border border-white/70 bg-white/85 p-3",
-            collapsed ? "flex justify-center" : ""
-          ].join(" ")}
-        >
-          {collapsed ? (
-            <Tooltip>
-              <Tooltip.Trigger>
-                <Avatar className="bg-[#1388ef] text-white" size="sm">
-                  <Avatar.Fallback>{adminBootstrap.title.slice(0, 1).toUpperCase()}</Avatar.Fallback>
-                </Avatar>
-              </Tooltip.Trigger>
-              <Tooltip.Content placement="right">System guidance and support</Tooltip.Content>
-            </Tooltip>
-          ) : (
-            <div className="flex items-center gap-3">
-              <Avatar className="bg-[#1388ef] text-white" size="sm">
-                <Avatar.Fallback>{userLabel.slice(0, 1).toUpperCase()}</Avatar.Fallback>
-              </Avatar>
-              <div>
-                <p className="text-sm font-semibold text-slate-900">Help & Information</p>
-                <p className="text-xs text-slate-500">System guidance and support</p>
-              </div>
+      <div className="border-t border-white/70 px-4 py-4">
+        <div className="rounded-[1.25rem] border border-white/70 bg-white/85 p-3 shadow-sm">
+          <div className="flex items-center gap-3">
+            <Avatar className="bg-[#1388ef] text-white" size="sm">
+              <Avatar.Fallback>{userLabel.slice(0, 1).toUpperCase()}</Avatar.Fallback>
+            </Avatar>
+            <div className="min-w-0">
+              <Label className="block text-sm font-semibold text-slate-900">Help & Information</Label>
+              <Description className="block text-xs text-slate-500">System guidance and support</Description>
             </div>
-          )}
+          </div>
         </div>
       </div>
     </>
@@ -217,28 +154,12 @@ export function AdminShell() {
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
   const [userLabel, setUserLabel] = useState("Administrator");
   const [pendingTicketCount, setPendingTicketCount] = useState(0);
 
   useEffect(() => {
     setMobileOpen(false);
   }, [location.pathname]);
-
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem("admin-v2-sidebar-collapsed");
-      setCollapsed(raw === "1");
-    } catch (error) {
-      setCollapsed(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem("admin-v2-sidebar-collapsed", collapsed ? "1" : "0");
-    } catch (error) {}
-  }, [collapsed]);
 
   useEffect(() => {
     void gatewayRequest<{ email?: string }>("user/info").then(response => {
@@ -257,21 +178,10 @@ export function AdminShell() {
   }, []);
 
   const breadcrumbItems = useMemo(() => {
-    const entries = navGroups.flatMap(group => {
-      const groupPath = group.items[0]?.path || "/new/dashboard";
-      return group.items.map(item => ({
-        groupLabel: group.label,
-        groupPath,
-        item
-      }));
-    });
+    const current = getActiveNavEntry(location.pathname);
 
-    const current = entries
-      .filter(entry => location.pathname === entry.item.path || location.pathname.startsWith(`${entry.item.path}/`))
-      .sort((left, right) => right.item.path.length - left.item.path.length)[0];
-
-    const currentGroupLabel = current?.groupLabel || "Overview";
-    const currentGroupPath = current?.groupPath || "/new/dashboard";
+    const currentGroupLabel = current?.group.label || "Overview";
+    const currentGroupPath = current?.group.items[0]?.path || "/new/dashboard";
     const currentPageLabel = current?.item.label || "Dashboard";
 
     return [
@@ -317,21 +227,9 @@ export function AdminShell() {
               <Drawer.Body className="p-0">
                 <div className="flex h-full flex-col">
                   <SidebarContent
-                    collapsed={false}
                     currentPath={location.pathname}
                     userLabel={userLabel}
                     onNavigate={handleNavigate}
-                    headerAction={
-                      <Button
-                        isIconOnly
-                        variant="ghost"
-                        className="shrink-0 text-slate-500"
-                        aria-label="Close navigation"
-                        onPress={() => setMobileOpen(false)}
-                      >
-                        <ArrowLeftToLine width={18} height={18} aria-hidden="true" />
-                      </Button>
-                    }
                   />
                 </div>
               </Drawer.Body>
@@ -343,17 +241,13 @@ export function AdminShell() {
       <div className="flex min-h-screen">
         <aside
           className={[
-            "admin-sidebar hidden border-r border-white/60 text-[#0f1720] transition-all duration-300 lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col",
-            collapsed ? "lg:w-[96px]" : "lg:w-[272px]"
+            "admin-sidebar hidden border-r border-white/60 text-[#0f1720] transition-all duration-300 lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-[320px] lg:flex-col"
           ].join(" ")}
         >
           <SidebarContent
-            collapsed={collapsed}
             currentPath={location.pathname}
             userLabel={userLabel}
             onNavigate={handleNavigate}
-            onToggleCollapse={() => setCollapsed(value => !value)}
-            showDesktopToggle
           />
         </aside>
 
