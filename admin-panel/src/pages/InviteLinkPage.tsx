@@ -18,6 +18,7 @@ import {
   TableHeader,
   TableRow,
   toast,
+  Tooltip,
 } from "@heroui/react";
 import { Check, Copy, QrCode, Xmark } from "@gravity-ui/icons";
 import { useEffect, useMemo, useState } from "react";
@@ -217,7 +218,7 @@ export function InviteLinkPage() {
               Track issued links, see who they belong to, and disable invalid links without leaving the new panel.
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-nowrap items-center gap-2 overflow-x-auto">
             <AdminFilterModal
               title="Invite link filters"
               description="Filter invite links by owner, keyword, and status before refreshing the inventory."
@@ -283,9 +284,14 @@ export function InviteLinkPage() {
                 </div>
               </div>
             </AdminFilterModal>
-            <Button variant="primary" onPress={() => setGenerateOpen(true)}>
-              Generate invite link
-            </Button>
+            <Tooltip>
+              <Tooltip.Trigger>
+                <Button variant="primary" className="whitespace-nowrap" onPress={() => setGenerateOpen(true)}>
+                  Generate invite link
+                </Button>
+              </Tooltip.Trigger>
+              <Tooltip.Content>Generate invite link<Tooltip.Arrow /></Tooltip.Content>
+            </Tooltip>
           </div>
         </CardHeader>
         <CardContent className={`${adminSectionBodyClassName} gap-5`}>
@@ -335,27 +341,37 @@ export function InviteLinkPage() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex flex-col gap-3">
-                            <div className="flex flex-wrap justify-end gap-2">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                isIconOnly
-                                aria-label={`Copy invite link for ${item.user_email || item.user_id || "user"}`}
-                                onPress={() => void copyInviteLink(item.link_url)}
-                              >
-                                <Copy width={16} height={16} aria-hidden="true" />
-                              </Button>
+                            <div className="flex flex-nowrap justify-end gap-2 overflow-x-auto whitespace-nowrap">
+                              <Tooltip>
+                                <Tooltip.Trigger>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    isIconOnly
+                                    aria-label={`Copy invite link for ${item.user_email || item.user_id || "user"}`}
+                                    onPress={() => void copyInviteLink(item.link_url)}
+                                  >
+                                    <Copy width={16} height={16} aria-hidden="true" />
+                                  </Button>
+                                </Tooltip.Trigger>
+                                <Tooltip.Content>Copy invite link<Tooltip.Arrow /></Tooltip.Content>
+                              </Tooltip>
                               {item.status === 3 ? (
-                                <Button
-                                  size="sm"
-                                  variant="primary"
-                                  isIconOnly
-                                  aria-label={`Enable invite link for ${item.user_email || item.user_id || "user"}`}
-                                  onPress={() => void updateStatus(item, 0)}
-                                  isDisabled={submitting}
-                                >
-                                  <Check width={16} height={16} aria-hidden="true" />
-                                </Button>
+                                <Tooltip>
+                                  <Tooltip.Trigger>
+                                    <Button
+                                      size="sm"
+                                      variant="primary"
+                                      isIconOnly
+                                      aria-label={`Enable invite link for ${item.user_email || item.user_id || "user"}`}
+                                      onPress={() => void updateStatus(item, 0)}
+                                      isDisabled={submitting}
+                                    >
+                                      <Check width={16} height={16} aria-hidden="true" />
+                                    </Button>
+                                  </Tooltip.Trigger>
+                                  <Tooltip.Content>Enable invite link<Tooltip.Arrow /></Tooltip.Content>
+                                </Tooltip>
                               ) : (
                                 <DangerConfirmButton
                                   size="sm"
@@ -373,15 +389,20 @@ export function InviteLinkPage() {
                             </div>
 
                             <Modal>
-                              <Button
-                                isIconOnly
-                                size="sm"
-                                variant="ghost"
-                                aria-label="Open QR code share modal"
-                                className="self-end"
-                              >
-                                <QrCode width={16} height={16} />
-                              </Button>
+                              <Tooltip>
+                                <Tooltip.Trigger>
+                                  <Button
+                                    isIconOnly
+                                    size="sm"
+                                    variant="ghost"
+                                    aria-label="Open QR code share modal"
+                                    className="self-end"
+                                  >
+                                    <QrCode width={16} height={16} />
+                                  </Button>
+                                </Tooltip.Trigger>
+                                <Tooltip.Content>Open QR share<Tooltip.Arrow /></Tooltip.Content>
+                              </Tooltip>
                               <Modal.Backdrop variant="blur" className="bg-slate-950/30 backdrop-blur-sm">
                                 <Modal.Container>
                                   <Modal.Dialog className="sm:max-w-[420px]">
@@ -402,14 +423,24 @@ export function InviteLinkPage() {
                                       <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
                                         <QRCodeSVG value={item.link_url} size={200} includeMargin />
                                       </div>
-                                      <Button size="sm" variant="secondary" onPress={() => void copyInviteLink(item.link_url)}>
-                                        Copy Link
-                                      </Button>
+                                      <Tooltip>
+                                        <Tooltip.Trigger>
+                                          <Button size="sm" variant="secondary" onPress={() => void copyInviteLink(item.link_url)}>
+                                            Copy Link
+                                          </Button>
+                                        </Tooltip.Trigger>
+                                        <Tooltip.Content>Copy invite link<Tooltip.Arrow /></Tooltip.Content>
+                                      </Tooltip>
                                     </Modal.Body>
                                     <Modal.Footer className="border-t border-slate-100 px-6 py-4">
-                                      <Button slot="close" variant="primary" className="w-full sm:w-auto">
-                                        Close
-                                      </Button>
+                                      <Tooltip>
+                                        <Tooltip.Trigger>
+                                          <Button slot="close" variant="primary" className="w-full whitespace-nowrap sm:w-auto">
+                                            Close
+                                          </Button>
+                                        </Tooltip.Trigger>
+                                        <Tooltip.Content>Close QR dialog<Tooltip.Arrow /></Tooltip.Content>
+                                      </Tooltip>
                                     </Modal.Footer>
                                   </Modal.Dialog>
                                 </Modal.Container>
@@ -439,12 +470,22 @@ export function InviteLinkPage() {
         isBusy={submitting}
         footer={
           <>
-            <Button variant="ghost" onPress={() => setGenerateOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="primary" onPress={() => void generateInviteLink()} isDisabled={submitting || inviteOwnerInvalid}>
-              Generate
-            </Button>
+            <Tooltip>
+              <Tooltip.Trigger>
+                <Button variant="ghost" onPress={() => setGenerateOpen(false)}>
+                  Cancel
+                </Button>
+              </Tooltip.Trigger>
+              <Tooltip.Content>Close without generating<Tooltip.Arrow /></Tooltip.Content>
+            </Tooltip>
+            <Tooltip>
+              <Tooltip.Trigger>
+                <Button variant="primary" onPress={() => void generateInviteLink()} isDisabled={submitting || inviteOwnerInvalid}>
+                  Generate
+                </Button>
+              </Tooltip.Trigger>
+              <Tooltip.Content>Generate invite link<Tooltip.Arrow /></Tooltip.Content>
+            </Tooltip>
           </>
         }
       >

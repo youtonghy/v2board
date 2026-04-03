@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { useState } from "react";
-import { Button, Form, Modal } from "@heroui/react";
+import { Button, Form, Modal, Tooltip } from "@heroui/react";
 
 export function AdminFilterModal({
   title = "Filters",
@@ -32,9 +32,14 @@ export function AdminFilterModal({
 
   return (
     <Modal isOpen={isOpen} onOpenChange={setIsOpen}>
-      <Button className="whitespace-nowrap" variant="secondary" onPress={() => setIsOpen(true)}>
-        {triggerLabel}
-      </Button>
+      <Tooltip>
+        <Tooltip.Trigger>
+          <Button className="whitespace-nowrap" variant="secondary" onPress={() => setIsOpen(true)}>
+            {triggerLabel}
+          </Button>
+        </Tooltip.Trigger>
+        <Tooltip.Content>{triggerLabel}<Tooltip.Arrow /></Tooltip.Content>
+      </Tooltip>
       <Modal.Backdrop variant="blur" className="bg-slate-950/30 backdrop-blur-sm" isDismissable={!busy}>
         <Modal.Container size={size}>
           <Modal.Dialog className="flex w-full flex-col border border-white/70 bg-white/95 shadow-[0_24px_80px_rgba(15,23,42,0.18)] backdrop-blur-xl">
@@ -60,21 +65,31 @@ export function AdminFilterModal({
                 {children}
               </Modal.Body>
               <Modal.Footer className="shrink-0 flex flex-wrap justify-end gap-3 border-t border-slate-100 px-6 py-4">
-                <Button
-                  variant="ghost"
-                  isDisabled={busy}
-                  onPress={() => {
-                    if (busy) return;
-                    onReset();
-                    setIsOpen(false);
-                  }}
-                  type="button"
-                >
-                  {resetLabel}
-                </Button>
-                <Button variant="primary" isDisabled={busy} type="submit">
-                  {searchLabel}
-                </Button>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Button
+                      variant="ghost"
+                      isDisabled={busy}
+                      onPress={() => {
+                        if (busy) return;
+                        onReset();
+                        setIsOpen(false);
+                      }}
+                      type="button"
+                    >
+                      {resetLabel}
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>{resetLabel}<Tooltip.Arrow /></Tooltip.Content>
+                </Tooltip>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Button variant="primary" isDisabled={busy} type="submit">
+                      {searchLabel}
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>{searchLabel}<Tooltip.Arrow /></Tooltip.Content>
+                </Tooltip>
               </Modal.Footer>
             </Form>
           </Modal.Dialog>
