@@ -336,35 +336,6 @@ export function DashboardPage() {
       onRefresh={() => void loadDashboard()}
       loading={state.loading}
     >
-      <section className="grid gap-6">
-        <Card className="border border-white/70 bg-white/95 shadow-panel">
-          <CardContent className="grid h-full gap-4 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-semibold text-slate-900">Operational Notes</p>
-                <p className="mt-1 text-sm text-slate-500">Quick signal cards from the live backend.</p>
-              </div>
-              <Chip variant="soft" className="bg-sky-50 text-sky-600">
-                Live
-              </Chip>
-            </div>
-            <div className="grid gap-3">
-              {[
-                ["Online Users", formatCompact(asNumber(overrideMetrics.online_user))],
-                ["Pending Tickets", formatCompact(asNumber(overrideMetrics.ticket_pending_total))],
-                ["Queue Ready", formatCompact(asNumber(queueStats.pending_jobs ?? queueStats.pending))],
-                ["Worker Load", formatCompact(asNumber(queueWorkload.processes ?? queueWorkload.workers ?? queueWorkload.supervisors))]
-              ].map(([label, value]) => (
-                <div key={label} className="rounded-[1.6rem] border border-slate-100 bg-slate-50/80 px-4 py-4">
-                  <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{label}</p>
-                  <p className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-slate-950">{value}</p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </section>
-
       {state.error ? (
         <Card className="border border-danger-200 bg-danger-50 shadow-none">
           <CardContent className="gap-4 p-6">
@@ -562,6 +533,35 @@ export function DashboardPage() {
             </div>
           </div>
         </PanelShell>
+      </section>
+
+      <section className="grid gap-6">
+        <Card className="border border-white/70 bg-white/95 shadow-panel">
+          <CardContent className="grid gap-4 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Operational Notes</p>
+                <p className="mt-1 text-sm text-slate-500">Quick signal cards from the live backend.</p>
+              </div>
+              <Chip variant="soft" className="bg-sky-50 text-sky-600">
+                Live
+              </Chip>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {[
+                ["Online Users", formatCompact(asNumber(overrideMetrics.online_user))],
+                ["Pending Tickets", formatCompact(asNumber(overrideMetrics.ticket_pending_total))],
+                ["Queue Ready", formatCompact(asNumber(queueStats.pending_jobs ?? queueStats.pending))],
+                ["Worker Load", formatCompact(asNumber(queueWorkload.processes ?? queueWorkload.workers ?? queueWorkload.supervisors))]
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-[1.6rem] border border-slate-100 bg-slate-50/80 px-4 py-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{label}</p>
+                  <p className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-slate-950">{value}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </section>
 
       <AdminDrawer
