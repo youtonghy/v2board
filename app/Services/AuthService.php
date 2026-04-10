@@ -4,10 +4,10 @@ namespace App\Services;
 
 use App\Utils\CacheKey;
 use App\Utils\Helper;
+use App\Utils\ResilientCache;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use App\Models\User;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\Request;
 
 class AuthService
@@ -58,8 +58,8 @@ class AuthService
             if ($expAt <= $now) return false;
             if (!self::checkSession((int)$data['id'], (string)$data['session'])) return false;
 
-            if (Cache::has($jwt)) {
-                return Cache::get($jwt);
+            if (ResilientCache::has($jwt)) {
+                return ResilientCache::get($jwt);
             }
 
             $user = User::select([
@@ -72,7 +72,7 @@ class AuthService
             if (!$user) return false;
 
             $ttl = max(1, min(3600, $expAt - $now));
-            Cache::put($jwt, $user->toArray(), $ttl);
+            ResilientCache::put($jwt, $user->toArray(), $ttl);
             return $user->toArray();
         } catch (\Exception $e) {
             return false;
@@ -81,16 +81,16 @@ class AuthService
 
     private static function checkSession($userId, $session)
     {
-        $sessions = (array)Cache::get(CacheKey::get("USER_SESSIONS", $userId), []);
+        $sessions = (array)ResilientCache::get(CacheKey::get("USER_SESSIONS", $userId), []);
         return isset($sessions[$session]);
     }
 
     private static function addSession($userId, $guid, $meta)
     {
         $cacheKey = CacheKey::get("USER_SESSIONS", $userId);
-        $sessions = (array)Cache::get($cacheKey, []);
+        $sessions = (array)ResilientCache::get($cacheKey, []);
         $sessions[$guid] = $meta;
-        if (!Cache::put(
+        if (!ResilientCache::put(
             $cacheKey,
             $sessions
         )) return false;
@@ -99,18 +99,18 @@ class AuthService
 
     public function getSessions()
     {
-        return (array)Cache::get(CacheKey::get("USER_SESSIONS", $this->user->id), []);
+        return (array)ResilientCache::get(CacheKey::get("USER_SESSIONS", $this->user->id), []);
     }
 
     public function removeSession($sessionId)
     {
         $cacheKey = CacheKey::get("USER_SESSIONS", $this->user->id);
-        $sessions = (array)Cache::get($cacheKey, []);
+        $sessions = (array)ResilientCache::get($cacheKey, []);
         if (isset($sessions[$sessionId]['auth_data'])) {
-            Cache::forget($sessions[$sessionId]['auth_data']);
+            ResilientCache::forget($sessions[$sessionId]['auth_data']);
         }
         unset($sessions[$sessionId]);
-        if (!Cache::put(
+        if (!ResilientCache::put(
             $cacheKey,
             $sessions
         )) return false;
@@ -120,13 +120,13 @@ class AuthService
     public function removeAllSession()
     {
         $cacheKey = CacheKey::get("USER_SESSIONS", $this->user->id);
-        $sessions = (array)Cache::get($cacheKey, []);
+        $sessions = (array)ResilientCache::get($cacheKey, []);
         foreach ($sessions as $guid => $meta) {
             if (isset($meta['auth_data'])) {
-                Cache::forget($meta['auth_data']);
+                ResilientCache::forget($meta['auth_data']);
             }
         }
-        return Cache::forget($cacheKey);
+        return ResilientCache::forget($cacheKey);
     }
 
     private function recordRecentLoginIp($ip, $loginAt)
@@ -142,7 +142,7 @@ class AuthService
         }
 
         $cacheKey = 'RECENT_LOGIN_IPS_30D_USER_' . (int)$this->user->id;
-        $recent = Cache::get($cacheKey);
+        $recent = ResilientCache::get($cacheKey);
         if (!is_array($recent)) {
             $recent = [];
         }
@@ -161,6 +161,6 @@ class AuthService
             $recent = array_slice($recent, 0, 50, true);
         }
 
-        Cache::put($cacheKey, $recent, 60 * 60 * 24 * 31);
+        ResilientCache::put($cacheKey, $recent, 60 * 60 * 24 * 31);
     }
 }

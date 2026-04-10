@@ -700,6 +700,30 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
+        async readResponsePayload(response) {
+            if (!response) return null;
+            const contentType = response.headers.get('content-type') || '';
+            try {
+                if (contentType.includes('application/json')) {
+                    return await response.json();
+                }
+                const text = await response.text();
+                return text ? { message: text } : null;
+            } catch (error) {
+                return null;
+            }
+        },
+
+        getRequestErrorMessage(response, payload, fallback = 'Request failed') {
+            if (payload && typeof payload.message === 'string' && payload.message.trim()) {
+                return payload.message;
+            }
+            if (response && response.status >= 500) {
+                return 'Authentication service is temporarily unavailable. Please try again later.';
+            }
+            return fallback;
+        },
+
         async safeJsonParse(response) {
             if (!response) return null;
 
@@ -731,7 +755,7 @@ document.addEventListener('alpine:init', () => {
             try {
                 const response = await this.request('/api/v3/guest/comm/config'); // Public endpoint, no auth needed
                 const data = await response.json();
-                if (data.data) {
+                if (data && data.data) {
                     this.siteConfig = data.data;
                     if (typeof data.data.passkey_login_enable !== 'undefined') {
                         this.passkey_login_enable = Number(data.data.passkey_login_enable) || 0;
@@ -881,7 +905,7 @@ document.addEventListener('alpine:init', () => {
                     body: JSON.stringify(params),
                     skipAuth: true
                 });
-                const data = await response.json();
+                const data = await this.readResponsePayload(response);
                 if (data.data) {
                     if (data.data.need_2fa) {
                         this.twoFactorToken = data.data.token;
@@ -904,7 +928,7 @@ document.addEventListener('alpine:init', () => {
                     this.captcha.loginRequested = false;
                     this.captcha.token = '';
                 } else {
-                    this.showMessage(data.message || 'Login failed');
+                    this.showMessage(this.getRequestErrorMessage(response, data, 'Login failed'));
                     // Reset captcha on failure
                     if (this.siteConfig.is_turnstile && window.turnstile) turnstile.reset(this.captcha.loginWidget);
                     if (this.siteConfig.is_recaptcha && window.grecaptcha) grecaptcha.reset(this.captcha.loginWidget);

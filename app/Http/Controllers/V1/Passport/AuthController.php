@@ -18,6 +18,7 @@ use App\Utils\Dict;
 use App\Utils\Helper;
 use App\Utils\RegisterMode;
 use App\Utils\Google2FA;
+use App\Utils\ResilientCache;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
@@ -327,14 +328,15 @@ class AuthController extends Controller
 
         $this->ensureCaptchaPassed($request);
 
-        if ((int)config('v2board.password_limit_enable', 1)) {
-            $passwordErrorCount = (int)Cache::get(CacheKey::get('PASSWORD_ERROR_LIMIT', $email), 0);
-            if ($passwordErrorCount >= (int)config('v2board.password_limit_count', 5)) {
-                abort(500, __('There are too many password errors, please try again after :minute minutes.', [
-                    'minute' => config('v2board.password_limit_expire', 60)
-                ]));
+        try {
+            if ((int)config('v2board.password_limit_enable', 1)) {
+                $passwordErrorCount = (int)ResilientCache::get(CacheKey::get('PASSWORD_ERROR_LIMIT', $email), 0);
+                if ($passwordErrorCount >= (int)config('v2board.password_limit_count', 5)) {
+                    abort(500, __('There are too many password errors, please try again after :minute minutes.', [
+                        'minute' => config('v2board.password_limit_expire', 60)
+                    ]));
+                }
             }
-        }
 
         $user = User::where('email', $email)->first();
         if (!$user) {
@@ -360,7 +362,7 @@ class AuthController extends Controller
                 ]);
             }
             if ((int)config('v2board.password_limit_enable')) {
-                Cache::put(
+                ResilientCache::put(
                     CacheKey::get('PASSWORD_ERROR_LIMIT', $email),
                     (int)$passwordErrorCount + 1,
                     60 * (int)config('v2board.password_limit_expire', 60)
@@ -375,7 +377,7 @@ class AuthController extends Controller
 
         if ((int)config('v2board.totp_enable', 0) && $user->two_factor_type && $user->two_factor_verified) {
             $token = Helper::guid();
-            Cache::put(CacheKey::get('TWO_FACTOR_LOGIN', $token), $user->id, 300);
+            ResilientCache::put(CacheKey::get('TWO_FACTOR_LOGIN', $token), $user->id, 300);
             return response([
                 'data' => [
                     'need_2fa' => true,
@@ -385,17 +387,23 @@ class AuthController extends Controller
             ]);
         }
 
-        $authService = new AuthService($user);
-        return response([
-            'data' => $authService->generateAuthData($request)
-        ]);
+            $authService = new AuthService($user);
+            return response([
+                'data' => $authService->generateAuthData($request)
+            ]);
+        } catch (\Throwable $exception) {
+            if ($exception instanceof \Symfony\Component\HttpKernel\Exception\HttpException) {
+                throw $exception;
+            }
+            abort(503, 'Authentication service is temporarily unavailable. Please try again later.');
+        }
     }
 
     public function login2FA(Request $request)
     {
         $token = $request->input('token');
         $code = preg_replace('/\s+/', '', (string)$request->input('code'));
-        $userId = Cache::get(CacheKey::get('TWO_FACTOR_LOGIN', $token));
+        $userId = ResilientCache::get(CacheKey::get('TWO_FACTOR_LOGIN', $token));
 
         if (!$userId) {
             abort(500, __('The token has expired or is invalid'));
@@ -416,7 +424,7 @@ class AuthController extends Controller
         // But per plan, we are focusing on TOTP. Generic 2FA for others might need more work.
         // Assuming user->two_factor_type only 'totp' for now based on implementation plan.
         
-        Cache::forget(CacheKey::get('TWO_FACTOR_LOGIN', $token));
+        ResilientCache::forget(CacheKey::get('TWO_FACTOR_LOGIN', $token));
         $authService = new AuthService($user);
         return response([
             'data' => $authService->generateAuthData($request)
