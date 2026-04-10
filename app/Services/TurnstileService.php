@@ -7,6 +7,14 @@ use Illuminate\Support\Facades\Log;
 
 class TurnstileService
 {
+    private static function safeLog(string $level, string $message, array $context = []): void
+    {
+        try {
+            Log::{$level}($message, $context);
+        } catch (\Throwable $exception) {
+        }
+    }
+
     /**
      * Verify Cloudflare Turnstile token
      *
@@ -23,14 +31,13 @@ class TurnstileService
 
         $secretKey = config('v2board.turnstile_secret_key');
 
-        // Validate required parameters
         if (empty($token)) {
-            Log::warning('Turnstile verification failed: empty token', ['ip' => $ip]);
+            self::safeLog('warning', 'Turnstile verification failed: empty token', ['ip' => $ip]);
             return false;
         }
 
         if (empty($secretKey)) {
-            Log::error('Turnstile verification failed: secret key not configured');
+            self::safeLog('error', 'Turnstile verification failed: secret key not configured');
             return false;
         }
 
@@ -44,7 +51,7 @@ class TurnstileService
                 ]);
 
             if (!$response->ok()) {
-                Log::warning('Turnstile API request failed', [
+                self::safeLog('warning', 'Turnstile API request failed', [
                     'status' => $response->status(),
                     'ip' => $ip
                 ]);
@@ -56,7 +63,7 @@ class TurnstileService
 
             if (!$success) {
                 $errorCodes = data_get($result, 'error-codes', []);
-                Log::warning('Turnstile verification rejected', [
+                self::safeLog('warning', 'Turnstile verification rejected', [
                     'error_codes' => $errorCodes,
                     'ip' => $ip
                 ]);
@@ -64,7 +71,7 @@ class TurnstileService
 
             return $success;
         } catch (\Throwable $e) {
-            Log::error('Turnstile verification exception', [
+            self::safeLog('error', 'Turnstile verification exception', [
                 'error' => $e->getMessage(),
                 'ip' => $ip
             ]);
