@@ -906,7 +906,7 @@ document.addEventListener('alpine:init', () => {
                     skipAuth: true
                 });
                 const data = await this.readResponsePayload(response);
-                if (data.data) {
+                if (data && data.data) {
                     if (data.data.need_2fa) {
                         this.twoFactorToken = data.data.token;
                         this.show2FAModal = true;
