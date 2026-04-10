@@ -16,21 +16,25 @@ class TelegramController extends Controller
     protected $telegramService;
     protected $callback;
 
-    public function __construct(Request $request)
+    public function __construct()
     {
-        if ($request->input('access_token') !== md5(config('v2board.telegram_bot_token'))) {
-            abort(401);
-        }
-
         $this->telegramService = new TelegramService();
     }
 
     public function webhook(Request $request)
     {
+        $this->authorizeWebhook($request);
         $this->formatMessage($request->input());
         $this->formatChatJoinRequest($request->input());
         $this->formatCallbackQuery($request->input());
         $this->handle();
+    }
+
+    private function authorizeWebhook(Request $request)
+    {
+        if ($request->input('access_token') !== md5(config('v2board.telegram_bot_token'))) {
+            abort(401);
+        }
     }
 
     public function handle()
